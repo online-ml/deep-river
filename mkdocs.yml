@@ -1,0 +1,68 @@
+# Project information
+site_name: Online Keras
+site_description: An keras based framework that adapts to to evolving datastreams for river.
+site_author: Cedric Kulbach
+site_url: https://github.com/kulbachcedric/OnlineKeras
+
+# Repository
+repo_name: Online Keras
+repo_url: https://github.com/kulbachcedric/OnlineKeras
+edit_uri: "https://github.com/kulbachcedric/OnlineKeras"
+
+# Copyright
+copyright: Copyright &copy; 2019 - 2020
+
+# Configuration
+theme:
+  name: material
+  language: en
+  palette:
+    primary: light blue
+    accent: grey
+  font:
+    text: Roboto
+    code: Roboto Mono
+  #logo: material/cloud
+  favicon: material/cloud
+  features:
+    - navigation.instant
+    - navigation.tracking
+
+# Extras
+extra:
+  social:
+    - icon: fontawesome/brands/github-alt
+      link: https://github.com/kulbachcedric/OnlineKeras
+
+# Google Analytics
+google_analytics:
+  - UA-63302552-3
+  - auto
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - footnotes
+  - toc:
+      permalink: true
+      toc_depth: "1-3"
+  - pymdownx.details
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings
+
+extra_javascript:
+
+extra_css:
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - Code Reference:
+      - OnlineKeras Classifier: online_classifier.md
+      - OnlineKeras Regressor: online_regressor.md
