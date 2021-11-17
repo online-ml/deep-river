@@ -38,10 +38,7 @@ base_packages = [
     "pandas~=1.3.2",
     "river~=0.8.0",
     "tqdm~=4.61.2",
-    "mlflow"
-]
-
-torch_packages = base_packages + [
+    "mlflow",
     "torch"
 ]
 
@@ -96,9 +93,8 @@ setuptools.setup(
     install_requires=base_packages,
     extras_require={
         "dev": dev_packages,
-        "torch": torch_packages,
         "docs": docs_packages,
-        "all": dev_packages+torch_packages+docs_packages,
+        "all": dev_packages+docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
     },
     include_package_data=True,
