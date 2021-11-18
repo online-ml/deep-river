@@ -12,12 +12,6 @@ except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "numpy"])
     from numpy import get_include
 
-try:
-    from Cython.Build import cythonize
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "Cython"])
-    from Cython.Build import cythonize
-
 
 # Package meta-data.
 NAME = "IncrementalTorch"
@@ -36,9 +30,8 @@ base_packages = [
     "torch",
     "vaex",
     "pandas~=1.3.2",
-    "river~=0.8.0",
+    "river",
     "tqdm~=4.61.2",
-    "mlflow"
 ]
 
 torch_packages = base_packages + [
@@ -96,7 +89,6 @@ setuptools.setup(
     install_requires=base_packages,
     extras_require={
         "dev": dev_packages,
-        "torch": torch_packages,
         "docs": docs_packages,
         "all": dev_packages+torch_packages+docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
