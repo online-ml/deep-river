@@ -35,6 +35,7 @@ base_packages = [
 ]
 
 torch_packages = base_packages + [
+    "mlflow",
     "torch"
 ]
 
@@ -90,7 +91,7 @@ setuptools.setup(
     extras_require={
         "dev": dev_packages,
         "docs": docs_packages,
-        "all": dev_packages+torch_packages+docs_packages,
+        "all": dev_packages+docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
     },
     include_package_data=True,
