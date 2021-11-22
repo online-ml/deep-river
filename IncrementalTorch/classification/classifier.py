@@ -3,8 +3,8 @@ import copy
 import typing
 import torch
 from river import base
+from IncrementalTorch.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
 
-from IncrementalDL.OnlineTorch.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
 
 class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
 
