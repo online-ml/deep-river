@@ -11,16 +11,9 @@
 ## Installation
 There are different versions, that can be installed
 
-### PyTorch
-Only use the PyTorch packages:
-```python
-pip install -e ".[torch]"
-```
-### dev
-For development purposes:
-```python
-pip install -e ".[torch]"
-```
+### base
+pip install -e .
+
 ### docs
 For doing work on the documentation:
 ```python
