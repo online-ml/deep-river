@@ -3,11 +3,69 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
-#from river.evaluate import Track
+
+# from river.evaluate import Track
 from tqdm import tqdm
+from torch import nn
+from torch import optim
+import torch
+import torch.nn.functional as F
 
+ACTIVATION_FNS = {
+    "selu": nn.SELU,
+    "relu": nn.ReLU,
+    "leaky_relu": nn.LeakyReLU,
+    "gelu": nn.GELU,
+    "tanh": nn.Tanh,
+}
+
+LOSS_FNS = {
+    "mse": F.mse_loss,
+    "mae": F.l1_loss,
+    "smooth_mae": F.smooth_l1_loss,
+    "bce": F.binary_cross_entropy,
+    "kld": F.kl_div,
+    "huber": F.huber_loss,
+}
+
+OPTIMIZER_FNS = {
+    "adam": optim.Adam,
+    "adam_w": optim.AdamW,
+    "sgd": optim.SGD,
+    "rmsprop": optim.RMSprop,
+}
+
+
+def get_activation_fn(activation_fn):
+    return (
+        ACTIVATION_FNS.get(activation_fn)
+        if isinstance(activation_fn, str)
+        else activation_fn
+    )
+
+
+def get_loss_fn(loss_fn):
+    return loss_fn if callable(loss_fn) else LOSS_FNS.get(loss_fn)
+
+
+def get_optimizer_fn(optimizer_fn):
+    return (
+        OPTIMIZER_FNS.get(optimizer_fn)
+        if isinstance(optimizer_fn, str)
+        else optimizer_fn
+    )
+
+
+def prep_input(x, device, dtype=torch.float32):
+    if isinstance(x, dict):
+        x = torch.Tensor([list(x.values())], device=device, dtype=dtype)
+    elif isinstance(x, pd.DataFrame):
+        x = torch.Tensor(x.values, device=device, dtype=dtype)
+    return x
+
+
+"""
 from IncrementalDL.tracks.evaluate_tracks import Torch2RiverTrack
-
 
 
 def evaluate_flexible_classes_track(
@@ -200,3 +258,4 @@ def plot_track(track: Torch2RiverTrack,
         df.to_csv(str(result_path / f'{track().name}.csv'))
 
     return df
+ """
