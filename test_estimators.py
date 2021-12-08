@@ -15,7 +15,7 @@ def iter_estimators():
             return inspect.isclass(obj) and issubclass(obj, river.base.Estimator)
 
         for _, obj in inspect.getmembers(
-            importlib.import_module(f"river.{submodule}"), is_estimator
+            importlib.import_module(f"IncrementalTorch.{submodule}"), is_estimator
         ):
             yield obj
 
