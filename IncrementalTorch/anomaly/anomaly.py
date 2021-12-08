@@ -7,6 +7,7 @@ import inspect
 import numpy as np
 from torch import nn
 import pandas as pd
+from torch._C import device
 
 from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
@@ -18,7 +19,6 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
         loss_fn="mse",
         optimizer_fn: Type[torch.optim.Optimizer] = "adam_w",
         build_fn=None,
-        momentum_scaling=0.99,
         device="cpu",
         **net_params,
     ):
@@ -28,7 +28,6 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
         self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
-        self.scaler = None if not momentum_scaling else ScoreStandardizer(momentum_scaling) 
 
         self.encoder = None
         self.decoder = None
@@ -59,10 +58,10 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
             self._init_net(n_features=x.shape[1])
 
         self.eval()
-        x_rec = self(x)
+        with torch.inference_mode():
+            x_rec = self(x)
         loss = self.loss_fn(x_rec, x).item()
-        score = loss if self.scaler is None else self.scaler.learn_transform_one(loss)
-        return score
+        return loss
 
     def learn_many(self, x: pd.DataFrame):
         return self._learn(x)
@@ -74,13 +73,13 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
             self._init_net(n_features=x.shape[1])
 
         self.eval()
-        x_rec = self(x)
+        with torch.inference_mode():
+            x_rec = self(x)
         loss = torch.mean(
             self.loss_fn(x_rec, x, reduction="none"),
             dim=list(range(1, x.dim())),
         )
-        loss = loss.cpu().detach().numpy()
-        score = loss if self.scaler is None else self.scaler.learn_transform_one(loss)
+        score = loss.cpu().detach().numpy()
         return score
 
     def forward(self, x):
@@ -116,7 +115,7 @@ class AdaptiveAutoencoder(Autoencoder):
         beta=0.99,
         s=0.2,
         momentum_scaling=0.99,
-        device="cpu",
+        
         **net_params,
     ):
         super().__init__(
@@ -124,6 +123,7 @@ class AdaptiveAutoencoder(Autoencoder):
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
             momentum_scaling=momentum_scaling,
+            device=device,
             **net_params,
         )
         self.beta_scalar = beta
@@ -226,31 +226,3 @@ class AdaptiveAutoencoder(Autoencoder):
         )
         return optimizer
 
-
-class ScoreStandardizer():
-    def __init__(self, momentum=0.99, with_std=True):
-        self.with_std = with_std
-        self.momentum = momentum
-        self.mean = None
-        self.var = 0
-    
-    def learn_one(self, x):
-        if self.mean is None:
-            self.mean = x
-        else:
-            last_diff = x - self.mean
-            self.mean += (1 - self.momentum) * last_diff
-            if self.with_std:
-                self.var = self.momentum * (self.var + (1-self.momentum)*last_diff)
-
-    def transform_one(self, x):
-        x_centered = x - self.mean
-        if self.with_std:
-            x_standardized = np.divide(x_centered, self.var ** 0.5, where=self.var>0)
-        else:
-            x_standardized = x_centered
-        return x_standardized
-
-    def learn_transform_one(self, x):
-        self.learn_one(x)
-        return self.transform_one(x)

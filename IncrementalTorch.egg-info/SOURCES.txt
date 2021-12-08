@@ -19,6 +19,7 @@ IncrementalTorch/datasets/base.py
 IncrementalTorch/datasets/covertype.py
 IncrementalTorch/datasets/credit_card.py
 IncrementalTorch/datasets/http.py
+IncrementalTorch/datasets/mnist.py
 IncrementalTorch/datasets/shuttle.py
 IncrementalTorch/datasets/smtp.py
 IncrementalTorch/nn_functions/__init__.py
