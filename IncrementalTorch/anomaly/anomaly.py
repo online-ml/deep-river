@@ -105,6 +105,26 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
         )
         return optimizer
 
+    def _filter_args(self, fn, override=None):
+        """Filters `sk_params` and returns those in `fn`'s arguments.
+
+        # Arguments
+            fn : arbitrary function
+            override: dictionary, values to override `torch_params`
+
+        # Returns
+            res : dictionary containing variables
+                in both `sk_params` and `fn`'s arguments.
+        """
+        override = override or {}
+        res = {}
+        for name, value in self.net_params.items():
+            args = list(inspect.signature(fn).parameters)
+            if name in args:
+                res.update({name: value})
+        res.update(override)
+        return res
+
 
 class AdaptiveAutoencoder(Autoencoder):
     def __init__(
