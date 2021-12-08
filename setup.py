@@ -32,6 +32,7 @@ base_packages = [
     "pandas~=1.3.2",
     "river",
     "tqdm~=4.61.2",
+    "pytest"
 ]
 
 torch_packages = base_packages + [
