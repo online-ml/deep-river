@@ -56,11 +56,11 @@ def get_optimizer_fn(optimizer_fn):
     )
 
 
-def prep_input(x, device, dtype=torch.float32):
+def prep_input(x, device):
     if isinstance(x, dict):
-        x = torch.Tensor([list(x.values())], device=device, dtype=dtype)
+        x = torch.Tensor([list(x.values())], device=device)
     elif isinstance(x, pd.DataFrame):
-        x = torch.Tensor(x.values, device=device, dtype=dtype)
+        x = torch.Tensor(x.values, device=device)
     return x
 
 

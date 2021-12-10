@@ -1,7 +1,6 @@
 from typing import Type
 
-from river import base
-from river.base import anomaly
+from river import anomaly
 import torch
 import inspect
 import numpy as np
@@ -13,7 +12,7 @@ from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
 
 
-class Autoencoder(base.AnomalyDetector, nn.Module):
+class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def __init__(
         self,
         loss_fn="mse",
@@ -37,14 +36,14 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
         return self._learn(x)
 
     def _learn(self, x):
-        prep_input(x, device=self.device)
+        x = prep_input(x, device=self.device)
 
         if self.is_initialized is False:
             self._init_net(n_features=x.shape[1])
 
         self.train()
         x_pred = self(x)
-        loss = self.loss(x_pred, x)
+        loss = self.loss_fn(x_pred, x)
 
         self.zero_grad()
         loss.backward()
@@ -81,6 +80,23 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
         )
         score = loss.cpu().detach().numpy()
         return score
+
+    def score_learn_one(self, x: dict):
+        x = prep_input(x, device=self.device)
+
+        if self.is_initialized is False:
+            self._init_net(n_features=x.shape[1])
+
+        self.train()
+        x_pred = self(x)
+        loss = self.loss_fn(x_pred, x)
+
+        self.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        score = loss.item()
+        return score
+
 
     def forward(self, x):
         return self.decoder(self.encoder(x))
@@ -203,6 +219,29 @@ class AdaptiveAutoencoder(Autoencoder):
             self.alpha = self.alpha / torch.sum(self.alpha)
 
         return self
+
+    def score_learn_one(self, x: dict) -> anomaly.AnomalyDetector:
+        if self.is_initialized is False:
+            self._init_net(x.shape[1])
+
+        x = prep_input(x)
+
+        x_recs = self.compute_recs(x)
+        x_rec = self.weight_recs(x_recs)
+
+        loss = self.loss_fn(x_rec, x)
+        self.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        losses = torch.stack([self.loss_fn(x_rec, x) for x_rec in x_recs])
+        with torch.no_grad():
+            self.alpha = self.alpha * torch.pow(self.beta, losses)
+            self.alpha = torch.max(self.alpha, self.alpha_min)
+            self.alpha = self.alpha / torch.sum(self.alpha)
+        
+        score = loss.item()
+        return score
 
     def _init_net(self, n_features):
         if self.build_fn is None:

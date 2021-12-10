@@ -1,6 +1,6 @@
 from torch import nn
 
-from ..base import get_activation_fn
+from ..utils import get_activation_fn
 
 
 def get_fc_autoencoder(
@@ -22,7 +22,7 @@ def get_fc_autoencoder(
         activation(),
     )
 
-    decoder = (
+    decoder = nn.Sequential(
         nn.Linear(latent_dim, layer_size),
         activation(),
         *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
