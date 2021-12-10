@@ -1,3 +1,4 @@
+.gitignore
 README.md
 mkdocs.yml
 setup.py
@@ -12,16 +13,22 @@ IncrementalTorch.egg-info/requires.txt
 IncrementalTorch.egg-info/top_level.txt
 IncrementalTorch/anomaly/__init__.py
 IncrementalTorch/anomaly/anomaly.py
+IncrementalTorch/anomaly/util.py
 IncrementalTorch/classification/__init__.py
 IncrementalTorch/classification/classifier.py
 IncrementalTorch/datasets/__init__.py
 IncrementalTorch/datasets/base.py
+IncrementalTorch/datasets/covertype.csv.zip
 IncrementalTorch/datasets/covertype.py
 IncrementalTorch/datasets/credit_card.py
 IncrementalTorch/datasets/http.py
+IncrementalTorch/datasets/make_mnist.ipynb
+IncrementalTorch/datasets/mnist.csv.zip
 IncrementalTorch/datasets/mnist.py
+IncrementalTorch/datasets/shuttle.csv.zip
 IncrementalTorch/datasets/shuttle.py
 IncrementalTorch/datasets/smtp.py
+IncrementalTorch/datasets/__pycache__/http.cpython-39.pyc
 IncrementalTorch/nn_functions/__init__.py
 IncrementalTorch/nn_functions/anomaly.py
 IncrementalTorch/nn_functions/classification.py

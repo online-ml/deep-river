@@ -1,19 +1,17 @@
 from typing import Type
 
-from river import base
-from river.base import anomaly
+from river import base, anomaly
 import torch
 import inspect
 import numpy as np
 from torch import nn
 import pandas as pd
-from torch._C import device
 
 from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
 
 
-class Autoencoder(base.AnomalyDetector, nn.Module):
+class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def __init__(
         self,
         loss_fn="mse",
@@ -98,6 +96,26 @@ class Autoencoder(base.AnomalyDetector, nn.Module):
 
         self.optimizer = self.configure_optimizers()
 
+    def _filter_args(self, fn, override=None):
+        """Filters `sk_params` and returns those in `fn`'s arguments.
+
+        # Arguments
+            fn : arbitrary function
+            override: dictionary, values to override `torch_params`
+
+        # Returns
+            res : dictionary containing variables
+                in both `sk_params` and `fn`'s arguments.
+        """
+        override = override or {}
+        res = {}
+        for name, value in self.net_params.items():
+            args = list(inspect.signature(fn).parameters)
+            if name in args:
+                res.update({name: value})
+        res.update(override)
+        return res
+
     def configure_optimizers(self):
         optimizer = self.optimizer_fn(
             nn.ModuleList([self.encoder, self.decoder]).parameters(),
@@ -115,7 +133,7 @@ class AdaptiveAutoencoder(Autoencoder):
         beta=0.99,
         s=0.2,
         momentum_scaling=0.99,
-        
+        device="cpu",
         **net_params,
     ):
         super().__init__(

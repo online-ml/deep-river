@@ -1,5 +1,5 @@
 from river import stream
-import base
+from . import base
 
 
 class Shuttle(base.FileDataset):

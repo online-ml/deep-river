@@ -1,6 +1,6 @@
 from torch import nn
 
-from ..base import get_activation_fn
+from ..utils import get_activation_fn
 
 
 def get_fc_autoencoder(
