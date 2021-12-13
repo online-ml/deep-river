@@ -87,4 +87,4 @@ class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
             x = torch.Tensor([l])
             return self.net(x).item()
         else:
-            return {}
+            return None
