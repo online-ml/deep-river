@@ -21,6 +21,7 @@ class Covertype(base.FileDataset):
             "Hillshade_Noon": float,
             "Hillshade_3pm": float,
             "Horizontal_Distance_To_Fire_Points": float,
+            "is_anom": int,
         }
         for i in range(1, 5): self.converters[f"Wilderness_Area{i}"] = int
         for i in range(1, 41): self.converters[f"Soil_Type{i}"] = int
