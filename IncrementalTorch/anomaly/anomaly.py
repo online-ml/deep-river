@@ -1,15 +1,12 @@
 from typing import Type
 
-<<<<<<< HEAD
 from river import anomaly
-=======
-from river import base, anomaly
->>>>>>> 6e06168200e2ed1adcebd2f353ed8ea8a445b438
 import torch
 import inspect
 import numpy as np
 from torch import nn
 import pandas as pd
+from torch._C import device
 
 from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
@@ -198,7 +195,7 @@ class AdaptiveAutoencoder(Autoencoder):
         else:
             x_enc_prev = x
 
-        for idx, layer in enumerate(self.encoder):
+        for idx, layer in enumerate(self.encoding_layers):
             x_enc_prev = layer(x_enc_prev)
             if not isinstance(layer, nn.Linear):
                 x_encs.append(x_enc_prev)
@@ -208,7 +205,7 @@ class AdaptiveAutoencoder(Autoencoder):
         for idx, x_enc in enumerate(x_encs):
             if x_enc is not None:
                 x_rec_prev = x_enc
-                for layer in self.decoder[-idx - 1 :]:
+                for layer in self.decoding_layers[-idx - 1 :]:
                     x_rec_prev = layer(x_rec_prev)
                 x_recs.append(x_rec_prev)
         return torch.stack(x_recs, dim=0)
@@ -222,10 +219,10 @@ class AdaptiveAutoencoder(Autoencoder):
         return self.weight_recs(x_recs)
 
     def learn_one(self, x: dict) -> anomaly.AnomalyDetector:
+        x = prep_input(x, device=self.device)
+
         if self.is_initialized is False:
             self._init_net(x.shape[1])
-
-        x = prep_input(x)
 
         x_recs = self.compute_recs(x)
         x_rec = self.weight_recs(x_recs)
@@ -244,10 +241,12 @@ class AdaptiveAutoencoder(Autoencoder):
         return self
 
     def score_learn_one(self, x: dict) -> anomaly.AnomalyDetector:
+        x = prep_input(x, device=self.device)
+
+        
         if self.is_initialized is False:
             self._init_net(x.shape[1])
 
-        x = prep_input(x)
 
         x_recs = self.compute_recs(x)
         x_rec = self.weight_recs(x_recs)
@@ -276,25 +275,25 @@ class AdaptiveAutoencoder(Autoencoder):
         self.encoder = self.encoder.to(self.device)
         self.decoder = self.decoder.to(self.device)
         
-        self.encoder = [
+        self.encoding_layers = [
             module
             for module in self.encoder.modules()
             if not isinstance(module, nn.Sequential)
         ]
-        self.decoder = [
+        self.decoding_layers = [
             module
             for module in self.decoder.modules()
             if not isinstance(module, nn.Sequential)
         ]
 
 
-        if isinstance(self.encoder[0], nn.Dropout):
-            self.dropout = self.encoder.pop(0)
+        if isinstance(self.encoding_layers[0], nn.Dropout):
+            self.dropout = self.encoding_layers.pop(0)
 
         self.optimizer = self.configure_optimizers()
 
         n_encoding_layers = len(
-            [layer for layer in self.encoder if isinstance(layer, nn.Linear)]
+            [layer for layer in self.encoding_layers if isinstance(layer, nn.Linear)]
         )
 
         self.register_buffer("alpha", torch.ones(n_encoding_layers) / n_encoding_layers)
@@ -303,7 +302,7 @@ class AdaptiveAutoencoder(Autoencoder):
 
     def configure_optimizers(self):
         optimizer = self.optimizer_fn(
-            nn.ModuleList(self.encoder + self.decoder).parameters(),
+            nn.ModuleList(self.encoding_layers + self.decoding_layers).parameters(),
             **self._filter_args(self.optimizer_fn),
         )
         return optimizer
