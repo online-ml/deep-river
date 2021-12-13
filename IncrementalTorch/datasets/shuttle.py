@@ -1,5 +1,5 @@
 from river import stream
-import base
+from . import base
 
 
 class Shuttle(base.FileDataset):
@@ -10,10 +10,12 @@ class Shuttle(base.FileDataset):
             filename="shuttle.csv.zip",
             task=base.BINARY_CLF,
         )
+        self.converters = {f"V{i}": float for i in range(1, 10)}
+        self.converters["is_anom"] = int
 
     def __iter__(self):
         return stream.iter_csv(
             self.path,
             target="is_anom",
-            converters={f"V{i}": float for i in range(1, 10)},
+            converters=self.converters,
         )
