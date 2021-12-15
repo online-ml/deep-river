@@ -6,7 +6,7 @@ import inspect
 import numpy as np
 from torch import nn
 import pandas as pd
-from torch._C import device
+from torch._C import _enable_minidumps_on_exceptions
 
 from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
@@ -96,7 +96,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.optimizer.step()
         score = loss.item()
         return score
-
 
     def forward(self, x):
         return self.decoder(self.encoder(x))
@@ -243,10 +242,8 @@ class AdaptiveAutoencoder(Autoencoder):
     def score_learn_one(self, x: dict) -> anomaly.AnomalyDetector:
         x = prep_input(x, device=self.device)
 
-        
         if self.is_initialized is False:
             self._init_net(x.shape[1])
-
 
         x_recs = self.compute_recs(x)
         x_rec = self.weight_recs(x_recs)
@@ -261,7 +258,7 @@ class AdaptiveAutoencoder(Autoencoder):
             self.alpha = self.alpha * torch.pow(self.beta, losses)
             self.alpha = torch.max(self.alpha, self.alpha_min)
             self.alpha = self.alpha / torch.sum(self.alpha)
-        
+
         score = loss.item()
         return score
 
@@ -274,7 +271,7 @@ class AdaptiveAutoencoder(Autoencoder):
         )
         self.encoder = self.encoder.to(self.device)
         self.decoder = self.decoder.to(self.device)
-        
+
         self.encoding_layers = [
             module
             for module in self.encoder.modules()
@@ -285,7 +282,6 @@ class AdaptiveAutoencoder(Autoencoder):
             for module in self.decoder.modules()
             if not isinstance(module, nn.Sequential)
         ]
-
 
         if isinstance(self.encoding_layers[0], nn.Dropout):
             self.dropout = self.encoding_layers.pop(0)
@@ -307,3 +303,100 @@ class AdaptiveAutoencoder(Autoencoder):
         )
         return optimizer
 
+
+class VariationalAutoencoder(Autoencoder):
+    def __init__(
+        self,
+        loss_fn="mse",
+        optimizer_fn: Type[torch.optim.Optimizer] = "adam_w",
+        build_fn=None,
+        device="cpu",
+        n_reconstructions=10,
+        **net_params,
+    ):
+        net_params["variational"] = True
+        super().__init__(
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            build_fn=build_fn,
+            device=device,
+            **net_params,
+        )
+        self.n_reconstructions = n_reconstructions
+
+    def encode(self, x):
+        encoded = self.encoder(x)
+        mu, log_var = encoded.split(encoded.shape[1] // 2, dim=1)
+        log_var = torch.clip(log_var, -3, 3)
+        return mu, log_var
+
+    def decode(self, mu, log_var, n_reconstructions=1):
+        eps = torch.randn((n_reconstructions, *log_var.shape))
+        z = mu + torch.exp(log_var * 0.5) * eps
+        decoded = self.decoder(z)
+        return decoded
+
+    def learn_one(self, x):
+        return self._learn(x)
+
+    def _learn(self, x):
+        x = prep_input(x, device=self.device)
+
+        if self.is_initialized is False:
+            self._init_net(n_features=x.shape[1])
+
+        self.train()
+        mu, log_var = self.encode(x)
+        reconstructed = self.decode(mu, log_var)
+        reconstructed = reconstructed.squeeze(0)
+
+        latent_loss = torch.mean(
+            -0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0
+        )
+        reconstruction_loss = self.loss_fn(reconstructed, x)
+        total_loss = reconstruction_loss + self.beta * latent_loss
+
+        self.zero_grad()
+        total_loss.backward()
+        self.optimizer.step()
+        return self
+
+    def score_one(self, x: dict):
+        x = prep_input(x, device=self.device)
+
+        if self.is_initialized is False:
+            self._init_net(n_features=x.shape[1])
+
+        self.eval()
+        with torch.inference_mode():
+            mu, log_var = self.encode(x)
+            reconstructed = self.decode(mu, log_var, self.n_reconstructions)
+
+        loss = self.loss_fn(
+            reconstructed, x.repeat((self.n_reconstructions, [1] * x.dim()))
+        ).item()
+        return loss
+
+    def score_learn_one(self, x: dict):
+        x = prep_input(x, device=self.device)
+
+        if self.is_initialized is False:
+            self._init_net(n_features=x.shape[1])
+
+        self.eval()
+        mu, log_var = self.encode(x)
+        reconstructed = self.decode(mu, log_var, self.n_reconstructions)
+
+        loss = self.loss_fn(
+            reconstructed, x.repeat((self.n_reconstructions, *[1] * x.dim()))
+        )
+        self.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        return loss.item()
+
+    def learn_many(self, x: pd.DataFrame):
+        return super().learn_many(x)
+
+    def score_many(self, x: pd.DataFrame) -> float:
+        return super().score_many(x)

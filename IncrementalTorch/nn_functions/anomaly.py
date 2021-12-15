@@ -10,17 +10,20 @@ def get_fc_autoencoder(
     n_layers=3,
     activation_fn="selu",
     latent_dim=10,
+    variational=False
 ):
     activation = get_activation_fn(activation_fn)
-
+    
+    encoder_output_dim = latent_dim * 2 if variational else latent_dim
     encoder = nn.Sequential(
         nn.Dropout(p=dropout),
         nn.Linear(n_features, layer_size),
         activation(),
         *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
-        nn.Linear(layer_size, latent_dim),
+        nn.Linear(layer_size, encoder_output_dim),
         activation(),
     )
+    
 
     decoder = nn.Sequential(
         nn.Linear(latent_dim, layer_size),
