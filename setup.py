@@ -36,7 +36,7 @@ base_packages = [
     "torch",
     "vaex",
     "pandas~=1.3.2",
-    "river~=0.8.0",
+    "river~=0.9.0",
     "tqdm~=4.61.2",
     "mlflow"
 ]

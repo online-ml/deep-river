@@ -13,7 +13,8 @@ IncrementalTorch.egg-info/requires.txt
 IncrementalTorch.egg-info/top_level.txt
 IncrementalTorch/anomaly/__init__.py
 IncrementalTorch/anomaly/anomaly.py
-IncrementalTorch/anomaly/util.py
+IncrementalTorch/anomaly/postprocessing.py
+IncrementalTorch/anomaly/utils.py
 IncrementalTorch/classification/__init__.py
 IncrementalTorch/classification/classifier.py
 IncrementalTorch/datasets/__init__.py
