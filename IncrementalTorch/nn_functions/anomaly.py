@@ -5,15 +5,20 @@ from ..utils import get_activation_fn
 
 def get_fc_autoencoder(
     n_features,
-    dropout=0.2,
-    layer_size=20,
-    n_layers=3,
+    dropout=0.1,
+    layer_size=0.9,
+    n_layers=4,
     activation_fn="selu",
-    latent_dim=10,
-    variational=False
+    latent_dim=0.4,
+    variational=False,
 ):
+    if isinstance(latent_dim, float):
+        latent_dim = int(latent_dim * n_features)
+    if isinstance(layer_size, float):
+        layer_size = int(layer_size * n_features)
+
     activation = get_activation_fn(activation_fn)
-    
+
     encoder_output_dim = latent_dim * 2 if variational else latent_dim
     encoder = nn.Sequential(
         nn.Dropout(p=dropout),
@@ -23,7 +28,6 @@ def get_fc_autoencoder(
         nn.Linear(layer_size, encoder_output_dim),
         activation(),
     )
-    
 
     decoder = nn.Sequential(
         nn.Linear(latent_dim, layer_size),

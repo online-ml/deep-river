@@ -3,10 +3,8 @@ from typing import Type
 from river import anomaly
 import torch
 import inspect
-import numpy as np
 from torch import nn
 import pandas as pd
-from torch._C import _enable_minidumps_on_exceptions
 
 from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
