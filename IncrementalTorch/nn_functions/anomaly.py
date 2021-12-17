@@ -40,7 +40,8 @@ def get_fc_autoencoder(
     ]
     if final_activation != "none":
         decoder_layers.append(get_activation_fn(final_activation)())
-    return nn.Sequential(encoder_layers), nn.Sequential(decoder_layers)
+
+    return nn.Sequential(*encoder_layers), nn.Sequential(*decoder_layers)
 
 
 def get_conv_autoencoder_28(activation_fn="selu", dropout=0.5, n_features=1):
