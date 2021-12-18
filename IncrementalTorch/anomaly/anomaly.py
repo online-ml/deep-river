@@ -149,7 +149,6 @@ class RollingTorchAE(base.AnomalyDetector):
         loss = self.loss(x_pred, x)
         loss.backward()
         self.optimizer.step()
-        return self
 
     def learn_one(self, x):
         self._x_window.append(list(x.values()))

@@ -26,6 +26,7 @@ class PyTorch2RiverBase(base.Estimator):
         self.net = None
 
     def _learn_one(self, x: torch.Tensor, y: torch.Tensor):
+        self.net.train()
         self.net.zero_grad()
         y_pred = self.net(x)
         #depending on loss function
@@ -41,7 +42,9 @@ class PyTorch2RiverBase(base.Estimator):
             self._init_net(n_features=len(list(x.values())))
 
         x = torch.Tensor([list(x.values())])
+        x = x.to(self.device)
         y = torch.Tensor([[y]])
+        y = y.to(self.device) # todo check if this works
         self._learn_one(x=x,y=y)
         return self
 
@@ -67,6 +70,7 @@ class PyTorch2RiverBase(base.Estimator):
 
     def _init_net(self, n_features):
         self.net = self.build_fn(n_features=n_features, **self._filter_torch_params(self.build_fn))
+        self.net.to(self.device)
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr = self.learning_rate)
 
 
@@ -111,7 +115,9 @@ class RollingPyTorch2RiverBase(base.Estimator):
 
         if len(self._x_window) == self.window_size:
             x = torch.Tensor([self._x_window.values])
+            x = x.to(self.device)
             y = torch.Tensor([[y]])
+            y = y.to(self.device)
             self._learn_batch(x=x, y=y)
         return self
 
@@ -137,4 +143,5 @@ class RollingPyTorch2RiverBase(base.Estimator):
 
     def _init_net(self, n_features):
         self.net = self.build_fn(n_features=n_features, **self._filter_torch_params(self.build_fn))
+        self.net.to(self.device)
         self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
