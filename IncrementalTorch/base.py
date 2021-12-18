@@ -11,6 +11,7 @@ class PyTorch2RiverBase(base.Estimator):
             loss_fn: Type[torch.nn.modules.loss._Loss],
             optimizer_fn: Type[torch.optim.Optimizer],
             learning_rate=1e-3,
+            device='cpu',
             seed=42,
             **net_params):
         self.build_fn = build_fn
@@ -18,6 +19,7 @@ class PyTorch2RiverBase(base.Estimator):
         self.loss = loss_fn()
         self.optimizer_fn = optimizer_fn
         self.learning_rate = learning_rate
+        self.device = device
         self.net_params = net_params
         self.seed = seed
         torch.manual_seed(seed)
@@ -77,12 +79,14 @@ class RollingPyTorch2RiverBase(base.Estimator):
             learning_rate=1e-3,
             window_size=1,
             seed=42,
+            device='cpu',
             **net_params):
         self.build_fn = build_fn
         self.loss_fn = loss_fn
         self.loss = loss_fn()
         self.optimizer_fn = optimizer_fn
         self.learning_rate = learning_rate
+        self.device = 'cpu'
         self.window_size = window_size
         self.net_params = net_params
         self.seed = seed

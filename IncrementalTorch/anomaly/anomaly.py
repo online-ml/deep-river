@@ -39,7 +39,7 @@ class TorchAE(base.AnomalyDetector):
             self._init_net(n_features=x.shape[0])
 
         x = x.to(self.device)
-        return self._score_one(x=x).item()
+        return self._score_one(x=x)#.item() todo test if item() is necessary?
 
     def _score_one(self, x: dict) -> float:
         self.net.eval()
