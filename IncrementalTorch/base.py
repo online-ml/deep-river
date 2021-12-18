@@ -34,7 +34,6 @@ class PyTorch2RiverBase(base.Estimator):
         loss.backward()
         self.optimizer.step()
 
-
     def learn_one(self, x, y):
         if self.net is None:
             self._init_net(n_features=len(list(x.values())))
@@ -99,6 +98,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
+        return self
 
     def learn_one(self, x, y):
         self._x_window.append(list(x.values()))
