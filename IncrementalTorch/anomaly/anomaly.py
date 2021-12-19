@@ -6,7 +6,6 @@ import inspect
 import numpy as np
 from torch import nn
 import pandas as pd
-from torch._C import _enable_minidumps_on_exceptions
 
 from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
@@ -30,7 +29,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
 
         self.encoder = None
         self.decoder = None
-        self.is_initialized = False
+        self.to_init = True
 
     def learn_one(self, x):
         return self._learn(x)
@@ -38,14 +37,14 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def _learn(self, x):
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init:
             self._init_net(n_features=x.shape[1])
 
         self.train()
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
 
-        self.zero_grad()
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         return self
@@ -53,7 +52,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def score_one(self, x: dict):
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init:
             self._init_net(n_features=x.shape[1])
 
         self.eval()
@@ -68,7 +67,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def score_many(self, x: pd.DataFrame) -> float:
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init:
             self._init_net(n_features=x.shape[1])
 
         self.eval()
@@ -81,17 +80,18 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         score = loss.cpu().detach().numpy()
         return score
 
+    
     def score_learn_one(self, x: dict):
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init:
             self._init_net(n_features=x.shape[1])
 
         self.train()
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
 
-        self.zero_grad()
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         score = loss.item()
@@ -112,6 +112,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.decoder = self.decoder.to(self.device)
 
         self.optimizer = self.configure_optimizers()
+        self.to_init = False
 
     def _filter_args(self, fn, override=None):
         """Filters `sk_params` and returns those in `fn`'s arguments.
@@ -220,7 +221,7 @@ class AdaptiveAutoencoder(Autoencoder):
     def learn_one(self, x: dict) -> anomaly.AnomalyDetector:
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init is False:
             self._init_net(x.shape[1])
 
         x_recs = self.compute_recs(x)
@@ -242,7 +243,7 @@ class AdaptiveAutoencoder(Autoencoder):
     def score_learn_one(self, x: dict) -> anomaly.AnomalyDetector:
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init is False:
             self._init_net(x.shape[1])
 
         x_recs = self.compute_recs(x)
@@ -342,7 +343,7 @@ class VariationalAutoencoder(Autoencoder):
     def _learn(self, x):
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init is False:
             self._init_net(n_features=x.shape[1])
 
         self.train()
@@ -364,7 +365,7 @@ class VariationalAutoencoder(Autoencoder):
     def score_one(self, x: dict):
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init is False:
             self._init_net(n_features=x.shape[1])
 
         self.eval()
@@ -380,7 +381,7 @@ class VariationalAutoencoder(Autoencoder):
     def score_learn_one(self, x: dict):
         x = prep_input(x, device=self.device)
 
-        if self.is_initialized is False:
+        if self.to_init is False:
             self._init_net(n_features=x.shape[1])
 
         self.eval()

@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 
 from ..utils import get_activation_fn
 
@@ -12,6 +13,7 @@ def get_fc_autoencoder(
     latent_dim=10,
     variational=False
 ):
+    torch.manual_seed(42)
     activation = get_activation_fn(activation_fn)
     
     encoder_output_dim = latent_dim * 2 if variational else latent_dim
