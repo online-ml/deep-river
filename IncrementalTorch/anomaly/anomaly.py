@@ -3,7 +3,6 @@ from typing import Type
 from river import anomaly
 import torch
 import inspect
-import numpy as np
 from torch import nn
 import pandas as pd
 

@@ -5,8 +5,8 @@ from . import base
 class Covertype(base.FileDataset):
     def __init__(self):
         super().__init__(
-            n_samples=581_012,
-            n_features=54,
+            n_samples=286_048,
+            n_features=10,
             filename="covertype.csv.zip",
             task=base.BINARY_CLF,
         )
@@ -23,13 +23,6 @@ class Covertype(base.FileDataset):
             "Horizontal_Distance_To_Fire_Points": float,
             "is_anom": int,
         }
-        for i in range(1, 5): self.converters[f"Wilderness_Area{i}"] = int
-        for i in range(1, 41): self.converters[f"Soil_Type{i}"] = int
-
 
     def __iter__(self):
-        return stream.iter_csv(
-            self.path,
-            target="is_anom",
-            converters=self.converters
-        )
+        return stream.iter_csv(self.path, target="is_anom", converters=self.converters)

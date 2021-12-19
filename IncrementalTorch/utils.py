@@ -17,6 +17,7 @@ ACTIVATION_FNS = {
     "leaky_relu": nn.LeakyReLU,
     "gelu": nn.GELU,
     "tanh": nn.Tanh,
+    "sigmoid": nn.Sigmoid,
 }
 
 LOSS_FNS = {
@@ -62,7 +63,6 @@ def prep_input(x, device):
     elif isinstance(x, pd.DataFrame):
         x = torch.Tensor(x.values, device=device)
     return x
-
 
 
 """

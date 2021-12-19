@@ -1,3 +1,5 @@
+import math
+
 from torch import nn
 import torch
 
@@ -7,37 +9,40 @@ from ..utils import get_activation_fn
 def get_fc_autoencoder(
     n_features,
     dropout=0.1,
-    layer_size=1.0,
+    layer_size=0.9,
     n_layers=4,
     activation_fn="selu",
-    latent_dim=0.05,
+    latent_dim=0.4,
     variational=False,
+    final_activation="sigmoid",
 ):
-    if isinstance(layer_size, float):
-        layer_size = int(layer_size * n_features)
     if isinstance(latent_dim, float):
-        latent_dim = int(latent_dim * n_features)
+        latent_dim = math.ceil(latent_dim * n_features)
+    if isinstance(layer_size, float):
+        layer_size = math.ceil(layer_size * n_features)
 
     activation = get_activation_fn(activation_fn)
 
     encoder_output_dim = latent_dim * 2 if variational else latent_dim
-    encoder = nn.Sequential(
+    encoder_layers = [
         nn.Dropout(p=dropout),
         nn.Linear(n_features, layer_size),
         activation(),
         *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
         nn.Linear(layer_size, encoder_output_dim),
         activation(),
-    )
+    ]
 
-    decoder = nn.Sequential(
+    decoder_layers = [
         nn.Linear(latent_dim, layer_size),
         activation(),
         *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
         nn.Linear(layer_size, n_features),
-        nn.Sigmoid(),
-    )
-    return encoder, decoder
+    ]
+    if final_activation != "none":
+        decoder_layers.append(get_activation_fn(final_activation)())
+
+    return nn.Sequential(*encoder_layers), nn.Sequential(*decoder_layers)
 
 
 def get_conv_autoencoder_28(activation_fn="selu", dropout=0.5, n_features=1):
