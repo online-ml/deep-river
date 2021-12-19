@@ -1,9 +1,10 @@
 import copy
 from typing import Type
 
-from river import anomaly, utils
+from river import utils, base
 import torch
 import inspect
+
 from torch import nn
 import pandas as pd
 
@@ -11,7 +12,7 @@ from ..utils import get_optimizer_fn, get_loss_fn, prep_input
 from ..nn_functions.anomaly import get_fc_autoencoder
 
 
-class Autoencoder(anomaly.AnomalyDetector, nn.Module):
+class Autoencoder(base.AnomalyDetector, nn.Module):
     def __init__(
         self,
         loss_fn="mse",
@@ -216,7 +217,7 @@ class AdaptiveAutoencoder(Autoencoder):
         x_recs = self.compute_recs(x)
         return self.weight_recs(x_recs)
 
-    def learn_one(self, x: dict) -> anomaly.AnomalyDetector:
+    def learn_one(self, x: dict) -> base.AnomalyDetector:
         x = prep_input(x, device=self.device)
 
         if self.to_init is False:
@@ -238,7 +239,7 @@ class AdaptiveAutoencoder(Autoencoder):
 
         return self
 
-    def score_learn_one(self, x: dict) -> anomaly.AnomalyDetector:
+    def score_learn_one(self, x: dict) -> base.AnomalyDetector:
         x = prep_input(x, device=self.device)
 
         if self.to_init is False:
@@ -286,7 +287,7 @@ class AdaptiveAutoencoder(Autoencoder):
             self.dropout = self.encoding_layers.pop(0)
 
 
-class RollingTorchAE(anomaly.AnomalyDetector):
+class RollingTorchAE(base.AnomalyDetector):
     def __init__(
             self,
             build_fn,
@@ -382,7 +383,7 @@ class RollingTorchAE(anomaly.AnomalyDetector):
             self.net.parameters(), lr=self.learning_rate)
 
 
-class SklearnAnomalyDetector(anomaly.AnomalyDetector):
+class SklearnAnomalyDetector(base.AnomalyDetector):
     def __init__(self, build_fn) -> None:
         super().__init__()
         self.model = None
