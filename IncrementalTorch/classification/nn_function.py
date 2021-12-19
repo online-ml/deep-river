@@ -1,5 +1,5 @@
 from torch import nn
-from .utils import SequentialLSTM
+from IncrementalTorch.utils import SequentialLSTM
 
 def build_torch_mlp_classifier(n_features, n_classes=1):
     net = nn.Sequential(

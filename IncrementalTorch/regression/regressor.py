@@ -4,7 +4,7 @@ from typing import Type
 import torch
 from river import base
 
-from IncrementalDL.OnlineTorch.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
+from IncrementalTorch.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
 
 
 class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
@@ -87,4 +87,4 @@ class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
             x = torch.Tensor([l])
             return self.net(x).item()
         else:
-            return {}
+            return None
