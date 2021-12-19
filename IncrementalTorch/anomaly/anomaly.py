@@ -15,7 +15,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def __init__(
         self,
         loss_fn="mse",
-        optimizer_fn: Type[torch.optim.Optimizer] = "adam_w",
+        optimizer_fn: Type[torch.optim.Optimizer] = "adam",
         build_fn=None,
         device="cpu",
         **net_params,
@@ -166,11 +166,10 @@ class AdaptiveAutoencoder(Autoencoder):
     def __init__(
         self,
         loss_fn="mse",
-        optimizer_fn: Type[torch.optim.Optimizer] = "adam_w",
+        optimizer_fn: Type[torch.optim.Optimizer] = "adam",
         build_fn=None,
         beta=0.99,
         s=0.2,
-        momentum_scaling=0.99,
         device="cpu",
         **net_params,
     ):
@@ -178,7 +177,6 @@ class AdaptiveAutoencoder(Autoencoder):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
-            momentum_scaling=momentum_scaling,
             device=device,
             **net_params,
         )
