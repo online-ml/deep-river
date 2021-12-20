@@ -2,15 +2,17 @@ from torch import nn
 import math
 from IncrementalTorch.utils import get_activation_fn
 
+
 def get_fc_autoencoder(
     n_features,
     dropout=0.1,
-    layer_size=0.9,
-    n_layers=4,
+    layer_size=35,
+    n_layers=2,
     activation_fn="selu",
-    latent_dim=0.4,
+    latent_dim=15,
     variational=False,
     final_activation="sigmoid",
+    tied_decoder_weights=False,
 ):
     if isinstance(latent_dim, float):
         latent_dim = math.ceil(latent_dim * n_features)
@@ -35,6 +37,12 @@ def get_fc_autoencoder(
         *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
         nn.Linear(layer_size, n_features),
     ]
+
+    if tied_decoder_weights:
+        for idx, layer in enumerate(decoder_layers):
+            if isinstance(layer, nn.Linear):
+                layer.weight = nn.Parameter(encoder_layers[-idx-2].weight.t())
+
     if final_activation != "none":
         decoder_layers.append(get_activation_fn(final_activation)())
 

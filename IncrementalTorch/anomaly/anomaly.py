@@ -14,8 +14,8 @@ from .nn_function import get_fc_autoencoder
 class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def __init__(
         self,
-        loss_fn="mse",
-        optimizer_fn: Type[torch.optim.Optimizer] = "adam",
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         device="cpu",
         **net_params,
