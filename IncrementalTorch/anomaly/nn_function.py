@@ -1,10 +1,6 @@
-import math
-
 from torch import nn
-import torch
-
-from ..utils import get_activation_fn
-
+import math
+from IncrementalTorch.utils import get_activation_fn
 
 def get_fc_autoencoder(
     n_features,
