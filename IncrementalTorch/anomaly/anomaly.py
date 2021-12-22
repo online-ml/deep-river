@@ -284,6 +284,16 @@ class AdaptiveAutoencoder(Autoencoder):
         if isinstance(self.encoding_layers[0], nn.Dropout):
             self.dropout = self.encoding_layers.pop(0)
 
+        self.optimizer = self.configure_optimizers()
+
+        n_encoding_layers = len(
+            [layer for layer in self.encoding_layers if isinstance(layer, nn.Linear)]
+        )
+
+        self.register_buffer("alpha", torch.ones(n_encoding_layers) / n_encoding_layers)
+        self.register_buffer("beta", torch.ones(n_encoding_layers) * self.beta_scalar)
+        self.register_buffer("alpha_min", torch.tensor(self.s / n_encoding_layers))
+
 
 class RollingTorchAE(anomaly.AnomalyDetector):
     def __init__(
