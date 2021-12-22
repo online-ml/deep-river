@@ -10,6 +10,7 @@ ACTIVATION_FNS = {
     "gelu": nn.GELU,
     "tanh": nn.Tanh,
     "sigmoid": nn.Sigmoid,
+    "elu": nn.ELU,
 }
 
 LOSS_FNS = {
@@ -26,6 +27,15 @@ OPTIMIZER_FNS = {
     "adam_w": optim.AdamW,
     "sgd": optim.SGD,
     "rmsprop": optim.RMSprop,
+}
+
+INIT_FNS = {
+    "uniform": nn.init.uniform_,
+    "normal": nn.init.normal_,
+    "xavier_uniform": nn.init.xavier_uniform_,
+    "xavier_normal": nn.init.xavier_normal_,
+    "kaiming_uniform": nn.init.kaiming_uniform_,
+    "kaiming_normal": nn.init.kaiming_normal_,
 }
 
 
@@ -49,4 +59,18 @@ def get_optimizer_fn(optimizer_fn):
     )
 
 
-
+def get_init_fn(init_fn):
+    init_fn_ = INIT_FNS.get(init_fn, "xavier_uniform")
+    if init_fn.startswith("xavier"):
+        result = lambda weight, activation_fn: init_fn_(
+            weight, gain=nn.init.calculate_gain(activation_fn)
+        )
+    elif init_fn.startswith("kaiming"):
+        result = lambda weight, activation_fn: init_fn_(
+            weight, nonlinearity=activation_fn
+        )
+    elif init_fn == "uniform":
+        result = lambda weight, activation_fn: 0
+    else:
+        result = lambda weight, activation_fn=None: init_fn_(weight)
+    return result

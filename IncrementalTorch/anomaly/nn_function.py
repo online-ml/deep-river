@@ -1,6 +1,6 @@
 from torch import nn
 import math
-from IncrementalTorch.utils import get_activation_fn
+from IncrementalTorch.utils import get_activation_fn, get_init_fn
 
 
 def get_fc_autoencoder(
@@ -13,6 +13,7 @@ def get_fc_autoencoder(
     variational=False,
     final_activation="sigmoid",
     tied_decoder_weights=False,
+    init_fn="xavier_uniform",
 ):
     if isinstance(latent_dim, float):
         latent_dim = math.ceil(latent_dim * n_features)
@@ -20,16 +21,28 @@ def get_fc_autoencoder(
         layer_size = math.ceil(layer_size * n_features)
 
     activation = get_activation_fn(activation_fn)
+    if activation_fn == "elu":
+        activation_fn = "linear"
+    init_fn = get_init_fn(init_fn)
 
     encoder_output_dim = latent_dim * 2 if variational else latent_dim
+
     encoder_layers = [
         nn.Dropout(p=dropout),
         nn.Linear(n_features, layer_size),
         activation(),
         *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
         nn.Linear(layer_size, encoder_output_dim),
-        activation(),
     ]
+
+    for idx, layer in enumerate(encoder_layers[:-1]):
+        if isinstance(layer, nn.Linear):
+            init_fn(layer.weight, activation_fn=activation_fn)
+    if variational:
+        init_fn(encoder_layers[-1].weight, activation_fn="linear")
+    else:
+        init_fn(encoder_layers[-1].weight, activation_fn=activation_fn)
+        encoder_layers.append(activation())
 
     decoder_layers = [
         nn.Linear(latent_dim, layer_size),
@@ -38,12 +51,16 @@ def get_fc_autoencoder(
         nn.Linear(layer_size, n_features),
     ]
 
-    if tied_decoder_weights:
-        for idx, layer in enumerate(decoder_layers):
-            if isinstance(layer, nn.Linear):
-                layer.weight = nn.Parameter(encoder_layers[-idx-2].weight.t())
+    for idx, layer in enumerate(decoder_layers):
+        if isinstance(layer, nn.Linear):
+            if tied_decoder_weights:
+                layer.weight = nn.Parameter(encoder_layers[-idx - 2].weight.t())
+            elif idx == len(decoder_layers) - 1:
+                init_fn(layer.weight, activation_fn=activation_fn)
+            else:
+                init_fn(layer.weight, activation_fn=final_activation)
 
-    if final_activation != "none":
+    if final_activation != "linear":
         decoder_layers.append(get_activation_fn(final_activation)())
 
     return nn.Sequential(*encoder_layers), nn.Sequential(*decoder_layers)

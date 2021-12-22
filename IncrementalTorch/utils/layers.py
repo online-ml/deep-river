@@ -2,6 +2,8 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
+from IncrementalTorch.utils.module_finder import get_init_fn
+
 class SequentialLSTM(nn.Module):
     def __init__(self, input_size,hidden_size,num_layers):
         super(SequentialLSTM, self).__init__()
@@ -21,4 +23,8 @@ class SequentialLSTM(nn.Module):
         hn = hn.view(-1, self.hidden_size)  # reshaping the data for Dense layer next
 
         return hn
+    
+
+def init_weights(layer: nn.Module, init_fn: str = "xavier_uniform"):
+    init_fn = get_init_fn(init_fn)
     
