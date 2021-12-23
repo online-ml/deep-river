@@ -164,8 +164,8 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
 class AdaptiveAutoencoder(Autoencoder):
     def __init__(
         self,
-        loss_fn="mse",
-        optimizer_fn: Type[torch.optim.Optimizer] = "adam",
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         beta=0.99,
         s=0.2,
