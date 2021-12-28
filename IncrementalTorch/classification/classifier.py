@@ -173,6 +173,9 @@ class RollingPyTorch2RiverClassifer(RollingPyTorch2RiverBase, base.Classifier):
         if len(self._x_window) == self.window_size:
             l = copy.deepcopy(self._x_window.values)
             l.append(list(x.values()))
+            if self.append_predict:
+                self._x_window.append(list(x.values()))
+
             x = torch.Tensor([l])
             yp = self.net(x).detach().numpy()
             proba = {c: 0.0 for c in self.classes}

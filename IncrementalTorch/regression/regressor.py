@@ -82,9 +82,14 @@ class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
         if self.net is None:
             self._init_net(len(list(x.values())))
         if len(self._x_window) == self.window_size:
-            l = copy.deepcopy(self._x_window.values)
-            l.append(list(x.values()))
-            x = torch.Tensor([l])
+
+            if self.append_predict:
+                self._x_window.append(list(x.values()))
+                x = torch.Tensor([self._x_window.values])
+            else:
+                l = copy.deepcopy(self._x_window.values)
+                l.append(list(x.values()))
+                x = torch.Tensor([l])
             return self.net(x).item()
         else:
             return None

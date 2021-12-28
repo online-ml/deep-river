@@ -84,6 +84,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
             window_size=1,
             seed=42,
             device='cpu',
+            append_predict=True,
             **net_params):
         self.build_fn = build_fn
         self.loss_fn = loss_fn
@@ -94,6 +95,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
         self.window_size = window_size
         self.net_params = net_params
         self.seed = seed
+        self.append_predict = append_predict
         torch.manual_seed(seed)
 
         self._x_window = utils.Window(window_size)
