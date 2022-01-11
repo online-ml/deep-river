@@ -170,7 +170,7 @@ class SkipAnomAutoencoder(Autoencoder):
         build_fn=None,
         device="cpu",
         momentum=0.8,
-        skip_threshold=0.1,
+        skip_threshold=0.03,
         **net_params,
     ):
         super().__init__(
