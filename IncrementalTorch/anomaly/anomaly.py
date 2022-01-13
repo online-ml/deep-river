@@ -19,6 +19,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         device="cpu",
+        grace_period=0,
         **net_params,
     ):
         super().__init__()
@@ -27,6 +28,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
+        self.grace_period = grace_period
 
         self.encoder = None
         self.decoder = None
@@ -56,20 +58,28 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         if self.to_init:
             self._init_net(n_features=x.shape[1])
 
+        if self.n_learned < self.grace_period:
+            return 0
+
         self.eval()
         with torch.inference_mode():
             x_rec = self(x)
         loss = self.loss_fn(x_rec, x).item()
+        self.n_learned += 1
         return loss
 
     def learn_many(self, x: pd.DataFrame):
         return self._learn(x)
 
     def score_many(self, x: pd.DataFrame) -> float:
+
         x = dict2tensor(x, device=self.device)
 
         if self.to_init:
             self._init_net(n_features=x.shape[1])
+
+        if self.n_learned < self.grace_period:
+            return [0 for row in x]
 
         self.eval()
         with torch.inference_mode():
@@ -79,6 +89,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
+        self.n_learned += len(x)
         return score
 
     def score_learn_one(self, x: dict):
@@ -94,6 +105,9 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        if self.n_learned < self.grace_period:
+            return 0
+        self.n_learned += 1
         score = loss.item()
         return score
 
@@ -113,6 +127,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
 
         self.optimizer = self.configure_optimizers()
         self.to_init = False
+        self.n_learned = 0
 
     def _filter_args(self, fn, override=None):
         """Filters `sk_params` and returns those in `fn`'s arguments.
@@ -169,8 +184,8 @@ class SkipAnomAutoencoder(Autoencoder):
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         device="cpu",
-        momentum=0.8,
-        skip_threshold=0.03,
+        mean_momentum=0.95,
+        skip_threshold=0.1,
         **net_params,
     ):
         super().__init__(
@@ -181,7 +196,7 @@ class SkipAnomAutoencoder(Autoencoder):
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.scaler = ScoreStandardizer(momentum=momentum)
+        self.scaler = ScoreStandardizer(momentum=mean_momentum)
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
@@ -193,16 +208,16 @@ class SkipAnomAutoencoder(Autoencoder):
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
 
-        loss_scaled = self.scaler.learn_transform_one(loss.item())
+        loss_scaled = self.scaler.transform_one(loss.item())
         prob = 1 - norm.cdf(loss_scaled)
+        loss = (prob - self.skip_threshold) / (1 - self.skip_threshold) * loss
 
         if prob < self.skip_threshold:
-            loss = (prob / self.skip_threshold - 1 / 2) * loss
-            
+            self.learn_one(loss.item())
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-
+        self.n_learned += 1
         return self
 
 

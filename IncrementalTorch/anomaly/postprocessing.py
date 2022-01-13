@@ -18,7 +18,7 @@ class ScoreStandardizer(base.Transformer):
                 self.var = self.momentum * (self.var + (1 - self.momentum) * last_diff ** 2)
 
     def transform_one(self, x):
-        x_centered = x - self.mean
+        x_centered = 0 if self.mean is None else x - self.mean
         if self.with_std:
             x_standardized = np.divide(x_centered, self.var ** 0.5, where=self.var > 0)
         else:
