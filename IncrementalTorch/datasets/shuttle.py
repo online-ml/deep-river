@@ -5,7 +5,7 @@ from . import base
 class Shuttle(base.FileDataset):
     def __init__(self):
         super().__init__(
-            n_samples=58000,
+            n_samples=49097,
             n_features=9,
             filename="shuttle.csv.zip",
             task=base.BINARY_CLF,

@@ -196,11 +196,12 @@ class SkipAnomAutoencoder(Autoencoder):
         loss_scaled = self.scaler.learn_transform_one(loss.item())
         prob = 1 - norm.cdf(loss_scaled)
 
-        if prob > self.skip_threshold:
-            # loss = prob * loss
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        if prob < self.skip_threshold:
+            loss = (prob / self.skip_threshold - 1 / 2) * loss
+            
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
         return self
 

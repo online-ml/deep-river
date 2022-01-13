@@ -21,8 +21,8 @@ class Covertype(base.FileDataset):
             "Hillshade_Noon": float,
             "Hillshade_3pm": float,
             "Horizontal_Distance_To_Fire_Points": float,
-            "is_anom": int,
+            "Is_Anomaly": int,
         }
 
     def __iter__(self):
-        return stream.iter_csv(self.path, target="is_anom", converters=self.converters)
+        return stream.iter_csv(self.path, target="Is_Anomaly", converters=self.converters)
