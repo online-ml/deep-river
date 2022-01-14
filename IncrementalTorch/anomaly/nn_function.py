@@ -1,3 +1,4 @@
+from trace import Trace
 from torch import nn
 import math
 from IncrementalTorch.utils import get_activation_fn, get_init_fn
@@ -6,13 +7,13 @@ from IncrementalTorch.utils import get_activation_fn, get_init_fn
 def get_fc_autoencoder(
     n_features,
     dropout=0.1,
-    layer_size=35,
+    layer_size=2.0,
     n_layers=2,
     activation_fn="selu",
-    latent_dim=15,
+    latent_dim=1.0,
     variational=False,
     final_activation="sigmoid",
-    tied_decoder_weights=False,
+    tied_decoder_weights=True,
     init_fn="xavier_uniform",
 ):
     if isinstance(latent_dim, float):

@@ -1,4 +1,4 @@
-from .anomaly import Autoencoder, AdaptiveAutoencoder, VariationalAutoencoder, RollingWindowAutoencoder, SkipAnomAutoencoder
+from .anomaly import Autoencoder, AdaptiveAutoencoder, VariationalAutoencoder, RollingWindowAutoencoder, SkipAnomAutoencoder, BasicAutoencoder
 from .postprocessing import ScoreStandardizer
 from .nn_function import get_fc_autoencoder
 
@@ -10,4 +10,5 @@ __all__ = [
     "RollingWindowAutoencoder",
     "SkipAnomAutoencoder",
     "get_fc_autoencoder"
+    "BasicAutoencoder"
 ]

@@ -19,7 +19,8 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         device="cpu",
-        grace_period=0,
+        scale_scores=True,
+        scale_momentum=0.9,
         **net_params,
     ):
         super().__init__()
@@ -28,7 +29,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
-        self.grace_period = grace_period
+        self.scaler = ScoreStandardizer(scale_momentum) if scale_scores else None
 
         self.encoder = None
         self.decoder = None
@@ -50,6 +51,8 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+        if self.scaler is not None:
+            self.scaler.learn_one(loss.item())
         return self
 
     def score_one(self, x: dict):
@@ -58,14 +61,12 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         if self.to_init:
             self._init_net(n_features=x.shape[1])
 
-        if self.n_learned < self.grace_period:
-            return 0
-
         self.eval()
         with torch.inference_mode():
             x_rec = self(x)
         loss = self.loss_fn(x_rec, x).item()
-        self.n_learned += 1
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
         return loss
 
     def learn_many(self, x: pd.DataFrame):
@@ -78,9 +79,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         if self.to_init:
             self._init_net(n_features=x.shape[1])
 
-        if self.n_learned < self.grace_period:
-            return [0 for row in x]
-
         self.eval()
         with torch.inference_mode():
             x_rec = self(x)
@@ -89,7 +87,8 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
-        self.n_learned += len(x)
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
         return score
 
     def score_learn_one(self, x: dict):
@@ -105,10 +104,10 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if self.n_learned < self.grace_period:
-            return 0
-        self.n_learned += 1
+
         score = loss.item()
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
         return score
 
     def forward(self, x):
@@ -127,7 +126,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
 
         self.optimizer = self.configure_optimizers()
         self.to_init = False
-        self.n_learned = 0
 
     def _filter_args(self, fn, override=None):
         """Filters `sk_params` and returns those in `fn`'s arguments.
@@ -184,7 +182,7 @@ class SkipAnomAutoencoder(Autoencoder):
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         device="cpu",
-        mean_momentum=0.95,
+        score_momentum=0.9,
         skip_threshold=0.1,
         **net_params,
     ):
@@ -193,10 +191,12 @@ class SkipAnomAutoencoder(Autoencoder):
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
             device=device,
+            score_momentum=score_momentum,
+            scale_scores=True,
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.scaler = ScoreStandardizer(momentum=mean_momentum)
+        self.scaler = ScoreStandardizer(momentum=score_momentum)
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
@@ -208,16 +208,13 @@ class SkipAnomAutoencoder(Autoencoder):
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
 
-        loss_scaled = self.scaler.transform_one(loss.item())
+        loss_scaled = self.scaler.learn_transform_one(loss)
         prob = 1 - norm.cdf(loss_scaled)
         loss = (prob - self.skip_threshold) / (1 - self.skip_threshold) * loss
 
-        if prob < self.skip_threshold:
-            self.learn_one(loss.item())
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        self.n_learned += 1
         return self
 
 
@@ -401,25 +398,58 @@ class RollingWindowAutoencoder(Autoencoder):
         return self
 
 
+class BasicAutoencoder(Autoencoder):
+    def __init__(
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        scale_scores=True,
+        scale_momentum=0.9,
+        **net_params,
+    ):  
+        net_params["dropout"] = 0
+        super().__init__(
+            loss_fn,
+            optimizer_fn,
+            build_fn,
+            device,
+            scale_scores,
+            scale_momentum,
+            **net_params,
+        )
+
+
 class VariationalAutoencoder(Autoencoder):
     def __init__(
         self,
-        loss_fn="mse",
-        optimizer_fn: Type[torch.optim.Optimizer] = "adam_w",
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         build_fn=None,
         device="cpu",
         n_reconstructions=10,
+        dropout=0,
+        scale_scores=True,
+        scale_momentum=0.9,
+        beta=1,
         **net_params,
     ):
         net_params["variational"] = True
+        net_params["tied_decoder_weights"] = False
+
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
             device=device,
+            dropout=dropout,
+            scale_scores=scale_scores,
+            scale_momentum=scale_momentum,
             **net_params,
         )
         self.n_reconstructions = n_reconstructions
+        self.beta = beta
 
     def encode(self, x):
         encoded = self.encoder(x)
@@ -453,6 +483,8 @@ class VariationalAutoencoder(Autoencoder):
         reconstruction_loss = self.loss_fn(reconstructed, x)
         total_loss = reconstruction_loss + self.beta * latent_loss
 
+        if self.scaler is not None:
+            self.scaler.learn_one(reconstruction_loss.item())
         self.zero_grad()
         total_loss.backward()
         self.optimizer.step()
@@ -461,7 +493,7 @@ class VariationalAutoencoder(Autoencoder):
     def score_one(self, x: dict):
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init is False:
+        if self.to_init is True:
             self._init_net(n_features=x.shape[1])
 
         self.eval()
@@ -470,14 +502,16 @@ class VariationalAutoencoder(Autoencoder):
             reconstructed = self.decode(mu, log_var, self.n_reconstructions)
 
         loss = self.loss_fn(
-            reconstructed, x.repeat((self.n_reconstructions, [1] * x.dim()))
+            reconstructed, x.repeat((self.n_reconstructions, *[1] * x.dim()))
         ).item()
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
         return loss
 
     def score_learn_one(self, x: dict):
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init is False:
+        if self.to_init is True:
             self._init_net(n_features=x.shape[1])
 
         self.eval()
@@ -490,7 +524,9 @@ class VariationalAutoencoder(Autoencoder):
         self.zero_grad()
         loss.backward()
         self.optimizer.step()
-        return loss.item()
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
+        return loss
 
     def learn_many(self, x: pd.DataFrame):
         return super().learn_many(x)
