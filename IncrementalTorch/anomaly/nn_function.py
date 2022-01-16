@@ -1,7 +1,33 @@
-from trace import Trace
+from modulefinder import Module
 from torch import nn
 import math
 from IncrementalTorch.utils import get_activation_fn, get_init_fn
+
+
+class DenseBlock(nn.Module):
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        activation_fn="selu",
+        init_fn="xavier_uniform",
+        weight=None,
+    ):
+        super().__init__()
+        self.linear = nn.Linear(in_features, out_features)
+        self.activation = get_activation_fn(activation_fn)()
+        init = get_init_fn(init_fn)
+        if weight is not None:
+            self.linear.weight = nn.Parameter(weight)
+        else:
+            init(self.linear.weight, activation_fn=activation_fn)
+
+    def forward(self, x):
+        encoded = self.linear(x)
+        return self.activation(encoded)
+
+    def get_weight(self):
+        return self.linear.weight
 
 
 def get_fc_autoencoder(
@@ -21,48 +47,35 @@ def get_fc_autoencoder(
     if isinstance(layer_size, float):
         layer_size = math.ceil(layer_size * n_features)
 
-    activation = get_activation_fn(activation_fn)
-    if activation_fn == "elu":
-        activation_fn = "linear"
-    init_fn = get_init_fn(init_fn)
-
     encoder_output_dim = latent_dim * 2 if variational else latent_dim
 
-    encoder_layers = [
-        nn.Dropout(p=dropout),
-        nn.Linear(n_features, layer_size),
-        activation(),
-        *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
-        nn.Linear(layer_size, encoder_output_dim),
-    ]
+    layer_sizes = [n_features, *[layer_size] * (n_layers - 1), encoder_output_dim]
+    encoder_activations = (
+        [activation_fn] * (n_layers - 1) + ["linear"]
+        if variational
+        else [activation_fn] * n_layers
+    )
+    decoder_activations = [activation_fn] * (n_layers - 1) + [final_activation]
 
-    for idx, layer in enumerate(encoder_layers[:-1]):
-        if isinstance(layer, nn.Linear):
-            init_fn(layer.weight, activation_fn=activation_fn)
-    if variational:
-        init_fn(encoder_layers[-1].weight, activation_fn="linear")
-    else:
-        init_fn(encoder_layers[-1].weight, activation_fn=activation_fn)
-        encoder_layers.append(activation())
+    encoder_layers, decoder_layers = [nn.Dropout(dropout)], []
 
-    decoder_layers = [
-        nn.Linear(latent_dim, layer_size),
-        activation(),
-        *[nn.Linear(layer_size, layer_size), activation()] * (n_layers - 2),
-        nn.Linear(layer_size, n_features),
-    ]
-
-    for idx, layer in enumerate(decoder_layers):
-        if isinstance(layer, nn.Linear):
-            if tied_decoder_weights:
-                layer.weight = nn.Parameter(encoder_layers[-idx - 2].weight.t())
-            elif idx == len(decoder_layers) - 1:
-                init_fn(layer.weight, activation_fn=activation_fn)
-            else:
-                init_fn(layer.weight, activation_fn=final_activation)
-
-    if final_activation != "linear":
-        decoder_layers.append(get_activation_fn(final_activation)())
+    for layer_idx in range(len(layer_sizes) - 1):
+        encoder_block = DenseBlock(
+            in_features=layer_sizes[layer_idx],
+            out_features=layer_sizes[layer_idx + 1],
+            activation_fn=encoder_activations[layer_idx],
+            init_fn=init_fn,
+        )
+        decoder_weight = encoder_block.get_weight().t() if tied_decoder_weights else None
+        decoder_block = DenseBlock(
+            in_features=layer_sizes[layer_idx + 1],
+            out_features=layer_sizes[layer_idx],
+            activation_fn=decoder_activations[layer_idx],
+            weight=decoder_weight,
+            init_fn=init_fn,
+        )
+        encoder_layers.append(encoder_block)
+        decoder_layers.insert(0, decoder_block)
 
     return nn.Sequential(*encoder_layers), nn.Sequential(*decoder_layers)
 

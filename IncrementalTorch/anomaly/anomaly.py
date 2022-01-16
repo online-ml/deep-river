@@ -208,7 +208,7 @@ class SkipAnomAutoencoder(Autoencoder):
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
 
-        loss_scaled = self.scaler.learn_transform_one(loss)
+        loss_scaled = self.scaler.learn_transform_one(loss.item())
         prob = 1 - norm.cdf(loss_scaled)
         loss = (prob - self.skip_threshold) / (1 - self.skip_threshold) * loss
 

@@ -11,6 +11,7 @@ ACTIVATION_FNS = {
     "tanh": nn.Tanh,
     "sigmoid": nn.Sigmoid,
     "elu": nn.ELU,
+    "linear": nn.Identity,
 }
 
 LOSS_FNS = {
