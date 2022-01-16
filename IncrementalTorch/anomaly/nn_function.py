@@ -16,10 +16,10 @@ class DenseBlock(nn.Module):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
         self.activation = get_activation_fn(activation_fn)()
-        init = get_init_fn(init_fn)
         if weight is not None:
             self.linear.weight = nn.Parameter(weight)
-        else:
+        elif init_fn != "uniform":
+            init = get_init_fn(init_fn)
             init(self.linear.weight, activation_fn=activation_fn)
 
     def forward(self, x):
@@ -34,7 +34,7 @@ def get_fc_autoencoder(
     n_features,
     dropout=0.1,
     layer_size=2.0,
-    n_layers=2,
+    n_layers=1,
     activation_fn="selu",
     latent_dim=1.0,
     variational=False,
