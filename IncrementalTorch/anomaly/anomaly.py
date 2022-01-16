@@ -91,25 +91,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
             loss /= self.scaler.mean
         return score
 
-    def score_learn_one(self, x: dict):
-        x = dict2tensor(x, device=self.device)
-
-        if self.to_init:
-            self._init_net(n_features=x.shape[1])
-
-        self.train()
-        x_pred = self(x)
-        loss = self.loss_fn(x_pred, x)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        score = loss.item()
-        if self.scaler is not None and self.scaler.mean is not None:
-            loss /= self.scaler.mean
-        return score
-
     def forward(self, x):
         return self.decoder(self.encoder(x))
 
@@ -408,7 +389,7 @@ class BasicAutoencoder(Autoencoder):
         scale_scores=True,
         scale_momentum=0.9,
         **net_params,
-    ):  
+    ):
         net_params["dropout"] = 0
         super().__init__(
             loss_fn,
@@ -419,6 +400,25 @@ class BasicAutoencoder(Autoencoder):
             scale_momentum,
             **net_params,
         )
+
+    def score_learn_one(self, x: dict):
+        x = dict2tensor(x, device=self.device)
+
+        if self.to_init:
+            self._init_net(n_features=x.shape[1])
+
+        self.train()
+        x_pred = self(x)
+        loss = self.loss_fn(x_pred, x)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        score = loss.item()
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
+        return score
 
 
 class VariationalAutoencoder(Autoencoder):
