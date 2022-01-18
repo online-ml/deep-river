@@ -419,7 +419,7 @@ class BasicAutoencoder(Autoencoder):
         if self.scaler is not None:
             if self.scaler.mean is not None:
                 score /= self.scaler.mean
-            self.scaler.learn_one(score.item())
+            self.scaler.learn_one(score)
         return score
 
 
