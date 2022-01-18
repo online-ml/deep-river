@@ -416,8 +416,10 @@ class BasicAutoencoder(Autoencoder):
         self.optimizer.step()
 
         score = loss.item()
-        if self.scaler is not None and self.scaler.mean is not None:
-            loss /= self.scaler.mean
+        if self.scaler is not None:
+            if self.scaler.mean is not None:
+                score /= self.scaler.mean
+            self.scaler.learn_one(score.item())
         return score
 
 
