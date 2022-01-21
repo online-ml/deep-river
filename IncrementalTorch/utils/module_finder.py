@@ -17,6 +17,7 @@ LOSS_FNS = {
     "mae": F.l1_loss,
     "smooth_mae": F.smooth_l1_loss,
     "bce": F.binary_cross_entropy,
+    "ce": F.cross_entropy,
     "kld": F.kl_div,
     "huber": F.huber_loss,
 }
@@ -50,6 +51,7 @@ def get_loss_fn(loss_fn):
     return loss_fn if callable(loss_fn) else LOSS_FNS.get(loss_fn)
 
 
+#todo how to handle parameters and the nn parameters?
 def get_optimizer_fn(optimizer_fn):
     return (
         OPTIMIZER_FNS.get(optimizer_fn)
