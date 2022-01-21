@@ -91,7 +91,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
         self.loss = loss_fn()
         self.optimizer_fn = optimizer_fn
         self.learning_rate = learning_rate
-        self.device = 'cpu'
+        self.device = device
         self.window_size = window_size
         self.net_params = net_params
         self.seed = seed
