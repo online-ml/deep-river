@@ -13,7 +13,6 @@ __all__ = ["check_estimator"]
 
 
 def yield_datasets(model):
-
     from sklearn import datasets as sk_datasets
 
     from river import base, compose, datasets, preprocessing, stream, utils
@@ -30,8 +29,8 @@ def yield_datasets(model):
 
             def __iter__(self):
                 oh = (
-                    compose.SelectType(str) | preprocessing.OneHotEncoder()
-                ) + compose.SelectType(int)
+                             compose.SelectType(str) | preprocessing.OneHotEncoder()
+                     ) + compose.SelectType(int)
                 for x, y in datasets.SolarFlare().take(200):
                     yield oh.transform_one(x), y
 
@@ -62,7 +61,6 @@ def check_learn_one(model, dataset):
     klass = model.__class__
 
     for x, y in dataset:
-
         xx, yy = copy.deepcopy(x), copy.deepcopy(y)
 
         model = model.learn_one(x, y)
@@ -109,7 +107,6 @@ def check_predict_proba_one_binary(classifier, dataset):
 
 
 def assert_predictions_are_close(y1, y2):
-
     if isinstance(y1, dict):
         for k in y1:
             assert_predictions_are_close(y1[k], y2[k])
@@ -262,9 +259,9 @@ def seed_params(params, seed):
 
     def is_class_param(param):
         return (
-            isinstance(param, tuple)
-            and inspect.isclass(param[0])
-            and isinstance(param[1], dict)
+                isinstance(param, tuple)
+                and inspect.isclass(param[0])
+                and isinstance(param[1], dict)
         )
 
     if is_class_param(params):
@@ -280,7 +277,6 @@ def seed_params(params, seed):
 
 
 def check_seeding_is_idempotent(model, dataset):
-
     params = model._get_params()
     seeded_params = seed_params(params, seed=42)
 

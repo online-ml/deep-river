@@ -3,25 +3,25 @@ from typing import Type
 
 import pandas as pd
 import torch
-from IncrementalTorch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 from river import anomaly, utils
 from scipy.stats import norm
 from torch import nn
 
+from IncrementalTorch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 from .nn_function import get_fc_autoencoder
 from .postprocessing import ScoreStandardizer
 
 
 class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        scale_scores=True,
-        scale_momentum=0.9,
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            scale_scores=True,
+            scale_momentum=0.9,
+            **net_params,
     ):
         super().__init__()
         self.loss_fn = get_loss_fn(loss_fn)
@@ -158,14 +158,14 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
 
 class SkipAnomAutoencoder(Autoencoder):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        score_momentum=0.9,
-        skip_threshold=0.1,
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            score_momentum=0.9,
+            skip_threshold=0.1,
+            **net_params,
     ):
         super().__init__(
             loss_fn=loss_fn,
@@ -201,14 +201,14 @@ class SkipAnomAutoencoder(Autoencoder):
 
 class AdaptiveAutoencoder(Autoencoder):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        beta=0.99,
-        s=0.2,
-        device="cpu",
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            beta=0.99,
+            s=0.2,
+            device="cpu",
+            **net_params,
     ):
         super().__init__(
             loss_fn=loss_fn,
@@ -240,7 +240,7 @@ class AdaptiveAutoencoder(Autoencoder):
         for idx, x_enc in enumerate(x_encs):
             if x_enc is not None:
                 x_rec_prev = x_enc
-                for layer in self.decoding_layers[-idx - 1 :]:
+                for layer in self.decoding_layers[-idx - 1:]:
                     x_rec_prev = layer(x_rec_prev)
                 x_recs.append(x_rec_prev)
         return torch.stack(x_recs, dim=0)
@@ -335,13 +335,13 @@ class AdaptiveAutoencoder(Autoencoder):
 
 class RollingWindowAutoencoder(Autoencoder):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        window_size=50,
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            window_size=50,
+            **net_params,
     ):
         super().__init__(
             loss_fn=loss_fn,
@@ -381,14 +381,14 @@ class RollingWindowAutoencoder(Autoencoder):
 
 class BasicAutoencoder(Autoencoder):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        scale_scores=True,
-        scale_momentum=0.9,
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            scale_scores=True,
+            scale_momentum=0.9,
+            **net_params,
     ):
         net_params["dropout"] = 0
         super().__init__(
@@ -425,17 +425,17 @@ class BasicAutoencoder(Autoencoder):
 
 class VariationalAutoencoder(Autoencoder):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        n_reconstructions=10,
-        dropout=0,
-        scale_scores=True,
-        scale_momentum=0.9,
-        beta=1,
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            n_reconstructions=10,
+            dropout=0,
+            scale_scores=True,
+            scale_momentum=0.9,
+            beta=1,
+            **net_params,
     ):
         net_params["variational"] = True
         net_params["tied_decoder_weights"] = False

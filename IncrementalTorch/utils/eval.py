@@ -8,18 +8,18 @@ from tqdm import tqdm
 
 
 def evaluate_flexible_classes_track(
-               track,
-               metric_name,
-               models,
-               n_samples,
-               seed,
-               n_checkpoints,
-               learning_rate = None,
-               result_path: Path = None,
-               n_classes = None,
-               class_tracker = False,
-               verbose=1
-    ):
+        track,
+        metric_name,
+        models,
+        n_samples,
+        seed,
+        n_checkpoints,
+        learning_rate=None,
+        result_path: Path = None,
+        n_classes=None,
+        class_tracker=False,
+        verbose=1
+):
     print(f'Track name: {track(n_samples=1, seed=seed).name}')
     result_data = {
         'step': [],
@@ -57,10 +57,10 @@ def evaluate_flexible_classes_track(
             memory.append(raw_memory * 2 ** -10 if unit == 'KB' else raw_memory)
             new_classes.append(checkpoint["NewClasses"])
             # in case you want to track new classes
-            #if class_tracker:
-               # if len(classes) != checkpoint['classes']:
-                #    pass
-               # classes = checkpoint['classes']
+            # if class_tracker:
+            # if len(classes) != checkpoint['classes']:
+            #    pass
+            # classes = checkpoint['classes']
 
         result_data['step'].extend(step)
         result_data['model'].extend(len(step) * [model_name])
@@ -86,15 +86,16 @@ def plot_track(track,
                n_samples,
                seed,
                n_checkpoints,
-               learning_rate = None,
+               learning_rate=None,
                result_path: Path = None,
-               n_classes = None,
-               class_tracker = False,
+               n_classes=None,
+               class_tracker=False,
                verbose=1):
     plt.clf()
     if class_tracker:
         nrows = 4
-    else: nrows = 3
+    else:
+        nrows = 3
     fig, ax = plt.subplots(figsize=(5, 5), nrows=nrows, dpi=300)
 
     print(f'Track name: {track(n_samples=1, seed=seed).name}')
@@ -131,7 +132,8 @@ def plot_track(track,
                 raw_memory, unit = float(checkpoint["Memory"][:-3]), checkpoint["Memory"][-2:]
                 memory.append(raw_memory * 2 ** -10 if unit == 'KB' else raw_memory)
         else:
-            for checkpoint in tqdm(track(n_samples=n_samples, seed=seed, n_classes=n_classes).run(model, n_checkpoints), disable=disable):
+            for checkpoint in tqdm(track(n_samples=n_samples, seed=seed, n_classes=n_classes).run(model, n_checkpoints),
+                                   disable=disable):
                 step.append(checkpoint["Step"])
                 error.append(checkpoint[metric_name])
                 # Convert timedelta object into seconds
@@ -145,7 +147,7 @@ def plot_track(track,
         ax[2].grid(True)
         ax_numb = 0
 
-        ax[ax_numb].plot(step, error, label=model_name +' - lr: '+ str(learning_rate), linewidth=.6)
+        ax[ax_numb].plot(step, error, label=model_name + ' - lr: ' + str(learning_rate), linewidth=.6)
         ax[ax_numb].set_ylabel(metric_name + " Accuracy")
         # ax[0].set_ylabel('Rolling 100\n Accuracy')
         ax_numb += 1
@@ -159,11 +161,11 @@ def plot_track(track,
         #     ax[ax_numb].set_ylabel('Class Tracker')
         #     ax_numb += 1
 
-        ax[ax_numb].plot(step, r_time, label=model_name +' - lr: '+ str(learning_rate), linewidth=.6)
+        ax[ax_numb].plot(step, r_time, label=model_name + ' - lr: ' + str(learning_rate), linewidth=.6)
         ax[ax_numb].set_ylabel('Time (seconds)')
         ax_numb += 1
 
-        ax[ax_numb].plot(step, memory, label=model_name +' - lr: '+ str(learning_rate), linewidth=.6)
+        ax[ax_numb].plot(step, memory, label=model_name + ' - lr: ' + str(learning_rate), linewidth=.6)
         ax[ax_numb].set_ylabel('Memory (MB)')
         ax[ax_numb].set_xlabel('Instances')
 
@@ -176,7 +178,6 @@ def plot_track(track,
             # ax[ax_numb].get_yaxis().set_visible(False)
             ax[ax_numb].set_yticklabels([])
             ax[ax_numb].set_ylabel('Class Tracker')
-
 
         result_data['step'].extend(step)
         result_data['model'].extend(len(step) * [model_name])

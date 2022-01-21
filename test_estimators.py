@@ -2,10 +2,11 @@
 import copy
 import importlib
 import inspect
-import river
-import pytest
 
-from IncrementalTorch import base, classification, regression, anomaly, utils
+import pytest
+import river
+
+from IncrementalTorch import utils
 
 
 def iter_estimators():
@@ -15,13 +16,12 @@ def iter_estimators():
             return inspect.isclass(obj) and issubclass(obj, river.base.Estimator)
 
         for _, obj in inspect.getmembers(
-            importlib.import_module(f"IncrementalTorch.{submodule}"), is_estimator
+                importlib.import_module(f"IncrementalTorch.{submodule}"), is_estimator
         ):
             yield obj
 
 
 def iter_estimators_which_can_be_tested():
-
     ignored = (
 
     )

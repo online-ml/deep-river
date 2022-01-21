@@ -1,5 +1,6 @@
 import inspect
 from typing import Type
+
 import torch
 from river import base, utils
 
@@ -29,11 +30,11 @@ class PyTorch2RiverBase(base.Estimator):
         self.net.train()
         self.net.zero_grad()
         y_pred = self.net(x)
-        #depending on loss function
+        # depending on loss function
         try:
             loss = self.loss(y_pred, y)
         except:
-            loss = self.loss(y_pred, torch.argmax(y, 1)) # TODO CHECK loss
+            loss = self.loss(y_pred, torch.argmax(y, 1))  # TODO CHECK loss
         loss.backward()
         self.optimizer.step()
 
@@ -44,8 +45,8 @@ class PyTorch2RiverBase(base.Estimator):
         x = torch.Tensor([list(x.values())])
         x = x.to(self.device)
         y = torch.Tensor([[y]])
-        y = y.to(self.device) # todo check if this works
-        self._learn_one(x=x,y=y)
+        y = y.to(self.device)  # todo check if this works
+        self._learn_one(x=x, y=y)
         return self
 
     def _filter_torch_params(self, fn, override=None):
@@ -71,7 +72,7 @@ class PyTorch2RiverBase(base.Estimator):
     def _init_net(self, n_features):
         self.net = self.build_fn(n_features=n_features, **self._filter_torch_params(self.build_fn))
         self.net.to(self.device)
-        self.optimizer = self.optimizer_fn(self.net.parameters(), lr = self.learning_rate)
+        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
 
 
 class RollingPyTorch2RiverBase(base.Estimator):

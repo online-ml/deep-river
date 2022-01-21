@@ -1,7 +1,5 @@
-from torch import nn, optim
 import torch.nn.functional as F
-import torch
-import pandas as pd
+from torch import nn, optim
 
 ACTIVATION_FNS = {
     "selu": nn.SELU,

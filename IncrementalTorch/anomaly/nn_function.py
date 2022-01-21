@@ -1,17 +1,18 @@
-from modulefinder import Module
-from torch import nn
 import math
+
+from torch import nn
+
 from IncrementalTorch.utils import get_activation_fn, get_init_fn
 
 
 class DenseBlock(nn.Module):
     def __init__(
-        self,
-        in_features,
-        out_features,
-        activation_fn="selu",
-        init_fn="xavier_uniform",
-        weight=None,
+            self,
+            in_features,
+            out_features,
+            activation_fn="selu",
+            init_fn="xavier_uniform",
+            weight=None,
     ):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
@@ -31,17 +32,17 @@ class DenseBlock(nn.Module):
 
 
 def get_fc_autoencoder(
-    n_features,
-    dropout=0.1,
-    layer_size=2.0,
-    n_layers=1,
-    activation_fn="selu",
-    latent_dim=1.0,
-    variational=False,
-    final_activation="sigmoid",
-    tied_decoder_weights=True,
-    init_fn="xavier_uniform",
-):
+        n_features,
+        dropout=0.1,
+        layer_size=2.0,
+        n_layers=1,
+        activation_fn="selu",
+        latent_dim=1.0,
+        variational=False,
+        final_activation="sigmoid",
+        tied_decoder_weights=True,
+        init_fn="xavier_uniform",
+    ):
     if isinstance(latent_dim, float):
         latent_dim = math.ceil(latent_dim * n_features)
     if isinstance(layer_size, float):

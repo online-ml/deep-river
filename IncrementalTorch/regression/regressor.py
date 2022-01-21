@@ -76,6 +76,7 @@ class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
         x = torch.Tensor(list(x.values()))
         return self.net(x).item()
 
+
 class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
 
     def predict_one(self, x: dict):

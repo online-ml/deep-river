@@ -1,8 +1,10 @@
 import collections
 import copy
 import typing
+
 import torch
 from river import base
+
 from IncrementalTorch.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
 
 
@@ -13,7 +15,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
                  loss_fn: torch.nn.modules.loss._Loss,
                  optimizer_fn: typing.Type[torch.optim.Optimizer],
                  learning_rate=1e-3,
-                 seed = 42,
+                 seed=42,
                  **net_params,
                  ):
         self.classes = collections.Counter()
@@ -23,13 +25,14 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
         if 'n_classes' in net_params:
             self.n_classes = net_params['n_classes']
             self.variable_classes = False
-        else: self.n_classes = 1
+        else:
+            self.n_classes = 1
         super().__init__(
             build_fn=build_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             learning_rate=learning_rate,
-            seed = seed,
+            seed=seed,
             **net_params
         )
 
@@ -61,7 +64,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
             with torch.no_grad():
                 new_layer.weight[:-1, :] = layer_to_convert.weight
                 new_layer.weight[-1:, :] = torch.mean(layer_to_convert.weight, 0)
-            #Add new layer
+            # Add new layer
             new_net.append(new_layer)
             # Add non trainable layers
             if i + 1 < -1:
@@ -73,7 +76,8 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
         # training process
         if self.variable_classes:
             proba = {c: 0.0 for c in self.classes}
-        else: proba = {c: 0.0 for c in range(self.n_classes)}
+        else:
+            proba = {c: 0.0 for c in range(self.n_classes)}
         proba[y] = 1.0
         x = list(x.values())
         y = list(proba.values())
@@ -94,10 +98,10 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
             for idx, val in enumerate(self.classes):
                 proba[val] = yp[idx]
         else:
-            proba = {c: yp[c] for c in range(self.n_classes)} ##NEW
-            #proba = {c: 0.0 for c in range(self.n_classes)}
+            proba = {c: yp[c] for c in range(self.n_classes)}  ##NEW
+            # proba = {c: 0.0 for c in range(self.n_classes)}
 
-        #for idx, val in enumerate(self.classes):
+        # for idx, val in enumerate(self.classes):
         #    proba[val] = yp[idx]
         return proba
 

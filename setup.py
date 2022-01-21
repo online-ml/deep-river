@@ -1,6 +1,5 @@
 import io
 import os
-import platform
 import subprocess
 import sys
 
@@ -11,7 +10,6 @@ try:
 except ImportError:
     subprocess.check_call([sys.executable, "-m", "pip", "install", "numpy"])
     from numpy import get_include
-
 
 # Package meta-data.
 NAME = "IncrementalTorch"
@@ -92,7 +90,7 @@ setuptools.setup(
     extras_require={
         "dev": dev_packages,
         "docs": docs_packages,
-        "all": dev_packages+docs_packages,
+        "all": dev_packages + docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
     },
     include_package_data=True,

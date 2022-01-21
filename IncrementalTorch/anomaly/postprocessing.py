@@ -1,5 +1,6 @@
-from river import base
 import numpy as np
+from river import base
+
 
 class ScoreStandardizer(base.Transformer):
     def __init__(self, momentum=0.99, with_std=True):
