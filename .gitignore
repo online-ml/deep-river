@@ -1,8 +1,6 @@
 # Own directories
-.venv
 .vscode
 .build
-*.egg-info/
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,pycharm,jupyternotebooks,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,pycharm,jupyternotebooks,python
