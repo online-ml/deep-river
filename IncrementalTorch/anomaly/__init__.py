@@ -10,6 +10,6 @@ __all__ = [
     "VariationalAutoencoder",
     "RollingWindowAutoencoder",
     "SkipAnomAutoencoder",
-    "get_fc_autoencoder"
-    "BasicAutoencoder"
+    "get_fc_autoencoder",
+    "BasicAutoencoder",
 ]
