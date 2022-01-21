@@ -12,7 +12,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
 
     def __init__(self,
                  build_fn,
-                 loss_fn: torch.nn.modules.loss._Loss,
+                 loss_fn: str,
                  optimizer_fn: typing.Type[torch.optim.Optimizer],
                  learning_rate=1e-3,
                  seed=42,

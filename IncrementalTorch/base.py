@@ -4,12 +4,14 @@ from typing import Type
 import torch
 from river import base, utils
 
+from IncrementalTorch.utils import get_loss_fn
+
 
 class PyTorch2RiverBase(base.Estimator):
     def __init__(
             self,
             build_fn,
-            loss_fn: Type[torch.nn.modules.loss._Loss],
+            loss_fn: str,
             optimizer_fn: Type[torch.optim.Optimizer],
             learning_rate=1e-3,
             device='cpu',
@@ -17,7 +19,7 @@ class PyTorch2RiverBase(base.Estimator):
             **net_params):
         self.build_fn = build_fn
         self.loss_fn = loss_fn
-        self.loss = loss_fn()
+        self.loss = get_loss_fn(loss_fn=loss_fn)
         self.optimizer_fn = optimizer_fn
         self.learning_rate = learning_rate
         self.device = device
