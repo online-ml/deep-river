@@ -8,7 +8,7 @@ from scipy.stats import norm
 from torch import nn
 
 from IncrementalTorch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
-from .nn_function import get_fc_autoencoder
+from .nn_builder import get_fc_autoencoder
 from .postprocessing import ScoreStandardizer
 
 
