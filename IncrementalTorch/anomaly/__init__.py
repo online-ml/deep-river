@@ -1,6 +1,6 @@
 from .anomaly import Autoencoder, AdaptiveAutoencoder, VariationalAutoencoder, RollingWindowAutoencoder, \
     SkipAnomAutoencoder, BasicAutoencoder
-from .nn_function import get_fc_autoencoder
+from .nn_builder import get_fc_autoencoder
 from .postprocessing import ScoreStandardizer
 
 __all__ = [
