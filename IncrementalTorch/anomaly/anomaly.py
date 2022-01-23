@@ -165,7 +165,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         return res
 
 
-class SkipAnomAutoencoder(Autoencoder):
+class ProbabilityWeightedAutoencoder(Autoencoder):
     def __init__(
         self,
         loss_fn="smooth_mae",
