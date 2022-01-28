@@ -3,6 +3,11 @@ from . import base
 
 
 class Covertype(base.FileDataset):
+    """Forest cover type information.
+
+    Subsample of the original covertype dataset modified for anomaly detection tasks. Class 2 of the original dataset is labeled as normal, class 4 as anomalous. Contains 2747 
+
+    """
     def __init__(self):
         super().__init__(
             n_samples=286_048,

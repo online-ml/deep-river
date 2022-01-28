@@ -16,7 +16,7 @@ from torch import nn
 import numpy as np
 
 from .nn_function import get_fc_autoencoder
-from .postprocessing import ScoreStandardizer
+from .postprocessing import ExponentialStandardizer
 
 
 class Autoencoder(anomaly.AnomalyDetector, nn.Module):

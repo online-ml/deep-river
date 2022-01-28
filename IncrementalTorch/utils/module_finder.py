@@ -3,6 +3,9 @@ import torch.nn.functional as F
 import torch
 import pandas as pd
 
+def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
+    return torch.sqrt(F.mse_loss(input, target, size_average, reduce, reduction))
+
 ACTIVATION_FNS = {
     "selu": nn.SELU,
     "relu": nn.ReLU,
@@ -16,6 +19,7 @@ ACTIVATION_FNS = {
 
 LOSS_FNS = {
     "mse": F.mse_loss,
+    "rmse": rmse_loss,
     "mae": F.l1_loss,
     "smooth_mae": F.smooth_l1_loss,
     "bce": F.binary_cross_entropy,
@@ -38,6 +42,7 @@ INIT_FNS = {
     "kaiming_uniform": nn.init.kaiming_uniform_,
     "kaiming_normal": nn.init.kaiming_normal_,
 }
+
 
 
 def get_activation_fn(activation_fn):
