@@ -76,15 +76,21 @@ class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
         x = torch.Tensor(list(x.values()))
         return self.net(x).item()
 
+
 class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
 
     def predict_one(self, x: dict):
         if self.net is None:
             self._init_net(len(list(x.values())))
         if len(self._x_window) == self.window_size:
-            l = copy.deepcopy(self._x_window.values)
-            l.append(list(x.values()))
-            x = torch.Tensor([l])
+
+            if self.append_predict:
+                self._x_window.append(list(x.values()))
+                x = torch.Tensor([self._x_window.values])
+            else:
+                l = copy.deepcopy(self._x_window.values)
+                l.append(list(x.values()))
+                x = torch.Tensor([l])
             return self.net(x).item()
         else:
-            return {}
+            return 0.0
