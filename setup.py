@@ -27,7 +27,7 @@ base_packages = [
     "sqlalchemy>=1.4",
     "torch",
     "vaex",
-    "pandas~=1.3.2"
+    "pandas~=1.3.2",
     "numpy",
     "river",
     "tqdm~=4.61.2",
