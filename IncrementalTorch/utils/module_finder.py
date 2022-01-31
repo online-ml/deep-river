@@ -1,4 +1,5 @@
 from torch import nn, optim
+import hypergrad
 import torch.nn.functional as F
 import torch
 import pandas as pd
@@ -32,6 +33,8 @@ OPTIMIZER_FNS = {
     "adam_w": optim.AdamW,
     "sgd": optim.SGD,
     "rmsprop": optim.RMSprop,
+    "sgdhd": hypergrad.SGDHD,
+    "adamhd": hypergrad.AdamHD
 }
 
 INIT_FNS = {
