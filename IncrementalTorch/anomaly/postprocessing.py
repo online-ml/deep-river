@@ -39,6 +39,10 @@ class ExponentialMeanScaler(ExponentialStandardizer):
     def __init__(self, momentum=0.99) -> None:
         super().__init__(momentum=momentum, with_std=False)
 
+    def transform_one(self, x):
+        x_centered = 0 if self.mean is None else x / self.mean
+        return x_centered
+
 
 class WindowedStandardizer(base.Transformer):
     def __init__(self, window_size=250) -> None:
@@ -98,7 +102,7 @@ class WindowedMeanScaler(base.Transformer):
             self.values.append(x)
 
     def transform_one(self, x):
-        return 0 if self.mean is None else x - self.mean
+        return 0 if self.mean is None else x / self.mean
 
     def learn_transform_one(self, x):
         self.learn_one(x)
