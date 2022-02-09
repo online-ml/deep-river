@@ -1,9 +1,11 @@
 import inspect
 from typing import Type
-import torch
-from torch import nn
-from river import base, utils, anomaly
+
 import pandas as pd
+import torch
+from river import base, utils, anomaly
+from torch import nn
+
 from IncrementalTorch.anomaly.nn_builder import get_fc_autoencoder
 from IncrementalTorch.utils import get_loss_fn, get_optimizer_fn, WindowedMeanMeter, dict2tensor
 
@@ -324,4 +326,3 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
                 res.update({name: value})
         res.update(override)
         return res
-

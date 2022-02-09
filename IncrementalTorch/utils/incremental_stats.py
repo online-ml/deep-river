@@ -1,5 +1,5 @@
-from collections import deque
 import math
+from collections import deque
 
 
 class WindowedVarianceMeter:

@@ -1,9 +1,7 @@
-import numpy as np
-from cmath import inf
-from river import base
-from river import base
-
 from collections import deque
+
+import numpy as np
+from river import base
 
 
 class ExponentialStandardizer(base.Transformer):
@@ -21,7 +19,7 @@ class ExponentialStandardizer(base.Transformer):
             self.mean += (1 - self.momentum) * last_diff
             if self.with_std:
                 self.var = self.momentum * (
-                    self.var + (1 - self.momentum) * last_diff ** 2
+                        self.var + (1 - self.momentum) * last_diff ** 2
                 )
 
     def transform_one(self, x):
@@ -136,4 +134,3 @@ class WindowedMinMaxScaler(base.Transformer):
     def learn_transform_one(self, x):
         self.learn_one(x)
         return self.transform_one(x)
-

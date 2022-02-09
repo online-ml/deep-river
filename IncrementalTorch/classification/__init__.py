@@ -4,5 +4,3 @@ __all__ = [
     "PyTorch2RiverClassifier",
     "RollingPyTorch2RiverClassifier",
 ]
-
-

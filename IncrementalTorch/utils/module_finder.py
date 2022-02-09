@@ -1,10 +1,11 @@
-from torch import nn, optim
-import torch.nn.functional as F
 import torch
-import pandas as pd
+import torch.nn.functional as F
+from torch import nn, optim
+
 
 def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
     return torch.sqrt(F.mse_loss(input, target, size_average, reduce, reduction))
+
 
 ACTIVATION_FNS = {
     "selu": nn.SELU,
@@ -45,7 +46,6 @@ INIT_FNS = {
 }
 
 
-
 def get_activation_fn(activation_fn):
     return (
         ACTIVATION_FNS.get(activation_fn)
@@ -58,7 +58,7 @@ def get_loss_fn(loss_fn):
     return loss_fn if callable(loss_fn) else LOSS_FNS.get(loss_fn)
 
 
-#todo how to handle parameters and the nn parameters?
+# todo how to handle parameters and the nn parameters?
 def get_optimizer_fn(optimizer_fn):
     return (
         OPTIMIZER_FNS.get(optimizer_fn)

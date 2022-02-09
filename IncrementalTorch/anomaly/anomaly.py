@@ -1,30 +1,29 @@
-import inspect
 from typing import Type
 
 import pandas as pd
 import torch
-from IncrementalTorch.utils import WindowedMeanMeter, WindowedVarianceMeter
 from river import anomaly, utils
 from scipy.special import ndtr
 from torch import nn
-from IncrementalTorch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
+
+from IncrementalTorch.utils import WindowedVarianceMeter
+from IncrementalTorch.utils import dict2tensor
 from .nn_builder import get_fc_autoencoder
 from .. import base
 
 
-
 class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        skip_threshold=0.9,
-        scale_scores=True,
-        window_size=250,
-        **net_params,
-        ):
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            skip_threshold=0.9,
+            scale_scores=True,
+            window_size=250,
+            **net_params,
+    ):
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
@@ -66,14 +65,14 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
 
 class BasicAutoencoder(base.AutoencoderBase):
     def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        scale_scores=True,
-        window_size=250,
-        **net_params,
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            scale_scores=True,
+            window_size=250,
+            **net_params,
     ):
         net_params["dropout"] = 0
         super().__init__(

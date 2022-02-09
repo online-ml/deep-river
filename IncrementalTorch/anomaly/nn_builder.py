@@ -42,7 +42,7 @@ def get_fc_autoencoder(
         final_activation="sigmoid",
         tied_decoder_weights=True,
         init_fn="xavier_uniform",
-    ):
+):
     if isinstance(latent_dim, float):
         latent_dim = math.ceil(latent_dim * n_features)
     if isinstance(layer_size, float):
