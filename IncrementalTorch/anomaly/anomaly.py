@@ -3,23 +3,13 @@ from typing import Type
 
 import pandas as pd
 import torch
-from IncrementalTorch.utils import (
-    dict2tensor,
-    get_loss_fn,
-    get_optimizer_fn,
-    WindowedMeanMeter,
-    WindowedVarianceMeter,
-)
+from IncrementalTorch.utils import WindowedMeanMeter, WindowedVarianceMeter
 from river import anomaly, utils
 from scipy.special import ndtr
 from torch import nn
-import numpy as np
-
 from IncrementalTorch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 from .nn_builder import get_fc_autoencoder
-from .postprocessing import ScoreStandardizer
-from .nn_function import get_fc_autoencoder
-from .postprocessing import ExponentialStandardizer
+
 
 
 class Autoencoder(anomaly.AnomalyDetector, nn.Module):
@@ -30,17 +20,8 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
             build_fn=None,
             device="cpu",
             scale_scores=True,
-            scale_momentum=0.9,
-            **net_params,
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
-        device="cpu",
-        scale_scores=True,
-        window_size=250,
-        **net_params,
-    ):
+            window_size=250,
+            **net_params):
         super().__init__()
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optimizer_fn(optimizer_fn)
@@ -186,15 +167,7 @@ class ProbabilityWeightedAutoencoder(Autoencoder):
         scale_scores=True,
         window_size=250,
         **net_params,
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            score_momentum=0.9,
-            skip_threshold=0.1,
-            **net_params,
-    ):
+        ):
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
@@ -456,50 +429,6 @@ class RollingWindowAutoencoder(Autoencoder):
             x = torch.concat(list(self._x_window.values))
             self._learn_batch(x=x)
         return self
-
-
-class BasicAutoencoder(Autoencoder):
-    def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            scale_scores=True,
-            scale_momentum=0.9,
-            **net_params,
-    ):
-        net_params["dropout"] = 0
-        super().__init__(
-            loss_fn,
-            optimizer_fn,
-            build_fn,
-            device,
-            scale_scores,
-            scale_momentum,
-            **net_params,
-        )
-
-    def score_learn_one(self, x: dict):
-        x = dict2tensor(x, device=self.device)
-
-        if self.to_init:
-            self._init_net(n_features=x.shape[1])
-
-        self.train()
-        x_pred = self(x)
-        loss = self.loss_fn(x_pred, x)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        score = loss.item()
-        if self.scaler is not None:
-            if self.scaler.mean is not None:
-                score /= self.scaler.mean
-            self.scaler.learn_one(score)
-        return score
 
 
 class VariationalAutoencoder(Autoencoder):
