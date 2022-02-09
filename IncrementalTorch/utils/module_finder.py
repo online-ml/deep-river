@@ -32,9 +32,7 @@ OPTIMIZER_FNS = {
     "adam": optim.Adam,
     "adam_w": optim.AdamW,
     "sgd": optim.SGD,
-    "rmsprop": optim.RMSprop,
-    "sgdhd": hypergrad.SGDHD,
-    "adamhd": hypergrad.AdamHD
+    "rmsprop": optim.RMSprop
 }
 
 INIT_FNS = {
