@@ -1,9 +1,8 @@
-from .anomaly import Autoencoder, AdaptiveAutoencoder, VariationalAutoencoder, RollingWindowAutoencoder, BasicAutoencoder
-from .anomaly import Autoencoder, AdaptiveAutoencoder, VariationalAutoencoder, RollingWindowAutoencoder, ProbabilityWeightedAutoencoder, BasicAutoencoder
+from .anomaly import AdaptiveAutoencoder, VariationalAutoencoder, RollingWindowAutoencoder, BasicAutoencoder, \
+    ProbabilityWeightedAutoencoder
 from .postprocessing import ExponentialStandardizer, WindowedStandardizer, WindowedMeanScaler, WindowedMinMaxScaler, ExponentialMeanScaler
 
 __all__ = [
-    "Autoencoder",
     "AdaptiveAutoencoder",
     "ExponentialStandardizer",
     "VariationalAutoencoder",
