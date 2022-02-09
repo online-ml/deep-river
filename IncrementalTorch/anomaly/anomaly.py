@@ -1,3 +1,4 @@
+import collections
 from typing import Type
 
 import pandas as pd
@@ -8,7 +9,6 @@ from torch import nn
 
 from IncrementalTorch.utils import WindowedVarianceMeter
 from IncrementalTorch.utils import dict2tensor
-from .nn_builder import get_fc_autoencoder
 from .. import base
 
 
@@ -63,184 +63,6 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
         return self
 
 
-class BasicAutoencoder(base.AutoencoderBase):
-    def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            scale_scores=True,
-            window_size=250,
-            **net_params,
-    ):
-        net_params["dropout"] = 0
-        super().__init__(
-            loss_fn,
-            optimizer_fn,
-            build_fn,
-            device,
-            scale_scores,
-            window_size=window_size,
-            **net_params,
-        )
-
-    def score_learn_one(self, x: dict):
-        x = dict2tensor(x, device=self.device)
-
-        if self.to_init:
-            self._init_net(n_features=x.shape[1])
-
-        self.train()
-        x_pred = self(x)
-        loss = self.loss_fn(x_pred, x)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        score = loss.item()
-        if self.stat_meter is not None:
-            if self.stat_meter.mean > 0:
-                score /= self.stat_meter.mean
-            self.stat_meter.update(loss.item())
-        return score
-
-
-class AdaptiveAutoencoder(base.AutoencoderBase):
-    def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            beta=0.99,
-            s=0.2,
-            device="cpu",
-            **net_params,
-    ):
-        super().__init__(
-            loss_fn=loss_fn,
-            optimizer_fn=optimizer_fn,
-            build_fn=build_fn,
-            device=device,
-            **net_params,
-        )
-        self.beta_scalar = beta
-        self.dropout = None
-        self.s = s
-
-    def compute_recs(self, x, train=True):
-        x_encs = []
-        x_recs = []
-
-        if train and self.dropout is not None:
-            x_enc_prev = self.dropout(x)
-        else:
-            x_enc_prev = x
-
-        for idx, layer in enumerate(self.encoding_layers):
-            x_enc_prev = layer(x_enc_prev)
-            if not isinstance(layer, nn.Linear):
-                x_encs.append(x_enc_prev)
-            else:
-                x_encs.append(None)
-
-        for idx, x_enc in enumerate(x_encs):
-            if x_enc is not None:
-                x_rec_prev = x_enc
-                for layer in self.decoding_layers[-idx - 1:]:
-                    x_rec_prev = layer(x_rec_prev)
-                x_recs.append(x_rec_prev)
-        return torch.stack(x_recs, dim=0)
-
-    def weight_recs(self, x_recs):
-        alpha = self.alpha.view(-1, *[1] * (x_recs.dim() - 1))
-        return torch.clip(torch.sum(x_recs * alpha, dim=0), min=0, max=1)
-
-    def forward(self, x):
-        x_recs = self.compute_recs(x)
-        return self.weight_recs(x_recs)
-
-    def learn_one(self, x: dict) -> anomaly.AnomalyDetector:
-        x = dict2tensor(x, device=self.device)
-
-        if self.to_init is False:
-            self._init_net(x.shape[1])
-
-        x_recs = self.compute_recs(x)
-        x_rec = self.weight_recs(x_recs)
-
-        loss = self.loss_fn(x_rec, x)
-        self.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        losses = torch.stack([self.loss_fn(x_rec, x) for x_rec in x_recs])
-        with torch.no_grad():
-            self.alpha = self.alpha * torch.pow(self.beta, losses)
-            self.alpha = torch.max(self.alpha, self.alpha_min)
-            self.alpha = self.alpha / torch.sum(self.alpha)
-
-        return self
-
-    def score_learn_one(self, x: dict) -> anomaly.AnomalyDetector:
-        x = dict2tensor(x, device=self.device)
-
-        if self.to_init is False:
-            self._init_net(x.shape[1])
-
-        x_recs = self.compute_recs(x)
-        x_rec = self.weight_recs(x_recs)
-
-        loss = self.loss_fn(x_rec, x)
-        self.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
-        losses = torch.stack([self.loss_fn(x_rec, x) for x_rec in x_recs])
-        with torch.no_grad():
-            self.alpha = self.alpha * torch.pow(self.beta, losses)
-            self.alpha = torch.max(self.alpha, self.alpha_min)
-            self.alpha = self.alpha / torch.sum(self.alpha)
-
-        score = loss.item()
-        return score
-
-    def _init_net(self, n_features):
-        if self.build_fn is None:
-            self.build_fn = get_fc_autoencoder
-
-        self.encoder, self.decoder = self.build_fn(
-            n_features=n_features, **self._filter_args(self.build_fn)
-        )
-        self.encoder = self.encoder.to(self.device)
-        self.decoder = self.decoder.to(self.device)
-
-        self.encoding_layers = [
-            module
-            for module in self.encoder.modules()
-            if not isinstance(module, nn.Sequential)
-        ]
-        self.decoding_layers = [
-            module
-            for module in self.decoder.modules()
-            if not isinstance(module, nn.Sequential)
-        ]
-
-        if isinstance(self.encoding_layers[0], nn.Dropout):
-            self.dropout = self.encoding_layers.pop(0)
-
-        self.optimizer = self.configure_optimizers()
-
-        n_encoding_layers = len(
-            [layer for layer in self.encoding_layers if isinstance(layer, nn.Linear)]
-        )
-
-        self.register_buffer("alpha", torch.ones(n_encoding_layers) / n_encoding_layers)
-        self.register_buffer("beta", torch.ones(n_encoding_layers) * self.beta_scalar)
-        self.register_buffer("alpha_min", torch.tensor(self.s / n_encoding_layers))
-
-
 class RollingWindowAutoencoder(base.AutoencoderBase):
     def __init__(
             self,
@@ -259,7 +81,7 @@ class RollingWindowAutoencoder(base.AutoencoderBase):
             **net_params,
         )
         self.window_size = window_size
-        self._x_window = utils.Window(window_size)
+        self._x_window = collections.deque(maxlen=window_size)
         self._batch_i = 0
         self.to_init = True
 
@@ -295,23 +117,18 @@ class VariationalAutoencoder(base.AutoencoderBase):
             build_fn=None,
             device="cpu",
             n_reconstructions=10,
-            dropout=0,
             scale_scores=True,
-            scale_momentum=0.9,
             beta=1,
             **net_params,
     ):
         net_params["variational"] = True
         net_params["tied_decoder_weights"] = False
-
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
             device=device,
-            dropout=dropout,
             scale_scores=scale_scores,
-            scale_momentum=scale_momentum,
             **net_params,
         )
         self.n_reconstructions = n_reconstructions

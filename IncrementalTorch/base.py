@@ -1,9 +1,10 @@
+import collections
 import inspect
 from typing import Type
 
 import pandas as pd
 import torch
-from river import base, utils, anomaly
+from river import base, anomaly
 from torch import nn
 
 from IncrementalTorch.anomaly.nn_builder import get_fc_autoencoder
@@ -41,7 +42,7 @@ class PyTorch2RiverBase(base.Estimator):
 
         yield {
             "build_fn": build_torch_linear_regressor,
-            "loss_fn": torch.nn.MSELoss,
+            "loss_fn": 'mae',
             "optimizer_fn": torch.optim.SGD,
         }
 
@@ -113,7 +114,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
     def __init__(
             self,
             build_fn,
-            loss_fn: Type[torch.nn.modules.loss._Loss],
+            loss_fn:str,
             optimizer_fn: Type[torch.optim.Optimizer],
             learning_rate=1e-3,
             window_size=1,
@@ -123,7 +124,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
             **net_params):
         self.build_fn = build_fn
         self.loss_fn = loss_fn
-        self.loss = loss_fn()
+        self.loss = get_loss_fn(loss_fn=loss_fn)
         self.optimizer_fn = optimizer_fn
         self.learning_rate = learning_rate
         self.device = device
@@ -133,9 +134,38 @@ class RollingPyTorch2RiverBase(base.Estimator):
         self.append_predict = append_predict
         torch.manual_seed(seed)
 
-        self._x_window = utils.Window(window_size)
+        self._x_window = collections.deque(maxlen=window_size)
         self._batch_i = 0
         self.net = None
+
+    @classmethod
+    def _unit_test_params(cls):
+        def build_torch_linear_regressor(n_features):
+            net = torch.nn.Sequential(
+                torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
+            )
+            return net
+
+        yield {
+            "loss_fn": 'mse',
+            "build_fn": build_torch_linear_regressor,
+            "optimizer_fn": torch.optim.SGD,
+        }
+
+    @classmethod
+    def _unit_test_skips(self):
+        """Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
 
     def _learn_batch(self, x: torch.Tensor, y: torch.Tensor):
         y_pred = self.net(x)
@@ -151,7 +181,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
             self._init_net(n_features=len(list(x.values())))
 
         if len(self._x_window) == self.window_size:
-            x = torch.Tensor([self._x_window.values])
+            x = torch.Tensor([self._x_window])
             x = x.to(self.device)
             y = torch.Tensor([[y]])
             y = y.to(self.device)
@@ -184,7 +214,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
         self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
 
 
-class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
+class AutoencoderBase(anomaly.AnomalyDetector, nn.Module, base.Estimator):
     def __init__(
             self,
             loss_fn="smooth_mae",
@@ -201,10 +231,34 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
         self.net_params = net_params
         self.device = device
         self.stat_meter = WindowedMeanMeter(window_size) if scale_scores else None
-
+        self.scale_scores = scale_scores
+        self.window_size = window_size
         self.encoder = None
         self.decoder = None
         self.to_init = True
+
+    @classmethod
+    def _unit_test_params(cls):
+        yield {
+            "build_fn": get_fc_autoencoder,
+            "loss_fn": torch.nn.MSELoss,
+            "optimizer_fn": torch.optim.SGD,
+        }
+
+    @classmethod
+    def _unit_test_skips(self):
+        """Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
 
     def learn_one(self, x):
         return self._learn(x)

@@ -109,7 +109,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
 class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
     def __init__(self,
                  build_fn,
-                 loss_fn: torch.nn.modules.loss._Loss,
+                 loss_fn: str,
                  optimizer_fn: typing.Type[torch.optim.Optimizer],
                  window_size=1,
                  learning_rate=1e-3,
@@ -165,7 +165,7 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
         y = list(proba.values())
 
         if len(self._x_window) == self.window_size:
-            x = torch.Tensor([self._x_window.values])
+            x = torch.Tensor([self._x_window])
             [y.append(0.0) for i in range(self.n_classes - len(y))]
             y = torch.Tensor([y])
             self._learn_batch(x=x, y=y)

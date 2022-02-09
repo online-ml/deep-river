@@ -29,7 +29,7 @@ base_packages = [
     "vaex",
     "pandas~=1.3.2",
     "numpy",
-    "river",
+    "river=0.10.1",
     "tqdm~=4.61.2",
     "pytest"
 ]

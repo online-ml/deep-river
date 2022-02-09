@@ -343,11 +343,6 @@ def yield_checks(model):
         check_disappearing_features,
     ]
 
-    if hasattr(model, "debug_one"):
-        checks.append(check_debug_one)
-
-    if model._is_stochastic:
-        checks.append(check_seeding_is_idempotent)
 
     # Classifier checks
     if utils.inspect.isclassifier(model) and not utils.inspect.ismoclassifier(model):
