@@ -217,7 +217,7 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
         if self.net is None:
             self._init_net(len(list(x.values())))
         if len(self._x_window) == self.window_size:
-            l = copy.deepcopy(self._x_window.values)
+            l = copy.deepcopy(self._x_window)
             l.append(list(x.values()))
             if self.append_predict:
                 self._x_window.append(list(x.values()))
