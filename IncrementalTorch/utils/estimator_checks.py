@@ -343,7 +343,6 @@ def yield_checks(model):
         check_disappearing_features,
     ]
 
-
     # Classifier checks
     if utils.inspect.isclassifier(model) and not utils.inspect.ismoclassifier(model):
         checks.append(allow_exception(check_predict_proba_one, NotImplementedError))

@@ -3,9 +3,7 @@ from typing import Type
 
 import pandas as pd
 import torch
-from river import anomaly, utils
 from scipy.special import ndtr
-from torch import nn
 
 from IncrementalTorch.utils import WindowedVarianceMeter
 from IncrementalTorch.utils import dict2tensor
