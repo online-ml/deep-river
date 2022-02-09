@@ -21,7 +21,7 @@ def iter_estimators():
             yield obj
 
 
-def iter_estimators_which_can_be_tested():
+def iter_estimators_that_can_be_tested():
     ignored = (
 
     )
@@ -38,7 +38,7 @@ def iter_estimators_which_can_be_tested():
     "estimator, check",
     [
         pytest.param(estimator, check, id=f"{estimator}:{check.__name__}")
-        for estimator in list(iter_estimators_which_can_be_tested())
+        for estimator in list(iter_estimators_that_can_be_tested())
 
         for check in utils.estimator_checks.yield_checks(estimator)
         if check.__name__ not in estimator._unit_test_skips()

@@ -106,7 +106,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
         return proba
 
 
-class RollingPyTorch2RiverClassifer(RollingPyTorch2RiverBase, base.Classifier):
+class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
     def __init__(self,
                  build_fn,
                  loss_fn: torch.nn.modules.loss._Loss,

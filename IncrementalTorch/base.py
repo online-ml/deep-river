@@ -1,10 +1,11 @@
 import inspect
 from typing import Type
-
 import torch
-from river import base, utils
-
-from IncrementalTorch.utils import get_loss_fn
+from torch import nn
+from river import base, utils, anomaly
+import pandas as pd
+from IncrementalTorch.anomaly.nn_builder import get_fc_autoencoder
+from IncrementalTorch.utils import get_loss_fn, get_optimizer_fn, WindowedMeanMeter, dict2tensor
 
 
 class PyTorch2RiverBase(base.Estimator):
@@ -27,6 +28,35 @@ class PyTorch2RiverBase(base.Estimator):
         self.seed = seed
         torch.manual_seed(seed)
         self.net = None
+
+    @classmethod
+    def _unit_test_params(cls):
+        def build_torch_linear_regressor(n_features):
+            net = torch.nn.Sequential(
+                torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
+            )
+            return net
+
+        yield {
+            "build_fn": build_torch_linear_regressor,
+            "loss_fn": torch.nn.MSELoss,
+            "optimizer_fn": torch.optim.SGD,
+        }
+
+    @classmethod
+    def _unit_test_skips(self):
+        """Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
 
     def _learn_one(self, x: torch.Tensor, y: torch.Tensor):
         self.net.train()
@@ -150,3 +180,148 @@ class RollingPyTorch2RiverBase(base.Estimator):
         self.net = self.build_fn(n_features=n_features, **self._filter_torch_params(self.build_fn))
         self.net.to(self.device)
         self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
+
+
+class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
+    def __init__(
+            self,
+            loss_fn="smooth_mae",
+            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+            build_fn=None,
+            device="cpu",
+            scale_scores=True,
+            window_size=250,
+            **net_params):
+        super().__init__()
+        self.loss_fn = get_loss_fn(loss_fn)
+        self.optimizer_fn = get_optimizer_fn(optimizer_fn)
+        self.build_fn = build_fn
+        self.net_params = net_params
+        self.device = device
+        self.stat_meter = WindowedMeanMeter(window_size) if scale_scores else None
+
+        self.encoder = None
+        self.decoder = None
+        self.to_init = True
+
+    def learn_one(self, x):
+        return self._learn(x)
+
+    def _learn(self, x):
+        x = dict2tensor(x, device=self.device)
+
+        if self.to_init:
+            self._init_net(n_features=x.shape[1])
+
+        self.train()
+        x_pred = self(x)
+        loss = self.loss_fn(x_pred, x)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+        if self.stat_meter is not None:
+            self.stat_meter.update(loss.item())
+        return self
+
+    def score_one(self, x: dict):
+        x = dict2tensor(x, device=self.device)
+
+        if self.to_init:
+            self._init_net(n_features=x.shape[1])
+
+        self.eval()
+        with torch.inference_mode():
+            x_rec = self(x)
+        loss = self.loss_fn(x_rec, x).item()
+        mean = 0 if self.stat_meter is None else self.stat_meter.mean
+        if mean != 0:
+            loss /= mean
+        return loss
+
+    def learn_many(self, x: pd.DataFrame):
+        return self._learn(x)
+
+    def score_many(self, x: pd.DataFrame) -> float:
+
+        x = dict2tensor(x, device=self.device)
+
+        if self.to_init:
+            self._init_net(n_features=x.shape[1])
+
+        self.eval()
+        with torch.inference_mode():
+            x_rec = self(x)
+        loss = torch.mean(
+            self.loss_fn(x_rec, x, reduction="none"),
+            dim=list(range(1, x.dim())),
+        )
+        score = loss.cpu().detach().numpy()
+        if self.scaler is not None and self.scaler.mean is not None:
+            loss /= self.scaler.mean
+        return score
+
+    def forward(self, x):
+        return self.decoder(self.encoder(x))
+
+    def _init_net(self, n_features):
+        if self.build_fn is None:
+            self.build_fn = get_fc_autoencoder
+
+        self.encoder, self.decoder = self.build_fn(
+            n_features=n_features, **self._filter_args(self.build_fn)
+        )
+
+        self.encoder = self.encoder.to(self.device)
+        self.decoder = self.decoder.to(self.device)
+
+        self.optimizer = self.configure_optimizers()
+        self.to_init = False
+
+    def _filter_args(self, fn, override=None):
+        """Filters `sk_params` and returns those in `fn`'s arguments.
+
+        # Arguments
+            fn : arbitrary function
+            override: dictionary, values to override `torch_params`
+
+        # Returns
+            res : dictionary containing variables
+                in both `sk_params` and `fn`'s arguments.
+        """
+        override = override or {}
+        res = {}
+        for name, value in self.net_params.items():
+            args = list(inspect.signature(fn).parameters)
+            if name in args:
+                res.update({name: value})
+        res.update(override)
+        return res
+
+    def configure_optimizers(self):
+        optimizer = self.optimizer_fn(
+            nn.ModuleList([self.encoder, self.decoder]).parameters(),
+            **self._filter_args(self.optimizer_fn),
+        )
+        return optimizer
+
+    def _filter_args(self, fn, override=None):
+        """Filters `sk_params` and returns those in `fn`'s arguments.
+
+        # Arguments
+            fn : arbitrary function
+            override: dictionary, values to override `torch_params`
+
+        # Returns
+            res : dictionary containing variables
+                in both `sk_params` and `fn`'s arguments.
+        """
+        override = override or {}
+        res = {}
+        for name, value in self.net_params.items():
+            args = list(inspect.signature(fn).parameters)
+            if name in args:
+                res.update({name: value})
+        res.update(override)
+        return res
+
