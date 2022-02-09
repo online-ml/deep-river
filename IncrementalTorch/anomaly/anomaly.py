@@ -3,13 +3,23 @@ from typing import Type
 
 import pandas as pd
 import torch
+from IncrementalTorch.utils import (
+    dict2tensor,
+    get_loss_fn,
+    get_optimizer_fn,
+    WindowedMeanMeter,
+    WindowedVarianceMeter,
+)
 from river import anomaly, utils
-from scipy.stats import norm
+from scipy.special import ndtr
 from torch import nn
+import numpy as np
 
 from IncrementalTorch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 from .nn_builder import get_fc_autoencoder
 from .postprocessing import ScoreStandardizer
+from .nn_function import get_fc_autoencoder
+from .postprocessing import ExponentialStandardizer
 
 
 class Autoencoder(anomaly.AnomalyDetector, nn.Module):
@@ -22,6 +32,14 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
             scale_scores=True,
             scale_momentum=0.9,
             **net_params,
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        scale_scores=True,
+        window_size=250,
+        **net_params,
     ):
         super().__init__()
         self.loss_fn = get_loss_fn(loss_fn)
@@ -29,7 +47,7 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
-        self.scaler = ScoreStandardizer(scale_momentum) if scale_scores else None
+        self.stat_meter = WindowedMeanMeter(window_size) if scale_scores else None
 
         self.encoder = None
         self.decoder = None
@@ -51,8 +69,8 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if self.scaler is not None:
-            self.scaler.learn_one(loss.item())
+        if self.stat_meter is not None:
+            self.stat_meter.update(loss.item())
         return self
 
     def score_one(self, x: dict):
@@ -65,8 +83,9 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         with torch.inference_mode():
             x_rec = self(x)
         loss = self.loss_fn(x_rec, x).item()
-        if self.scaler is not None and self.scaler.mean is not None:
-            loss /= self.scaler.mean
+        mean = 0 if self.stat_meter is None else self.stat_meter.mean
+        if mean != 0:
+            loss /= mean
         return loss
 
     def learn_many(self, x: pd.DataFrame):
@@ -156,8 +175,17 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         return res
 
 
-class SkipAnomAutoencoder(Autoencoder):
+class ProbabilityWeightedAutoencoder(Autoencoder):
     def __init__(
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        skip_threshold=0.9,
+        scale_scores=True,
+        window_size=250,
+        **net_params,
             self,
             loss_fn="smooth_mae",
             optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
@@ -172,12 +200,12 @@ class SkipAnomAutoencoder(Autoencoder):
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
             device=device,
-            score_momentum=score_momentum,
-            scale_scores=True,
+            scale_scores=scale_scores,
+            window_size=window_size,
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.scaler = ScoreStandardizer(momentum=score_momentum)
+        self.stat_meter = WindowedVarianceMeter(window_size) if scale_scores else None
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
@@ -188,15 +216,66 @@ class SkipAnomAutoencoder(Autoencoder):
         self.train()
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
+        loss_item = loss.item()
+        if self.stat_meter is not None:
+            mean = self.stat_meter.mean
+            std = (
+                self.stat_meter.sample_std if self.stat_meter.population_std > 0 else 1
+            )
+            self.stat_meter.update(loss_item)
 
-        loss_scaled = self.scaler.learn_transform_one(loss.item())
-        prob = 1 - norm.cdf(loss_scaled)
-        loss = (prob - self.skip_threshold) / (1 - self.skip_threshold) * loss
+        loss_scaled = (loss_item - mean) / std
+        prob = ndtr(loss_scaled)
+        loss = (self.skip_threshold - prob) / self.skip_threshold * loss
 
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
         return self
+
+
+class BasicAutoencoder(Autoencoder):
+    def __init__(
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        scale_scores=True,
+        window_size=250,
+        **net_params,
+    ):
+        net_params["dropout"] = 0
+        super().__init__(
+            loss_fn,
+            optimizer_fn,
+            build_fn,
+            device,
+            scale_scores,
+            window_size=window_size,
+            **net_params,
+        )
+
+    def score_learn_one(self, x: dict):
+        x = dict2tensor(x, device=self.device)
+
+        if self.to_init:
+            self._init_net(n_features=x.shape[1])
+
+        self.train()
+        x_pred = self(x)
+        loss = self.loss_fn(x_pred, x)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        score = loss.item()
+        if self.stat_meter is not None:
+            if self.stat_meter.mean > 0:
+                score /= self.stat_meter.mean
+            self.stat_meter.update(loss.item())
+        return score
 
 
 class AdaptiveAutoencoder(Autoencoder):
