@@ -48,9 +48,7 @@ def get_fc_autoencoder(
     if isinstance(layer_size, float):
         layer_size = math.ceil(layer_size * n_features)
 
-    encoder_output_dim = latent_dim * 2 if variational else latent_dim
-
-    layer_sizes = [n_features, *[layer_size] * (n_layers - 1), encoder_output_dim]
+    layer_sizes = [n_features, *[layer_size] * (n_layers - 1), latent_dim]
     encoder_activations = (
         [activation_fn] * (n_layers - 1) + ["linear"]
         if variational
@@ -61,9 +59,12 @@ def get_fc_autoencoder(
     encoder_layers, decoder_layers = [nn.Dropout(dropout)], []
 
     for layer_idx in range(len(layer_sizes) - 1):
+        encoder_out = layer_sizes[layer_idx + 1]
+        if variational and layer_idx == len(layer_sizes) - 2: 
+            encoder_out *= 2
         encoder_block = DenseBlock(
             in_features=layer_sizes[layer_idx],
-            out_features=layer_sizes[layer_idx + 1],
+            out_features= encoder_out,
             activation_fn=encoder_activations[layer_idx],
             init_fn=init_fn,
         )

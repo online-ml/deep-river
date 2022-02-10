@@ -120,6 +120,7 @@ class VariationalAutoencoder(base.AutoencoderBase):
             **net_params,
     ):
         net_params["variational"] = True
+        net_params["dropout"] = 0
         net_params["tied_decoder_weights"] = False
         super().__init__(
             loss_fn=loss_fn,
@@ -150,7 +151,7 @@ class VariationalAutoencoder(base.AutoencoderBase):
     def _learn(self, x):
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init is False:
+        if self.to_init is True:
             self._init_net(n_features=x.shape[1])
 
         self.train()
@@ -205,9 +206,9 @@ class VariationalAutoencoder(base.AutoencoderBase):
         self.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if self.scaler is not None and self.scaler.mean is not None:
-            loss /= self.scaler.mean
-        return loss
+        if self.stat_meter is not None and self.stat_meter.mean > 0:
+            loss /= self.stat_meter.mean
+        return loss.item()
 
     def learn_many(self, x: pd.DataFrame):
         return super().learn_many(x)
