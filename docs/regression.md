@@ -1,1 +1,3 @@
 # Regression
+
+::: IncrementalTorch.regression.regressor

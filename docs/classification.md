@@ -1,1 +1,3 @@
 # Classification
+
+::: IncrementalTorch.classification.classifier
