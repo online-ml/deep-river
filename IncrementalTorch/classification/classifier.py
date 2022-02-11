@@ -9,7 +9,8 @@ from IncrementalTorch.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
 
 
 class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
-    """A river classifier that integrates neural Networks from PyTorch.
+    """
+    A river classifier that integrates neural Networks from PyTorch.
     Parameters
     ----------
     build_fn
@@ -51,7 +52,6 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)
     Accuracy: 74.38%
     """
-
     def __init__(self,
                  build_fn,
                  loss_fn: str,
@@ -60,6 +60,16 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
                  seed=42,
                  **net_params,
                  ):
+        """
+
+        Args:
+            build_fn:
+            loss_fn:
+            optimizer_fn:
+            learning_rate:
+            seed:
+            **net_params:
+        """
         self.classes = collections.Counter()
         self.variable_classes = True
         self.counter = 0
@@ -149,6 +159,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
 
 
 class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
+
     def __init__(self,
                  build_fn,
                  loss_fn: str,
@@ -157,6 +168,17 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
                  learning_rate=1e-3,
                  **net_params,
                  ):
+        """
+
+        Parameters
+        ----------
+        build_fn
+        loss_fn
+        optimizer_fn
+        window_size
+        learning_rate
+        net_params
+        """
         self.classes = collections.Counter()
         self.n_classes = 1
         super().__init__(
