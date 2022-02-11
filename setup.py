@@ -53,6 +53,7 @@ docs_packages = [
     "mkdocs",
     "mkdocs-awesome-pages-plugin",
     "mkdocs-material",
+    "mkdocsstrings",
     "nbconvert",
     "numpydoc",
     "spacy",
