@@ -29,18 +29,12 @@ base_packages = [
     "vaex",
     "pandas~=1.3.2",
     "numpy",
-    "river=0.10.1",
+    "river~=0.10.1",
     "tqdm~=4.61.2",
-    "pytest"
-]
-
-torch_packages = base_packages + [
-    "mlflow",
-    "torch"
+    "pytest",
 ]
 
 dev_packages = base_packages + [
-    "asv",
     "graphviz>=0.10.1",
     "matplotlib>=3.0.2",
     "mypy>=0.761",
@@ -51,7 +45,7 @@ dev_packages = base_packages + [
     "sqlalchemy>=1.4",
 ]
 
-docs_packages = dev_packages + [
+docs_packages = [
     "flask",
     "ipykernel",
     "jupyter-client",
@@ -61,7 +55,7 @@ docs_packages = dev_packages + [
     "mkdocs-material",
     "nbconvert",
     "numpydoc",
-    "spacy"
+    "spacy",
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -91,7 +85,7 @@ setuptools.setup(
     extras_require={
         "dev": dev_packages,
         "docs": docs_packages,
-        "all": dev_packages + docs_packages,
+        "all": dev_packages,# + docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
     },
     include_package_data=True,
