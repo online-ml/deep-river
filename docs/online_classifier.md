@@ -1,3 +1,0 @@
-# OnlineClassifier
-
-::: OnlineKeras.classifier

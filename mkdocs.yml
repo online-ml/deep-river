@@ -1,13 +1,13 @@
 # Project information
-site_name: Online Keras
-site_description: An keras based framework that adapts to to evolving datastreams for river.
+site_name: Incremental Torch
+site_description: Incremental DL is a Python library for incremental deep learning.
 site_author: Cedric Kulbach
-site_url: https://github.com/kulbachcedric/OnlineKeras
+site_url: https://github.com/kulbachcedric/IncrementalTorch
 
 # Repository
-repo_name: Online Keras
-repo_url: https://github.com/kulbachcedric/OnlineKeras
-edit_uri: "https://github.com/kulbachcedric/OnlineKeras"
+repo_name: IncrementalTorch
+repo_url: https://github.com/kulbachcedric/IncrementalTorch
+edit_uri: "https://github.com/kulbachcedric/IncrementalTorch"
 
 # Copyright
 copyright: Copyright &copy; 2019 - 2020
@@ -32,7 +32,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/kulbachcedric/OnlineKeras
+      link: https://github.com/kulbachcedric/IncrementalTorch
 
 # Google Analytics
 google_analytics:
@@ -64,5 +64,6 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Code Reference:
-      - OnlineKeras Classifier: online_classifier.md
-      - OnlineKeras Regressor: online_regressor.md
+      - Classification: classification.md
+      - Regression: regression.md
+      - Anomaly: anomaly.md

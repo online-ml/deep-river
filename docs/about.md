@@ -1,1 +1,1 @@
-# About EvO AutoML
+# About Incremental Torch

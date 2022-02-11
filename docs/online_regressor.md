@@ -1,3 +1,0 @@
-# OnlineRegressor
-
-::: OnlineKeras.regressor
