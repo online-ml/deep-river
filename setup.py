@@ -22,16 +22,15 @@ REQUIRES_PYTHON = ">=3.6.0"
 
 # Package requirements.
 base_packages = [
-    "scikit-learn",
-    "scikit-surprise",
-    "sqlalchemy>=1.4",
-    "torch",
-    "vaex",
+    "scikit-learn==1.0.2",
+    "scikit-surprise==1.1.1",
+    "torch==1.10.2",
+    "vaex==4.8.0",
     "pandas~=1.3.2",
-    "numpy",
+    "numpy==1.22.2",
     "river~=0.10.1",
     "tqdm~=4.61.2",
-    "pytest",
+    "pytest==7.0.1",
 ]
 
 dev_packages = base_packages + [
@@ -46,17 +45,16 @@ dev_packages = base_packages + [
 ]
 
 docs_packages = [
-    "flask",
-    "ipykernel",
-    "jupyter-client",
+    "flask==2.0.2",
+    "ipykernel==6.9.0",
     "mike==0.5.3",
-    "mkdocs",
-    "mkdocs-awesome-pages-plugin",
-    "mkdocs-material",
-    "mkdocsstrings",
-    "nbconvert",
-    "numpydoc",
-    "spacy",
+    "mkdocs==1.2.3",
+    "mkdocs-awesome-pages-plugin==2.7.0",
+    "mkdocs-material==8.1.11",
+    "mkdocstrings==0.18.0",
+    "nbconvert==6.4.2",
+    "numpydoc==1.2",
+    "spacy==3.2.2",
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
