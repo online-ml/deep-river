@@ -34,11 +34,6 @@ extra:
     - icon: fontawesome/brands/github-alt
       link: https://github.com/kulbachcedric/IncrementalTorch
 
-# Google Analytics
-google_analytics:
-  - UA-63302552-3
-  - auto
-
 # Extensions
 markdown_extensions:
   - admonition
@@ -55,6 +50,7 @@ markdown_extensions:
 plugins:
   - search
   - mkdocstrings
+  - mkdocs-jupyter
 
 extra_javascript:
 
@@ -67,3 +63,7 @@ nav:
       - Classification: classification.md
       - Regression: regression.md
       - Anomaly: anomaly.md
+  - Examples:
+      - Classification: examples/example_classification.ipynb
+      - Regression: examples/example_regression.ipynb
+      - Anomaly Detection: examples/example_ae.ipynb

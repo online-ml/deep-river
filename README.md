@@ -19,7 +19,7 @@ pip install -e .
 
 For doing work on the documentation:
 
-```python
+```console
 pip install -e ".[docs]"
 ```
 
@@ -27,6 +27,12 @@ pip install -e ".[docs]"
 
 I don't care about memory and want to have all packages that are used within incremental deep learning:
 
-```python
+```console
 pip install -e ".[all]"
+```
+
+## Docs
+Run
+```console
+mkdocs serve
 ```
