@@ -8,19 +8,25 @@ from river import base, anomaly
 from torch import nn
 
 from IncrementalTorch.anomaly.nn_builder import get_fc_autoencoder
-from IncrementalTorch.utils import get_loss_fn, get_optimizer_fn, WindowedMeanMeter, dict2tensor
+from IncrementalTorch.utils import (
+    get_loss_fn,
+    get_optimizer_fn,
+    WindowedMeanMeter,
+    dict2tensor,
+)
 
 
 class PyTorch2RiverBase(base.Estimator):
     def __init__(
-            self,
-            build_fn,
-            loss_fn: str,
-            optimizer_fn: Type[torch.optim.Optimizer],
-            learning_rate=1e-3,
-            device='cpu',
-            seed=42,
-            **net_params):
+        self,
+        build_fn,
+        loss_fn: str,
+        optimizer_fn: Type[torch.optim.Optimizer],
+        learning_rate=1e-3,
+        device="cpu",
+        seed=42,
+        **net_params
+    ):
         self.build_fn = build_fn
         self.loss_fn = loss_fn
         self.loss = get_loss_fn(loss_fn=loss_fn)
@@ -42,7 +48,7 @@ class PyTorch2RiverBase(base.Estimator):
 
         yield {
             "build_fn": build_torch_linear_regressor,
-            "loss_fn": 'mae',
+            "loss_fn": "mae",
             "optimizer_fn": torch.optim.SGD,
         }
 
@@ -105,23 +111,26 @@ class PyTorch2RiverBase(base.Estimator):
         return res
 
     def _init_net(self, n_features):
-        self.net = self.build_fn(n_features=n_features, **self._filter_torch_params(self.build_fn))
+        self.net = self.build_fn(
+            n_features=n_features, **self._filter_torch_params(self.build_fn)
+        )
         self.net.to(self.device)
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
 
 
 class RollingPyTorch2RiverBase(base.Estimator):
     def __init__(
-            self,
-            build_fn,
-            loss_fn: str,
-            optimizer_fn: Type[torch.optim.Optimizer],
-            learning_rate=1e-3,
-            window_size=1,
-            seed=42,
-            device='cpu',
-            append_predict=True,
-            **net_params):
+        self,
+        build_fn,
+        loss_fn: str,
+        optimizer_fn: Type[torch.optim.Optimizer],
+        learning_rate=1e-3,
+        window_size=1,
+        seed=42,
+        device="cpu",
+        append_predict=True,
+        **net_params
+    ):
         self.build_fn = build_fn
         self.loss_fn = loss_fn
         self.loss = get_loss_fn(loss_fn=loss_fn)
@@ -147,7 +156,7 @@ class RollingPyTorch2RiverBase(base.Estimator):
             return net
 
         yield {
-            "loss_fn": 'mse',
+            "loss_fn": "mse",
             "build_fn": build_torch_linear_regressor,
             "optimizer_fn": torch.optim.SGD,
         }
@@ -209,21 +218,24 @@ class RollingPyTorch2RiverBase(base.Estimator):
         return res
 
     def _init_net(self, n_features):
-        self.net = self.build_fn(n_features=n_features, **self._filter_torch_params(self.build_fn))
+        self.net = self.build_fn(
+            n_features=n_features, **self._filter_torch_params(self.build_fn)
+        )
         self.net.to(self.device)
         self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
 
 
-class AutoencoderBase(anomaly.AnomalyDetector, nn.Module, base.Estimator):
+class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
     def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            scale_scores=True,
-            window_size=250,
-            **net_params):
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        scale_scores=True,
+        window_size=250,
+        **net_params
+    ):
         super().__init__()
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optimizer_fn(optimizer_fn)
@@ -263,6 +275,7 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module, base.Estimator):
     def learn_one(self, x):
         return self._learn(x)
 
+
     def _learn(self, x):
         x = dict2tensor(x, device=self.device)
 
@@ -272,11 +285,10 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module, base.Estimator):
         self.train()
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
-
-        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        if self.stat_meter is not None:
+        self.optimizer.zero_grad()
+        if self.scale_scores:
             self.stat_meter.update(loss.item())
         return self
 
@@ -290,9 +302,8 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module, base.Estimator):
         with torch.inference_mode():
             x_rec = self(x)
         loss = self.loss_fn(x_rec, x).item()
-        mean = 0 if self.stat_meter is None else self.stat_meter.mean
-        if mean != 0:
-            loss /= mean
+        if self.scale_scores and self.stat_meter.mean != 0:
+            loss /= self.stat_meter.mean
         return loss
 
     def learn_many(self, x: pd.DataFrame):
@@ -313,8 +324,8 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module, base.Estimator):
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
-        if self.scaler is not None and self.scaler.mean is not None:
-            loss /= self.scaler.mean
+        if self.scale_scores and self.stat_meter.mean != 0:
+            score /= self.stat_meter.mean
         return score
 
     def forward(self, x):
