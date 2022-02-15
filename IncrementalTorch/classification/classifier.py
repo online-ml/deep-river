@@ -169,7 +169,7 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
                  **net_params,
                  ):
         """
-
+        A Rolling Window PyTorch to River Classifier
         Parameters
         ----------
         build_fn
@@ -178,6 +178,14 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
         window_size
         learning_rate
         net_params
+
+        Args:
+            build_fn:
+            loss_fn:
+            optimizer_fn:
+            window_size:
+            learning_rate:
+            **net_params:
         """
         self.classes = collections.Counter()
         self.n_classes = 1
