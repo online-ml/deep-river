@@ -32,7 +32,7 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.stat_meter = WindowedVarianceMeter(window_size) if scale_scores else None
+        self.stat_meter = WindowedVarianceMeter(window_size)
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
