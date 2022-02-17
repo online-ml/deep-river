@@ -86,9 +86,9 @@ class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
 
             if self.append_predict:
                 self._x_window.append(list(x.values()))
-                x = torch.Tensor([self._x_window.values])
+                x = torch.Tensor([self._x_window])
             else:
-                l = copy.deepcopy(self._x_window.values)
+                l = copy.deepcopy(self._x_window)
                 l.append(list(x.values()))
                 x = torch.Tensor([l])
             return self.net(x).item()
