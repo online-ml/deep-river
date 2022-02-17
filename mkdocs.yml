@@ -17,13 +17,13 @@ theme:
   name: material
   language: en
   palette:
-    primary: light blue
+    primary: blue
     accent: grey
   font:
     text: Roboto
     code: Roboto Mono
   #logo: material/cloud
-  favicon: material/cloud
+  #favicon: material/cloud
   features:
     - navigation.instant
     - navigation.tracking
