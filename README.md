@@ -7,12 +7,19 @@
     Incremental DL ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks. 
 </p>
 
-## Installation
+## Quickstart
+As a quick example, we'll train a simple MLP classifier to classifiy the
 
-There are different versions, that can be installed
+
+
+## Installation
+```shell
+pip install IncrementalTorch
+```
+There are 
+
 
 ### base
-
 pip install -e .
 
 ### docs
