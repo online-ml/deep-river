@@ -12,15 +12,15 @@ from .. import base
 
 class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
     def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            skip_threshold=0.9,
-            scale_scores=True,
-            window_size=250,
-            **net_params,
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        skip_threshold=0.9,
+        scale_scores=True,
+        window_size=250,
+        **net_params,
     ):
         super().__init__(
             loss_fn=loss_fn,
@@ -61,15 +61,57 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
         return self
 
 
+class NoDropoutAE(base.AutoencoderBase):
+    def __init__(
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn="sgd",
+        build_fn=None,
+        device="cpu",
+        scale_scores=True,
+        window_size=250,
+        **net_params,
+    ):
+        net_params["dropout"] = 0
+        super().__init__(
+            loss_fn,
+            optimizer_fn,
+            build_fn,
+            device,
+            scale_scores,
+            window_size,
+            **net_params,
+        )
+
+    def score_learn_one(self, x: dict) -> float:
+        x = dict2tensor(x, device=self.device)
+
+        if self.to_init:
+            self._init_net(n_features=x.shape[1])
+        x_rec = self(x)
+        loss = self.loss_fn(x_rec, x)
+
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        score = loss.item()
+        if self.scale_scores and self.stat_meter.mean != 0:
+            score /= self.stat_meter.mean
+            self.stat_meter.update()
+
+        return score
+
+
 class RollingWindowAutoencoder(base.AutoencoderBase):
     def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            window_size=50,
-            **net_params,
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        window_size=50,
+        **net_params,
     ):
         super().__init__(
             loss_fn=loss_fn,
@@ -109,15 +151,15 @@ class RollingWindowAutoencoder(base.AutoencoderBase):
 
 class VariationalAutoencoder(base.AutoencoderBase):
     def __init__(
-            self,
-            loss_fn="smooth_mae",
-            optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-            build_fn=None,
-            device="cpu",
-            n_reconstructions=10,
-            scale_scores=True,
-            beta=1,
-            **net_params,
+        self,
+        loss_fn="smooth_mae",
+        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        build_fn=None,
+        device="cpu",
+        n_reconstructions=10,
+        scale_scores=True,
+        beta=1,
+        **net_params,
     ):
         net_params["variational"] = True
         net_params["dropout"] = 0
