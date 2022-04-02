@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
+from IncrementalTorch.utils.optim import SGDHD
 
 
 def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
@@ -34,7 +35,8 @@ OPTIMIZER_FNS = {
     "adam_w": optim.AdamW,
     "sgd": optim.SGD,
     "rmsprop": optim.RMSprop, 
-    "lbfgs": optim.LBFGS
+    "lbfgs": optim.LBFGS, 
+    "hd-sgd": SGDHD,
 }
 
 INIT_FNS = {

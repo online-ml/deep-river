@@ -1,4 +1,4 @@
-from .anomaly import VariationalAutoencoder, RollingWindowAutoencoder, ProbabilityWeightedAutoencoder
+from .anomaly import VariationalAutoencoder, RollingWindowAutoencoder, ProbabilityWeightedAutoencoder, NoDropoutAE
 from .postprocessing import ExponentialStandardizer, WindowedStandardizer, WindowedMeanScaler, WindowedMinMaxScaler, \
     ExponentialMeanScaler
 
@@ -10,5 +10,6 @@ __all__ = [
     "WindowedMeanScaler",
     "ProbabilityWeightedAutoencoder",
     "WindowedMinMaxScaler",
-    "ExponentialMeanScaler"
+    "ExponentialMeanScaler", 
+    "NoDropoutAE"
 ]
