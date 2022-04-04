@@ -98,7 +98,8 @@ class NoDropoutAE(base.AutoencoderBase):
         score = loss.item()
         if self.scale_scores and self.stat_meter.mean != 0:
             score /= self.stat_meter.mean
-            self.stat_meter.update()
+        
+        self.stat_meter.update(loss.item())
 
         return score
 

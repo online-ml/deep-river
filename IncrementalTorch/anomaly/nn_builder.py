@@ -7,12 +7,12 @@ from IncrementalTorch.utils import get_activation_fn, get_init_fn
 
 class DenseBlock(nn.Module):
     def __init__(
-            self,
-            in_features,
-            out_features,
-            activation_fn="selu",
-            init_fn="xavier_uniform",
-            weight=None,
+        self,
+        in_features,
+        out_features,
+        activation_fn="selu",
+        init_fn="xavier_uniform",
+        weight=None,
     ):
         super().__init__()
         self.linear = nn.Linear(in_features, out_features)
@@ -32,16 +32,16 @@ class DenseBlock(nn.Module):
 
 
 def get_fc_autoencoder(
-        n_features,
-        dropout=0.1,
-        layer_size=2.0,
-        n_layers=1,
-        activation_fn="selu",
-        latent_dim=1.0,
-        variational=False,
-        final_activation="sigmoid",
-        tied_decoder_weights=True,
-        init_fn="xavier_uniform",
+    n_features,
+    dropout=0.1,
+    layer_size=2.0,
+    n_layers=1,
+    activation_fn="selu",
+    latent_dim=1.0,
+    variational=False,
+    final_activation="sigmoid",
+    tied_decoder_weights=True,
+    init_fn="xavier_uniform",
 ):
     if isinstance(latent_dim, float):
         latent_dim = math.ceil(latent_dim * n_features)
@@ -56,19 +56,22 @@ def get_fc_autoencoder(
     )
     decoder_activations = [activation_fn] * (n_layers - 1) + [final_activation]
 
-    encoder_layers, decoder_layers = [nn.Dropout(dropout)], []
+    encoder_layers = [nn.Dropout(dropout)] if dropout > 0 else []
+    decoder_layers = []
 
     for layer_idx in range(len(layer_sizes) - 1):
         encoder_out = layer_sizes[layer_idx + 1]
-        if variational and layer_idx == len(layer_sizes) - 2: 
+        if variational and layer_idx == len(layer_sizes) - 2:
             encoder_out *= 2
         encoder_block = DenseBlock(
             in_features=layer_sizes[layer_idx],
-            out_features= encoder_out,
+            out_features=encoder_out,
             activation_fn=encoder_activations[layer_idx],
             init_fn=init_fn,
         )
-        decoder_weight = encoder_block.get_weight().t() if tied_decoder_weights else None
+        decoder_weight = (
+            encoder_block.get_weight().t() if tied_decoder_weights else None
+        )
         decoder_block = DenseBlock(
             in_features=layer_sizes[layer_idx + 1],
             out_features=layer_sizes[layer_idx],
