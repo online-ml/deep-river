@@ -27,7 +27,7 @@ base_packages = [
     "torch==1.10.2",
     "vaex==4.8.0",
     "pandas~=1.3.2",
-    "numpy==1.22.2",
+    "numpy>=1.21.6",
     "river~=0.10.1",
     "tqdm~=4.61.2",
     "pytest==7.0.1",
