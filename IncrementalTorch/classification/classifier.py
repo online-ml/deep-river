@@ -41,12 +41,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
     ...     )
     ...     return net
     ...
-    >>> model = compat.PyTorch2RiverClassifier(
-    ...     build_fn= build_torch_mlp_classifier,
-    ...     loss_fn='bce',
-    ...     optimizer_fn=optim.Adam,
-    ...     learning_rate=1e-3
-    ... )
+    >>> model = compat.PyTorch2RiverClassifier(build_fn=build_torch_mlp_classifier,loss_fn='bce',optimizer_fn=optim.Adam,learning_rate=1e-3)
     >>> dataset = datasets.Phishing()
     >>> metric = metrics.Accuracy()
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)
@@ -54,8 +49,8 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
     """
     def __init__(self,
                  build_fn,
-                 loss_fn: str,
-                 optimizer_fn: typing.Type[torch.optim.Optimizer],
+                 loss_fn: str='ce',
+                 optimizer_fn: typing.Type[torch.optim.Optimizer]=torch.optim.SGD,
                  learning_rate=1e-3,
                  seed=42,
                  **net_params,
