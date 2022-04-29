@@ -157,8 +157,8 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
 
     def __init__(self,
                  build_fn,
-                 loss_fn: str,
-                 optimizer_fn: typing.Type[torch.optim.Optimizer],
+                 loss_fn: str='ce',
+                 optimizer_fn: typing.Type[torch.optim.Optimizer]=torch.optim.SGD,
                  window_size=1,
                  learning_rate=1e-3,
                  **net_params,
