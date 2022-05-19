@@ -56,6 +56,7 @@ docs_packages = [
     "nbconvert==6.4.2",
     "numpydoc==1.2",
     "spacy==3.2.2",
+    "jinja2"==3.0.3
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
