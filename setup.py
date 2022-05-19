@@ -36,7 +36,6 @@ dev_packages = base_packages + [
     "graphviz>=0.10.1",
     "matplotlib>=3.0.2",
     "mypy>=0.761",
-    "vaex==4.8.0",
     "pre-commit>=2.9.2",
     "pytest>=4.5.0",
     "pytest-cov>=2.6.1",
