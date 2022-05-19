@@ -1,4 +1,4 @@
-[![Python application](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/python-app.yml)
+[![unit-tests](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/python-app.yml)
 
 <p align="center">
   <img height="150px" src="docs/img/logo.png" alt="incremental dl logo">
