@@ -84,6 +84,7 @@ setuptools.setup(
     install_requires=base_packages,
     extras_require={
         "dev": dev_packages,
+        "test": dev_pacakges,
         "docs": docs_packages,
         "all": dev_packages,# + docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
