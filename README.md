@@ -8,6 +8,8 @@
     It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>. 
 </p>
 
+[![Python application](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/python-app.yml/badge.svg?branch=master)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/python-app.yml)
+
 ## 💈 Installation
 ```shell
 pip install IncrementalTorch
