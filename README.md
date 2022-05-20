@@ -9,17 +9,28 @@
 <p align="center">
     IncrementalTorch is a Python library for online deep learning.
     IncrementalTorch ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
-    It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>. 
+    It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>.
 </p>
 
 ## 💈 Installation
 ```shell
 pip install IncrementalTorch
 ```
+You can install the latest development version from GitHub as so:
+```shell
+pip install https://github.com/kulbachcedric/IncrementalTorch.git --upgrade
+```
+
+Or, through SSH:
+```shell
+pip install git@github.com:kulbachcedric/IncrementalTorch.git --upgrade
+```
+
 
 ## 🍫 Quickstart
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
+For further examples check out the <a href="http://kulbachcedric.github.io/IncrementalTorch/">Dokumentation</a>.
 ```python
 from river import datasets
 from river import metrics
