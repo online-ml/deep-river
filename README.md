@@ -1,4 +1,5 @@
 [![Unit Tests](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_tests.yml/badge.svg?branch=master)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_tests.yml)
+[![coverage](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/coverage.yml/badge.svg)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/coverage.yml)
 [![docs](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/mkdocs.yml/badge.svg)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_test.yml)
 
 <p align="center">
