@@ -6,6 +6,7 @@ from IncrementalTorch.utils.module_finder import get_init_fn
 
 
 class SequentialLSTM(nn.Module):
+    """Documentation needs to be added"""
     def __init__(self, input_size, hidden_size, num_layers):
         super(SequentialLSTM, self).__init__()
         self.num_layers = num_layers  # number of layers

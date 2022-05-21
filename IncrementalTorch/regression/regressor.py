@@ -12,7 +12,7 @@ class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
 
     Parameters
     ----------
-    net
+    build_fn
     loss_fn
     optimizer_fn
     batch_size
@@ -78,7 +78,17 @@ class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
 
 
 class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
-
+    """
+    A Rolling Window PyTorch to River Regressor
+    Parameters
+    ----------
+    build_fn
+    loss_fn
+    optimizer_fn
+    window_size
+    learning_rate
+    net_params
+    """
     def predict_one(self, x: dict):
         if self.net is None:
             self._init_net(len(list(x.values())))

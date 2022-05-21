@@ -3,7 +3,7 @@ from collections import deque
 
 
 class WindowedVarianceMeter:
-    def __init__(self, window_size=250) -> None:
+    def __init__(self, window_size:int=250) -> None:
         self.values = deque(maxlen=window_size)
         self.window_size = window_size
         self.current_size = 0
@@ -56,7 +56,10 @@ class WindowedVarianceMeter:
 
 
 class WindowedMeanMeter:
-    def __init__(self, window_size=250) -> None:
+    """
+
+    """
+    def __init__(self, window_size:int = 250) -> None:
         self.values = deque(maxlen=window_size)
         self.window_size = window_size
         self.current_size = 0

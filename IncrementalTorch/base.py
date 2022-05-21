@@ -7,7 +7,7 @@ import torch
 from river import base, anomaly
 from torch import nn
 
-from IncrementalTorch.anomaly.nn_builder import get_fc_autoencoder
+
 from IncrementalTorch.utils import (
     get_loss_fn,
     get_optimizer_fn,

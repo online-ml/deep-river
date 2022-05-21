@@ -1,9 +1,9 @@
 import torch
 from functools import reduce
-from torch.optim.optimizer import Optimizer, required
+from torch.optim import optimizer
 
 
-class SGDHD(Optimizer):
+class SGDHD(optimizer.Optimizer):
     r"""Implements stochastic gradient descent (optionally with momentum).
     Nesterov momentum is based on the formula from
     `On the importance of initialization and momentum in deep learning`__.
@@ -43,7 +43,7 @@ class SGDHD(Optimizer):
         The Nesterov version is analogously modified.
     """
 
-    def __init__(self, params, lr=required, momentum=0, dampening=0,
+    def __init__(self, params, lr=optimizer.required, momentum=0, dampening=0,
                  weight_decay=0, nesterov=False, hypergrad_lr=1e-6):
         defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
                         weight_decay=weight_decay, nesterov=nesterov, hypergrad_lr=hypergrad_lr)

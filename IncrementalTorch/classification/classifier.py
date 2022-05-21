@@ -19,8 +19,10 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
     learning_rate
     seed
     net_params
+
     Examples
     --------
+
     >>> from river import compat
     >>> from river import datasets
     >>> from river import evaluate
@@ -154,7 +156,17 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
 
 
 class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
-
+    """
+    A Rolling Window PyTorch to River Regressor
+    Parameters
+    ----------
+    build_fn
+    loss_fn
+    optimizer_fn
+    window_size
+    learning_rate
+    net_params
+    """
     def __init__(self,
                  build_fn,
                  loss_fn: str='ce',
@@ -173,14 +185,6 @@ class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
         window_size
         learning_rate
         net_params
-
-        Args:
-            build_fn:
-            loss_fn:
-            optimizer_fn:
-            window_size:
-            learning_rate:
-            **net_params:
         """
         self.classes = collections.Counter()
         self.n_classes = 1
