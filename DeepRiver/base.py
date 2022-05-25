@@ -242,7 +242,7 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
         self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
-        self.stat_meter = WindowedMeanMeter(window_size) if scale_scores else None
+        self.mean_meter = RollingMean(window_size) if scale_scores else None
         self.scale_scores = scale_scores
         self.window_size = window_size
         self.encoder = None
@@ -289,7 +289,7 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
         self.optimizer.step()
         self.optimizer.zero_grad()
         if self.scale_scores:
-            self.stat_meter.update(loss.item())
+            self.mean_meter.update(loss.item())
         return self
 
     def score_one(self, x: dict):
@@ -302,8 +302,8 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
         with torch.inference_mode():
             x_rec = self(x)
         loss = self.loss_fn(x_rec, x).item()
-        if self.scale_scores and self.stat_meter.mean != 0:
-            loss /= self.stat_meter.mean
+        if self.scale_scores and self.mean_meter.get() != 0:
+            loss /= self.mean_meter.get()
         return loss
 
     def learn_many(self, x: pd.DataFrame):
@@ -324,8 +324,8 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
-        if self.scale_scores and self.stat_meter.mean != 0:
-            score /= self.stat_meter.mean
+        if self.scale_scores and self.mean_meter.get() != 0:
+            score /= self.mean_meter.get()
         return score
 
     def forward(self, x):
