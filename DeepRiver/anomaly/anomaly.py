@@ -4,8 +4,8 @@ from typing import Type
 import pandas as pd
 import torch
 from scipy.special import ndtr
+from river import stats
 
-from DeepRiver.utils import WindowedVarianceMeter
 from DeepRiver.utils import dict2tensor
 from .. import base
 
@@ -44,8 +44,8 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.var_meter = RollingVar(window_size)
-        self.mean_meter = RollingMean(window_size)
+        self.var_meter = stats.RollingVar(window_size)
+        self.mean_meter = stats.RollingMean(window_size)
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
