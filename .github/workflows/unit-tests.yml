@@ -37,6 +37,5 @@ jobs:
           
       - name: pytest
         run: pytest --cov=DeepRiver -m "not datasets"
-
-      - name: codecov
-        run: codecov
+      - name: Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v2
