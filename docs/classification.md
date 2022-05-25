@@ -1,3 +1,3 @@
 # Classification
 
-::: IncrementalTorch.classification.classifier
+::: DeepRiver.classification.classifier

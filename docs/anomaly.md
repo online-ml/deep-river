@@ -1,7 +1,7 @@
 # Anomaly Detection
 
-::: IncrementalTorch.anomaly.anomaly
+::: DeepRiver.anomaly.anomaly
 
 # Postprocessing
 
-::: IncrementalTorch.anomaly.postprocessing
+::: DeepRiver.anomaly.postprocessing

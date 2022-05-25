@@ -1,3 +1,3 @@
 # Regression
 
-::: IncrementalTorch.regression.regressor
+::: DeepRiver.regression.regressor
