@@ -36,7 +36,7 @@ jobs:
           pip install -e ".[dev]" codecov
           
       - name: pytest
-        run: pytest --cov=river -m "not datasets"
+        run: pytest --cov=DeepRiver -m "not datasets"
 
       - name: codecov
         run: codecov
