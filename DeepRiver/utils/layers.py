@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from IncrementalTorch.utils.module_finder import get_init_fn
+from DeepRiver.utils.module_finder import get_init_fn
 
 
 class SequentialLSTM(nn.Module):

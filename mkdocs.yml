@@ -2,12 +2,12 @@
 site_name: Incremental Torch
 site_description: Incremental DL is a Python library for incremental deep learning.
 site_author: Cedric Kulbach
-site_url: https://github.com/kulbachcedric/IncrementalTorch
+site_url: https://github.com/kulbachcedric/DeepRiver
 
 # Repository
-repo_name: IncrementalTorch
-repo_url: https://github.com/kulbachcedric/IncrementalTorch
-edit_uri: "https://github.com/kulbachcedric/IncrementalTorch"
+repo_name: DeepRiver
+repo_url: https://github.com/kulbachcedric/DeepRiver
+edit_uri: "https://github.com/kulbachcedric/DeepRiver"
 
 # Copyright
 copyright: Copyright &copy; 2019 - 2020
@@ -32,7 +32,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/kulbachcedric/IncrementalTorch
+      link: https://github.com/kulbachcedric/DeepRiver
 
 # Google Analytics
 google_analytics:

@@ -6,17 +6,17 @@ import inspect
 import pytest
 import river
 
-from IncrementalTorch import utils
+from DeepRiver import utils
 
 
 def iter_estimators():
-    for submodule in importlib.import_module("IncrementalTorch").__all__:
+    for submodule in importlib.import_module("DeepRiver").__all__:
 
         def is_estimator(obj):
             return inspect.isclass(obj) and issubclass(obj, river.base.Estimator)
 
         for _, obj in inspect.getmembers(
-                importlib.import_module(f"IncrementalTorch.{submodule}"), is_estimator
+                importlib.import_module(f"DeepRiver.{submodule}"), is_estimator
         ):
             yield obj
 

@@ -8,7 +8,7 @@ from river import base, anomaly
 from torch import nn
 
 
-from IncrementalTorch.utils import (
+from DeepRiver.utils import (
     get_loss_fn,
     get_optimizer_fn,
     WindowedMeanMeter,

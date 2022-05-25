@@ -1,6 +1,6 @@
 from torch import nn
 
-from IncrementalTorch.utils import SequentialLSTM
+from DeepRiver.utils import SequentialLSTM
 
 
 def build_torch_mlp_regressor(n_features):
