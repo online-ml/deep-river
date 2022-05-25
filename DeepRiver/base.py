@@ -12,6 +12,16 @@ from DeepRiver.utils import get_loss_fn, get_optimizer_fn, dict2tensor
 
 
 class PyTorch2RiverBase(base.Estimator):
+    """
+    A PyTorch to River base class that aims to provide basic supervised functionalities.
+    ----------
+    build_fn
+    loss_fn
+    optimizer_fn
+    learning_rate
+    device
+    net_params
+    """
     def __init__(
         self,
         build_fn,
