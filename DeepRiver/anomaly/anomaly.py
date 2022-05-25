@@ -44,7 +44,8 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.stat_meter = WindowedVarianceMeter(window_size)
+        self.var_meter = RollingVar(window_size)
+        self.mean_meter = RollingMean(window_size)
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
@@ -56,12 +57,12 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
         x_pred = self(x)
         loss = self.loss_fn(x_pred, x)
         loss_item = loss.item()
-        if self.stat_meter is not None:
-            mean = self.stat_meter.mean
-            std = (
-                self.stat_meter.sample_std if self.stat_meter.population_std > 0 else 1
+        mean = self.mean_meter.get()
+        std = (
+                self.var_meter.get() if self.var_meter.get() > 0 else 1
             )
-            self.stat_meter.update(loss_item)
+        self.mean_meter.update(loss_item)
+        self.var_meter.update(loss_item)
 
         loss_scaled = (loss_item - mean) / std
         prob = ndtr(loss_scaled)
@@ -86,27 +87,6 @@ class NoDropoutAE(base.AutoencoderBase):
         window_size
         net_params
     """
-    def __init__(
-        self,
-        loss_fn="smooth_mae",
-        optimizer_fn="sgd",
-        build_fn=None,
-        device="cpu",
-        scale_scores=True,
-        window_size=250,
-        **net_params,
-    ):
-        net_params["dropout"] = 0
-        super().__init__(
-            loss_fn,
-            optimizer_fn,
-            build_fn,
-            device,
-            scale_scores,
-            window_size,
-            **net_params,
-        )
-
     def score_learn_one(self, x: dict) -> float:
         x = dict2tensor(x, device=self.device)
 
