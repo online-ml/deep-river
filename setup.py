@@ -87,7 +87,7 @@ setuptools.setup(
         "dev": dev_packages,
         "test": dev_packages,
         "docs": docs_packages,
-        "all": dev_packages,# + docs_packages,
+        "all": dev_packages + docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
     },
     include_package_data=True,
