@@ -4,19 +4,24 @@ from typing import Type
 
 import pandas as pd
 import torch
-from river import base, anomaly
+from river import base, anomaly, stats
 from torch import nn
 
 from DeepRiver.anomaly.nn_builder import get_fc_autoencoder
-from DeepRiver.utils import (
-    get_loss_fn,
-    get_optimizer_fn,
-    WindowedMeanMeter,
-    dict2tensor,
-)
+from DeepRiver.utils import get_loss_fn, get_optimizer_fn, dict2tensor
 
 
 class PyTorch2RiverBase(base.Estimator):
+    """
+    A PyTorch to River base class that aims to provide basic supervised functionalities.
+    ----------
+    build_fn
+    loss_fn
+    optimizer_fn
+    learning_rate
+    device
+    net_params
+    """
     def __init__(
         self,
         build_fn,
@@ -242,7 +247,7 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
         self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
-        self.mean_meter = RollingMean(window_size) if scale_scores else None
+        self.mean_meter = stats.RollingMean(window_size) if scale_scores else None
         self.scale_scores = scale_scores
         self.window_size = window_size
         self.encoder = None
