@@ -16,26 +16,21 @@ permissions:
   contents: read
 
 jobs:
-  build_wheels:
-    name: Build wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-
+  build_wheel:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.6.1
-        env:
-          CIBW_BUILD: "cp38-* cp39-* cp310-*"
-          CIBW_BEFORE_BUILD: "pip install cython"
-          CIBW_BUILD_VERBOSITY: "1"
-
-      - uses: actions/upload-artifact@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          path: ./wheelhouse/*.whl
+          python-version: 3.9
+      - name: Build wheel and install
+        run: |
+          python -m pip install --user --upgrade build
+          python -m build
+          #pip install .
+          find ./dist/*.whl | xargs pip install
+          python simple_test.py
 
   build_sdist:
     name: Build source distribution
@@ -51,7 +46,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload_pypi:
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheel]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v2
