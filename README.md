@@ -1,4 +1,4 @@
-[![Upload Python Package](https://github.com/kulbachcedric/DeepRiver/actions/workflows/pypi-publish.yml/badge.svg?branch=master)](https://github.com/kulbachcedric/DeepRiver/actions/workflows/pypi-publish.yml)
+![GitHub last commit](https://img.shields.io/github/last-commit/kulbachcedric/DeepRiver)
 [![unit-tests](https://github.com/kulbachcedric/DeepRiver/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/kulbachcedric/DeepRiver/actions/workflows/unit-tests.yml)
 [![docs](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/mkdocs.yml/badge.svg)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_test.yml)
 
