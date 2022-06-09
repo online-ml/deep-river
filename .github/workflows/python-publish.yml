@@ -30,7 +30,6 @@ jobs:
           python -m build
           #pip install .
           find ./dist/*.whl | xargs pip install
-          python simple_test.py
 
   build_sdist:
     name: Build source distribution
