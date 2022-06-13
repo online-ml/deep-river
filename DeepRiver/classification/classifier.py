@@ -5,10 +5,10 @@ import typing
 import torch
 from river import base
 
-from DeepRiver.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
+from DeepRiver.deepestimator import DeepEstimator, RollingDeepEstimator
 
 
-class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
+class Classifier(DeepEstimator, base.Classifier):
     """
     A river classifier that integrates neural Networks from PyTorch.
     Parameters
@@ -43,7 +43,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
     ...     )
     ...     return net
     ...
-    >>> model = compat.PyTorch2RiverClassifier(build_fn=build_torch_mlp_classifier,loss_fn='bce',optimizer_fn=optim.Adam,learning_rate=1e-3)
+    >>> model = compat.Classifier(build_fn=build_torch_mlp_classifier,loss_fn='bce',optimizer_fn=optim.Adam,learning_rate=1e-3)
     >>> dataset = datasets.Phishing()
     >>> metric = metrics.Accuracy()
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)
@@ -155,7 +155,7 @@ class PyTorch2RiverClassifier(PyTorch2RiverBase, base.Classifier):
         return proba
 
 
-class RollingPyTorch2RiverClassifier(RollingPyTorch2RiverBase, base.Classifier):
+class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
     A Rolling Window PyTorch to River Regressor
     Parameters

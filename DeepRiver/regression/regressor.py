@@ -4,10 +4,10 @@ from typing import Type
 import torch
 from river import base
 
-from DeepRiver.base import PyTorch2RiverBase, RollingPyTorch2RiverBase
+from DeepRiver.deepestimator import DeepEstimator, RollingDeepEstimator
 
 
-class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
+class Regressor(DeepEstimator, base.Regressor):
     """Compatibility layer from PyTorch to River for regression.
 
     Parameters
@@ -41,7 +41,7 @@ class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
 
     >>> model = (
     ...     preprocessing.StandardScaler() |
-    ...     compat.PyTorch2RiverRegressor(
+    ...     compat.Regressor(
     ...         net=net,
     ...         loss_fn=nn.MSELoss(),
     ...         optimizer_fn=optim.SGD(net.parameters(), lr=1e-3),
@@ -77,7 +77,7 @@ class PyTorch2RiverRegressor(PyTorch2RiverBase, base.Regressor):
         return self.net(x).item()
 
 
-class RollingPyTorch2RiverRegressor(RollingPyTorch2RiverBase, base.Regressor):
+class RollingRegressor(RollingDeepEstimator, base.Regressor):
     """
     A Rolling Window PyTorch to River Regressor
     Parameters

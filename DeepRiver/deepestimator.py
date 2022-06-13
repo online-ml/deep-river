@@ -11,7 +11,7 @@ from DeepRiver.anomaly.nn_builder import get_fc_autoencoder
 from DeepRiver.utils import get_loss_fn, get_optimizer_fn, dict2tensor
 
 
-class PyTorch2RiverBase(base.Estimator):
+class DeepEstimator(base.Estimator):
     """
     A PyTorch to River base class that aims to provide basic supervised functionalities.
     ----------
@@ -123,7 +123,7 @@ class PyTorch2RiverBase(base.Estimator):
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
 
 
-class RollingPyTorch2RiverBase(base.Estimator):
+class RollingDeepEstimator(base.Estimator):
     def __init__(
         self,
         build_fn,

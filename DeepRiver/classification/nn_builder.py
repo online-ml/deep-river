@@ -3,7 +3,7 @@ from torch import nn
 from DeepRiver.utils import SequentialLSTM
 
 
-def build_torch_mlp_classifier(n_features, n_classes=1):
+def build_torch_mlp_classifier(n_features, n_classes=2):
     net = nn.Sequential(
         nn.Linear(n_features, 5),
         nn.ReLU(),
@@ -19,7 +19,7 @@ def build_torch_mlp_classifier(n_features, n_classes=1):
     return net
 
 
-def build_torch_dynamic_mlp_classifier(n_features, n_classes=1):
+def build_torch_dynamic_mlp_classifier(n_features, n_classes=2):
     net = nn.Sequential(
         nn.Linear(n_features, n_features * 5),
         nn.LeakyReLU(),

@@ -1,6 +1,6 @@
-from DeepRiver.regression.regressor import PyTorch2RiverRegressor, RollingPyTorch2RiverRegressor
+from DeepRiver.regression.regressor import Regressor, RollingRegressor
 
 __all__ = [
-    "PyTorch2RiverRegressor",
-    "RollingPyTorch2RiverRegressor",
+    "Regressor",
+    "RollingRegressor",
 ]

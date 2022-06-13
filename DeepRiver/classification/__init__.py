@@ -1,6 +1,6 @@
-from DeepRiver.classification.classifier import PyTorch2RiverClassifier, RollingPyTorch2RiverClassifier
+from DeepRiver.classification.classifier import Classifier, RollingClassifier
 
 __all__ = [
-    "PyTorch2RiverClassifier",
-    "RollingPyTorch2RiverClassifier",
+    "Classifier",
+    "RollingClassifier",
 ]

@@ -59,8 +59,8 @@ def build_torch_mlp_classifier(n_features):  # build neural architecture
 
 model = compose.Pipeline(
     preprocessing.StandardScaler(),
-    classification.PyTorch2RiverClassifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam,
-                                           learning_rate=1e-3)
+    classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam,
+                              learning_rate=1e-3)
 )
 
 dataset = datasets.Phishing()
