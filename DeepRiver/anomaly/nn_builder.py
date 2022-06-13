@@ -91,44 +91,36 @@ def get_conv_autoencoder_28(activation_fn="selu", dropout=0.5, n_features=1):
     encoder = nn.Sequential(
         nn.Dropout(p=dropout),
         nn.Conv2d(in_channels=n_features, out_channels=32, kernel_size=3, stride=2),
-        activation,
+        activation(),
         nn.Conv2d(in_channels=32, out_channels=16, kernel_size=3, stride=2),
-        activation,
+        activation(),
         nn.Conv2d(in_channels=16, out_channels=8, kernel_size=3, stride=3),
-        activation,
+        activation(),
     )
 
     decoder = nn.Sequential(
         nn.ConvTranspose2d(in_channels=8, out_channels=16, kernel_size=3, stride=3),
-        activation,
+        activation(),
         nn.ConvTranspose2d(in_channels=16, out_channels=32, kernel_size=3, stride=2),
-        activation,
+        activation(),
         nn.ConvTranspose2d(in_channels=32, out_channels=1, kernel_size=4, stride=2),
     )
     return encoder, decoder
 
 
-def get_conv_autoencoder_32(activation_fn="selu", dropout=0.5, n_features=3):
+def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
     activation = get_activation_fn(activation_fn)
 
     encoder = nn.Sequential(
         nn.Dropout(p=dropout),
-        nn.Conv2d(in_channels=n_features, out_channels=64, kernel_size=3, stride=2),
-        activation,
-        nn.Conv2d(in_channels=64, out_channels=128, kernel_size=3, stride=2),
-        activation,
-        nn.Conv2d(in_channels=128, out_channels=128, kernel_size=3, stride=2),
-        activation,
-        nn.Conv2d(in_channels=128, out_channels=256, kernel_size=3, stride=2),
-        activation,
+        nn.Linear(in_features=n_features,out_features=math.ceil(n_features/2)),
+        activation(),
+        nn.Linear(in_features=math.ceil(n_features/2),out_features=math.ceil(n_features/4)),
+        activation(),
     )
     decoder = nn.Sequential(
-        nn.ConvTranspose2d(in_channels=256, out_channels=128, kernel_size=3, stride=2),
-        activation,
-        nn.ConvTranspose2d(in_channels=128, out_channels=128, kernel_size=3, stride=2),
-        activation,
-        nn.ConvTranspose2d(in_channels=128, out_channels=64, kernel_size=3, stride=2),
-        activation,
-        nn.ConvTranspose2d(in_channels=64, out_channels=3, kernel_size=3, stride=2),
+        nn.Linear(in_features=math.ceil(n_features/4),out_features=math.ceil(n_features/2)),
+        activation(),
+        nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
     )
     return encoder, decoder
