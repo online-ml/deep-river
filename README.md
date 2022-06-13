@@ -1,5 +1,6 @@
-[![Unit Tests](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_tests.yml/badge.svg?branch=master)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_tests.yml)
-[![coverage](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/coverage.yml/badge.svg)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/coverage.yml)
+![GitHub last commit](https://img.shields.io/github/last-commit/kulbachcedric/DeepRiver)
+[![unit-tests](https://github.com/kulbachcedric/DeepRiver/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/kulbachcedric/DeepRiver/actions/workflows/unit-tests.yml)
+![Codecov](https://img.shields.io/codecov/c/github/kulbachcedric/DeepRiver)
 [![docs](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/mkdocs.yml/badge.svg)](https://github.com/kulbachcedric/IncrementalTorch/actions/workflows/unit_test.yml)
 
 <p align="center">
@@ -18,7 +19,7 @@ pip install DeepRiver
 ```
 You can install the latest development version from GitHub as so:
 ```shell
-pip install https://github.com/kulbachcedric/IncrementalTorch.git --upgrade
+pip install https://github.com/kulbachcedric/DeepRiver.git --upgrade
 ```
 
 Or, through SSH:
@@ -30,7 +31,7 @@ pip install git@github.com:kulbachcedric/DeepRiver.git --upgrade
 ## 🍫 Quickstart
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
-For further examples check out the <a href="http://kulbachcedric.github.io/IncrementalTorch/">Dokumentation</a>.
+For further examples check out the <a href="http://kulbachcedric.github.io/DeepRiver/">Documentation</a>.
 
 ```python
 from river import datasets
