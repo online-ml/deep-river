@@ -5,7 +5,7 @@ import typing
 import torch
 from river import base
 
-from DeepRiver.deepestimator import DeepEstimator, RollingDeepEstimator
+from DeepRiver.base import DeepEstimator, RollingDeepEstimator
 
 
 class Classifier(DeepEstimator, base.Classifier):

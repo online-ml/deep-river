@@ -4,7 +4,7 @@ from typing import Type
 import torch
 from river import base
 
-from DeepRiver.deepestimator import DeepEstimator, RollingDeepEstimator
+from DeepRiver.base import DeepEstimator, RollingDeepEstimator
 
 
 class Regressor(DeepEstimator, base.Regressor):

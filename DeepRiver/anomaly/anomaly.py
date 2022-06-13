@@ -7,7 +7,7 @@ from scipy.special import ndtr
 from river import stats
 
 from DeepRiver.utils import dict2tensor
-from .. import deepestimator
+from .. import base
 
 
 class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
