@@ -58,13 +58,15 @@ class Regressor(DeepEstimator, base.Regressor):
     def __init__(
             self,
             build_fn,
-            loss_fn: torch.nn.modules.loss._Loss,
             optimizer_fn: Type[torch.optim.Optimizer],
+            loss_fn="mse",
+            device="cpu",
             learning_rate=1e-3,
             **net_params):
         super().__init__(
             build_fn=build_fn,
             loss_fn=loss_fn,
+            device=device,
             optimizer_fn=optimizer_fn,
             learning_rate=learning_rate,
             **net_params

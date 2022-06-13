@@ -54,6 +54,7 @@ class Classifier(DeepEstimator, base.Classifier):
                  loss_fn: str='ce',
                  optimizer_fn: typing.Type[torch.optim.Optimizer]=torch.optim.SGD,
                  learning_rate=1e-3,
+                 device="cpu",
                  seed=42,
                  **net_params,
                  ):
@@ -77,9 +78,10 @@ class Classifier(DeepEstimator, base.Classifier):
         else:
             self.n_classes = 1
         super().__init__(
-            build_fn=build_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
+            build_fn=build_fn,
+            device=device,
             learning_rate=learning_rate,
             seed=seed,
             **net_params
@@ -172,6 +174,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                  loss_fn: str='ce',
                  optimizer_fn: typing.Type[torch.optim.Optimizer]=torch.optim.SGD,
                  window_size=1,
+                 device="cpu",
                  learning_rate=1e-3,
                  **net_params,
                  ):
@@ -193,6 +196,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             window_size=window_size,
+            device=device,
             learning_rate=learning_rate,
             **net_params
         )

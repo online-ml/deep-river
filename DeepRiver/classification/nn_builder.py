@@ -44,7 +44,7 @@ def build_torch_lstm_classifier(n_features, hidden_size):
     return net
 
 
-def build_torch_linear_classifier(n_features, n_classes=1):
+def build_torch_linear_classifier(n_features, n_classes=2):
     net = nn.Sequential(
         nn.Linear(n_features, n_classes),
         # nn.Sigmoid()
