@@ -10,13 +10,14 @@ from DeepRiver.utils import dict2tensor
 from .. import base
 
 
-class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
+class ProbabilityWeightedAutoencoder(base.AutoencodedAnomalyDetector):
     """
         A propability weighted auto encoder
         ----------
+        encoder_fn
+        decoder_fn
         loss_fn
-        optimizer_fn
-        build_fn
+        optimizer_f
         device
         skip_threshold
         scale_scores
@@ -25,9 +26,10 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
     """
     def __init__(
         self,
+        encoder_fn,
+        decoder_fn,
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
         device="cpu",
         skip_threshold=0.9,
         scale_scores=True,
@@ -35,9 +37,10 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
         **net_params,
     ):
         super().__init__(
+            encoder_fn=encoder_fn,
+            decoder_fn=decoder_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            build_fn=build_fn,
             device=device,
             scale_scores=scale_scores,
             window_size=window_size,
@@ -74,13 +77,14 @@ class ProbabilityWeightedAutoencoder(base.AutoencoderBase):
         return self
 
 
-class NoDropoutAE(base.AutoencoderBase):
+class NoDropoutAE(base.AutoencodedAnomalyDetector):
     """
         No dropout auto encoder
         ----------
+        encoder_fn
+        decoder_fn
         loss_fn
         optimizer_fn
-        build_fn
         device
         skip_threshold
         scale_scores
@@ -109,13 +113,14 @@ class NoDropoutAE(base.AutoencoderBase):
         return score
 
 
-class RollingWindowAutoencoder(base.AutoencoderBase):
+class RollingWindowAutoencoder(base.AutoencodedAnomalyDetector):
     """
         A rolling window auto encoder
         ----------
+        encoder_fn
+        decoder_fn
         loss_fn
         optimizer_fn
-        build_fn
         device
         skip_threshold
         scale_scores
@@ -124,24 +129,25 @@ class RollingWindowAutoencoder(base.AutoencoderBase):
     """
     def __init__(
         self,
+        encoder_fn,
+        decoder_fn,
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
         device="cpu",
         window_size=50,
         **net_params,
     ):
         super().__init__(
+            encoder_fn=encoder_fn,
+            decoder_fn=decoder_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            build_fn=build_fn,
             device=device,
             **net_params,
         )
         self.window_size = window_size
         self._x_window = collections.deque(maxlen=window_size)
         self._batch_i = 0
-        self.to_init = True
 
     def _learn_batch(self, x: torch.Tensor):
         self.train()
@@ -167,13 +173,14 @@ class RollingWindowAutoencoder(base.AutoencoderBase):
         return self
 
 
-class VariationalAutoencoder(base.AutoencoderBase):
+class VariationalAutoencoder(base.AutoencodedAnomalyDetector):
     """
         A propability weighted auto encoder
         ----------
+        encoder_fn
+        decoder_fn
         loss_fn
         optimizer_fn
-        build_fn
         device
         skip_threshold
         scale_scores
@@ -182,9 +189,10 @@ class VariationalAutoencoder(base.AutoencoderBase):
     """
     def __init__(
         self,
+        encoder_fn,
+        decoder_fn,
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
         device="cpu",
         n_reconstructions=10,
         scale_scores=True,
@@ -195,9 +203,10 @@ class VariationalAutoencoder(base.AutoencoderBase):
         net_params["dropout"] = 0
         net_params["tied_decoder_weights"] = False
         super().__init__(
+            encoder_fn=encoder_fn,
+            decoder_fn=decoder_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            build_fn=build_fn,
             device=device,
             scale_scores=scale_scores,
             **net_params,

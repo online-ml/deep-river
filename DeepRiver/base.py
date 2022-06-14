@@ -1,5 +1,6 @@
 import collections
 import inspect
+import math
 from typing import Type
 
 import pandas as pd
@@ -230,34 +231,44 @@ class RollingDeepEstimator(base.Estimator):
         self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
 
 
-class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
+class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
     def __init__(
         self,
+        encoder_fn,
+        decoder_fn,
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        build_fn=None,
+
         device="cpu",
         scale_scores=True,
         window_size=250,
         **net_params
     ):
         super().__init__()
+        self.encoder_fn = encoder_fn
+        self.decoder_fn = decoder_fn
+        self.encoder = None
+        self.decoder = None
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optimizer_fn(optimizer_fn)
-        self.build_fn = build_fn
         self.net_params = net_params
         self.device = device
         self.mean_meter = stats.RollingMean(window_size) if scale_scores else None
         self.scale_scores = scale_scores
         self.window_size = window_size
-        self.encoder = None
-        self.decoder = None
-        self.to_init = True
 
     @classmethod
     def _unit_test_params(cls):
+
+        def encoder_fn(n_features):
+            return nn.Sequential(nn.Linear(n_features, math.ceil(n_features / 2)), nn.LeakyReLU())
+
+        def decoder_fn(n_features):
+            return nn.Sequential(nn.Linear(math.ceil(n_features/2), n_features))
+
         yield {
-            "build_fn": get_fc_autoencoder,
+            "encoder_fn": encoder_fn,
+            "decoder_fn": decoder_fn,
             "loss_fn": torch.nn.MSELoss,
             "optimizer_fn": torch.optim.SGD,
         }
@@ -284,7 +295,7 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
     def _learn(self, x):
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init:
+        if self.encoder is None or self.decoder is None:
             self._init_net(n_features=x.shape[1])
 
         self.train()
@@ -337,10 +348,10 @@ class AutoencoderBase(anomaly.AnomalyDetector, nn.Module):
         return self.decoder(self.encoder(x))
 
     def _init_net(self, n_features):
-        if self.build_fn is None:
-            self.build_fn = get_fc_autoencoder
-
-        self.encoder, self.decoder = self.build_fn(
+        self.encoder = self.encoder_fn(
+            n_features=n_features, **self._filter_args(self.build_fn)
+        )
+        self.decoder = self.decoder_fn(
             n_features=n_features, **self._filter_args(self.build_fn)
         )
 

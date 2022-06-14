@@ -2,8 +2,33 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from DeepRiver.utils.module_finder import get_init_fn
+from DeepRiver.utils.module_finder import get_init_fn, get_activation_fn
 
+
+class DenseBlock(nn.Module):
+    def __init__(
+        self,
+        in_features,
+        out_features,
+        activation_fn="selu",
+        init_fn="xavier_uniform",
+        weight=None,
+    ):
+        super().__init__()
+        self.linear = nn.Linear(in_features, out_features)
+        self.activation = get_activation_fn(activation_fn)()
+        if weight is not None:
+            self.linear.weight = nn.Parameter(weight)
+        elif init_fn != "uniform":
+            init = get_init_fn(init_fn)
+            init(self.linear.weight, activation_fn=activation_fn)
+
+    def forward(self, x):
+        encoded = self.linear(x)
+        return self.activation(encoded)
+
+    def get_weight(self):
+        return self.linear.weight
 
 class SequentialLSTM(nn.Module):
     """Documentation needs to be added"""
