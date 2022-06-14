@@ -237,7 +237,6 @@ class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
         decoder_fn,
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-
         device="cpu",
         scale_scores=True,
         window_size=250,
@@ -310,7 +309,7 @@ class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
     def score_one(self, x: dict):
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init:
+        if self.encoder is None or self.decoder is None:
             self._init_net(n_features=x.shape[1])
 
         self.eval()
@@ -386,23 +385,3 @@ class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
             **self._filter_args(self.optimizer_fn),
         )
         return optimizer
-
-    def _filter_args(self, fn, override=None):
-        """Filters `sk_params` and returns those in `fn`'s arguments.
-
-        # Arguments
-            fn : arbitrary function
-            override: dictionary, values to override `torch_params`
-
-        # Returns
-            res : dictionary containing variables
-                in both `sk_params` and `fn`'s arguments.
-        """
-        override = override or {}
-        res = {}
-        for name, value in self.net_params.items():
-            args = list(inspect.signature(fn).parameters)
-            if name in args:
-                res.update({name: value})
-        res.update(override)
-        return res
