@@ -1,6 +1,6 @@
 # Project information
-site_name: Incremental Torch
-site_description: Incremental DL is a Python library for incremental deep learning.
+site_name: Deep River
+site_description: DeepRiver is a Python library for incremental deep learning.
 site_author: Cedric Kulbach
 site_url: https://github.com/kulbachcedric/DeepRiver
 
@@ -22,7 +22,7 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
-  #logo: material/cloud
+  logo: img/logo_square.png
   #favicon: material/cloud
   features:
     - navigation.instant

@@ -1,9 +1,76 @@
 <p align="center">
-  <img height="300px" src="img/logo.png" alt="incremental dl logo" width="300px">
+  <img height="300px" src="img/logo.png" alt="deep river logo" width="300px">
 </p>
 <h1 align="center"><b>Welcome to Deep River</b></h1>
 <p align="center">
-    DeepRiver is a Python library for incremental deep learning.
-    The ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks. 
+    IncrementalTorch is a Python library for online deep learning.
+    IncrementalTorch ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
+    It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>.
 </p>
 
+## 💈 Installation
+```shell
+pip install DeepRiver
+```
+You can install the latest development version from GitHub as so:
+```shell
+pip install https://github.com/kulbachcedric/DeepRiver.git --upgrade
+```
+
+Or, through SSH:
+```shell
+pip install git@github.com:kulbachcedric/DeepRiver.git --upgrade
+```
+
+
+## 🍫 Quickstart
+We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
+The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
+For further examples check out the <a href="http://kulbachcedric.github.io/DeepRiver/">Documentation</a>.
+
+```python
+from river import datasets
+from river import metrics
+from river import preprocessing
+from river import compose
+from DeepRiver import classification
+from torch import nn
+from torch import optim
+from torch import manual_seed
+
+_ = manual_seed(0)
+
+
+def build_torch_mlp_classifier(n_features):  # build neural architecture
+    net = nn.Sequential(
+        nn.Linear(n_features, 5),
+        nn.Linear(5, 5),
+        nn.Linear(5, 5),
+        nn.Linear(5, 5),
+        nn.Linear(5, 1),
+        nn.Sigmoid()
+    )
+    return net
+
+
+model = compose.Pipeline(
+    preprocessing.StandardScaler(),
+    classification.PyTorch2RiverClassifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam,
+                                           learning_rate=1e-3)
+)
+
+dataset = datasets.Phishing()
+metric = metrics.Accuracy()
+
+for x, y in dataset:
+    y_pred = model.predict_one(x)  # make a prediction
+    metric = metric.update(y, y_pred)  # update the metric
+    model = model.learn_one(x, y)  # make the model learn
+
+print(metric)
+```
+
+## 🏫 Affiliations
+<p align="center">
+    <img width=200px src="https://upload.wikimedia.org/wikipedia/de/thumb/4/44/Fzi_logo.svg/1200px-Fzi_logo.svg.png?raw=true" alt="FZI Logo" height="200"/>
+</p>
