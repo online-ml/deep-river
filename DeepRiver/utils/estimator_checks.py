@@ -1,13 +1,5 @@
 """Utilities for unit testing and sanity checking estimators."""
 import copy
-import functools
-import inspect
-import itertools
-import math
-import pickle
-import random
-
-import numpy as np
 
 __all__ = ["check_estimator"]
 
