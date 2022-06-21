@@ -39,7 +39,7 @@ def build_torch_lstm_classifier(n_features, hidden_size):
         nn.Linear(hidden_size, 10),
         nn.ReLU(),
         nn.Linear(10, 1),
-        nn.Sigmoid()
+        nn.Sigmoid(),
     )
     return net
 
@@ -62,6 +62,6 @@ def build_torch_conv1d_classifier(n_features):
         # nn.Sigmoid(),
         # nn.Conv1d(in_channels=1, out_channels=1, kernel_size=1, stride=1, padding=1),
         # nn.Linear(10, 1),
-        nn.Sigmoid()
+        nn.Sigmoid(),
     )
     return net

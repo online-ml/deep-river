@@ -3,27 +3,29 @@ from typing import Type
 
 import pandas as pd
 import torch
-from scipy.special import ndtr
 from river import stats
+from scipy.special import ndtr
 
 from DeepRiver.utils import dict2tensor
+
 from .. import base
 
 
 class ProbabilityWeightedAutoencoder(base.AutoencodedAnomalyDetector):
     """
-        A propability weighted auto encoder
-        ----------
-        encoder_fn
-        decoder_fn
-        loss_fn
-        optimizer_f
-        device
-        skip_threshold
-        scale_scores
-        window_size
-        net_params
+    A propability weighted auto encoder
+    ----------
+    encoder_fn
+    decoder_fn
+    loss_fn
+    optimizer_f
+    device
+    skip_threshold
+    scale_scores
+    window_size
+    net_params
     """
+
     def __init__(
         self,
         encoder_fn,
@@ -61,9 +63,7 @@ class ProbabilityWeightedAutoencoder(base.AutoencodedAnomalyDetector):
         loss = self.loss_fn(x_pred, x)
         loss_item = loss.item()
         mean = self.mean_meter.get()
-        std = (
-                self.var_meter.get() if self.var_meter.get() > 0 else 1
-            )
+        std = self.var_meter.get() if self.var_meter.get() > 0 else 1
         self.mean_meter.update(loss_item)
         self.var_meter.update(loss_item)
 
@@ -79,18 +79,19 @@ class ProbabilityWeightedAutoencoder(base.AutoencodedAnomalyDetector):
 
 class NoDropoutAE(base.AutoencodedAnomalyDetector):
     """
-        No dropout auto encoder
-        ----------
-        encoder_fn
-        decoder_fn
-        loss_fn
-        optimizer_fn
-        device
-        skip_threshold
-        scale_scores
-        window_size
-        net_params
+    No dropout auto encoder
+    ----------
+    encoder_fn
+    decoder_fn
+    loss_fn
+    optimizer_fn
+    device
+    skip_threshold
+    scale_scores
+    window_size
+    net_params
     """
+
     def score_learn_one(self, x: dict) -> float:
         x = dict2tensor(x, device=self.device)
 
@@ -104,10 +105,10 @@ class NoDropoutAE(base.AutoencodedAnomalyDetector):
         self.optimizer.step()
 
         score = loss.item()
-        if self.scale_scores: 
+        if self.scale_scores:
             if self.stat_meter.mean != 0:
                 score /= self.stat_meter.mean
-        
+
             self.stat_meter.update(loss.item())
 
         return score
@@ -115,18 +116,19 @@ class NoDropoutAE(base.AutoencodedAnomalyDetector):
 
 class RollingWindowAutoencoder(base.AutoencodedAnomalyDetector):
     """
-        A rolling window auto encoder
-        ----------
-        encoder_fn
-        decoder_fn
-        loss_fn
-        optimizer_fn
-        device
-        skip_threshold
-        scale_scores
-        window_size
-        net_params
+    A rolling window auto encoder
+    ----------
+    encoder_fn
+    decoder_fn
+    loss_fn
+    optimizer_fn
+    device
+    skip_threshold
+    scale_scores
+    window_size
+    net_params
     """
+
     def __init__(
         self,
         encoder_fn,
@@ -175,18 +177,19 @@ class RollingWindowAutoencoder(base.AutoencodedAnomalyDetector):
 
 class VariationalAutoencoder(base.AutoencodedAnomalyDetector):
     """
-        A propability weighted auto encoder
-        ----------
-        encoder_fn
-        decoder_fn
-        loss_fn
-        optimizer_fn
-        device
-        skip_threshold
-        scale_scores
-        window_size
-        net_params
+    A propability weighted auto encoder
+    ----------
+    encoder_fn
+    decoder_fn
+    loss_fn
+    optimizer_fn
+    device
+    skip_threshold
+    scale_scores
+    window_size
+    net_params
     """
+
     def __init__(
         self,
         encoder_fn,
@@ -241,7 +244,7 @@ class VariationalAutoencoder(base.AutoencodedAnomalyDetector):
         reconstructed = reconstructed.squeeze(0)
 
         latent_loss = torch.mean(
-            -0.5 * torch.sum(1 + log_var - mu ** 2 - log_var.exp(), dim=1), dim=0
+            -0.5 * torch.sum(1 + log_var - mu**2 - log_var.exp(), dim=1), dim=0
         )
         reconstruction_loss = self.loss_fn(reconstructed, x)
         total_loss = reconstruction_loss + self.beta * latent_loss

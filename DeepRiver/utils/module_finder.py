@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
+
 from DeepRiver.utils.optim import SGDHD
 
 
@@ -34,8 +35,8 @@ OPTIMIZER_FNS = {
     "adam": optim.Adam,
     "adam_w": optim.AdamW,
     "sgd": optim.SGD,
-    "rmsprop": optim.RMSprop, 
-    "lbfgs": optim.LBFGS, 
+    "rmsprop": optim.RMSprop,
+    "lbfgs": optim.LBFGS,
     "hd-sgd": SGDHD,
 }
 

@@ -40,7 +40,9 @@ dev_packages = base_packages + [
     "pytest>=4.5.0",
     "pytest-cov>=2.6.1",
     "scikit-learn>=0.22.1",
-    "sqlalchemy>=1.4",
+    "black>=22.1.0",
+    "flake8>=4.0.1",
+    "isort>=5.9.3",
 ]
 
 docs_packages = [

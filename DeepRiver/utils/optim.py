@@ -1,5 +1,6 @@
-import torch
 from functools import reduce
+
+import torch
 from torch.optim import optimizer
 
 
@@ -43,18 +44,34 @@ class SGDHD(optimizer.Optimizer):
         The Nesterov version is analogously modified.
     """
 
-    def __init__(self, params, lr=optimizer.required, momentum=0, dampening=0,
-                 weight_decay=0, nesterov=False, hypergrad_lr=1e-6):
-        defaults = dict(lr=lr, momentum=momentum, dampening=dampening,
-                        weight_decay=weight_decay, nesterov=nesterov, hypergrad_lr=hypergrad_lr)
+    def __init__(
+        self,
+        params,
+        lr=optimizer.required,
+        momentum=0,
+        dampening=0,
+        weight_decay=0,
+        nesterov=False,
+        hypergrad_lr=1e-6,
+    ):
+        defaults = dict(
+            lr=lr,
+            momentum=momentum,
+            dampening=dampening,
+            weight_decay=weight_decay,
+            nesterov=nesterov,
+            hypergrad_lr=hypergrad_lr,
+        )
         if nesterov and (momentum <= 0 or dampening != 0):
             raise ValueError("Nesterov momentum requires a momentum and zero dampening")
         super(SGDHD, self).__init__(params, defaults)
 
         if len(self.param_groups) != 1:
-            raise ValueError("SGDHD doesn't support per-parameter options (parameter groups)")
+            raise ValueError(
+                "SGDHD doesn't support per-parameter options (parameter groups)"
+            )
 
-        self._params = self.param_groups[0]['params']
+        self._params = self.param_groups[0]["params"]
         self._params_numel = reduce(lambda total, p: total + p.numel(), self._params, 0)
 
     def _gather_flat_grad_with_weight_decay(self, weight_decay=0):
@@ -76,7 +93,7 @@ class SGDHD(optimizer.Optimizer):
         for p in self._params:
             numel = p.numel()
             # view as to avoid deprecated pointwise semantics
-            p.data.add_(step_size, update[offset:offset + numel].view_as(p.data))
+            p.data.add_(step_size, update[offset : offset + numel].view_as(p.data))
             offset += numel
         assert offset == self._params_numel
 
@@ -93,10 +110,10 @@ class SGDHD(optimizer.Optimizer):
             loss = closure()
 
         group = self.param_groups[0]
-        weight_decay = group['weight_decay']
-        momentum = group['momentum']
-        dampening = group['dampening']
-        nesterov = group['nesterov']
+        weight_decay = group["weight_decay"]
+        momentum = group["momentum"]
+        dampening = group["dampening"]
+        nesterov = group["nesterov"]
 
         grad = self._gather_flat_grad_with_weight_decay(weight_decay)
 
@@ -105,28 +122,28 @@ class SGDHD(optimizer.Optimizer):
         state = self.state[self._params[0]]
         # State initialization
         if len(state) == 0:
-            state['grad_prev'] = torch.zeros_like(grad)
+            state["grad_prev"] = torch.zeros_like(grad)
 
-        grad_prev = state['grad_prev']
+        grad_prev = state["grad_prev"]
         # Hypergradient for SGD
         h = torch.dot(grad, grad_prev)
         # Hypergradient descent of the learning rate:
-        group['lr'] += group['hypergrad_lr'] * h
+        group["lr"] += group["hypergrad_lr"] * h
 
         if momentum != 0:
-            if 'momentum_buffer' not in state:
-                buf = state['momentum_buffer'] = torch.zeros_like(grad)
+            if "momentum_buffer" not in state:
+                buf = state["momentum_buffer"] = torch.zeros_like(grad)
                 buf.mul_(momentum).add_(grad)
             else:
-                buf = state['momentum_buffer']
+                buf = state["momentum_buffer"]
                 buf.mul_(momentum).add_(1 - dampening, grad)
             if nesterov:
                 grad.add_(momentum, buf)
             else:
                 grad = buf
 
-        state['grad_prev'] = grad
+        state["grad_prev"] = grad
 
-        self._add_grad(-group['lr'], grad)
+        self._add_grad(-group["lr"], grad)
 
         return loss

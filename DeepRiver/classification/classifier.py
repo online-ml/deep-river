@@ -49,15 +49,17 @@ class Classifier(DeepEstimator, base.Classifier):
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)
     Accuracy: 74.38%
     """
-    def __init__(self,
-                 build_fn,
-                 loss_fn: str='ce',
-                 optimizer_fn: typing.Type[torch.optim.Optimizer]=torch.optim.SGD,
-                 learning_rate=1e-3,
-                 device="cpu",
-                 seed=42,
-                 **net_params,
-                 ):
+
+    def __init__(
+        self,
+        build_fn,
+        loss_fn: str = "ce",
+        optimizer_fn: typing.Type[torch.optim.Optimizer] = torch.optim.SGD,
+        learning_rate=1e-3,
+        device="cpu",
+        seed=42,
+        **net_params,
+    ):
         """
 
         Args:
@@ -72,8 +74,8 @@ class Classifier(DeepEstimator, base.Classifier):
         self.variable_classes = True
         self.counter = 0
 
-        if 'n_classes' in net_params:
-            self.n_classes = net_params['n_classes']
+        if "n_classes" in net_params:
+            self.n_classes = net_params["n_classes"]
             self.variable_classes = False
         else:
             self.n_classes = 1
@@ -84,7 +86,7 @@ class Classifier(DeepEstimator, base.Classifier):
             device=device,
             learning_rate=learning_rate,
             seed=seed,
-            **net_params
+            **net_params,
         )
 
     def learn_one(self, x: dict, y: base.typing.ClfTarget, **kwargs) -> base.Classifier:
@@ -102,15 +104,16 @@ class Classifier(DeepEstimator, base.Classifier):
             i = -1
             # Get Layer to convert
             layer_to_convert = layers[i]
-            while not hasattr(layer_to_convert, 'weight'):
+            while not hasattr(layer_to_convert, "weight"):
                 layer_to_convert = layers[i]
                 i -= 1
             if i == -1:
                 i = -2
 
-            new_net = list(self.net.children())[:i + 1]
-            new_layer = torch.nn.Linear(in_features=layer_to_convert.in_features,
-                                        out_features=self.n_classes)
+            new_net = list(self.net.children())[: i + 1]
+            new_layer = torch.nn.Linear(
+                in_features=layer_to_convert.in_features, out_features=self.n_classes
+            )
             # copy the original weights back
             with torch.no_grad():
                 new_layer.weight[:-1, :] = layer_to_convert.weight
@@ -119,10 +122,12 @@ class Classifier(DeepEstimator, base.Classifier):
             new_net.append(new_layer)
             # Add non trainable layers
             if i + 1 < -1:
-                for layer in layers[i + 2:]:
+                for layer in layers[i + 2 :]:
                     new_net.append(layer)
             self.net = torch.nn.Sequential(*new_net)
-            self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
+            self.optimizer = self.optimizer_fn(
+                self.net.parameters(), self.learning_rate
+            )
 
         # training process
         if self.variable_classes:
@@ -169,15 +174,17 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     learning_rate
     net_params
     """
-    def __init__(self,
-                 build_fn,
-                 loss_fn: str='ce',
-                 optimizer_fn: typing.Type[torch.optim.Optimizer]=torch.optim.SGD,
-                 window_size=1,
-                 device="cpu",
-                 learning_rate=1e-3,
-                 **net_params,
-                 ):
+
+    def __init__(
+        self,
+        build_fn,
+        loss_fn: str = "ce",
+        optimizer_fn: typing.Type[torch.optim.Optimizer] = torch.optim.SGD,
+        window_size=1,
+        device="cpu",
+        learning_rate=1e-3,
+        **net_params,
+    ):
         """
         A Rolling Window PyTorch to River Classifier
         Parameters
@@ -198,7 +205,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             window_size=window_size,
             device=device,
             learning_rate=learning_rate,
-            **net_params
+            **net_params,
         )
 
     def learn_one(self, x: dict, y: base.typing.ClfTarget, **kwargs) -> base.Classifier:
@@ -214,24 +221,27 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             layers = list(self.net.children())
             i = -1
             layer_to_convert = layers[i]
-            while not hasattr(layer_to_convert, 'weight'):
+            while not hasattr(layer_to_convert, "weight"):
                 layer_to_convert = layers[i]
                 i -= 1
 
-            removed = list(self.net.children())[:i + 1]
+            removed = list(self.net.children())[: i + 1]
             new_net = removed
-            new_layer = torch.nn.Linear(in_features=layer_to_convert.in_features,
-                                        out_features=self.n_classes)
+            new_layer = torch.nn.Linear(
+                in_features=layer_to_convert.in_features, out_features=self.n_classes
+            )
             # copy the original weights back
             with torch.no_grad():
                 new_layer.weight[:-1, :] = layer_to_convert.weight
                 new_layer.weight[-1:, :] = torch.mean(layer_to_convert.weight, 0)
             new_net.append(new_layer)
             if i + 1 < -1:
-                for layer in layers[i + 2:]:
+                for layer in layers[i + 2 :]:
                     new_net.append(layer)
             self.net = torch.nn.Sequential(*new_net)
-            self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
+            self.optimizer = self.optimizer_fn(
+                self.net.parameters(), self.learning_rate
+            )
 
         # training process
         self._x_window.append(list(x.values()))

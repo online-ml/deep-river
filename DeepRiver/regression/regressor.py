@@ -56,13 +56,14 @@ class Regressor(DeepEstimator, base.Regressor):
     """
 
     def __init__(
-            self,
-            build_fn,
-            optimizer_fn: Type[torch.optim.Optimizer],
-            loss_fn="mse",
-            device="cpu",
-            learning_rate=1e-3,
-            **net_params):
+        self,
+        build_fn,
+        optimizer_fn: Type[torch.optim.Optimizer],
+        loss_fn="mse",
+        device="cpu",
+        learning_rate=1e-3,
+        **net_params
+    ):
         super().__init__(
             build_fn=build_fn,
             loss_fn=loss_fn,
@@ -91,6 +92,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
     learning_rate
     net_params
     """
+
     def predict_one(self, x: dict):
         if self.net is None:
             self._init_net(len(list(x.values())))

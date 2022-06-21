@@ -37,13 +37,13 @@ class Dataset(abc.ABC):
     """
 
     def __init__(
-            self,
-            task,
-            n_features,
-            n_samples=None,
-            n_classes=None,
-            n_outputs=None,
-            sparse=False,
+        self,
+        task,
+        n_features,
+        n_samples=None,
+        n_classes=None,
+        n_outputs=None,
+        sparse=False,
     ):
         self.task = task
         self.n_features = n_features
@@ -122,16 +122,16 @@ class SyntheticDataset(Dataset):
         r_len_config = max(map(len, map(str, params.values())))
 
         out = (
-                "Synthetic data generator\n\n"
-                + "\n".join(
-            k.rjust(l_len_prop) + "  " + v.ljust(r_len_prop)
-            for k, v in self._repr_content.items()
-        )
-                + "\n\nConfiguration\n-------------\n"
-                + "\n".join(
-            k.rjust(l_len_config) + "  " + str(v).ljust(r_len_config)
-            for k, v in params.items()
-        )
+            "Synthetic data generator\n\n"
+            + "\n".join(
+                k.rjust(l_len_prop) + "  " + v.ljust(r_len_prop)
+                for k, v in self._repr_content.items()
+            )
+            + "\n\nConfiguration\n-------------\n"
+            + "\n".join(
+                k.rjust(l_len_config) + "  " + str(v).ljust(r_len_config)
+                for k, v in params.items()
+            )
         )
 
         return out

@@ -6,10 +6,11 @@ from river import base
 
 class ExponentialStandardizer(base.Transformer):
     """
-        An exponential standard scaler
-        ----------
-        momentum
+    An exponential standard scaler
+    ----------
+    momentum
     """
+
     def __init__(self, momentum=0.99, with_std=True):
         self.with_std = with_std
         self.momentum = momentum
@@ -24,13 +25,13 @@ class ExponentialStandardizer(base.Transformer):
             self.mean += (1 - self.momentum) * last_diff
             if self.with_std:
                 self.var = self.momentum * (
-                        self.var + (1 - self.momentum) * last_diff ** 2
+                    self.var + (1 - self.momentum) * last_diff**2
                 )
 
     def transform_one(self, x):
         x_centered = 0 if self.mean is None else x - self.mean
         if self.with_std:
-            x_standardized = np.divide(x_centered, self.var ** 0.5, where=self.var > 0)
+            x_standardized = np.divide(x_centered, self.var**0.5, where=self.var > 0)
         else:
             x_standardized = x_centered
         return x_standardized
@@ -42,10 +43,11 @@ class ExponentialStandardizer(base.Transformer):
 
 class ExponentialMeanScaler(ExponentialStandardizer):
     """
-        An exponential mean scaler
-        ----------
-        momentum
+    An exponential mean scaler
+    ----------
+    momentum
     """
+
     def __init__(self, momentum=0.99) -> None:
         super().__init__(momentum=momentum, with_std=False)
 
@@ -56,10 +58,11 @@ class ExponentialMeanScaler(ExponentialStandardizer):
 
 class WindowedStandardizer(base.Transformer):
     """
-        A windwoed standardizer
-        ----------
-        window_size
+    A windwoed standardizer
+    ----------
+    window_size
     """
+
     def __init__(self, window_size=250) -> None:
         self.values = deque(maxlen=window_size)
         self.window_size = window_size
@@ -84,7 +87,7 @@ class WindowedStandardizer(base.Transformer):
 
     def transform_one(self, x):
         x_centered = 0 if self.mean is None else x - self.mean
-        x_standardized = np.divide(x_centered, self.var ** 0.5, where=self.var > 0)
+        x_standardized = np.divide(x_centered, self.var**0.5, where=self.var > 0)
         return x_standardized
 
     def learn_transform_one(self, x):
@@ -100,10 +103,11 @@ class WindowedStandardizer(base.Transformer):
 
 class WindowedMeanScaler(base.Transformer):
     """
-        An windowed mean scaler
-        ----------
-        windows_size
+    An windowed mean scaler
+    ----------
+    windows_size
     """
+
     def __init__(self, window_size=250) -> None:
         self.values = deque(maxlen=window_size)
         self.window_size = window_size
@@ -131,10 +135,11 @@ class WindowedMeanScaler(base.Transformer):
 
 class WindowedMinMaxScaler(base.Transformer):
     """
-        A windowed min max scaler
-        ----------
-        window_size
+    A windowed min max scaler
+    ----------
+    window_size
     """
+
     def __init__(self, window_size=250) -> None:
         self.values = deque(maxlen=window_size)
         self.window_size = window_size

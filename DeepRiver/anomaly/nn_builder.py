@@ -5,6 +5,7 @@ from torch import nn
 from DeepRiver.utils import get_activation_fn, get_init_fn
 from DeepRiver.utils.layers import DenseBlock
 
+
 def get_fc_encoder(
     n_features,
     dropout=0.1,
@@ -46,6 +47,7 @@ def get_fc_encoder(
         encoder_layers.append(encoder_block)
 
     return nn.Sequential(*encoder_layers)
+
 
 def get_fc_decoder(
     n_features,

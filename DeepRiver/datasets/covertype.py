@@ -6,7 +6,7 @@ from . import base
 class Covertype(base.FileDataset):
     """Forest cover type information.
 
-    Subsample of the original covertype dataset modified for anomaly detection tasks. Class 2 of the original dataset is labeled as normal, class 4 as anomalous. Contains 2747 
+    Subsample of the original covertype dataset modified for anomaly detection tasks. Class 2 of the original dataset is labeled as normal, class 4 as anomalous. Contains 2747
 
     """
 
@@ -32,4 +32,6 @@ class Covertype(base.FileDataset):
         }
 
     def __iter__(self):
-        return stream.iter_csv(self.path, target="Is_Anomaly", converters=self.converters)
+        return stream.iter_csv(
+            self.path, target="Is_Anomaly", converters=self.converters
+        )

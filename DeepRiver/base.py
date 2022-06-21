@@ -5,10 +5,10 @@ from typing import Type
 
 import pandas as pd
 import torch
-from river import base, anomaly, stats
+from river import anomaly, base, stats
 from torch import nn
 
-from DeepRiver.utils import get_loss_fn, get_optimizer_fn, dict2tensor
+from DeepRiver.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
 class DeepEstimator(base.Estimator):
@@ -22,6 +22,7 @@ class DeepEstimator(base.Estimator):
     device
     net_params
     """
+
     def __init__(
         self,
         build_fn,
@@ -257,12 +258,13 @@ class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
 
     @classmethod
     def _unit_test_params(cls):
-
         def encoder_fn(n_features):
-            return nn.Sequential(nn.Linear(n_features, math.ceil(n_features / 2)), nn.LeakyReLU())
+            return nn.Sequential(
+                nn.Linear(n_features, math.ceil(n_features / 2)), nn.LeakyReLU()
+            )
 
         def decoder_fn(n_features):
-            return nn.Sequential(nn.Linear(math.ceil(n_features/2), n_features))
+            return nn.Sequential(nn.Linear(math.ceil(n_features / 2), n_features))
 
         yield {
             "encoder_fn": encoder_fn,
@@ -288,7 +290,6 @@ class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
 
     def learn_one(self, x):
         return self._learn(x)
-
 
     def _learn(self, x):
         x = dict2tensor(x, device=self.device)
