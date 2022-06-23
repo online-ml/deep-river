@@ -348,10 +348,10 @@ class AutoencodedAnomalyDetector(anomaly.AnomalyDetector, nn.Module):
 
     def _init_net(self, n_features):
         self.encoder = self.encoder_fn(
-            n_features=n_features, **self._filter_args(self.build_fn)
+            n_features=n_features, **self._filter_args(self.encoder_fn)
         )
         self.decoder = self.decoder_fn(
-            n_features=n_features, **self._filter_args(self.build_fn)
+            n_features=n_features, **self._filter_args(self.decoder_fn)
         )
 
         self.encoder = self.encoder.to(self.device)
