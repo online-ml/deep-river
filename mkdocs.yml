@@ -5,12 +5,12 @@ site_author: Cedric Kulbach
 site_url: https://github.com/kulbachcedric/DeepRiver
 
 # Repository
-repo_name: DeepRiver
-repo_url: https://github.com/kulbachcedric/DeepRiver
-edit_uri: "https://github.com/kulbachcedric/DeepRiver"
+repo_name: river-torch
+repo_url: https://github.com/online-ml/river-torch
+edit_uri: "https://github.com/online-ml/river-torch"
 
 # Copyright
-copyright: Copyright &copy; 2019 - 2020
+copyright: Copyright &copy; 2019 - 2022
 
 # Configuration
 theme:
@@ -32,7 +32,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/kulbachcedric/DeepRiver
+      link: https://github.com/online-ml/river-torch
 
 # Google Analytics
 google_analytics:
