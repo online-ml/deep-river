@@ -2,7 +2,7 @@ import copy
 from typing import Type
 
 import torch
-from DeepRiver.base import DeepEstimator, RollingDeepEstimator
+from river_torch.base import DeepEstimator, RollingDeepEstimator
 from river import base
 
 

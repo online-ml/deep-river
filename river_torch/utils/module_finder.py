@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from DeepRiver.utils.optim import SGDHD
+from river_torch.utils.optim import SGDHD
 from torch import nn, optim
 
 

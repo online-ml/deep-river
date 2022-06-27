@@ -1,4 +1,4 @@
-from DeepRiver.regression.regressor import Regressor, RollingRegressor
+from river_torch.regression.regressor import Regressor, RollingRegressor
 
 __all__ = [
     "Regressor",

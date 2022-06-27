@@ -3,7 +3,7 @@ import copy
 import typing
 
 import torch
-from DeepRiver.base import DeepEstimator, RollingDeepEstimator
+from river_torch.base import DeepEstimator, RollingDeepEstimator
 from river import base
 
 

@@ -36,6 +36,6 @@ jobs:
           pip install -e ".[dev]" codecov
           
       - name: pytest
-        run: pytest --cov=DeepRiver -m "not datasets"
+        run: pytest --cov=river_torch -m "not datasets"
       - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v2

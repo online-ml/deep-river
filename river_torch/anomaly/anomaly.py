@@ -3,7 +3,7 @@ from typing import Type
 
 import pandas as pd
 import torch
-from DeepRiver.utils import dict2tensor
+from river_torch.utils import dict2tensor
 from river import stats
 from scipy.special import ndtr
 
