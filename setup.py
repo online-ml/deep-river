@@ -12,7 +12,7 @@ except ImportError:
     from numpy import get_include
 
 # Package meta-data.
-NAME = "DeepRiver"
+NAME = "river_torch"
 DESCRIPTION = "Online Deep Learning for river"
 LONG_DESCRIPTION_CONTENT_TYPE = "text/markdown"
 URL = "https://github.com/kulbachcedric/IncrementalTorch"
