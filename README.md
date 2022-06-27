@@ -38,7 +38,7 @@ from river import datasets
 from river import metrics
 from river import preprocessing
 from river import compose
-from DeepRiver import classification
+from river_torch import classification
 from torch import nn
 from torch import optim
 from torch import manual_seed
@@ -81,9 +81,9 @@ print(f'Accuracy: {metric.get()}')
 import math
 
 from river import datasets, metrics
-from DeepRiver.anomaly.nn_builder import get_fc_autoencoder
-from DeepRiver.base import AutoencodedAnomalyDetector
-from DeepRiver.utils import get_activation_fn
+from river_torch.anomaly.nn_builder import get_fc_autoencoder
+from river_torch.base import AutoencodedAnomalyDetector
+from river_torch.utils import get_activation_fn
 from torch import manual_seed, nn
 
 _ = manual_seed(0)
