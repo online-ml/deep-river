@@ -6,7 +6,7 @@ import inspect
 import pytest
 import river
 
-from DeepRiver import utils
+from river_torch import utils
 
 
 def iter_estimators():
