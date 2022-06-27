@@ -5,10 +5,9 @@ from typing import Type
 
 import pandas as pd
 import torch
+from DeepRiver.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 from river import anomaly, base, stats
 from torch import nn
-
-from DeepRiver.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
 class DeepEstimator(base.Estimator):

@@ -2,9 +2,8 @@ import copy
 from typing import Type
 
 import torch
-from river import base
-
 from DeepRiver.base import DeepEstimator, RollingDeepEstimator
+from river import base
 
 
 class Regressor(DeepEstimator, base.Regressor):

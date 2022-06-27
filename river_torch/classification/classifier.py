@@ -3,9 +3,8 @@ import copy
 import typing
 
 import torch
-from river import base
-
 from DeepRiver.base import DeepEstimator, RollingDeepEstimator
+from river import base
 
 
 class Classifier(DeepEstimator, base.Classifier):

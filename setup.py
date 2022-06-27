@@ -43,6 +43,7 @@ dev_packages = base_packages + [
     "black>=22.1.0",
     "flake8>=4.0.1",
     "isort>=5.9.3",
+    "jupyter==1.0.0"
 ]
 
 docs_packages = [

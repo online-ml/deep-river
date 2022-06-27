@@ -1,4 +1,4 @@
-files: DeepRiver
+files: river_torch
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.2.0

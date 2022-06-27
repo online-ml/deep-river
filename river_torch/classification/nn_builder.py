@@ -1,6 +1,5 @@
-from torch import nn
-
 from DeepRiver.utils import SequentialLSTM
+from torch import nn
 
 
 def build_torch_mlp_classifier(n_features, n_classes=2):

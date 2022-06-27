@@ -1,9 +1,8 @@
 import math
 
-from torch import nn
-
 from DeepRiver.utils import get_activation_fn, get_init_fn
 from DeepRiver.utils.layers import DenseBlock
+from torch import nn
 
 
 def get_fc_encoder(
