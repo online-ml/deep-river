@@ -1,3 +1,3 @@
 # Classification
 
-::: DeepRiver.classification.classifier
+::: river_torch.classification.classifier

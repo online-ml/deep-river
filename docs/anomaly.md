@@ -1,7 +1,7 @@
 # Anomaly Detection
 
-::: DeepRiver.anomaly.anomaly
+::: river_torch.anomaly.anomaly
 
 # Postprocessing
 
-::: DeepRiver.anomaly.postprocessing
+::: river_torch.anomaly.postprocessing
