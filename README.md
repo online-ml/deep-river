@@ -124,10 +124,6 @@ Accuracy: 0.8304
 ...     score = model.score_one(x)
 ...     metric = metric.update(y_true=y, y_pred=score)
 ...     model = model.learn_one(x=x)
->>> print(f'ROCAUC: {metric.get()}')
-ROCAUC: 0.50
-
-
 
 ```
 
