@@ -87,9 +87,6 @@ Accuracy: 0.8304
 
 >>> _ = manual_seed(42)
 
->>> def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
-...     activation = get_activation_fn(activation_fn)
-...
 >>> def get_encoder(activation_fn="selu", dropout=0.5, n_features=3):
 ...     activation = get_activation_fn(activation_fn)
 ...     encoder = nn.Sequential(
