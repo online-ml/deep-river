@@ -1,15 +1,7 @@
 import io
 import os
-import subprocess
-import sys
 
 import setuptools
-
-try:
-    from numpy import get_include
-except ImportError:
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "numpy"])
-    from numpy import get_include
 
 # Package meta-data.
 NAME = "river_torch"
