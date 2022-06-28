@@ -43,7 +43,7 @@ For further examples check out the <a href="http://kulbachcedric.github.io/DeepR
 >>> from torch import optim
 >>> from torch import manual_seed
 
->>> _ = manual_seed(0)
+>>> _ = manual_seed(42)
 
 
 >>> def build_torch_mlp_classifier(n_features):  # build neural architecture
@@ -85,7 +85,7 @@ Accuracy: 0.8304
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
 
->>> _ = manual_seed(0)
+>>> _ = manual_seed(42)
 
 >>> def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
 ...     activation = get_activation_fn(activation_fn)
@@ -125,7 +125,8 @@ Accuracy: 0.8304
 ...     metric = metric.update(y_true=y, y_pred=score)
 ...     model = model.learn_one(x=x)
 >>> print(f'ROCAUC: {metric.get()}')
-ROCAUC: 0.49866
+ROCAUC: 0.50
+
 
 
 ```
