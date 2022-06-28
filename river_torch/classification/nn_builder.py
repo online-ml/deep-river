@@ -35,11 +35,7 @@ def build_torch_dynamic_mlp_classifier(n_features, n_classes=2):
 
 def build_torch_lstm_classifier(n_features, hidden_size):
     net = nn.Sequential(
-        SequentialLSTM(
-            input_size=n_features,
-            hidden_size=hidden_size,
-            num_layers=1
-        ),
+        SequentialLSTM(input_size=n_features, hidden_size=hidden_size, num_layers=1),
         nn.Linear(hidden_size, 10),
         nn.ReLU(),
         nn.Linear(10, 1),
