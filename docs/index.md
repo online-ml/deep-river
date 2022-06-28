@@ -1,25 +1,25 @@
 <p align="center">
   <img height="300px" src="img/logo.png" alt="deep river logo" width="300px">
 </p>
-<h1 align="center"><b>Welcome to Deep River</b></h1>
+<h1 align="center"><b>Welcome to river-torch</b></h1>
 <p align="center">
-    IncrementalTorch is a Python library for online deep learning.
-    IncrementalTorch ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
+    river-torch is a Python library for online deep learning.
+    river-torch ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
     It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>.
 </p>
 
 ## 💈 Installation
 ```shell
-pip install DeepRiver
+pip install river-torch
 ```
 You can install the latest development version from GitHub as so:
 ```shell
-pip install https://github.com/kulbachcedric/DeepRiver.git --upgrade
+pip install https://github.com/online-ml/river-torch.git --upgrade
 ```
 
 Or, through SSH:
 ```shell
-pip install git@github.com:kulbachcedric/DeepRiver.git --upgrade
+pip install git@github.com:online-ml/river-torch.git --upgrade
 ```
 
 
@@ -33,7 +33,7 @@ from river import datasets
 from river import metrics
 from river import preprocessing
 from river import compose
-from DeepRiver import classification
+from river_torch import classification
 from torch import nn
 from torch import optim
 from torch import manual_seed
