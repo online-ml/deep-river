@@ -1,7 +1,7 @@
 import math
 
-from DeepRiver.utils import get_activation_fn, get_init_fn
-from DeepRiver.utils.layers import DenseBlock
+from river_torch.utils import get_activation_fn, get_init_fn
+from river_torch.utils.layers import DenseBlock
 from torch import nn
 
 

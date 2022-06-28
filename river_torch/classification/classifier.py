@@ -3,8 +3,9 @@ import copy
 import typing
 
 import torch
-from river_torch.base import DeepEstimator, RollingDeepEstimator
 from river import base
+
+from river_torch.base import DeepEstimator, RollingDeepEstimator
 
 
 class Classifier(DeepEstimator, base.Classifier):

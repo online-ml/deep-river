@@ -1,4 +1,4 @@
-from DeepRiver.utils import SequentialLSTM
+from river_torch.utils import SequentialLSTM
 from torch import nn
 
 

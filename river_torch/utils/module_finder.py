@@ -1,7 +1,8 @@
 import torch
 import torch.nn.functional as F
-from river_torch.utils.optim import SGDHD
 from torch import nn, optim
+
+from river_torch.utils.optim import SGDHD
 
 
 def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
