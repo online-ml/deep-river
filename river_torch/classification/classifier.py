@@ -23,7 +23,6 @@ class Classifier(DeepEstimator, base.Classifier):
     Examples
     --------
 
-    >>> from river import compat
     >>> from river import datasets
     >>> from river import evaluate
     >>> from river import metrics
@@ -31,6 +30,7 @@ class Classifier(DeepEstimator, base.Classifier):
     >>> from torch import nn
     >>> from torch import optim
     >>> from torch import manual_seed
+    >>> from river_torch.classification import Classifier
     >>> _ = manual_seed(0)
     >>> def build_torch_mlp_classifier(n_features):
     ...     net = nn.Sequential(
@@ -43,7 +43,7 @@ class Classifier(DeepEstimator, base.Classifier):
     ...     )
     ...     return net
     ...
-    >>> model = compat.Classifier(build_fn=build_torch_mlp_classifier,loss_fn='bce',optimizer_fn=optim.Adam,learning_rate=1e-3)
+    >>> model = Classifier(build_fn=build_torch_mlp_classifier,loss_fn='bce',optimizer_fn=optim.Adam,learning_rate=1e-3)
     >>> dataset = datasets.Phishing()
     >>> metric = metrics.Accuracy()
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)

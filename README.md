@@ -34,54 +34,53 @@ The following example creates a simple MLP architecture based on PyTorch and inc
 For further examples check out the <a href="http://kulbachcedric.github.io/DeepRiver/">Documentation</a>.
 ### Classification
 ```python
-from river import datasets
-from river import metrics
-from river import preprocessing
-from river import compose
-from river_torch import classification
-from torch import nn
-from torch import optim
-from torch import manual_seed
+>>> from river import datasets
+>>> from river import metrics
+>>> from river import preprocessing
+>>> from river import compose
+>>> from river_torch import classification
+>>> from torch import nn
+>>> from torch import optim
+>>> from torch import manual_seed
 
-_ = manual_seed(0)
-
-
-def build_torch_mlp_classifier(n_features):  # build neural architecture
-    net = nn.Sequential(
-        nn.Linear(n_features, 5),
-        nn.Linear(5, 5),
-        nn.Linear(5, 5),
-        nn.Linear(5, 5),
-        nn.Linear(5, 1),
-        nn.Sigmoid()
-    )
-    return net
+>>> _ = manual_seed(0)
 
 
-model = compose.Pipeline(
-    preprocessing.StandardScaler(),
-    classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam,
-                              learning_rate=1e-3)
-)
+>>> def build_torch_mlp_classifier(n_features):  # build neural architecture
+...     net = nn.Sequential(
+...         nn.Linear(n_features, 5),
+...         nn.Linear(5, 5),
+...         nn.Linear(5, 5),
+...         nn.Linear(5, 5),
+...         nn.Linear(5, 1),
+...         nn.Sigmoid()
+...     )
+...     return net
 
-dataset = datasets.Phishing()
-metric = metrics.Accuracy()
 
-for x, y in dataset:
-    y_pred = model.predict_one(x)  # make a prediction
-    metric = metric.update(y, y_pred)  # update the metric
-    model = model.learn_one(x, y)  # make the model learn
+>>> model = compose.Pipeline(
+...     preprocessing.StandardScaler(),
+...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam, learning_rate=1e-3)
+... )
 
-print(f'Accuracy: {metric.get()}')
+>>> dataset = datasets.Phishing()
+>>> metric = metrics.Accuracy()
+
+>>> for x, y in dataset:
+...     y_pred = model.predict_one(x)  # make a prediction
+...     metric = metric.update(y, y_pred)  # update the metric
+...     model = model.learn_one(x, y)  # make the model learn
+
+>>> print(f'Accuracy: {metric.get()}')
+Accuracy: 0.8304
+
 ```
 
 ### Anomaly Detection
 
 ```python
 >>> import math
-
 >>> from river import datasets, metrics
->>> from river_torch.anomaly.nn_builder import get_fc_autoencoder
 >>> from river_torch.base import AutoencodedAnomalyDetector
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
@@ -91,6 +90,8 @@ print(f'Accuracy: {metric.get()}')
 >>> def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
 ...     activation = get_activation_fn(activation_fn)
 ...
+>>> def get_encoder(activation_fn="selu", dropout=0.5, n_features=3):
+...     activation = get_activation_fn(activation_fn)
 ...     encoder = nn.Sequential(
 ...         nn.Dropout(p=dropout),
 ...         nn.Linear(in_features=n_features, out_features=math.ceil(n_features / 2)),
@@ -98,25 +99,34 @@ print(f'Accuracy: {metric.get()}')
 ...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=math.ceil(n_features / 4)),
 ...         activation(),
 ...     )
+...     return encoder
+
+>>> def get_decoder(activation_fn="selu", dropout=0.5, n_features=3):
+...     activation = get_activation_fn(activation_fn)
 ...     decoder = nn.Sequential(
 ...         nn.Linear(in_features=math.ceil(n_features / 4), out_features=math.ceil(n_features / 2)),
 ...         activation(),
 ...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
 ...     )
-...     return encoder, decoder
+...     return decoder
 
 
 >>> dataset = datasets.CreditCard().take(5000)
 >>> metric = metrics.ROCAUC()
+>>> encoder_fn = get_encoder
+>>> decoder_fn = get_decoder
+>>> dataset = datasets.CreditCard().take(5000)
+>>> metric = metrics.ROCAUC()
 
->>> model = AutoencodedAnomalyDetector(build_fn=get_fully_conected_autoencoder, lr=0.01)
+>>> model = AutoencodedAnomalyDetector(encoder_fn=encoder_fn,decoder_fn=decoder_fn, lr=0.01)
 
->>> for x, y in dataset:
+>>> for x,y in dataset:
 ...     score = model.score_one(x)
-...     metric.update(y_true=y, y_pred=score)
-...     model.learn_one(x=x)
+...     metric = metric.update(y_true=y, y_pred=score)
+...     model = model.learn_one(x=x)
+>>> print(f'ROCAUC: {metric.get()}')
+ROCAUC: 0.49866
 
->>> print(metric)
 
 ```
 

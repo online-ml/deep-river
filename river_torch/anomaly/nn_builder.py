@@ -1,8 +1,7 @@
 import math
 
-from river_torch.utils import get_activation_fn, get_init_fn
-from river_torch.utils.layers import DenseBlock
 from torch import nn
+from river_torch.utils.layers import DenseBlock
 
 
 def get_fc_encoder(

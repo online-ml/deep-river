@@ -2,8 +2,6 @@ import torch
 import torch.nn.functional as F
 from torch import nn, optim
 
-from river_torch.utils.optim import SGDHD
-
 
 def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
     return torch.sqrt(F.mse_loss(input, target, size_average, reduce, reduction))
@@ -37,7 +35,6 @@ OPTIMIZER_FNS = {
     "sgd": optim.SGD,
     "rmsprop": optim.RMSprop,
     "lbfgs": optim.LBFGS,
-    "hd-sgd": SGDHD,
 }
 
 INIT_FNS = {

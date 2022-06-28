@@ -1,5 +1,6 @@
-from river_torch.utils import SequentialLSTM
 from torch import nn
+
+from river_torch.utils import SequentialLSTM
 
 
 def build_torch_mlp_classifier(n_features, n_classes=2):

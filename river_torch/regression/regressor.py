@@ -20,11 +20,11 @@ class Regressor(DeepEstimator, base.Regressor):
     Examples
     --------
 
-    >>> from river import compat
     >>> from river import datasets
     >>> from river import evaluate
     >>> from river import metrics
     >>> from river import preprocessing
+    >>> from river_torch.regression import Regressor
     >>> import torch
     >>> from torch import nn
     >>> from torch import optim
@@ -32,26 +32,29 @@ class Regressor(DeepEstimator, base.Regressor):
     >>> _ = torch.manual_seed(0)
 
     >>> dataset = datasets.TrumpApproval()
+    >>> def build_torch_mlp(n_features):
+    ...     net = nn.Sequential(
+    ...         nn.Linear(n_features, 5),
+    ...         nn.Linear(5, 1),
+    ...         nn.Softmax()
+    ...     )
+    ...     return net
+    ...
 
-    >>> n_features = 6
-    >>> net = nn.Sequential(
-    ...     nn.Linear(n_features, 3),
-    ...     nn.Linear(3, 1)
-    ... )
 
     >>> model = (
     ...     preprocessing.StandardScaler() |
-    ...     compat.Regressor(
-    ...         net=net,
-    ...         loss_fn=nn.MSELoss(),
-    ...         optimizer_fn=optim.SGD(net.parameters(), lr=1e-3),
+    ...     Regressor(
+    ...         build_fn=build_torch_mlp,
+    ...         loss_fn='mse',
+    ...         optimizer_fn=torch.optim.SGD,
     ...         batch_size=2
     ...     )
     ... )
     >>> metric = metrics.MAE()
 
     >>> evaluate.progressive_val_score(dataset, model, metric).get()
-    2.78258
+    39.7545
 
     """
 
