@@ -1,6 +1,7 @@
 import math
 
 from torch import nn
+
 from river_torch.utils.layers import DenseBlock
 
 
