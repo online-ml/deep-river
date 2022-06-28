@@ -31,7 +31,7 @@ pip install git@github.com:online-ml/river-torch.git --upgrade
 ## 🍫 Quickstart
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
-For further examples check out the <a href="http://kulbachcedric.github.io/DeepRiver/">Documentation</a>.
+For further examples check out the <a href="https://online-ml.github.io/river-torch">Documentation</a>.
 ### Classification
 ```python
 >>> from river import datasets
