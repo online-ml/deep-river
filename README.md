@@ -78,47 +78,46 @@ print(f'Accuracy: {metric.get()}')
 ### Anomaly Detection
 
 ```python
-import math
+>>> import math
 
-from river import datasets, metrics
-from river_torch.anomaly.nn_builder import get_fc_autoencoder
-from river_torch.base import AutoencodedAnomalyDetector
-from river_torch.utils import get_activation_fn
-from torch import manual_seed, nn
+>>> from river import datasets, metrics
+>>> from river_torch.anomaly.nn_builder import get_fc_autoencoder
+>>> from river_torch.base import AutoencodedAnomalyDetector
+>>> from river_torch.utils import get_activation_fn
+>>> from torch import manual_seed, nn
 
-_ = manual_seed(0)
+>>> _ = manual_seed(0)
+
+>>> def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
+...     activation = get_activation_fn(activation_fn)
+...
+...     encoder = nn.Sequential(
+...         nn.Dropout(p=dropout),
+...         nn.Linear(in_features=n_features, out_features=math.ceil(n_features / 2)),
+...         activation(),
+...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=math.ceil(n_features / 4)),
+...         activation(),
+...     )
+...     decoder = nn.Sequential(
+...         nn.Linear(in_features=math.ceil(n_features / 4), out_features=math.ceil(n_features / 2)),
+...         activation(),
+...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
+...     )
+...     return encoder, decoder
 
 
-def get_fully_conected_autoencoder(activation_fn="selu", dropout=0.5, n_features=3):
-    activation = get_activation_fn(activation_fn)
+>>> dataset = datasets.CreditCard().take(5000)
+>>> metric = metrics.ROCAUC()
 
-    encoder = nn.Sequential(
-        nn.Dropout(p=dropout),
-        nn.Linear(in_features=n_features, out_features=math.ceil(n_features / 2)),
-        activation(),
-        nn.Linear(in_features=math.ceil(n_features / 2), out_features=math.ceil(n_features / 4)),
-        activation(),
-    )
-    decoder = nn.Sequential(
-        nn.Linear(in_features=math.ceil(n_features / 4), out_features=math.ceil(n_features / 2)),
-        activation(),
-        nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
-    )
-    return encoder, decoder
+>>> model = AutoencodedAnomalyDetector(build_fn=get_fully_conected_autoencoder, lr=0.01)
 
+>>> for x, y in dataset:
+...     score = model.score_one(x)
+...     metric.update(y_true=y, y_pred=score)
+...     model.learn_one(x=x)
 
-if __name__ == '__main__':
+>>> print(metric)
 
-    dataset = datasets.CreditCard().take(5000)
-    metric = metrics.ROCAUC()
-
-    model = AutoencodedAnomalyDetector(build_fn=get_fully_conected_autoencoder, lr=0.01)
-
-    for x, y in dataset:
-        score = model.score_one(x)
-        metric.update(y_true=y, y_pred=score)
-        model.learn_one(x=x)
-    print(f'ROCAUC: {metric.get()}')
 ```
 
 ## 🏫 Affiliations
