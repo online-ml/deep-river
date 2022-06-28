@@ -1,0 +1,15 @@
+[tool.pytest.ini_options]
+addopts = [
+    "--doctest-modules",
+    "--doctest-glob=README.md",
+    "--verbose",
+    "-ra",
+    "--color=yes",
+]
+doctest_optionflags = "NORMALIZE_WHITESPACE NUMBER ELLIPSIS"
+norecursedirs = [
+    "build",
+    "docs",
+    ".eggs",
+    "site",
+]
