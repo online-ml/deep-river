@@ -28,10 +28,8 @@ def get_fc_encoder(
         if variational
         else [activation_fn] * n_layers
     )
-    decoder_activations = [activation_fn] * (n_layers - 1) + [final_activation]
 
     encoder_layers = [nn.Dropout(dropout)] if dropout > 0 else []
-    decoder_layers = []
 
     for layer_idx in range(len(layer_sizes) - 1):
         encoder_out = layer_sizes[layer_idx + 1]

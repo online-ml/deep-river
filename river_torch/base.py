@@ -81,7 +81,7 @@ class DeepEstimator(base.Estimator):
         try:
             loss = self.loss(y_pred, y)
         except:
-            loss = self.loss(y_pred, torch.argmax(y, 1))  # TODO CHECK loss
+            loss = self.loss(y_pred, torch.argmax(y, 1))
         loss.backward()
         self.optimizer.step()
 

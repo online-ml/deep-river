@@ -148,17 +148,13 @@ class Classifier(DeepEstimator, base.Classifier):
             self._init_net(len(list(x.values())))
         x = torch.Tensor(list(x.values()))
         yp = self.net(x).detach().numpy()
-        # proba = {c: 0.0 for c in self.classes} # TODO CHECK from here
         if self.variable_classes:
             proba = {c: 0.0 for c in self.classes}
             for idx, val in enumerate(self.classes):
                 proba[val] = yp[idx]
         else:
-            proba = {c: yp[c] for c in range(self.n_classes)}  ##NEW
-            # proba = {c: 0.0 for c in range(self.n_classes)}
+            proba = {c: yp[c] for c in range(self.n_classes)}
 
-        # for idx, val in enumerate(self.classes):
-        #    proba[val] = yp[idx]
         return proba
 
 
