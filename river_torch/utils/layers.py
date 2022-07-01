@@ -61,7 +61,3 @@ class SequentialLSTM(nn.Module):
         hn = hn.view(-1, self.hidden_size)  # reshaping the data for Dense layer next
 
         return hn
-
-
-def init_weights(layer: nn.Module, init_fn: str = "xavier_uniform"):
-    init_fn = get_init_fn(init_fn)
