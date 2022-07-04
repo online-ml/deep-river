@@ -5,6 +5,7 @@ import torch
 from river import base
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
+from river_torch.utils.river_compat import dict2tensor, list2tensor
 
 
 class Regressor(DeepEstimator, base.Regressor):
@@ -79,7 +80,7 @@ class Regressor(DeepEstimator, base.Regressor):
     def predict_one(self, x):
         if self.net is None:
             self._init_net(len(x))
-        x = torch.Tensor(list(x.values()))
+        x = dict2tensor(x, self.device)
         return self.net(x).item()
 
 
@@ -103,11 +104,11 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
             if self.append_predict:
                 self._x_window.append(list(x.values()))
-                x = torch.Tensor([self._x_window])
+                x = list2tensor(self._x_window, self.device)
             else:
-                l = copy.deepcopy(self._x_window)
-                l.append(list(x.values()))
-                x = torch.Tensor([l])
+                x = copy.deepcopy(self._x_window)
+                x.append(list(x.values()))
+                x = list2tensor(x, self.device)
             return self.net(x).item()
         else:
             return 0.0
