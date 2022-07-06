@@ -6,12 +6,13 @@ import torch
 from river import stats
 from scipy.special import ndtr
 
+import river_torch.anomaly.base
 from river_torch.utils import dict2tensor
 
 from .. import base
 
 
-class ProbabilityWeightedAutoencoder(base.AutoencodedAnomalyDetector):
+class ProbabilityWeightedAutoencoder(river_torch.anomaly.base.AutoEncoder):
     """
     A propability weighted auto encoder
     ----------
@@ -77,7 +78,7 @@ class ProbabilityWeightedAutoencoder(base.AutoencodedAnomalyDetector):
         return self
 
 
-class NoDropoutAE(base.AutoencodedAnomalyDetector):
+class NoDropoutAE(river_torch.anomaly.base.AutoEncoder):
     """
     No dropout auto encoder
     ----------
@@ -114,7 +115,7 @@ class NoDropoutAE(base.AutoencodedAnomalyDetector):
         return score
 
 
-class RollingWindowAutoencoder(base.AutoencodedAnomalyDetector):
+class RollingWindowAutoencoder(river_torch.anomaly.base.AutoEncoder):
     """
     A rolling window auto encoder
     ----------
@@ -175,7 +176,7 @@ class RollingWindowAutoencoder(base.AutoencodedAnomalyDetector):
         return self
 
 
-class VariationalAutoencoder(base.AutoencodedAnomalyDetector):
+class VariationalAutoencoder(river_torch.anomaly.base.AutoEncoder):
     """
     A propability weighted auto encoder
     ----------
