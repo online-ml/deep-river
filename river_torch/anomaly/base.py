@@ -11,6 +11,7 @@ from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
 class AutoEncoder(anomaly.AnomalyDetector):
+
     def __init__(
         self,
         encoder_fn,
