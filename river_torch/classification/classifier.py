@@ -6,6 +6,7 @@ import torch
 from river import base
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
+from river_torch.utils.river_compat import dict2tensor, list2tensor, scalar2tensor
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -92,10 +93,10 @@ class Classifier(DeepEstimator, base.Classifier):
     def learn_one(self, x: dict, y: base.typing.ClfTarget, **kwargs) -> base.Classifier:
         self.counter += 1
         self.classes.update([y])
-
+        x = dict2tensor(x, device=self.device)
         # check if model is initialized
         if self.net is None:
-            self._init_net(len(list(x.values())))
+            self._init_net(x.shape[1])
 
         # check last layer
         if (len(self.classes) != self.n_classes) and (self.variable_classes):
@@ -135,19 +136,18 @@ class Classifier(DeepEstimator, base.Classifier):
         else:
             proba = {c: 0.0 for c in range(self.n_classes)}
         proba[y] = 1.0
-        x = list(x.values())
-        y = list(proba.values())
+        
+        y = dict2tensor(proba, device=self.device)
 
-        x = torch.Tensor([x])
-        y = torch.Tensor([y])
         self._learn_one(x=x, y=y)
         return self
 
     def predict_proba_one(self, x: dict) -> typing.Dict[base.typing.ClfTarget, float]:
+        x = dict2tensor(x, device=self.device)
         if self.net is None:
-            self._init_net(len(list(x.values())))
-        x = torch.Tensor(list(x.values()))
-        yp = self.net(x).detach().numpy()
+            self._init_net(x.shape[1])
+        yp = self.net(x).detach().numpy()[0]
+
         if self.variable_classes:
             proba = {c: 0.0 for c in self.classes}
             for idx, val in enumerate(self.classes):
@@ -246,9 +246,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         y = list(proba.values())
 
         if len(self._x_window) == self.window_size:
-            x = torch.Tensor([self._x_window])
+            x = list2tensor(self._x_window, device=self.device)
             [y.append(0.0) for i in range(self.n_classes - len(y))]
-            y = torch.Tensor([y])
+            y = scalar2tensor(y, device=self.device)
             self._learn_batch(x=x, y=y)
         return self
 
@@ -256,12 +256,14 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if self.net is None:
             self._init_net(len(list(x.values())))
         if len(self._x_window) == self.window_size:
-            l = copy.deepcopy(self._x_window)
-            l.append(list(x.values()))
             if self.append_predict:
                 self._x_window.append(list(x.values()))
-
-            x = torch.Tensor([l])
+                x = self._x_window
+            else: 
+                x = copy.deepcopy(self._x_window)
+                x.append(list(x.values()))
+            
+            x = list2tensor(x, device=self.device)
             yp = self.net(x).detach().numpy()
             proba = {c: 0.0 for c in self.classes}
             for idx, val in enumerate(self.classes):

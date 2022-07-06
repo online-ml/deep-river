@@ -112,8 +112,6 @@ Accuracy: 0.8304
 >>> metric = metrics.ROCAUC()
 >>> encoder_fn = get_encoder
 >>> decoder_fn = get_decoder
->>> dataset = datasets.CreditCard().take(5000)
->>> metric = metrics.ROCAUC()
 
 >>> model = AutoencodedAnomalyDetector(encoder_fn=encoder_fn,decoder_fn=decoder_fn, lr=0.01)
 

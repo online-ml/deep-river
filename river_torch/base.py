@@ -9,6 +9,7 @@ from river import anomaly, base, stats
 from torch import nn
 
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
+from river_torch.utils.river_compat import list2tensor, scalar2tensor
 
 
 class DeepEstimator(base.Estimator):
@@ -33,6 +34,7 @@ class DeepEstimator(base.Estimator):
         seed=42,
         **net_params
     ):
+        super().__init__()
         self.build_fn = build_fn
         self.loss_fn = loss_fn
         self.loss = get_loss_fn(loss_fn=loss_fn)
@@ -86,13 +88,12 @@ class DeepEstimator(base.Estimator):
         self.optimizer.step()
 
     def learn_one(self, x, y):
-        if self.net is None:
-            self._init_net(n_features=len(list(x.values())))
+        x = dict2tensor(x, device=self.device)
+        y = scalar2tensor(y, device=self.device)
 
-        x = torch.Tensor([list(x.values())])
-        x = x.to(self.device)
-        y = torch.Tensor([[y]])
-        y = y.to(self.device)  # todo check if this works
+        if self.net is None:
+            self._init_net(n_features=x.shape[1])
+
         self._learn_one(x=x, y=y)
         return self
 
@@ -196,10 +197,8 @@ class RollingDeepEstimator(base.Estimator):
             self._init_net(n_features=len(list(x.values())))
 
         if len(self._x_window) == self.window_size:
-            x = torch.Tensor([self._x_window])
-            x = x.to(self.device)
-            y = torch.Tensor([[y]])
-            y = y.to(self.device)
+            x = list2tensor(list(self._x_window), device=self.device)
+            y = scalar2tensor(y, device=self.device)
             self._learn_batch(x=x, y=y)
         return self
 
