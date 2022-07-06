@@ -81,7 +81,7 @@ Accuracy: 0.8304
 ```python
 >>> import math
 >>> from river import datasets, metrics
->>> from river_torch.base import AutoencodedAnomalyDetector
+>>> from river_torch.anomaly import AutoEncoder
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
 
