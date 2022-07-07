@@ -1,6 +1,6 @@
 # Anomaly Detection
 
-::: river_torch.anomaly.anomaly
+::: river_torch.anomaly.base
 
 # Postprocessing
 
