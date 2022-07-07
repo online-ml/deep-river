@@ -6,7 +6,7 @@ from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
 
-class VariationalAutoencoder(base.AutoEncoder):
+class VariationalAutoencoder(base.Autoencoder):
     """
     A propability weighted auto encoder
     ----------

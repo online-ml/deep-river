@@ -4,7 +4,8 @@ import torch
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
-class RollingWindowAutoencoder(base.AutoEncoder):
+
+class RollingWindowAutoencoder(base.Autoencoder):
     """
     A rolling window auto encoder
     ----------

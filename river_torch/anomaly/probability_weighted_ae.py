@@ -9,7 +9,8 @@ from scipy.special import ndtr
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
-class ProbabilityWeightedAutoencoder(base.AutoEncoder):
+
+class ProbabilityWeightedAutoencoder(base.Autoencoder):
     """
     A propability weighted auto encoder
     ----------

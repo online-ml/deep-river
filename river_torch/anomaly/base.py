@@ -11,7 +11,7 @@ from torch import nn
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
-class AutoEncoder(anomaly.AnomalyDetector, nn.Module):
+class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     """
     Base Auto Encoder
     ----------
@@ -182,8 +182,34 @@ class AutoEncoder(anomaly.AnomalyDetector, nn.Module):
 
 
 class AnomalyScaler(base.Wrapper, anomaly.AnomalyDetector):
+    """AnomalyScaler is a wrapper around an anomaly detector that scales the output of the model.
+
+    Parameters
+    ----------
+    anomaly_detector
+    """
+
     def __init__(self, anomaly_detector: anomaly.AnomalyDetector):
         self.anomaly_detector = anomaly_detector
+
+    @classmethod
+    def _unit_test_params(self):
+        yield {"anomaly_detector": anomaly.HalfSpaceTrees()}
+
+    @classmethod
+    def _unit_test_skips(self):
+        """Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
 
     @property
     def _wrapped_model(self):
