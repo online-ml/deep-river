@@ -15,7 +15,6 @@ class RollingWindowAutoencoder(base.Autoencoder):
     optimizer_fn
     device
     skip_threshold
-    scale_scores
     window_size
     net_params
     """
@@ -43,9 +42,9 @@ class RollingWindowAutoencoder(base.Autoencoder):
         self._batch_i = 0
 
     def _learn_batch(self, x: torch.Tensor):
-        self.train()
+        self.encoder.train()
 
-        x_pred = self(x)
+        x_pred = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_pred, x)
 
         self.optimizer.zero_grad()

@@ -16,8 +16,6 @@ class VariationalAutoencoder(base.Autoencoder):
     optimizer_fn
     device
     skip_threshold
-    scale_scores
-    window_size
     net_params
     """
 
@@ -29,7 +27,6 @@ class VariationalAutoencoder(base.Autoencoder):
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         device="cpu",
         n_reconstructions=10,
-        scale_scores=True,
         beta=1,
         **net_params,
     ):
@@ -42,7 +39,6 @@ class VariationalAutoencoder(base.Autoencoder):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             device=device,
-            scale_scores=scale_scores,
             **net_params,
         )
         self.n_reconstructions = n_reconstructions
@@ -69,7 +65,7 @@ class VariationalAutoencoder(base.Autoencoder):
         if self.to_init is True:
             self._init_net(n_features=x.shape[1])
 
-        self.train()
+        self.encoder.train()
         mu, log_var = self.encode(x)
         reconstructed = self.decode(mu, log_var)
         reconstructed = reconstructed.squeeze(0)
@@ -80,8 +76,6 @@ class VariationalAutoencoder(base.Autoencoder):
         reconstruction_loss = self.loss_fn(reconstructed, x)
         total_loss = reconstruction_loss + self.beta * latent_loss
 
-        if self.scaler is not None:
-            self.scaler.learn_one(reconstruction_loss.item())
         self.zero_grad()
         total_loss.backward()
         self.optimizer.step()
@@ -101,8 +95,6 @@ class VariationalAutoencoder(base.Autoencoder):
         loss = self.loss_fn(
             reconstructed, x.repeat((self.n_reconstructions, *[1] * x.dim()))
         ).item()
-        if self.scaler is not None and self.scaler.mean is not None:
-            loss /= self.scaler.mean
         return loss
 
     def score_learn_one(self, x: dict):

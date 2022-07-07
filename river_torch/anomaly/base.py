@@ -11,7 +11,7 @@ from torch import nn
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
-class Autoencoder(anomaly.AnomalyDetector, nn.Module):
+class Autoencoder(anomaly.AnomalyDetector):
     """
     Base Auto Encoder
     ----------
@@ -20,8 +20,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
     loss_fn
     optimizer_fn
     device
-    scale_scores
-    window_size
     net_params
     """
 
@@ -32,8 +30,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         device="cpu",
-        scale_scores=True,
-        window_size=250,
         **net_params
     ):
         super().__init__()
@@ -45,9 +41,6 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         self.optimizer_fn = get_optimizer_fn(optimizer_fn)
         self.net_params = net_params
         self.device = device
-        self.mean_meter = stats.RollingMean(window_size) if scale_scores else None
-        self.scale_scores = scale_scores
-        self.window_size = window_size
 
     @classmethod
     def _unit_test_params(cls):
@@ -90,14 +83,12 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         if self.encoder is None or self.decoder is None:
             self._init_net(n_features=x.shape[1])
 
-        self.train()
-        x_pred = self(x)
+        self.encoder.train()
+        x_pred = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_pred, x)
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
-        if self.scale_scores:
-            self.mean_meter.update(loss.item())
         return self
 
     def score_one(self, x: dict):
@@ -106,12 +97,10 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
         if self.encoder is None or self.decoder is None:
             self._init_net(n_features=x.shape[1])
 
-        self.eval()
+        self.encoder.eval()
         with torch.inference_mode():
-            x_rec = self(x)
+            x_rec = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_rec, x).item()
-        if self.scale_scores and self.mean_meter.get() != 0:
-            loss /= self.mean_meter.get()
         return loss
 
     def learn_many(self, x: pd.DataFrame):
@@ -126,18 +115,13 @@ class Autoencoder(anomaly.AnomalyDetector, nn.Module):
 
         self.eval()
         with torch.inference_mode():
-            x_rec = self(x)
+            x_rec = self.decoder(self.encoder(x))
         loss = torch.mean(
             self.loss_fn(x_rec, x, reduction="none"),
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
-        if self.scale_scores and self.mean_meter.get() != 0:
-            score /= self.mean_meter.get()
         return score
-
-    def forward(self, x):
-        return self.decoder(self.encoder(x))
 
     def _init_net(self, n_features):
         self.encoder = self.encoder_fn(
