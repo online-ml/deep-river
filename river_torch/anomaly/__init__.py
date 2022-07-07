@@ -17,7 +17,6 @@ __all__ = [
     "Autoencoder",
     "VariationalAutoencoder",
     "RollingWindowAutoencoder",
-    "WindowedStandardizer",
     "ProbabilityWeightedAutoencoder",
     "StandardScaler",
     "MeanScaler",

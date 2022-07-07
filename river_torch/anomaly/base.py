@@ -5,13 +5,13 @@ from typing import Type
 
 import pandas as pd
 import torch
-from river import anomaly, base, stats
+from river import anomaly, base
 from torch import nn
 
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
-class Autoencoder(anomaly.AnomalyDetector):
+class Autoencoder(anomaly.base.AnomalyDetector):
 
     """
     Base Auto Encoder
@@ -166,7 +166,7 @@ class Autoencoder(anomaly.AnomalyDetector):
         return optimizer
 
 
-class AnomalyScaler(base.Wrapper, anomaly.AnomalyDetector):
+class AnomalyScaler(base.Wrapper, anomaly.base.AnomalyDetector):
     """AnomalyScaler is a wrapper around an anomaly detector that scales the output of the model.
 
     Parameters
@@ -174,7 +174,7 @@ class AnomalyScaler(base.Wrapper, anomaly.AnomalyDetector):
     anomaly_detector
     """
 
-    def __init__(self, anomaly_detector: anomaly.AnomalyDetector):
+    def __init__(self, anomaly_detector: anomaly.base.AnomalyDetector):
         self.anomaly_detector = anomaly_detector
 
     @classmethod
@@ -215,7 +215,7 @@ class AnomalyScaler(base.Wrapper, anomaly.AnomalyDetector):
         normal observation.
         """
 
-    def learn_one(self, *args) -> anomaly.AnomalyDetector:
+    def learn_one(self, *args) -> anomaly.base.AnomalyDetector:
         """Update the anomaly calibrator and the underlying anomaly detector.
         Parameters
         ----------
