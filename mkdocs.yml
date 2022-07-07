@@ -15,6 +15,7 @@ copyright: Copyright &copy; 2019 - 2022
 # Configuration
 theme:
   name: material
+  custom_dir: docs/overrides
   language: en
   palette:
     primary: indigo
@@ -25,10 +26,10 @@ theme:
   logo: img/logo_square.png
   #favicon: material/cloud
   features:
-    - navigation.instant
     - navigation.tabs
+    - navigation.instant
     - navigation.indexes
-    - navigation.tracking
+    #- navigation.tracking
 
 # Extras
 extra:
@@ -37,11 +38,6 @@ extra:
       link: https://github.com/online-ml/river-torch
   version:
     - provider: mike
-
-# Google Analytics
-google_analytics:
-  - UA-63302552-3
-  - auto
 
 # Extensions
 markdown_extensions:
@@ -53,7 +49,7 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.arithmatex:
       generic: true
-  - pymdownx.highlight
+  - pymdownx.details
   - pymdownx.superfences
 
 plugins:
@@ -64,18 +60,9 @@ plugins:
   - mkdocs-jupyter
 
 extra_javascript:
-
+  - javascripts/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 extra_css:
+  - stylesheets/extra.css
 
-nav:
-  - Home: index.md
-  - Installation: installation.md
-  - Code Reference:
-      - Classification: classification.md
-      - Regression: regression.md
-      - Anomaly: anomaly.md
-  - Examples:
-      - Classification: examples/example_classification.ipynb
-      - Regression: examples/example_regression.ipynb
-      - Anomaly Detection: examples/example_ae.ipynb
-  - About: about.md
