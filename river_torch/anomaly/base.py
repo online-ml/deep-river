@@ -4,13 +4,13 @@ from typing import Type
 
 import pandas as pd
 import torch
-from river import anomaly, stats
+from river import stats, anomaly
 from torch import nn
 
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
-class AutoEncoder(anomaly.AnomalyDetector, nn.Module):
+class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
     """
     Base Auto Encoder
     ----------
