@@ -1,8 +1,6 @@
 from .base import AnomalyScaler
 from river.stats import EWMean, RollingMean, RollingMin, RollingMax, Mean, Min, Max
 
-from river_torch import anomaly
-
 
 class StandardScaler(AnomalyScaler):
     def __init__(self, anomaly_detector, with_std=True):
@@ -103,7 +101,7 @@ class MeanScaler(AnomalyScaler):
 
 
 class MinMaxScaler(AnomalyScaler):
-    def __init__(self, anomaly_detector: anomaly.AnomalyDetector):
+    def __init__(self, anomaly_detector):
         super().__init__(anomaly_detector)
         self.min = Min()
         self.max = Max()
@@ -180,14 +178,14 @@ class RollingMinMaxScaler(MinMaxScaler):
 
 
 class RollingMeanScaler(MeanScaler):
-    def __init__(self, anomaly_detector: anomaly.AnomalyDetector, window_size=250):
+    def __init__(self, anomaly_detector, window_size=250):
         super().__init__(anomaly_detector)
         self.window_size = window_size
         self.mean = RollingMean(window_size=window_size)
 
 
 class AdaptiveMeanScaler(MeanScaler):
-    def __init__(self, anomaly_detector: anomaly.AnomalyDetector, alpha=0.3):
+    def __init__(self, anomaly_detector, alpha=0.3):
         super().__init__(anomaly_detector)
         self.alpha = alpha
         self.mean = EWMean(alpha=alpha)
