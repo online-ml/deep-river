@@ -10,8 +10,19 @@ from torch import nn
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
 
-class AutoEncoder(anomaly.AnomalyDetector):
-
+class AutoEncoder(anomaly.AnomalyDetector, nn.Module):
+    """
+    Base Auto Encoder
+    ----------
+    encoder_fn
+    decoder_fn
+    loss_fn
+    optimizer_fn
+    device
+    scale_scores
+    window_size
+    net_params
+    """
     def __init__(
         self,
         encoder_fn,
