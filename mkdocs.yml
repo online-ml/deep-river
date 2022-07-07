@@ -1,8 +1,8 @@
 # Project information
-site_name: Deep River
-site_description: DeepRiver is a Python library for incremental deep learning.
+site_name: river-torch
+site_description: river-torch is a Python library for incremental deep learning and serves as extension for river.
 site_author: Cedric Kulbach
-site_url: https://github.com/kulbachcedric/DeepRiver
+site_url: https://github.com/kulbachcedric/river-torch
 
 # Repository
 repo_name: river-torch
@@ -17,15 +17,17 @@ theme:
   name: material
   language: en
   palette:
-    primary: blue
-    accent: grey
+    primary: indigo
+    accent: indigo
   font:
-    text: Roboto
+    text: Rubik
     code: Roboto Mono
   logo: img/logo_square.png
   #favicon: material/cloud
   features:
     - navigation.instant
+    - navigation.tabs
+    - navigation.indexes
     - navigation.tracking
 
 # Extras
@@ -33,6 +35,8 @@ extra:
   social:
     - icon: fontawesome/brands/github-alt
       link: https://github.com/online-ml/river-torch
+  version:
+    - provider: mike
 
 # Google Analytics
 google_analytics:
