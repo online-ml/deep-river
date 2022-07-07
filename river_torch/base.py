@@ -1,14 +1,11 @@
 import collections
 import inspect
-import math
 from typing import Type
 
-import pandas as pd
 import torch
-from river import anomaly, base, stats
-from torch import nn
+from river import base
 
-from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
+from river_torch.utils import dict2tensor, get_loss_fn
 from river_torch.utils.river_compat import list2tensor, scalar2tensor
 
 

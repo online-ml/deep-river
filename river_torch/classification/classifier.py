@@ -136,7 +136,7 @@ class Classifier(DeepEstimator, base.Classifier):
         else:
             proba = {c: 0.0 for c in range(self.n_classes)}
         proba[y] = 1.0
-        
+
         y = dict2tensor(proba, device=self.device)
 
         self._learn_one(x=x, y=y)
@@ -259,10 +259,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             if self.append_predict:
                 self._x_window.append(list(x.values()))
                 x = self._x_window
-            else: 
+            else:
                 x = copy.deepcopy(self._x_window)
                 x.append(list(x.values()))
-            
+
             x = list2tensor(x, device=self.device)
             yp = self.net(x).detach().numpy()
             proba = {c: 0.0 for c in self.classes}

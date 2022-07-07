@@ -9,7 +9,8 @@ from scipy.special import ndtr
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
-class ProbabilityWeightedAutoencoder(base.AutoEncoder):
+
+class ProbabilityWeightedAutoencoder(base.Autoencoder):
     """
     A propability weighted auto encoder
     ----------
@@ -19,8 +20,6 @@ class ProbabilityWeightedAutoencoder(base.AutoEncoder):
     optimizer_f
     device
     skip_threshold
-    scale_scores
-    window_size
     net_params
     """
 
@@ -32,8 +31,6 @@ class ProbabilityWeightedAutoencoder(base.AutoEncoder):
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         device="cpu",
         skip_threshold=0.9,
-        scale_scores=True,
-        window_size=250,
         **net_params,
     ):
         super().__init__(
@@ -42,13 +39,9 @@ class ProbabilityWeightedAutoencoder(base.AutoEncoder):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             device=device,
-            scale_scores=scale_scores,
-            window_size=window_size,
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.var_meter = stats.RollingVar(window_size)
-        self.mean_meter = stats.RollingMean(window_size)
 
     def learn_one(self, x):
         x = dict2tensor(x, device=self.device)
@@ -56,8 +49,8 @@ class ProbabilityWeightedAutoencoder(base.AutoEncoder):
         if self.to_init:
             self._init_net(n_features=x.shape[1])
 
-        self.train()
-        x_pred = self(x)
+        self.encoder.train()
+        x_pred = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_pred, x)
         loss_item = loss.item()
         mean = self.mean_meter.get()

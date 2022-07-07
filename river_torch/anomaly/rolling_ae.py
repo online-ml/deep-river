@@ -4,7 +4,8 @@ import torch
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
-class RollingWindowAutoencoder(base.AutoEncoder):
+
+class RollingWindowAutoencoder(base.Autoencoder):
     """
     A rolling window auto encoder
     ----------
@@ -14,7 +15,6 @@ class RollingWindowAutoencoder(base.AutoEncoder):
     optimizer_fn
     device
     skip_threshold
-    scale_scores
     window_size
     net_params
     """
@@ -42,9 +42,9 @@ class RollingWindowAutoencoder(base.AutoEncoder):
         self._batch_i = 0
 
     def _learn_batch(self, x: torch.Tensor):
-        self.train()
+        self.encoder.train()
 
-        x_pred = self(x)
+        x_pred = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_pred, x)
 
         self.optimizer.zero_grad()

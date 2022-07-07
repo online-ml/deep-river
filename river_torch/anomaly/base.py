@@ -1,16 +1,15 @@
+import abc
 import inspect
 import math
 from typing import Type
 
 import pandas as pd
 import torch
-from river import stats, anomaly
-from torch import nn
-
+from river import anomaly, stats, base
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
 
+class Autoencoder(anomaly.AnomalyDetector):
 
-class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
     """
     Base Auto Encoder
     ----------
@@ -19,10 +18,9 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
     loss_fn
     optimizer_fn
     device
-    scale_scores
-    window_size
     net_params
     """
+
     def __init__(
         self,
         encoder_fn,
@@ -30,8 +28,6 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
         loss_fn="smooth_mae",
         optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
         device="cpu",
-        scale_scores=True,
-        window_size=250,
         **net_params
     ):
         super().__init__()
@@ -43,9 +39,6 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
         self.optimizer_fn = get_optimizer_fn(optimizer_fn)
         self.net_params = net_params
         self.device = device
-        self.mean_meter = stats.RollingMean(window_size) if scale_scores else None
-        self.scale_scores = scale_scores
-        self.window_size = window_size
 
     @classmethod
     def _unit_test_params(cls):
@@ -88,14 +81,12 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
         if self.encoder is None or self.decoder is None:
             self._init_net(n_features=x.shape[1])
 
-        self.train()
-        x_pred = self(x)
+        self.encoder.train()
+        x_pred = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_pred, x)
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
-        if self.scale_scores:
-            self.mean_meter.update(loss.item())
         return self
 
     def score_one(self, x: dict):
@@ -104,12 +95,10 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
         if self.encoder is None or self.decoder is None:
             self._init_net(n_features=x.shape[1])
 
-        self.eval()
+        self.encoder.eval()
         with torch.inference_mode():
-            x_rec = self(x)
+            x_rec = self.decoder(self.encoder(x))
         loss = self.loss_fn(x_rec, x).item()
-        if self.scale_scores and self.mean_meter.get() != 0:
-            loss /= self.mean_meter.get()
         return loss
 
     def learn_many(self, x: pd.DataFrame):
@@ -124,18 +113,13 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
 
         self.eval()
         with torch.inference_mode():
-            x_rec = self(x)
+            x_rec = self.decoder(self.encoder(x))
         loss = torch.mean(
             self.loss_fn(x_rec, x, reduction="none"),
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
-        if self.scale_scores and self.mean_meter.get() != 0:
-            score /= self.mean_meter.get()
         return score
-
-    def forward(self, x):
-        return self.decoder(self.encoder(x))
 
     def _init_net(self, n_features):
         self.encoder = self.encoder_fn(
@@ -177,3 +161,67 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
             **self._filter_args(self.optimizer_fn),
         )
         return optimizer
+
+
+class AnomalyScaler(base.Wrapper, anomaly.AnomalyDetector):
+    """AnomalyScaler is a wrapper around an anomaly detector that scales the output of the model.
+
+    Parameters
+    ----------
+    anomaly_detector
+    """
+
+    def __init__(self, anomaly_detector: anomaly.AnomalyDetector):
+        self.anomaly_detector = anomaly_detector
+
+    @classmethod
+    def _unit_test_params(self):
+        yield {"anomaly_detector": anomaly.HalfSpaceTrees()}
+
+    @classmethod
+    def _unit_test_skips(self):
+        """Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
+
+    @property
+    def _wrapped_model(self):
+        return self.anomaly_detector
+
+    @abc.abstractmethod
+    def score_one(self, *args) -> float:
+        """Return calibrated anomaly score based on raw score provided by the wrapped anomaly detector.
+
+        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+        Parameters
+        ----------
+        args
+            Depends on whether the underlying anomaly detector is supervised or not.
+        Returns
+        -------
+        An anomaly score. A high score is indicative of an anomaly. A low score corresponds a
+        normal observation.
+        """
+
+    def learn_one(self, *args) -> anomaly.AnomalyDetector:
+        """Update the anomaly calibrator and the underlying anomaly detector.
+        Parameters
+        ----------
+        args
+            Depends on whether the underlying anomaly detector is supervised or not.
+        Returns
+        -------
+        self
+        """
+
+        self.anomaly_detector.learn_one(*args)
+        return self

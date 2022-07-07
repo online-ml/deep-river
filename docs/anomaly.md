@@ -1,7 +1,7 @@
 # Anomaly Detection
 
-::: river_torch.anomaly.base
+::: river_torch.anomaly
 
-# Postprocessing
+# Anomaly score postprocessing
 
-::: river_torch.anomaly.postprocessing
+::: river_torch.anomaly.scaler
