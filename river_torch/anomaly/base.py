@@ -5,9 +5,11 @@ from typing import Type
 
 import pandas as pd
 import torch
+from river import anomaly, base, stats
 from torch import nn
-from river import anomaly, stats, base
+
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
+
 
 class Autoencoder(anomaly.AnomalyDetector):
 

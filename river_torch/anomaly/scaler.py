@@ -1,5 +1,6 @@
+from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMean, RollingMin
+
 from .base import AnomalyScaler
-from river.stats import EWMean, RollingMean, RollingMin, RollingMax, Mean, Min, Max
 
 
 class StandardScaler(AnomalyScaler):
@@ -65,12 +66,13 @@ class StandardScaler(AnomalyScaler):
 
 
 class MeanScaler(AnomalyScaler):
-    """ Wrapper around an anomaly detector that scales the model's output by the incremental mean of previous scores.
+    """Wrapper around an anomaly detector that scales the model's output by the incremental mean of previous scores.
 
     Parameters
     ----------
     anomaly_detector
     """
+
     def __init__(self, anomaly_detector):
         super().__init__(anomaly_detector=anomaly_detector)
         self.mean = Mean()
@@ -121,6 +123,7 @@ class MinMaxScaler(AnomalyScaler):
     ----------
     anomaly_detector
     """
+
     def __init__(self, anomaly_detector):
         super().__init__(anomaly_detector)
         self.min = Min()
@@ -198,6 +201,7 @@ class AdaptiveStandardScaler(StandardScaler):
     alpha
     with_std
     """
+
     def __init__(self, anomaly_detector, alpha=0.3, with_std=True):
         super().__init__(anomaly_detector=anomaly_detector)
         self.alpha = alpha
@@ -214,6 +218,7 @@ class RollingMinMaxScaler(MinMaxScaler):
     anomaly_detector
     window_size
     """
+
     def __init__(self, anomaly_detector, window_size=250):
         super().__init__(anomaly_detector=anomaly_detector)
         self.window_size = window_size
@@ -222,13 +227,14 @@ class RollingMinMaxScaler(MinMaxScaler):
 
 
 class RollingMeanScaler(MeanScaler):
-    """ Wrapper around an anomaly detector that scales the model's output by the rolling mean of previous scores.
+    """Wrapper around an anomaly detector that scales the model's output by the rolling mean of previous scores.
 
     Parameters
     ----------
     anomaly_detector
     window_size
     """
+
     def __init__(self, anomaly_detector, window_size=250):
         super().__init__(anomaly_detector)
         self.window_size = window_size
@@ -236,13 +242,14 @@ class RollingMeanScaler(MeanScaler):
 
 
 class AdaptiveMeanScaler(MeanScaler):
-    """ Wrapper around an anomaly detector that scales the model's output by the exponential running mean of previous scores.
+    """Wrapper around an anomaly detector that scales the model's output by the exponential running mean of previous scores.
 
     Parameters
     ----------
     anomaly_detector
     alpha
     """
+
     def __init__(self, anomaly_detector, alpha=0.3):
         super().__init__(anomaly_detector)
         self.alpha = alpha

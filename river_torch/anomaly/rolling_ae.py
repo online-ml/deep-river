@@ -1,6 +1,8 @@
 import collections
 from typing import Type
+
 import torch
+
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 

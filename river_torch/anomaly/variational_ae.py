@@ -2,6 +2,7 @@ from typing import Type
 
 import pandas as pd
 import torch
+
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
