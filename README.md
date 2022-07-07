@@ -113,7 +113,7 @@ Accuracy: 0.8304
 >>> encoder_fn = get_encoder
 >>> decoder_fn = get_decoder
 
->>> model = AutoencodedAnomalyDetector(encoder_fn=encoder_fn,decoder_fn=decoder_fn, lr=0.01)
+>>> model = AutoEncoder(encoder_fn=encoder_fn,decoder_fn=decoder_fn, lr=0.01)
 
 >>> for x,y in dataset:
 ...     score = model.score_one(x)

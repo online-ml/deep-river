@@ -1,10 +1,11 @@
+import abc
 import inspect
 import math
 from typing import Type
 
 import pandas as pd
 import torch
-from river import anomaly, stats
+from river import anomaly, stats, base
 from torch import nn
 
 from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
@@ -23,6 +24,7 @@ class AutoEncoder(anomaly.AnomalyDetector, nn.Module):
     window_size
     net_params
     """
+
     def __init__(
         self,
         encoder_fn,
@@ -177,3 +179,41 @@ class AutoEncoder(anomaly.AnomalyDetector, nn.Module):
             **self._filter_args(self.optimizer_fn),
         )
         return optimizer
+
+
+class AnomalyScaler(base.Wrapper, anomaly.AnomalyDetector):
+    def __init__(self, anomaly_detector: anomaly.AnomalyDetector):
+        self.anomaly_detector = anomaly_detector
+
+    @property
+    def _wrapped_model(self):
+        return self.anomaly_detector
+
+    @abc.abstractmethod
+    def score_one(self, *args) -> float:
+        """Return calibrated anomaly score based on raw score provided by the wrapped anomaly detector.
+
+        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+        Parameters
+        ----------
+        args
+            Depends on whether the underlying anomaly detector is supervised or not.
+        Returns
+        -------
+        An anomaly score. A high score is indicative of an anomaly. A low score corresponds a
+        normal observation.
+        """
+
+    def learn_one(self, *args) -> anomaly.AnomalyDetector:
+        """Update the anomaly calibrator and the underlying anomaly detector.
+        Parameters
+        ----------
+        args
+            Depends on whether the underlying anomaly detector is supervised or not.
+        Returns
+        -------
+        self
+        """
+
+        self.anomaly_detector.learn_one(*args)
+        return self
