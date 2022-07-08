@@ -1,6 +1,47 @@
 from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMean, RollingMin
+from river.anomaly import AnomalyDetector
 
 from .base import AnomalyScaler
+
+METRICS = {
+    "mean": {"incremental": Mean, "rolling": RollingMean, "adaptive": EWMean},
+    "max": {"incremental": Max, "rolling": RollingMax},
+    "min": {"incremental": Min, "rolling": RollingMin},
+}
+
+
+def get_metric(
+    metric: str, metric_type: str, window_size: int = 250, alpha: float = 0.3
+):
+    """Get the metric class for the given metric and metric type.
+
+    Args:
+    -----
+    metric: str
+        The metric to use.
+    metric_type: str
+        The type of metric to use.
+    window_size: int
+        The window size to use for the rolling metrics.
+    alpha: float
+        The alpha to use for the EWMean metric.
+
+    Returns:
+    --------
+    metric_class: river.stats.Statistic
+    """
+
+    assert metric in METRICS.keys(), f"Invalid metric: {metric}"
+    assert (
+        metric_type in METRICS[metric].keys()
+    ), f"Invalid metric type {metric_type} for metric: {metric}"
+
+    if metric_type == "incremental":
+        return METRICS[metric][metric_type]()
+    elif metric_type == "rolling":
+        return METRICS[metric][metric_type](window_size=window_size)
+    else:
+        return METRICS[metric][metric_type](alpha=alpha)
 
 
 class StandardScaler(AnomalyScaler):
@@ -8,14 +49,32 @@ class StandardScaler(AnomalyScaler):
 
     Parameters
     ----------
-    anomaly_detector
+    anomaly_detector: AnomalyDetector
+        The anomaly detector to wrap.
     with_std : bool
+        Whether to use standard deviation for scaling.
+    metric_type: str
+        The type of metric to use.
+    window_size: int
+        The window size used for the metrics if metric_type=="rolling".
+    alpha: float
+        The alpha used for the metrics if metric_type=="adaptive".
     """
 
-    def __init__(self, anomaly_detector, with_std=True):
+    def __init__(
+        self,
+        anomaly_detector: AnomalyDetector,
+        with_std: bool = True,
+        metric_type: str = "rolling",
+        window_size: int = 250,
+        alpha: float = 0.3,
+    ):
         super().__init__(anomaly_detector)
-        self.mean = Mean()
-        self.sq_mean = Mean()
+        self.metric_type = metric_type
+        self.alpha = alpha
+        self.window_size = window_size
+        self.mean = get_metric("mean", metric_type, window_size, alpha)
+        self.sq_mean = get_metric("mean", metric_type, window_size, alpha)
         self.with_std = with_std
 
     def score_one(self, *args) -> float:
@@ -70,12 +129,28 @@ class MeanScaler(AnomalyScaler):
 
     Parameters
     ----------
-    anomaly_detector
+    anomaly_detector: AnomalyDetector
+        The anomaly detector to wrap.
+    metric_type: str
+        The type of metric to use.
+    window_size: int
+        The window size used for mean computation if metric_type=="rolling".
+    alpha: float
+        The alpha used for mean computation if metric_type=="adaptive".
     """
 
-    def __init__(self, anomaly_detector):
+    def __init__(
+        self,
+        anomaly_detector: AnomalyDetector,
+        metric_type: str = "rolling",
+        window_size: int = 250,
+        alpha: float = 0.3,
+    ):
         super().__init__(anomaly_detector=anomaly_detector)
-        self.mean = Mean()
+        self.metric_type = metric_type
+        self.alpha = alpha
+        self.window_size = window_size
+        self.mean = get_metric("mean", metric_type, window_size, alpha)
 
     def score_one(self, *args) -> float:
         """Return scaled anomaly score based on raw score provided by the wrapped anomaly detector.
@@ -121,13 +196,29 @@ class MinMaxScaler(AnomalyScaler):
 
     Parameters
     ----------
-    anomaly_detector
+    anomaly_detector: AnomalyDetector
+        The anomaly detector to wrap.
+    metric_type: str
+        The type of metric to use.
+    window_size: int
+        The window size used for the metrics if metric_type=="rolling".
+    alpha: float
+        The alpha used for the metrics if metric_type=="adaptive".
     """
 
-    def __init__(self, anomaly_detector):
+    def __init__(
+        self,
+        anomaly_detector: AnomalyDetector,
+        metric_type: str = "rolling",
+        window_size: int = 250,
+        alpha: float = 0.3,
+    ):
         super().__init__(anomaly_detector)
-        self.min = Min()
-        self.max = Max()
+        self.metric_type = metric_type
+        self.alpha = alpha
+        self.window_size = window_size
+        self.min = get_metric("min", metric_type, window_size, alpha)
+        self.max = get_metric("max", metric_type, window_size, alpha)
 
     def score_one(self, *args) -> float:
         """Return scaled anomaly score based on raw score provided by the wrapped anomaly detector.
@@ -172,85 +263,3 @@ class MinMaxScaler(AnomalyScaler):
         score = (raw_score - min) / (max - min)
 
         return score
-
-
-class RollingStandardScaler(StandardScaler):
-    """Wrapper around an anomaly detector that standardizes the model's output using rolling mean and variance metrics.
-
-    Parameters
-    ----------
-    anomaly_detector
-    window_size
-    with_std : bool
-    """
-
-    def __init__(self, anomaly_detector, window_size=250, with_std=True):
-        super().__init__(anomaly_detector=anomaly_detector)
-        self.window_size = window_size
-        self.mean = RollingMean(window_size=window_size)
-        self.sq_mean = RollingMean(window_size=window_size) if with_std else None
-        self.with_std = with_std
-
-
-class AdaptiveStandardScaler(StandardScaler):
-    """Wrapper around an anomaly detector that standardizes the model's output using exponential running mean and variance metrics.
-
-    Parameters
-    ----------
-    anomaly_detector
-    alpha
-    with_std
-    """
-
-    def __init__(self, anomaly_detector, alpha=0.3, with_std=True):
-        super().__init__(anomaly_detector=anomaly_detector)
-        self.alpha = alpha
-        self.mean = EWMean(alpha=alpha)
-        self.sq_mean = EWMean(alpha=alpha) if with_std else None
-        self.with_std = with_std
-
-
-class RollingMinMaxScaler(MinMaxScaler):
-    """Wrapper around an anomaly detector that scales the model's output to $[0, 1]$ using rolling min and max metrics.
-
-    Parameters
-    ----------
-    anomaly_detector
-    window_size
-    """
-
-    def __init__(self, anomaly_detector, window_size=250):
-        super().__init__(anomaly_detector=anomaly_detector)
-        self.window_size = window_size
-        self.min = RollingMin(window_size=window_size)
-        self.max = RollingMax(window_size=window_size)
-
-
-class RollingMeanScaler(MeanScaler):
-    """Wrapper around an anomaly detector that scales the model's output by the rolling mean of previous scores.
-
-    Parameters
-    ----------
-    anomaly_detector
-    window_size
-    """
-
-    def __init__(self, anomaly_detector, window_size=250):
-        super().__init__(anomaly_detector)
-        self.window_size = window_size
-        self.mean = RollingMean(window_size=window_size)
-
-
-class AdaptiveMeanScaler(MeanScaler):
-    """Wrapper around an anomaly detector that scales the model's output by the exponential running mean of previous scores.
-
-    Parameters
-    ----------
-    anomaly_detector
-    alpha
-    """
-
-    def __init__(self, anomaly_detector, alpha=0.3):
-        super().__init__(anomaly_detector)
-        self.alpha = alpha
-        self.mean = EWMean(alpha=alpha)
