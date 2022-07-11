@@ -77,5 +77,5 @@ nav:
   - Examples:
       - Classification: examples/example_classification.ipynb
       - Regression: examples/example_regression.ipynb
-      - Anomaly Detection: examples/example_ae.ipynb
+      - Anomaly Detection: examples/example_autoencoder.ipynb
   - About: about.md
