@@ -1,8 +1,5 @@
 nav:
-  - introduction
-  - recipes
+  - installation.md
   - examples
-  - api
-  - faq
-  - releases
-  - benchmarks
+  - code_reference.md
+  - about.md
