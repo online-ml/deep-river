@@ -2,7 +2,7 @@ from typing import Callable
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
-
+from typing import Union
 
 def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
     return torch.sqrt(F.mse_loss(input, target, size_average, reduce, reduction))
@@ -68,7 +68,7 @@ def get_init_fn(init_fn):
 BASE_PARAM_ERROR = "Unknown {}: {}. A valid string or {} is required."
 
 
-def get_activation_fn(activation_fn: str | type) -> type:
+def get_activation_fn(activation_fn: Union[str, type]) -> type:
     """Returns the requested activation function as a nn.Module class.
 
     Parameters
@@ -95,7 +95,7 @@ def get_activation_fn(activation_fn: str | type) -> type:
     return activation_fn
 
 
-def get_optim_fn(optim_fn: str | type) -> type:
+def get_optim_fn(optim_fn: Union[str, type]) -> type:
     """Returns the requested optimizer as a nn.Module class.
 
     Parameters
@@ -122,7 +122,7 @@ def get_optim_fn(optim_fn: str | type) -> type:
     return optim_fn
 
 
-def get_loss_fn(loss_fn: str | Callable) -> Callable:
+def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
     """Returns the requested loss function as a function.
 
     Parameters
