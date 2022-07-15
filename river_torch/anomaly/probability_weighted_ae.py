@@ -28,7 +28,7 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         encoder_fn,
         decoder_fn,
         loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        optimizer_fn= "sgd",
         device="cpu",
         skip_threshold=0.9,
         **net_params,
