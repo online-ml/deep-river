@@ -8,13 +8,15 @@ import torch
 from river import anomaly, base
 from torch import nn
 
-from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
+from river_torch.utils import dict2tensor, get_loss_fn, get_optim_fn
 
 
 class Autoencoder(anomaly.base.AnomalyDetector):
 
     """
     Base Auto Encoder
+
+    Parameters
     ----------
     encoder_fn
     decoder_fn
@@ -29,7 +31,7 @@ class Autoencoder(anomaly.base.AnomalyDetector):
         encoder_fn,
         decoder_fn,
         loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
+        optimizer_fn="sgd",
         device="cpu",
         **net_params
     ):
@@ -39,7 +41,7 @@ class Autoencoder(anomaly.base.AnomalyDetector):
         self.encoder = None
         self.decoder = None
         self.loss_fn = get_loss_fn(loss_fn)
-        self.optimizer_fn = get_optimizer_fn(optimizer_fn)
+        self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.net_params = net_params
         self.device = device
 
@@ -56,8 +58,8 @@ class Autoencoder(anomaly.base.AnomalyDetector):
         yield {
             "encoder_fn": encoder_fn,
             "decoder_fn": decoder_fn,
-            "loss_fn": torch.nn.MSELoss,
-            "optimizer_fn": torch.optim.SGD,
+            "loss_fn": "mse",
+            "optimizer_fn": "sgd",
         }
 
     @classmethod

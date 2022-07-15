@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from river_torch.utils.module_finder import get_activation_fn, get_init_fn
+from river_torch.utils.params import get_activation_fn, get_init_fn
 
 
 class DenseBlock(nn.Module):

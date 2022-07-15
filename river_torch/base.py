@@ -5,7 +5,7 @@ from typing import Type
 import torch
 from river import base
 
-from river_torch.utils import dict2tensor, get_loss_fn
+from river_torch.utils import dict2tensor, get_loss_fn, get_optim_fn
 from river_torch.utils.river_compat import list2tensor, scalar2tensor
 
 
@@ -25,7 +25,7 @@ class DeepEstimator(base.Estimator):
         self,
         build_fn,
         loss_fn: str,
-        optimizer_fn: Type[torch.optim.Optimizer],
+        optimizer_fn,
         learning_rate=1e-3,
         device="cpu",
         seed=42,
@@ -33,9 +33,8 @@ class DeepEstimator(base.Estimator):
     ):
         super().__init__()
         self.build_fn = build_fn
-        self.loss_fn = loss_fn
-        self.loss = get_loss_fn(loss_fn=loss_fn)
-        self.optimizer_fn = optimizer_fn
+        self.loss_fn = get_loss_fn(loss_fn)
+        self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.learning_rate = learning_rate
         self.device = device
         self.net_params = net_params
@@ -54,7 +53,7 @@ class DeepEstimator(base.Estimator):
         yield {
             "build_fn": build_torch_linear_regressor,
             "loss_fn": "mae",
-            "optimizer_fn": torch.optim.SGD,
+            "optimizer_fn": "sgd",
         }
 
     @classmethod
@@ -78,9 +77,9 @@ class DeepEstimator(base.Estimator):
         y_pred = self.net(x)
         # depending on loss function
         try:
-            loss = self.loss(y_pred, y)
+            loss = self.loss_fn(y_pred, y)
         except:
-            loss = self.loss(y_pred, torch.argmax(y, 1))
+            loss = self.loss_fn(y_pred, torch.argmax(y, 1))
         loss.backward()
         self.optimizer.step()
 
@@ -127,7 +126,7 @@ class RollingDeepEstimator(base.Estimator):
         self,
         build_fn,
         loss_fn: str,
-        optimizer_fn: Type[torch.optim.Optimizer],
+        optimizer_fn,
         learning_rate=1e-3,
         window_size=1,
         seed=42,
@@ -136,9 +135,8 @@ class RollingDeepEstimator(base.Estimator):
         **net_params
     ):
         self.build_fn = build_fn
-        self.loss_fn = loss_fn
-        self.loss = get_loss_fn(loss_fn=loss_fn)
-        self.optimizer_fn = optimizer_fn
+        self.loss_fn = get_loss_fn(loss_fn=loss_fn)
+        self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.learning_rate = learning_rate
         self.device = device
         self.window_size = window_size
@@ -162,7 +160,7 @@ class RollingDeepEstimator(base.Estimator):
         yield {
             "loss_fn": "mse",
             "build_fn": build_torch_linear_regressor,
-            "optimizer_fn": torch.optim.SGD,
+            "optimizer_fn": "sgd",
         }
 
     @classmethod
@@ -182,7 +180,7 @@ class RollingDeepEstimator(base.Estimator):
 
     def _learn_batch(self, x: torch.Tensor, y: torch.Tensor):
         y_pred = self.net(x)
-        loss = self.loss(y_pred, y)
+        loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
