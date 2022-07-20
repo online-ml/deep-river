@@ -14,8 +14,7 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
     """
     A propability weighted auto encoder
     ----------
-    encoder_fn
-    decoder_fn
+    build_fn
     loss_fn
     optimizer_f
     device
@@ -25,17 +24,15 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
 
     def __init__(
         self,
-        encoder_fn,
-        decoder_fn,
+        build_fn,
         loss_fn="smooth_mae",
-        optimizer_fn= "sgd",
+        optimizer_fn="sgd",
         device="cpu",
         skip_threshold=0.9,
         **net_params,
     ):
         super().__init__(
-            encoder_fn=encoder_fn,
-            decoder_fn=decoder_fn,
+            build_fn=build_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             device=device,
@@ -44,13 +41,15 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         self.skip_threshold = skip_threshold
 
     def learn_one(self, x):
+        if self.to_init:
+            self._init_net(n_features=len(x))
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init:
-            self._init_net(n_features=x.shape[1])
+        self.net.train()
+        return self._learn_one(x)
 
-        self.encoder.train()
-        x_pred = self.decoder(self.encoder(x))
+    def _learn_one(self, x):
+        x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
         loss_item = loss.item()
         mean = self.mean_meter.get()

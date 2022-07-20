@@ -7,19 +7,19 @@ import pandas as pd
 import torch
 from river import anomaly, base
 from torch import nn
+from river_torch.base import DeepEstimator
 
 from river_torch.utils import dict2tensor, get_loss_fn, get_optim_fn
 
 
-class Autoencoder(anomaly.base.AnomalyDetector):
+class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
 
     """
-    Base Auto Encoder
+    Base Autoencoder
 
     Parameters
     ----------
-    encoder_fn
-    decoder_fn
+    build_fn
     loss_fn
     optimizer_fn
     device
@@ -28,36 +28,32 @@ class Autoencoder(anomaly.base.AnomalyDetector):
 
     def __init__(
         self,
-        encoder_fn,
-        decoder_fn,
+        build_fn,
         loss_fn="smooth_mae",
         optimizer_fn="sgd",
         device="cpu",
         **net_params
     ):
-        super().__init__()
-        self.encoder_fn = encoder_fn
-        self.decoder_fn = decoder_fn
-        self.encoder = None
-        self.decoder = None
-        self.loss_fn = get_loss_fn(loss_fn)
-        self.optimizer_fn = get_optim_fn(optimizer_fn)
-        self.net_params = net_params
-        self.device = device
+        super().__init__(
+            build_fn=build_fn,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            device=device,
+            **net_params,
+        )
 
     @classmethod
     def _unit_test_params(cls):
-        def encoder_fn(n_features):
+        def build_fn(n_features):
+            latent_dim = math.ceil(n_features / 2)
             return nn.Sequential(
-                nn.Linear(n_features, math.ceil(n_features / 2)), nn.LeakyReLU()
+                nn.Linear(n_features, latent_dim),
+                nn.LeakyReLU(),
+                nn.Linear(latent_dim, n_features),
             )
 
-        def decoder_fn(n_features):
-            return nn.Sequential(nn.Linear(math.ceil(n_features / 2), n_features))
-
         yield {
-            "encoder_fn": encoder_fn,
-            "decoder_fn": decoder_fn,
+            "build_fn": build_fn,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
         }
@@ -78,16 +74,15 @@ class Autoencoder(anomaly.base.AnomalyDetector):
         }
 
     def learn_one(self, x):
+        if self.net is None:
+            self._init_net(n_features=len(x))
+        self.net.train()
+        x = dict2tensor(x, device=self.device)
         return self._learn(x)
 
     def _learn(self, x):
-        x = dict2tensor(x, device=self.device)
-
-        if self.encoder is None or self.decoder is None:
-            self._init_net(n_features=x.shape[1])
-
-        self.encoder.train()
-        x_pred = self.decoder(self.encoder(x))
+        self.net.train()
+        x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
         loss.backward()
         self.optimizer.step()
@@ -97,12 +92,12 @@ class Autoencoder(anomaly.base.AnomalyDetector):
     def score_one(self, x: dict):
         x = dict2tensor(x, device=self.device)
 
-        if self.encoder is None or self.decoder is None:
+        if self.net is None:
             self._init_net(n_features=x.shape[1])
 
-        self.encoder.eval()
+        self.net.eval()
         with torch.inference_mode():
-            x_rec = self.decoder(self.encoder(x))
+            x_rec = self.net(x)
         loss = self.loss_fn(x_rec, x).item()
         return loss
 
@@ -118,27 +113,13 @@ class Autoencoder(anomaly.base.AnomalyDetector):
 
         self.eval()
         with torch.inference_mode():
-            x_rec = self.decoder(self.encoder(x))
+            x_rec = self.net(x)
         loss = torch.mean(
             self.loss_fn(x_rec, x, reduction="none"),
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
         return score
-
-    def _init_net(self, n_features):
-        self.encoder = self.encoder_fn(
-            n_features=n_features, **self._filter_args(self.encoder_fn)
-        )
-        self.decoder = self.decoder_fn(
-            n_features=n_features, **self._filter_args(self.decoder_fn)
-        )
-
-        self.encoder = self.encoder.to(self.device)
-        self.decoder = self.decoder.to(self.device)
-
-        self.optimizer = self.configure_optimizers()
-        self.to_init = False
 
     def _filter_args(self, fn, override=None):
         """Filters `sk_params` and returns those in `fn`'s arguments.
@@ -159,13 +140,6 @@ class Autoencoder(anomaly.base.AnomalyDetector):
                 res.update({name: value})
         res.update(override)
         return res
-
-    def configure_optimizers(self):
-        optimizer = self.optimizer_fn(
-            nn.ModuleList([self.encoder, self.decoder]).parameters(),
-            **self._filter_args(self.optimizer_fn),
-        )
-        return optimizer
 
 
 class AnomalyScaler(base.Wrapper, anomaly.base.AnomalyDetector):

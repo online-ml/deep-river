@@ -80,42 +80,32 @@ Accuracy: 0.8304
 
 ```python
 >>> import math
->>> from river import datasets, metrics
->>> from river_torch.anomaly import AutoEncoder
+>>> from river import datasets, metrics, preprocessing
+>>> from river_torch.anomaly import Autoencoder
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
 
 >>> _ = manual_seed(42)
 
->>> def get_encoder(activation_fn="selu", dropout=0.5, n_features=3):
-...     activation = get_activation_fn(activation_fn)
-...     encoder = nn.Sequential(
+>>> def get_ae(n_features=3, dropout=0.1):
+...     latent_dim = math.ceil(n_features / 2)
+...     net = nn.Sequential(
 ...         nn.Dropout(p=dropout),
-...         nn.Linear(in_features=n_features, out_features=math.ceil(n_features / 2)),
-...         activation(),
-...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=math.ceil(n_features / 4)),
-...         activation(),
+...         nn.Linear(in_features=n_features, out_features=latent_dim),
+...         nn.ReLU(),
+...         nn.Linear(in_features=latent_dim, out_features=n_features),
+...         nn.Sigmoid()
 ...     )
-...     return encoder
-
->>> def get_decoder(activation_fn="selu", dropout=0.5, n_features=3):
-...     activation = get_activation_fn(activation_fn)
-...     decoder = nn.Sequential(
-...         nn.Linear(in_features=math.ceil(n_features / 4), out_features=math.ceil(n_features / 2)),
-...         activation(),
-...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
-...     )
-...     return decoder
-
+...     return net
 
 >>> dataset = datasets.CreditCard().take(5000)
 >>> metric = metrics.ROCAUC()
->>> encoder_fn = get_encoder
->>> decoder_fn = get_decoder
+>>> scaler = preprocessing.MinMaxScaler()
 
->>> model = AutoEncoder(encoder_fn=encoder_fn,decoder_fn=decoder_fn, lr=0.01)
+>>> model = Autoencoder(build_fn=get_ae, lr=0.01)
 
->>> for x,y in dataset:
+>>> for x, y in dataset:
+...     x = scaler.learn_one(x).transform_one(x)
 ...     score = model.score_one(x)
 ...     metric = metric.update(y_true=y, y_pred=score)
 ...     model = model.learn_one(x=x)
