@@ -22,13 +22,7 @@ pip install river-torch
 You can install the latest development version from GitHub as so:
 
 ```shell
-pip install https://github.com/online-ml/river-torch --upgrade
-```
-
-Or, through SSH:
-
-```shell
-pip install git@github.com:online-ml/river-torch.git --upgrade
+pip install https://github.com/online-ml/river-torch/archive/refs/heads/master.zip
 ```
 
 ## 🍫 Quickstart
