@@ -5,7 +5,7 @@ import torch
 from river import base
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
-from river_torch.utils.river_compat import dict2tensor, list2tensor
+from river_torch.utils.river_compat import dict2tensor, list2tensor, scalar2tensor
 
 
 class Regressor(DeepEstimator, base.Regressor):
@@ -77,10 +77,27 @@ class Regressor(DeepEstimator, base.Regressor):
             **net_params
         )
 
-    def predict_one(self, x):
+    def learn_one(self, x: dict, y: base.typing.RegTarget):
         if self.net is None:
             self._init_net(len(x))
         x = dict2tensor(x, self.device)
+        y = scalar2tensor(y, device=self.device)
+        self.net.train()
+        self._learn_one(x, y)
+        return self
+
+    def _learn_one(self, x: torch.TensorType, y: torch.TensorType):
+        self.optimizer.zero_grad()
+        y_pred = self.net(x)
+        loss = self.loss_fn(y_pred, y)
+        loss.backward()
+        self.optimizer.step()
+
+    def predict_one(self, x: dict) -> base.typing.RegTarget:
+        if self.net is None:
+            self._init_net(len(x))
+        x = dict2tensor(x, self.device)
+        self.net.eval()
         return self.net(x).item()
 
 
@@ -99,7 +116,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def predict_one(self, x: dict):
         if self.net is None:
-            self._init_net(len(list(x.values())))
+            self._init_net(len(x))
         if len(self._x_window) == self.window_size:
 
             if self.append_predict:
@@ -109,6 +126,27 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
                 x = copy.deepcopy(self._x_window)
                 x.append(list(x.values()))
                 x = list2tensor(x, self.device)
+            self.net.eval()
             return self.net(x).item()
         else:
             return 0.0
+
+    def learn_one(self, x: dict, y: base.typing.RegTarget):
+        if self.net is None:
+            self._init_net(len(x))
+
+        self._x_window.append(list(x.values()))
+        if len(self._x_window) == self.window_size:
+            x = list2tensor(self._x_window, device=self.device)
+            y = scalar2tensor(y, device=self.device)
+            self.net.train()
+            self._learn_window(x, y)
+
+        return self
+
+    def _learn_window(self, x: torch.TensorType, y: torch.TensorType):
+        self.optimizer.zero_grad()
+        y_pred = self.net(x)
+        loss = self.loss_fn(y_pred, y)
+        loss.backward()
+        self.optimizer.step()

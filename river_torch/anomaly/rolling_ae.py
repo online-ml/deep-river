@@ -11,8 +11,7 @@ class RollingWindowAutoencoder(base.Autoencoder):
     """
     A rolling window auto encoder
     ----------
-    encoder_fn
-    decoder_fn
+    build_fn
     loss_fn
     optimizer_fn
     device
@@ -23,8 +22,7 @@ class RollingWindowAutoencoder(base.Autoencoder):
 
     def __init__(
         self,
-        encoder_fn,
-        decoder_fn,
+        build_fn,
         loss_fn="smooth_mae",
         optimizer_fn = "sgd",
         device="cpu",
@@ -32,8 +30,7 @@ class RollingWindowAutoencoder(base.Autoencoder):
         **net_params,
     ):
         super().__init__(
-            encoder_fn=encoder_fn,
-            decoder_fn=decoder_fn,
+            build_fn=build_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             device=device,
@@ -44,9 +41,9 @@ class RollingWindowAutoencoder(base.Autoencoder):
         self._batch_i = 0
 
     def _learn_batch(self, x: torch.Tensor):
-        self.encoder.train()
+        self.net.train()
 
-        x_pred = self.decoder(self.encoder(x))
+        x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
 
         self.optimizer.zero_grad()
@@ -60,8 +57,9 @@ class RollingWindowAutoencoder(base.Autoencoder):
 
         if self.to_init:
             self._init_net(n_features=x.shape[1])
-
+        
         if len(self._x_window) == self.window_size:
+            self.net.train()
             x = torch.concat(list(self._x_window.values))
             self._learn_batch(x=x)
         return self

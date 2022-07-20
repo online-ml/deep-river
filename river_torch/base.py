@@ -1,6 +1,7 @@
+import abc
 import collections
 import inspect
-from typing import Type
+from typing import Callable, Type, Union
 
 import torch
 from river import base
@@ -12,6 +13,8 @@ from river_torch.utils.river_compat import list2tensor, scalar2tensor
 class DeepEstimator(base.Estimator):
     """
     A PyTorch to River base class that aims to provide basic supervised functionalities.
+
+    Parameters
     ----------
     build_fn
     loss_fn
@@ -23,12 +26,12 @@ class DeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        build_fn,
-        loss_fn: str,
-        optimizer_fn,
-        learning_rate=1e-3,
-        device="cpu",
-        seed=42,
+        build_fn: Callable,
+        loss_fn: Union[str, Callable],
+        optimizer_fn: Union[str, Callable],
+        learning_rate: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
         **net_params
     ):
         super().__init__()
@@ -71,26 +74,16 @@ class DeepEstimator(base.Estimator):
             "check_predict_proba_one_binary",
         }
 
-    def _learn_one(self, x: torch.Tensor, y: torch.Tensor):
-        self.net.train()
-        self.net.zero_grad()
-        y_pred = self.net(x)
-        # depending on loss function
-        try:
-            loss = self.loss_fn(y_pred, y)
-        except:
-            loss = self.loss_fn(y_pred, torch.argmax(y, 1))
-        loss.backward()
-        self.optimizer.step()
+    @abc.abstractmethod
+    def learn_one(self, x: dict, y: base.typing.ClfTarget):
+        """
+        Learn on one sample.
 
-    def learn_one(self, x, y):
-        x = dict2tensor(x, device=self.device)
-        y = scalar2tensor(y, device=self.device)
-
-        if self.net is None:
-            self._init_net(n_features=x.shape[1])
-
-        self._learn_one(x=x, y=y)
+        Parameters
+        ----------
+        x
+        y
+        """
         return self
 
     def _filter_torch_params(self, fn, override=None):
@@ -124,14 +117,14 @@ class DeepEstimator(base.Estimator):
 class RollingDeepEstimator(base.Estimator):
     def __init__(
         self,
-        build_fn,
-        loss_fn: str,
-        optimizer_fn,
-        learning_rate=1e-3,
-        window_size=1,
-        seed=42,
-        device="cpu",
-        append_predict=True,
+        build_fn: Callable,
+        loss_fn: Union[str, Callable],
+        optimizer_fn: Union[str, Callable],
+        learning_rate: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 1,
+        append_predict: bool = True,
         **net_params
     ):
         self.build_fn = build_fn
@@ -178,23 +171,16 @@ class RollingDeepEstimator(base.Estimator):
             "check_predict_proba_one_binary",
         }
 
-    def _learn_batch(self, x: torch.Tensor, y: torch.Tensor):
-        y_pred = self.net(x)
-        loss = self.loss_fn(y_pred, y)
-        loss.backward()
-        self.optimizer.step()
-        self.optimizer.zero_grad()
-        return self
+    @abc.abstractmethod
+    def learn_one(self, x: dict, y: base.typing.ClfTarget):
+        """
+        Learn on one sample.
 
-    def learn_one(self, x, y):
-        self._x_window.append(list(x.values()))
-        if self.net is None:
-            self._init_net(n_features=len(list(x.values())))
-
-        if len(self._x_window) == self.window_size:
-            x = list2tensor(list(self._x_window), device=self.device)
-            y = scalar2tensor(y, device=self.device)
-            self._learn_batch(x=x, y=y)
+        Parameters
+        ----------
+        x
+        y
+        """
         return self
 
     def _filter_torch_params(self, fn, override=None):

@@ -138,14 +138,22 @@ class Classifier(DeepEstimator, base.Classifier):
         proba[y] = 1.0
 
         y = dict2tensor(proba, device=self.device)
-
+        self.net.train()
         self._learn_one(x=x, y=y)
         return self
 
+    def _learn_one(self, x: torch.TensorType, y: torch.TensorType):
+        self.optimizer.zero_grad()
+        y_pred = self.net(x)
+        loss = self.loss_fn(y_pred, y)
+        loss.backward()
+        self.optimizer.step()
+
     def predict_proba_one(self, x: dict) -> typing.Dict[base.typing.ClfTarget, float]:
-        x = dict2tensor(x, device=self.device)
         if self.net is None:
-            self._init_net(x.shape[1])
+            self._init_net(len(x))
+        x = dict2tensor(x, device=self.device)
+        self.net.eval()
         yp = self.net(x).detach().numpy()[0]
 
         if self.variable_classes:
@@ -175,7 +183,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         self,
         build_fn,
         loss_fn: str = "ce",
-        optimizer_fn= "sgd",
+        optimizer_fn="sgd",
         window_size=1,
         device="cpu",
         learning_rate=1e-3,
@@ -209,7 +217,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         # check if model is initialized
         if self.net is None:
-            self._init_net(len(list(x.values())))
+            self._init_net(len(x))
 
         # check last layer
         if len(self.classes) != self.n_classes:
@@ -244,17 +252,24 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         proba = {c: 0.0 for c in self.classes}
         proba[y] = 1.0
         y = list(proba.values())
-
         if len(self._x_window) == self.window_size:
+            self.net.train()
             x = list2tensor(self._x_window, device=self.device)
             [y.append(0.0) for i in range(self.n_classes - len(y))]
             y = scalar2tensor(y, device=self.device)
-            self._learn_batch(x=x, y=y)
+            self._learn_window(x=x, y=y)
         return self
+
+    def _learn_window(self, x: torch.TensorType, y: torch.TensorType):
+        self.optimizer.zero_grad()
+        y_pred = self.net(x)
+        loss = self.loss_fn(y_pred, y)
+        loss.backward()
+        self.optimizer.step()
 
     def predict_proba_one(self, x: dict) -> typing.Dict[base.typing.ClfTarget, float]:
         if self.net is None:
-            self._init_net(len(list(x.values())))
+            self._init_net(len(x))
         if len(self._x_window) == self.window_size:
             if self.append_predict:
                 self._x_window.append(list(x.values()))
@@ -264,6 +279,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 x.append(list(x.values()))
 
             x = list2tensor(x, device=self.device)
+            self.net.eval()
             yp = self.net(x).detach().numpy()
             proba = {c: 0.0 for c in self.classes}
             for idx, val in enumerate(self.classes):

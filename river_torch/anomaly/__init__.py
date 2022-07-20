@@ -6,12 +6,10 @@ from .scaler import (
     MinMaxScaler,
     StandardScaler,
 )
-from .variational_ae import VariationalAutoencoder
 
 __all__ = [
     "Autoencoder",
     "AnomalyScaler",
-    "VariationalAutoencoder",
     "RollingWindowAutoencoder",
     "ProbabilityWeightedAutoencoder",
     "StandardScaler",
