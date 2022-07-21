@@ -75,18 +75,10 @@ class DeepEstimator(base.Estimator):
         }
 
     @abc.abstractmethod
-    def learn_one(self, x: dict, y: base.typing.ClfTarget):
-        """
-        Learn on one sample.
-
-        Parameters
-        ----------
-        x
-        y
-        """
+    def learn_one(self, x, y):
         return self
 
-    def _filter_torch_params(self, fn, override=None):
+    def _filter_torch_params(self, fn: Callable, override=None):
         """Filters `sk_params` and returns those in `fn`'s arguments.
 
         # Arguments
@@ -113,7 +105,7 @@ class DeepEstimator(base.Estimator):
         self.net.to(self.device)
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
 
-
+# Shares the same code as `DeepEstimator`. Remove it? 
 class RollingDeepEstimator(base.Estimator):
     def __init__(
         self,
@@ -172,15 +164,7 @@ class RollingDeepEstimator(base.Estimator):
         }
 
     @abc.abstractmethod
-    def learn_one(self, x: dict, y: base.typing.ClfTarget):
-        """
-        Learn on one sample.
-
-        Parameters
-        ----------
-        x
-        y
-        """
+    def learn_one(self, x, y):
         return self
 
     def _filter_torch_params(self, fn, override=None):

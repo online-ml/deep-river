@@ -61,3 +61,13 @@ class SequentialLSTM(nn.Module):
         hn = hn.view(-1, self.hidden_size)  # reshaping the data for Dense layer next
 
         return hn
+
+
+def find_output_layer(net):
+    """Return the output layer of a network. 
+    """
+
+    for layer in list(net.children())[::-1]:
+        if isinstance(layer, nn.Linear):
+            return layer
+    raise ValueError("No dense layer found.")
