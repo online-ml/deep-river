@@ -46,14 +46,12 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 >>> _ = manual_seed(42)
 
 
->>> def build_torch_mlp_classifier(n_features):  # build neural architecture
+>>> def build_torch_mlp_classifier(n_features):
 ...     net = nn.Sequential(
 ...         nn.Linear(n_features, 5),
-...         nn.Linear(5, 5),
-...         nn.Linear(5, 5),
-...         nn.Linear(5, 5),
-...         nn.Linear(5, 1),
-...         nn.Sigmoid()
+...         nn.ReLU(),
+...         nn.Linear(5, 2),
+...         nn.Softmax(-1)
 ...     )
 ...     return net
 
@@ -72,7 +70,7 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 ...     model = model.learn_one(x, y)  # make the model learn
 
 >>> print(f'Accuracy: {metric.get()}')
-Accuracy: 0.8304
+Accuracy: 0.8336
 
 ```
 
