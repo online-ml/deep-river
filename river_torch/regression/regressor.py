@@ -36,8 +36,8 @@ class Regressor(DeepEstimator, base.Regressor):
     >>> def build_torch_mlp(n_features):
     ...     net = nn.Sequential(
     ...         nn.Linear(n_features, 5),
-    ...         nn.Linear(5, 1),
-    ...         nn.Softmax()
+    ...         nn.ReLU(),
+    ...         nn.Linear(5, 1)
     ...     )
     ...     return net
     ...
@@ -55,7 +55,7 @@ class Regressor(DeepEstimator, base.Regressor):
     >>> metric = metrics.MAE()
 
     >>> evaluate.progressive_val_score(dataset, model, metric).get()
-    39.7545
+    1.3456
 
     """
 
