@@ -5,7 +5,7 @@ import typing
 from matplotlib.pyplot import axis
 
 import torch
-from torch.nn import init
+from torch.nn import init, parameter
 import torch.nn.functional as F
 from river import base
 
@@ -116,8 +116,8 @@ class Classifier(DeepEstimator, base.Classifier):
 
         new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
         init.kaiming_uniform_(new_weights, a=math.sqrt(5))
-        self.output_layer.weight = torch.cat(
-            [self.output_layer.weight, new_weights], axis=0
+        self.output_layer.weight = parameter.Parameter(
+            torch.cat([self.output_layer.weight, new_weights], axis=0)
         )
 
         if self.output_layer.bias is not None:
@@ -125,8 +125,8 @@ class Classifier(DeepEstimator, base.Classifier):
             fan_in, _ = init._calculate_fan_in_and_fan_out(self.output_layer.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             init.uniform_(new_bias, -bound, bound)
-            self.output_layer.bias = torch.cat(
-                [self.output_layer.bias, new_bias], axis=0
+            self.output_layer.bias = parameter.Parameter(
+                torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
@@ -231,8 +231,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     def _add_output_dims(self, n_classes_to_add: int):
         new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
         init.kaiming_uniform_(new_weights, a=math.sqrt(5))
-        self.output_layer.weight = torch.cat(
-            [self.output_layer.weight, new_weights], axis=0
+        self.output_layer.weight = parameter.Parameter(
+            torch.cat([self.output_layer.weight, new_weights], axis=0)
         )
 
         if self.output_layer.bias is not None:
@@ -240,8 +240,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             fan_in, _ = init._calculate_fan_in_and_fan_out(self.output_layer.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             init.uniform_(new_bias, -bound, bound)
-            self.output_layer.bias = torch.cat(
-                [self.output_layer.bias, new_bias], axis=0
+            self.output_layer.bias = parameter.Parameter(
+                torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
