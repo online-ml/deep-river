@@ -63,8 +63,18 @@ class SequentialLSTM(nn.Module):
         return hn
 
 
-def find_output_layer(net):
-    """Return the output layer of a network. 
+def find_output_layer(net: nn.Sequential) -> nn.Linear:
+    """Return the output layer of a network.
+
+    Parameters
+    ----------
+    net
+        The network to find the output layer of.
+
+    Returns
+    -------
+    nn.Linear
+        The output layer of the network.
     """
 
     for layer in list(net.children())[::-1]:

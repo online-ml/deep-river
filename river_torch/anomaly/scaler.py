@@ -1,5 +1,5 @@
-from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMean, RollingMin
 from river.anomaly.base import AnomalyDetector
+from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMean, RollingMin
 
 from .base import AnomalyScaler
 
@@ -10,25 +10,27 @@ METRICS = {
 }
 
 
-def get_metric(
+def _get_metric(
     metric: str, metric_type: str, window_size: int = 250, alpha: float = 0.3
 ):
-    """Get the metric class for the given metric and metric type.
+    """
+    Returns the metric class for the given metric and metric type.
 
-    Args:
-    -----
-    metric: str
+    Parameters
+    ----------
+    metric
         The metric to use.
-    metric_type: str
+    metric_type
         The type of metric to use.
-    window_size: int
+    window_size
         The window size to use for the rolling metrics.
-    alpha: float
+    alpha
         The alpha to use for the EWMean metric.
 
-    Returns:
-    --------
-    metric_class: river.stats.Statistic
+    Returns
+    -------
+    Callable
+        The metric class.
     """
 
     assert metric in METRICS.keys(), f"Invalid metric: {metric}"
@@ -45,19 +47,20 @@ def get_metric(
 
 
 class StandardScaler(AnomalyScaler):
-    """Wrapper around an anomaly detector that standardizes the model's output using incremental mean and variance metrics.
+    """
+    Wrapper around an anomaly detector that standardizes the model's output using incremental mean and variance metrics.
 
     Parameters
     ----------
-    anomaly_detector: AnomalyDetector
+    anomaly_detector
         The anomaly detector to wrap.
-    with_std : bool
+    with_std
         Whether to use standard deviation for scaling.
-    metric_type: str
+    metric_type
         The type of metric to use.
-    window_size: int
+    window_size
         The window size used for the metrics if metric_type=="rolling".
-    alpha: float
+    alpha
         The alpha used for the metrics if metric_type=="adaptive".
     """
 
@@ -73,22 +76,22 @@ class StandardScaler(AnomalyScaler):
         self.metric_type = metric_type
         self.alpha = alpha
         self.window_size = window_size
-        self.mean = get_metric("mean", metric_type, window_size, alpha)
-        self.sq_mean = get_metric("mean", metric_type, window_size, alpha)
+        self.mean = _get_metric("mean", metric_type, window_size, alpha)
+        self.sq_mean = _get_metric("mean", metric_type, window_size, alpha)
         self.with_std = with_std
 
-    def score_one(self, *args) -> float:
-        """Return scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+    def score_one(self, *args):
+        """
+        Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
         Parameters
         ----------
-        args
+        *args
             Depends on whether the underlying anomaly detector is supervised or not.
+
         Returns
         -------
-        An anomaly score. A high score is indicative of an anomaly. A low score corresponds a
-        normal observation.
+        An scaled anomaly score. Larger values indicate more anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args)
         mean = self.mean.update(raw_score).get()
@@ -101,17 +104,17 @@ class StandardScaler(AnomalyScaler):
         return score
 
     def score_many(self, *args):
-        """Return scaled anomaly scores based on raw scores provided by the wrapped anomaly detector.
+        """
+        Return scaled anomaly scores based on raw scores provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
         Parameters
         ----------
-        args
+        *args
             Depends on whether the underlying anomaly detector is supervised or not.
+
         Returns
         -------
-        Anomaly scores. A high score is indicative of an anomaly. A low score corresponds a
-        normal observation.
+        An scaled anomaly score. Larger values indicate more anomalous examples.
         """
         raw_scores = self.anomaly_detector.score_many(*args)
         mean = self.mean.update_many(raw_scores).get()
@@ -129,13 +132,13 @@ class MeanScaler(AnomalyScaler):
 
     Parameters
     ----------
-    anomaly_detector: AnomalyDetector
+    anomaly_detector
         The anomaly detector to wrap.
-    metric_type: str
+    metric_type
         The type of metric to use.
-    window_size: int
+    window_size
         The window size used for mean computation if metric_type=="rolling".
-    alpha: float
+    alpha
         The alpha used for mean computation if metric_type=="adaptive".
     """
 
@@ -150,20 +153,20 @@ class MeanScaler(AnomalyScaler):
         self.metric_type = metric_type
         self.alpha = alpha
         self.window_size = window_size
-        self.mean = get_metric("mean", metric_type, window_size, alpha)
+        self.mean = _get_metric("mean", metric_type, window_size, alpha)
 
-    def score_one(self, *args) -> float:
-        """Return scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+    def score_one(self, *args):
+        """
+        Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
         Parameters
         ----------
-        args
+        *args
             Depends on whether the underlying anomaly detector is supervised or not.
+
         Returns
         -------
-        Anomaly score. A high score is indicative of an anomaly. A low score corresponds a
-        normal observation.
+        An scaled anomaly score. Larger values indicate more anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args)
         mean = self.mean.update(raw_score).get()
@@ -171,18 +174,18 @@ class MeanScaler(AnomalyScaler):
 
         return score
 
-    def score_many(self, *args) -> float:
-        """Return scaled anomaly scores based on raw scores provided by the wrapped anomaly detector.
+    def score_many(self, *args):
+        """
+        Return scaled anomaly scores based on raw scores provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
         Parameters
         ----------
-        args
+        *args
             Depends on whether the underlying anomaly detector is supervised or not.
+
         Returns
         -------
-        Anomaly score. A high score is indicative of an anomaly. A low score corresponds a
-        normal observation.
+        An scaled anomaly score. Larger values indicate more anomalous examples.
         """
         raw_score = self.anomaly_detector.score_many(*args)
         mean = self.mean.update_many(raw_score).get()
@@ -196,13 +199,13 @@ class MinMaxScaler(AnomalyScaler):
 
     Parameters
     ----------
-    anomaly_detector: AnomalyDetector
+    anomaly_detector
         The anomaly detector to wrap.
-    metric_type: str
+    metric_type
         The type of metric to use.
-    window_size: int
+    window_size
         The window size used for the metrics if metric_type=="rolling".
-    alpha: float
+    alpha
         The alpha used for the metrics if metric_type=="adaptive".
     """
 
@@ -217,21 +220,21 @@ class MinMaxScaler(AnomalyScaler):
         self.metric_type = metric_type
         self.alpha = alpha
         self.window_size = window_size
-        self.min = get_metric("min", metric_type, window_size, alpha)
-        self.max = get_metric("max", metric_type, window_size, alpha)
+        self.min = _get_metric("min", metric_type, window_size, alpha)
+        self.max = _get_metric("max", metric_type, window_size, alpha)
 
-    def score_one(self, *args) -> float:
-        """Return scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+    def score_one(self, *args):
+        """
+        Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
         Parameters
         ----------
-        args
+        *args
             Depends on whether the underlying anomaly detector is supervised or not.
+
         Returns
         -------
-        Anomaly score. A high score is indicative of an anomaly. A low score corresponds a
-        normal observation.
+        An scaled anomaly score. Larger values indicate more anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args)
         min = self.min.update(raw_score).get()
@@ -240,18 +243,18 @@ class MinMaxScaler(AnomalyScaler):
 
         return score
 
-    def score_many(self, *args) -> float:
-        """Return scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+    def score_many(self, *args):
+        """
+        Return scaled anomaly scores based on raw scores provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
         Parameters
         ----------
-        args
+        *args
             Depends on whether the underlying anomaly detector is supervised or not.
+
         Returns
         -------
-        Anomaly score. A high score is indicative of an anomaly. A low score corresponds a
-        normal observation.
+        An scaled anomaly score. Larger values indicate more anomalous examples.
         """
         raw_scores = self.anomaly_detector.score_many(*args)
         for raw_score in raw_scores:

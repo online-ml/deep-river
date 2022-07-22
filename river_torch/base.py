@@ -1,35 +1,42 @@
 import abc
 import collections
 import inspect
-from typing import Callable, Type, Union
+from typing import Callable, Union
 
 import torch
 from river import base
 
-from river_torch.utils import dict2tensor, get_loss_fn, get_optim_fn
-from river_torch.utils.river_compat import list2tensor, scalar2tensor
+from river_torch.utils import get_loss_fn, get_optim_fn
 
 
 class DeepEstimator(base.Estimator):
     """
-    A PyTorch to River base class that aims to provide basic supervised functionalities.
+    Abstract base class that implements basic functionality of River-compatible PyTorch wrappers.
 
     Parameters
     ----------
     build_fn
+        Function that builds the PyTorch model to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
+        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
-    learning_rate
+        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
     device
-    net_params
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    **net_params
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
     """
 
     def __init__(
         self,
         build_fn: Callable,
-        loss_fn: Union[str, Callable],
-        optimizer_fn: Union[str, Callable],
-        learning_rate: float = 1e-3,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
         **net_params
@@ -38,7 +45,7 @@ class DeepEstimator(base.Estimator):
         self.build_fn = build_fn
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
-        self.learning_rate = learning_rate
+        self.lr = lr
         self.device = device
         self.net_params = net_params
         self.seed = seed
@@ -46,7 +53,16 @@ class DeepEstimator(base.Estimator):
         self.net = None
 
     @classmethod
-    def _unit_test_params(cls):
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
         def build_torch_linear_regressor(n_features):
             net = torch.nn.Sequential(
                 torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
@@ -55,15 +71,21 @@ class DeepEstimator(base.Estimator):
 
         yield {
             "build_fn": build_torch_linear_regressor,
-            "loss_fn": "mae",
+            "loss_fn": "l1",
             "optimizer_fn": "sgd",
         }
 
     @classmethod
-    def _unit_test_skips(self):
-        """Indicates which checks to skip during unit testing.
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite. However, in some cases, some estimators might not
         be able to pass certain checks.
+
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
         """
         return {
             "check_pickling",
@@ -75,19 +97,38 @@ class DeepEstimator(base.Estimator):
         }
 
     @abc.abstractmethod
-    def learn_one(self, x, y):
+    def learn_one(self, x, y) -> "DeepEstimator":
+        """
+        Performs one step of training with a single example.
+
+        Parameters
+        ----------
+        x
+            Input example.
+        y
+            Target value.
+
+        Returns
+        -------
+        DeepEstimator
+            The estimator itself.
+        """
         return self
 
-    def _filter_torch_params(self, fn: Callable, override=None):
-        """Filters `sk_params` and returns those in `fn`'s arguments.
+    def _filter_torch_params(self, fn: Callable, override=None) -> dict:
+        """Filters `net_params` and returns those in `fn`'s arguments.
 
-        # Arguments
-            fn : arbitrary function
-            override: dictionary, values to override `torch_params`
+        Parameters
+        ----------
+        fn
+            Arbitrary function
+        override
+            Dictionary, values to override `torch_params`
 
-        # Returns
-            res : dictionary containing variables
-                in both `sk_params` and `fn`'s arguments.
+        Returns
+        -------
+        dict
+            Dictionary containing variables in both `sk_params` and `fn`'s arguments.
         """
         override = override or {}
         res = {}
@@ -98,31 +139,65 @@ class DeepEstimator(base.Estimator):
         res.update(override)
         return res
 
-    def _init_net(self, n_features):
+    def _init_net(self, n_features) -> None:
+        """
+        Initializes the PyTorch model.
+
+        Parameters
+        ----------
+        n_features
+            Number of input features of the model to initialize.
+
+        """
         self.net = self.build_fn(
             n_features=n_features, **self._filter_torch_params(self.build_fn)
         )
         self.net.to(self.device)
-        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
+        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.lr)
 
-# Shares the same code as `DeepEstimator`. Remove it? 
+
 class RollingDeepEstimator(base.Estimator):
+    """
+    Abstract base class that implements basic functionality of River-compatible PyTorch wrappers including a rolling window to allow the model to make predictions based on multiple previous examples.
+
+    Parameters
+    ----------
+    build_fn
+        Function that builds the PyTorch model to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+    loss_fn
+        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    window_size
+        Size of the rolling window used for storing previous examples.
+    append_predict
+        Whether to append inputs passed for prediction to the rolling window.
+    **net_params
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    """
+
     def __init__(
         self,
         build_fn: Callable,
-        loss_fn: Union[str, Callable],
-        optimizer_fn: Union[str, Callable],
-        learning_rate: float = 1e-3,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
-        window_size: int = 1,
-        append_predict: bool = True,
+        window_size: int = 10,
+        append_predict: bool = False,
         **net_params
     ):
         self.build_fn = build_fn
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
-        self.learning_rate = learning_rate
+        self.lr = lr
         self.device = device
         self.window_size = window_size
         self.net_params = net_params
@@ -135,7 +210,16 @@ class RollingDeepEstimator(base.Estimator):
         self.net = None
 
     @classmethod
-    def _unit_test_params(cls):
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
         def build_torch_linear_regressor(n_features):
             net = torch.nn.Sequential(
                 torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
@@ -143,16 +227,22 @@ class RollingDeepEstimator(base.Estimator):
             return net
 
         yield {
-            "loss_fn": "mse",
             "build_fn": build_torch_linear_regressor,
+            "loss_fn": "mse",
             "optimizer_fn": "sgd",
         }
 
     @classmethod
-    def _unit_test_skips(self):
-        """Indicates which checks to skip during unit testing.
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite. However, in some cases, some estimators might not
         be able to pass certain checks.
+
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
         """
         return {
             "check_pickling",
@@ -164,19 +254,38 @@ class RollingDeepEstimator(base.Estimator):
         }
 
     @abc.abstractmethod
-    def learn_one(self, x, y):
+    def learn_one(self, x, y) -> "RollingDeepEstimator":
+        """
+        Performs one step of training with a sliding window of the most recent examples.
+
+        Parameters
+        ----------
+        x
+            Input example.
+        y
+            Target value.
+
+        Returns
+        -------
+        RollingDeepEstimator
+            The estimator itself.
+        """
         return self
 
-    def _filter_torch_params(self, fn, override=None):
-        """Filters `sk_params` and returns those in `fn`'s arguments.
+    def _filter_torch_params(self, fn, override=None) -> dict:
+        """Filters `net_params` and returns those in `fn`'s arguments.
 
-        # Arguments
-            fn : arbitrary function
-            override: dictionary, values to override `torch_params`
+        Parameters
+        ----------
+        fn
+            Arbitrary function
+        override
+            Dictionary, values to override `torch_params`
 
-        # Returns
-            res : dictionary containing variables
-                in both `sk_params` and `fn`'s arguments.
+        Returns
+        -------
+        dict
+            Dictionary containing variables in both `sk_params` and `fn`'s arguments.
         """
         override = override or {}
         res = {}
@@ -187,9 +296,18 @@ class RollingDeepEstimator(base.Estimator):
         res.update(override)
         return res
 
-    def _init_net(self, n_features):
+    def _init_net(self, n_features) -> None:
+        """
+        Initializes the PyTorch model.
+
+        Parameters
+        ----------
+        n_features
+            Number of input features of the model to initialize.
+
+        """
         self.net = self.build_fn(
             n_features=n_features, **self._filter_torch_params(self.build_fn)
         )
         self.net.to(self.device)
-        self.optimizer = self.optimizer_fn(self.net.parameters(), self.learning_rate)
+        self.optimizer = self.optimizer_fn(self.net.parameters(), self.lr)

@@ -1,13 +1,11 @@
-import collections
 import copy
 import math
-import typing
-from matplotlib.pyplot import axis
+from typing import Callable, Dict, Union
 
 import torch
-from torch.nn import init, parameter
-import torch.nn.functional as F
 from river import base
+from river.base.typing import ClfTarget
+from torch.nn import init, parameter
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
 from river_torch.utils.layers import find_output_layer
@@ -15,33 +13,37 @@ from river_torch.utils.river_compat import (
     dict2tensor,
     list2tensor,
     output2proba,
-    scalar2tensor,
     target2onehot,
 )
 
 
 class Classifier(DeepEstimator, base.Classifier):
     """
-    A river classifier that integrates neural Networks from PyTorch.
+    Wrapper for PyTorch classification models that automatically handles increases in the number of classes by adding output neurons in case the number of observed classes exceeds the current number of output neurons.
+
     Parameters
     ----------
     build_fn
+        Function that builds the PyTorch classifier to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example. For the dynamic adaptation of the number of possible classes, the returned network should be a torch.nn.Sequential model with a Linear layer as the last module.
     loss_fn
+        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
-    learning_rate
+        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
-    net_params
+        Random seed to be used for training the wrapped model.
+    **net_params
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
 
     Examples
     --------
 
-    >>> from river import datasets
-    >>> from river import evaluate
-    >>> from river import metrics
-    >>> from river import preprocessing
-    >>> from torch import nn
-    >>> from torch import optim
-    >>> from torch import manual_seed
+    >>> from river.datasets import Phishing
+    >>> from river import evaluate, metrics, preprocessing
+    >>> from torch import nn, optim, manual_seed
     >>> from river_torch.classification import Classifier
     >>> _ = manual_seed(0)
     >>> def build_torch_mlp_classifier(n_features):
@@ -53,8 +55,8 @@ class Classifier(DeepEstimator, base.Classifier):
     ...     )
     ...     return net
     ...
-    >>> model = Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce',optimizer_fn=optim.Adam, learning_rate=1e-3)
-    >>> dataset = datasets.Phishing()
+    >>> model = Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy',optimizer_fn=optim.Adam, lr=1e-3)
+    >>> dataset = Phishing()
     >>> metric = metrics.Accuracy()
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)
     Accuracy: 79.82%
@@ -62,12 +64,12 @@ class Classifier(DeepEstimator, base.Classifier):
 
     def __init__(
         self,
-        build_fn,
-        loss_fn: str = "bce",
-        optimizer_fn="sgd",
-        learning_rate=1e-3,
-        device="cpu",
-        seed=42,
+        build_fn: Callable,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
         **net_params,
     ):
         self.observed_classes = []
@@ -77,12 +79,27 @@ class Classifier(DeepEstimator, base.Classifier):
             optimizer_fn=optimizer_fn,
             build_fn=build_fn,
             device=device,
-            learning_rate=learning_rate,
+            lr=lr,
             seed=seed,
             **net_params,
         )
 
-    def learn_one(self, x: dict, y: base.typing.ClfTarget, **kwargs) -> base.Classifier:
+    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
+        """
+        Performs one step of training with a single example.
+
+        Parameters
+        ----------
+        x
+            Input example.
+        y
+            Target value.
+
+        Returns
+        -------
+        Classifier
+            The classifier itself.
+        """
         # check if model is initialized
         if self.net is None:
             self._init_net(len(x))
@@ -109,11 +126,17 @@ class Classifier(DeepEstimator, base.Classifier):
             device=self.device,
         )
         self.net.train()
-        self._learn_one(x=x, y=y)
-        return self
+        return self._learn_one(x=x, y=y)
 
-    def _add_output_dims(self, n_classes_to_add: int):
+    def _add_output_dims(self, n_classes_to_add: int) -> None:
+        """
+        Adds output dimensions to the model by adding new rows of weights to the existing weights of the last layer.
 
+        Parameters
+        ----------
+        n_classes_to_add
+            Number of output dimensions to add.
+        """
         new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
         init.kaiming_uniform_(new_weights, a=math.sqrt(5))
         self.output_layer.weight = parameter.Parameter(
@@ -129,7 +152,7 @@ class Classifier(DeepEstimator, base.Classifier):
                 torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
-        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
+        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.lr)
 
     def _learn_one(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
@@ -137,8 +160,22 @@ class Classifier(DeepEstimator, base.Classifier):
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
+        return self
 
-    def predict_proba_one(self, x: dict) -> typing.Dict[base.typing.ClfTarget, float]:
+    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
+        """
+        Predict the probability of each label given the input.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        Dict[ClfTarget, float]
+            Dictionary of probabilities for each label.
+        """
         if self.net is None:
             self._init_net(len(x))
         x = dict2tensor(x, device=self.device)
@@ -149,39 +186,42 @@ class Classifier(DeepEstimator, base.Classifier):
 
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
-    A Rolling Window PyTorch to River Regressor
+    Wrapper that feeds a sliding window of the most recent examples to the wrapped PyTorch classification model. The class also automatically handles increases in the number of classes by adding output neurons in case the number of observed classes exceeds the current number of output neurons.
+
     Parameters
     ----------
     build_fn
+        Function that builds the PyTorch classifier to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example. For the dynamic adaptation of the number of possible classes, the returned network should be a torch.nn.Sequential model with a Linear layer as the last module.
     loss_fn
+        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
+        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
     window_size
-    learning_rate
-    net_params
+        Number of recent examples to be fed to the wrapped model at each step.
+    append_predict
+        Whether to append inputs passed for prediction to the rolling window.
+    **net_params
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
     """
 
     def __init__(
         self,
-        build_fn,
-        loss_fn: str = "ce",
-        optimizer_fn="sgd",
-        window_size=1,
-        device="cpu",
-        learning_rate=1e-3,
+        build_fn: Callable,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 10,
+        append_predict: bool = False,
         **net_params,
     ):
-        """
-        A Rolling Window PyTorch to River Classifier
-
-        Parameters
-        ----------
-        build_fn
-        loss_fn
-        optimizer_fn
-        window_size
-        learning_rate
-        net_params
-        """
         self.observed_classes = []
         self.output_layer = None
         super().__init__(
@@ -189,12 +229,29 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             window_size=window_size,
+            append_predict=append_predict,
             device=device,
-            learning_rate=learning_rate,
+            lr=lr,
+            seed=seed,
             **net_params,
         )
 
-    def learn_one(self, x: dict, y: base.typing.ClfTarget, **kwargs) -> base.Classifier:
+    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
+        """
+        Performs one step of training with the most recent training examples stored in the sliding window.
+
+        Parameters
+        ----------
+        x
+            Input example.
+        y
+            Target value.
+
+        Returns
+        -------
+        Classifier
+            The classifier itself.
+        """
         # check if model is initialized
         if self.net is None:
             self._init_net(len(x))
@@ -228,7 +285,15 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self._learn_window(x=x, y=y)
         return self
 
-    def _add_output_dims(self, n_classes_to_add: int):
+    def _add_output_dims(self, n_classes_to_add: int) -> None:
+        """
+        Adds output dimensions to the model by adding new rows of weights to the existing weights of the last layer.
+
+        Parameters
+        ----------
+        n_classes_to_add
+            Number of output dimensions to add.
+        """
         new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
         init.kaiming_uniform_(new_weights, a=math.sqrt(5))
         self.output_layer.weight = parameter.Parameter(
@@ -244,7 +309,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
-        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.learning_rate)
+        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.lr)
 
     def _learn_window(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
@@ -253,7 +318,20 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         loss.backward()
         self.optimizer.step()
 
-    def predict_proba_one(self, x: dict) -> typing.Dict[base.typing.ClfTarget, float]:
+    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
+        """
+        Predict the probability of each label given the most recent examples stored in the sliding window.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        Dict[ClfTarget, float]
+            Dictionary of probabilities for each label.
+        """
         if self.net is None:
             self._init_net(len(x))
 

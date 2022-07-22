@@ -1,16 +1,12 @@
 from .base import AnomalyScaler, Autoencoder
 from .probability_weighted_ae import ProbabilityWeightedAutoencoder
-from .rolling_ae import RollingWindowAutoencoder
-from .scaler import (
-    MeanScaler,
-    MinMaxScaler,
-    StandardScaler,
-)
+from .rolling_ae import RollingAutoencoder
+from .scaler import MeanScaler, MinMaxScaler, StandardScaler
 
 __all__ = [
     "Autoencoder",
     "AnomalyScaler",
-    "RollingWindowAutoencoder",
+    "RollingAutoencoder",
     "ProbabilityWeightedAutoencoder",
     "StandardScaler",
     "MeanScaler",

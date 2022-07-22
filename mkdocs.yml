@@ -61,6 +61,14 @@ plugins:
   - autorefs
   - mkdocstrings:
       default_handler: python
+      handlers: 
+        python:
+          paths: [.]
+          options:
+            docstring_style: numpy         
+            docstring_section_style: list
+            merge_init_into_class: True    
+            show_source: False 
   - mkdocs-jupyter
 
 extra_javascript:
@@ -71,11 +79,11 @@ nav:
   - Home: index.md
   - Installation: installation.md
   - Code Reference:
+      - Anomaly: anomaly.md
       - Classification: classification.md
       - Regression: regression.md
-      - Anomaly: anomaly.md
   - Examples:
+      - Anomaly Detection: examples/example_autoencoder.ipynb
       - Classification: examples/example_classification.ipynb
       - Regression: examples/example_regression.ipynb
-      - Anomaly Detection: examples/example_autoencoder.ipynb
   - About: about.md

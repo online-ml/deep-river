@@ -14,27 +14,33 @@
 </p>
 
 ## 💈 Installation
+
 ```shell
 pip install river-torch
 ```
+
 You can install the latest development version from GitHub as so:
+
 ```shell
 pip install https://github.com/online-ml/river-torch --upgrade
 ```
 
 Or, through SSH:
+
 ```shell
 pip install git@github.com:online-ml/river-torch.git --upgrade
 ```
 
-
 ## 🍫 Quickstart
+
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
 For further examples check out the <a href="https://online-ml.github.io/river-torch">Documentation</a>.
+
 ### Classification
+
 ```python
->>> from river import datasets
+>>> from river.datasets import Phishing
 >>> from river import metrics
 >>> from river import preprocessing
 >>> from river import compose
@@ -60,10 +66,10 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 
 >>> model = compose.Pipeline(
 ...     preprocessing.StandardScaler(),
-...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam, learning_rate=1e-3)
+...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy', optimizer_fn=optim.Adam, lr=1e-3)
 ... )
 
->>> dataset = datasets.Phishing()
+>>> dataset = Phishing()
 >>> metric = metrics.Accuracy()
 
 >>> for x, y in dataset:
@@ -80,7 +86,8 @@ Accuracy: 0.8304
 
 ```python
 >>> import math
->>> from river import datasets, metrics, preprocessing
+>>> from river import metrics, preprocessing
+>>> from river.datasets import CreditCard
 >>> from river_torch.anomaly import Autoencoder
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
@@ -98,7 +105,7 @@ Accuracy: 0.8304
 ...     )
 ...     return net
 
->>> dataset = datasets.CreditCard().take(5000)
+>>> dataset = CreditCard().take(5000)
 >>> metric = metrics.ROCAUC()
 >>> scaler = preprocessing.MinMaxScaler()
 
@@ -113,6 +120,7 @@ Accuracy: 0.8304
 ```
 
 ## 🏫 Affiliations
+
 <p align="center">
     <img src="https://upload.wikimedia.org/wikipedia/de/thumb/4/44/Fzi_logo.svg/1200px-Fzi_logo.svg.png?raw=true" alt="FZI Logo" height="200"/>
 </p>
