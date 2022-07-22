@@ -34,7 +34,7 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 ### Classification
 
 ```python
->>> from river import datasets
+>>> from river.datasets import Phishing
 >>> from river import metrics
 >>> from river import preprocessing
 >>> from river import compose
@@ -58,10 +58,10 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 
 >>> model = compose.Pipeline(
 ...     preprocessing.StandardScaler(),
-...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam, learning_rate=1e-3)
+...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy', optimizer_fn=optim.Adam, lr=1e-3)
 ... )
 
->>> dataset = datasets.Phishing()
+>>> dataset = Phishing()
 >>> metric = metrics.Accuracy()
 
 >>> for x, y in dataset:
@@ -78,7 +78,8 @@ Accuracy: 0.8336
 
 ```python
 >>> import math
->>> from river import datasets, metrics, preprocessing
+>>> from river import metrics, preprocessing
+>>> from river.datasets import CreditCard
 >>> from river_torch.anomaly import Autoencoder
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
@@ -96,7 +97,7 @@ Accuracy: 0.8336
 ...     )
 ...     return net
 
->>> dataset = datasets.CreditCard().take(5000)
+>>> dataset = CreditCard().take(5000)
 >>> metric = metrics.ROCAUC()
 >>> scaler = preprocessing.MinMaxScaler()
 

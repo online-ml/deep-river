@@ -1,11 +1,8 @@
-from typing import Callable
+from typing import Callable, Union
+
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
-from typing import Union
-
-def rmse_loss(input, target, size_average=None, reduce=None, reduction="mean"):
-    return torch.sqrt(F.mse_loss(input, target, size_average, reduce, reduction))
 
 
 ACTIVATION_FNS = {
@@ -21,12 +18,11 @@ ACTIVATION_FNS = {
 
 LOSS_FNS = {
     "mse": F.mse_loss,
-    "rmse": rmse_loss,
-    "mae": F.l1_loss,
-    "smooth_mae": F.smooth_l1_loss,
-    "bce": F.binary_cross_entropy,
-    "ce": F.cross_entropy,
-    "kld": F.kl_div,
+    "l1": F.l1_loss,
+    "smooth_l1": F.smooth_l1_loss,
+    "binary_cross_entropy": F.binary_cross_entropy,
+    "cross_entropy": F.cross_entropy,
+    "kl_div": F.kl_div,
     "huber": F.huber_loss,
 }
 
@@ -49,6 +45,18 @@ INIT_FNS = {
 
 
 def get_init_fn(init_fn):
+    """Returns the requested init function.
+
+    Parameters
+    ----------
+    init_fn
+        The init function to fetch. Must be one of ["xavier_uniform", "uniform", "kaiming_uniform"].
+
+    Returns
+    -------
+    Callable
+        The class of the requested activation function.
+    """
     init_fn_ = INIT_FNS.get(init_fn, "xavier_uniform")
     if init_fn.startswith("xavier"):
         result = lambda weight, activation_fn: init_fn_(
@@ -68,7 +76,7 @@ def get_init_fn(init_fn):
 BASE_PARAM_ERROR = "Unknown {}: {}. A valid string or {} is required."
 
 
-def get_activation_fn(activation_fn: Union[str, type]) -> type:
+def get_activation_fn(activation_fn: Union[str, Callable]) -> Callable:
     """Returns the requested activation function as a nn.Module class.
 
     Parameters
@@ -76,11 +84,10 @@ def get_activation_fn(activation_fn: Union[str, type]) -> type:
     activation_fn
         The activation function to fetch. Can be a string or a nn.Module class.
 
-    Raises:
-        ValueError: If the activation function is not found.
-
-    Returns:
-        type: The class of the requested activation function.
+    Returns
+    -------
+    Callable
+        The class of the requested activation function.
     """
     err = ValueError(
         BASE_PARAM_ERROR.format("activation function", activation_fn, "nn.Module")
@@ -95,7 +102,7 @@ def get_activation_fn(activation_fn: Union[str, type]) -> type:
     return activation_fn
 
 
-def get_optim_fn(optim_fn: Union[str, type]) -> type:
+def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
     """Returns the requested optimizer as a nn.Module class.
 
     Parameters
@@ -103,11 +110,11 @@ def get_optim_fn(optim_fn: Union[str, type]) -> type:
     optim_fn
         The optimizer to fetch. Can be a string or a nn.Module class.
 
-    Raises:
-        ValueError: If the optimizer is not found.
 
-    Returns:
-        type: The class of the requested optimizer.
+    Returns
+    -------
+    Callable
+        The class of the requested optimizer.
     """
     err = ValueError(BASE_PARAM_ERROR.format("optimizer", optim_fn, "nn.Module"))
     if isinstance(optim_fn, str):
@@ -130,11 +137,10 @@ def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
     loss_fn
         The loss function to fetch. Can be a string or a function.
 
-    Raises:
-        ValueError: If the loss function is not found.
-
-    Returns:
-        function: The function of the requested loss function.
+    Returns
+    -------
+    Callable
+        The function of the requested loss function.
     """
     err = ValueError(BASE_PARAM_ERROR.format("loss function", loss_fn, "function"))
     if isinstance(loss_fn, str):

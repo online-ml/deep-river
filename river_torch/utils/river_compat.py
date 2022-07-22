@@ -15,7 +15,7 @@ def scalar2tensor(x: Union[float, int], device="cpu", dtype=torch.float32):
     return x
 
 
-def pandas2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32):
+def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32):
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
