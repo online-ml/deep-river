@@ -1,5 +1,4 @@
 import collections
-from typing import Type
 
 import torch
 

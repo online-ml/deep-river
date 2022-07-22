@@ -1,7 +1,6 @@
 import abc
 import inspect
 import math
-from typing import Type
 
 import pandas as pd
 import torch
@@ -9,7 +8,7 @@ from river import anomaly, base
 from torch import nn
 from river_torch.base import DeepEstimator
 
-from river_torch.utils import dict2tensor, get_loss_fn, get_optim_fn
+from river_torch.utils import dict2tensor
 
 
 class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
