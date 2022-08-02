@@ -63,11 +63,13 @@ markdown_extensions:
 
 plugins:
   - search
+  - mkdocs-jupyter:
+      execute: True
+      allow_errors: false
   - autorefs
   - awesome-pages
   - mkdocstrings:
       default_handler: python
-  - mkdocs-jupyter
 
 extra_javascript:
   - javascripts/config.js

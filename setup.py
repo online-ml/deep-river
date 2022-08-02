@@ -45,7 +45,7 @@ docs_packages = [
     "mkdocs==1.2.3",
     "mkdocs-awesome-pages-plugin==2.7.0",
     "mkdocs-material==8.1.11",
-    "mkdocstrings==0.18.0",
+    "mkdocstrings==0.19.0",
     "ipython_genutils==0.1.0",
     "mkdocs-jupyter==0.20.0",
     "nbconvert==6.4.2",
