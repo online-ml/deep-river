@@ -38,7 +38,7 @@ theme:
     - navigation.tabs
     - navigation.instant
     - navigation.indexes
-    #- navigation.tracking
+    - navigation.tracking
 
 # Extras
 extra:
@@ -65,7 +65,6 @@ plugins:
   - search
   - mkdocs-jupyter:
       execute: True
-      allow_errors: false
   - autorefs
   - awesome-pages
   - mkdocstrings:

@@ -28,7 +28,6 @@
 
 .md-typeset details {
   margin: 0;
-  padding: 0;
   border-radius: 0;
   padding: 0 1em;
   border-left-width: 0.25em;
@@ -145,25 +144,28 @@
 
 /* Remove spacing, as we cannot hide it completely */
 .md-main__inner {
-  margin: 0;
+  /* margin: 0; */
 }
 
 /* Hide main content for now */
 .md-content {
-  display: none;
+    /*display: none;*/
 }
+.md-content__button {
+    display: none;
+  }
 
 /* Hide table of contents */
 @media screen and (min-width: 60em) {
   .md-sidebar--secondary {
-    display: none;
+        /*display: none;*/
   }
 }
 
 /* Hide navigation */
 @media screen and (min-width: 76.25em) {
   .md-sidebar--primary {
-    display: none;
+      /*display: none;*/
   }
 }
 
@@ -224,13 +226,13 @@ transform: translateY(10%);
         font-size: 1.4rem
     }
     .tx-hero__image {
-        display: none;
+            /*display: none;*/
     }
 }
 
 @media screen and (min-width:60em) {
     .md-sidebar--secondary {
-        display: none
+            /*display: none;*/
     }
 
     .tx-hero {
@@ -250,7 +252,7 @@ transform: translateY(10%);
 
 @media screen and (min-width:76.25em) {
     .md-sidebar--primary {
-        display: none
+            /*display: none;*/
     }
 
     .top-hr {
