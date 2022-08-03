@@ -60,6 +60,9 @@ markdown_extensions:
       generic: true
   - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.highlight:
+        use_pygments: true
+        pygments_lang_class: true
 
 plugins:
   - search
@@ -69,10 +72,6 @@ plugins:
   - awesome-pages
   - mkdocstrings:
       default_handler: python
-      handlers:
-        python:
-          options:
-            show_source: false
 
 extra_javascript:
   - javascripts/config.js
