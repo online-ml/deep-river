@@ -11,9 +11,4 @@ __all__ = [
     "StandardScaler",
     "MeanScaler",
     "MinMaxScaler",
-    "RollingStandardScaler",
-    "AdaptiveStandardScaler",
-    "RollingMinMaxScaler",
-    "RollingMeanScaler",
-    "AdaptiveMeanScaler",
 ]
