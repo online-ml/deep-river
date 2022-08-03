@@ -1,3 +1,0 @@
-# About river-torch
-
-Hallo
