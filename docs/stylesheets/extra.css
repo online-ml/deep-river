@@ -47,18 +47,22 @@
 
  /*Landing page container*/
 .tx-container {
+    position: absolute; top: 0; left: 0;
+    height:100%;
+    width: 100%;
+    margin: 0;
+    padding:0;
     padding-top: .0rem;
-    background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1123 258'><path d='M1124,2c0,0 0,256 0,256l-1125,0l0,-48c0,0 16,5 55,5c116,0 197,-92 325,-92c121,0 114,46 254,46c140,0 214,-167 572,-166Z' style='fill: hsla(0, 0%, 100%, 1)' /></svg>") no-repeat bottom,
-    linear-gradient(
+    background: linear-gradient(
             to bottom,
             var(--md-primary-fg-color),
-            hsla(280, 67%, 55%, 1) 99%,
-            var(--md-default-bg-color) 99%
+            hsla(280, 67%, 55%, 1) 100%,
+            var(--md-default-bg-color) 100%
     )
 }
 
 .tx-hero {
-    margin: 32px 2.8rem;
+
     color: var(--md-primary-bg-color);
     justify-content: center;
 }
@@ -74,8 +78,12 @@
 }
 
 .tx-hero__content {
-    padding-bottom: 1rem;
+
     margin: 0 auto;
+    position: absolute;
+    top:  50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
 }
 
 .tx-hero__image{
