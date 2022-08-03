@@ -1,21 +1,19 @@
-from .base import AutoEncoder
-from .dropout_ae import NoDropoutAE
+from .base import AnomalyScaler, Autoencoder
 from .probability_weighted_ae import ProbabilityWeightedAutoencoder
-from .variational_ae import VariationalAutoencoder
-from .rolling_ae import RollingWindowAutoencoder
-from .postprocessing import (ExponentialMeanScaler, ExponentialStandardizer,
-                             WindowedMeanScaler, WindowedMinMaxScaler,
-                             WindowedStandardizer)
+from .rolling_ae import RollingAutoencoder
+from .scaler import MeanScaler, MinMaxScaler, StandardScaler
 
 __all__ = [
-    "AutoEncoder",
-    "ExponentialMeanScaler",
-    "ExponentialStandardizer",
-    "VariationalAutoencoder",
-    "RollingWindowAutoencoder",
-    "WindowedStandardizer",
-    "WindowedMeanScaler",
+    "Autoencoder",
+    "AnomalyScaler",
+    "RollingAutoencoder",
     "ProbabilityWeightedAutoencoder",
-    "WindowedMinMaxScaler",
-    "NoDropoutAE",
+    "StandardScaler",
+    "MeanScaler",
+    "MinMaxScaler",
+    "RollingStandardScaler",
+    "AdaptiveStandardScaler",
+    "RollingMinMaxScaler",
+    "RollingMeanScaler",
+    "AdaptiveMeanScaler",
 ]

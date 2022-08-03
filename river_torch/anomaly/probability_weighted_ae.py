@@ -1,63 +1,79 @@
-import collections
-from typing import Type
-
-import pandas as pd
-import torch
-from river import stats
+from typing import Callable, Union
 from scipy.special import ndtr
 
 from river_torch.anomaly import base
 from river_torch.utils import dict2tensor
 
-class ProbabilityWeightedAutoencoder(base.AutoEncoder):
+
+class ProbabilityWeightedAutoencoder(base.Autoencoder):
     """
-    A propability weighted auto encoder
+    Wrapper for PyTorch autoencoder models for anomaly detection that reduces the employed learning rate based on an outlier probability estimate of the input example as well as a threshold probability `skip_threshold`. If the outlier probability is above the threshold, the learning rate is reduced to less than 0. Given the probability estimate $p_out$, the adjusted learning rate $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
+
+    Parameters
     ----------
-    encoder_fn
-    decoder_fn
+    build_fn
+        Function that builds the autoencoder to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
-    optimizer_f
-    device
+        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Base learning rate of the optimizer.
     skip_threshold
-    scale_scores
-    window_size
-    net_params
+        Threshold probability to use as a reference for the reduction of the base learning rate.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    **net_params
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
     """
 
     def __init__(
         self,
-        encoder_fn,
-        decoder_fn,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        device="cpu",
-        skip_threshold=0.9,
-        scale_scores=True,
-        window_size=250,
+        build_fn: Callable,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        skip_threshold: float = 0.9,
         **net_params,
     ):
         super().__init__(
-            encoder_fn=encoder_fn,
-            decoder_fn=decoder_fn,
+            build_fn=build_fn,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
+            lr=lr,
             device=device,
-            scale_scores=scale_scores,
-            window_size=window_size,
+            seed=seed,
             **net_params,
         )
         self.skip_threshold = skip_threshold
-        self.var_meter = stats.RollingVar(window_size)
-        self.mean_meter = stats.RollingMean(window_size)
 
-    def learn_one(self, x):
+    def learn_one(self, x: dict) -> "ProbabilityWeightedAutoencoder":
+        """
+        Performs one step of training with a single example, scaling the employed learning rate based on the outlier probability estimate of the input example.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        ProbabilityWeightedAutoencoder
+            The autoencoder itself.
+        """
+        if self.to_init:
+            self._init_net(n_features=len(x))
         x = dict2tensor(x, device=self.device)
 
-        if self.to_init:
-            self._init_net(n_features=x.shape[1])
+        self.net.train()
+        return self._learn_one(x)
 
-        self.train()
-        x_pred = self(x)
+    def _learn_one(self, x):
+        x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
         loss_item = loss.item()
         mean = self.mean_meter.get()

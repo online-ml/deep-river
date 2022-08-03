@@ -15,11 +15,11 @@ REQUIRES_PYTHON = ">=3.6.0"
 # Package requirements.
 base_packages = [
     "scikit-learn==1.0.2",
-    #"scikit-surprise==1.1.1",
+    # "scikit-surprise==1.1.1",
     "torch==1.11",
     "pandas~=1.3.2",
     "numpy>=1.21.6",
-    "river~=0.11.1",
+    "river==0.11.1",
     "tqdm~=4.61.2",
     "pytest==7.0.1",
 ]
@@ -35,7 +35,7 @@ dev_packages = base_packages + [
     "black>=22.1.0",
     "flake8>=4.0.1",
     "isort>=5.9.3",
-    "jupyter==1.0.0"
+    "jupyter==1.0.0",
 ]
 
 docs_packages = [
@@ -102,5 +102,5 @@ setuptools.setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
-    ext_modules=[]
+    ext_modules=[],
 )

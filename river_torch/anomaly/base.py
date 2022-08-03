@@ -1,74 +1,97 @@
+import abc
 import inspect
 import math
-from typing import Type
+from typing import Callable, Union
+import numpy as np
 
 import pandas as pd
 import torch
-from river import stats, anomaly
+from river import anomaly, base
 from torch import nn
+from river_torch.base import DeepEstimator
 
-from river_torch.utils import dict2tensor, get_loss_fn, get_optimizer_fn
+from river_torch.utils import dict2tensor
+from river_torch.utils.river_compat import df2tensor
 
 
-class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
+class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
     """
-    Base Auto Encoder
+    Wrapper for PyTorch autoencoder models that uses the networks reconstruction error for scoring the anomalousness of a given example.
+
+    Parameters
     ----------
-    encoder_fn
-    decoder_fn
+    build_fn
+        Function that builds the autoencoder to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
+        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
+        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
     device
-    scale_scores
-    window_size
-    net_params
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    **net_params
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
     """
+
     def __init__(
         self,
-        encoder_fn,
-        decoder_fn,
-        loss_fn="smooth_mae",
-        optimizer_fn: Type[torch.optim.Optimizer] = "sgd",
-        device="cpu",
-        scale_scores=True,
-        window_size=250,
+        build_fn: Callable,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
         **net_params
     ):
-        super().__init__()
-        self.encoder_fn = encoder_fn
-        self.decoder_fn = decoder_fn
-        self.encoder = None
-        self.decoder = None
-        self.loss_fn = get_loss_fn(loss_fn)
-        self.optimizer_fn = get_optimizer_fn(optimizer_fn)
-        self.net_params = net_params
-        self.device = device
-        self.mean_meter = stats.RollingMean(window_size) if scale_scores else None
-        self.scale_scores = scale_scores
-        self.window_size = window_size
+        super().__init__(
+            build_fn=build_fn,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            lr=lr,
+            device=device,
+            seed=seed,
+            **net_params,
+        )
 
     @classmethod
-    def _unit_test_params(cls):
-        def encoder_fn(n_features):
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
+        def build_fn(n_features):
+            latent_dim = math.ceil(n_features / 2)
             return nn.Sequential(
-                nn.Linear(n_features, math.ceil(n_features / 2)), nn.LeakyReLU()
+                nn.Linear(n_features, latent_dim),
+                nn.LeakyReLU(),
+                nn.Linear(latent_dim, n_features),
             )
 
-        def decoder_fn(n_features):
-            return nn.Sequential(nn.Linear(math.ceil(n_features / 2), n_features))
-
         yield {
-            "encoder_fn": encoder_fn,
-            "decoder_fn": decoder_fn,
-            "loss_fn": torch.nn.MSELoss,
-            "optimizer_fn": torch.optim.SGD,
+            "build_fn": build_fn,
+            "loss_fn": "mse",
+            "optimizer_fn": "sgd",
         }
 
     @classmethod
-    def _unit_test_skips(self):
-        """Indicates which checks to skip during unit testing.
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite. However, in some cases, some estimators might not
         be able to pass certain checks.
+
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
         """
         return {
             "check_pickling",
@@ -79,101 +102,186 @@ class AutoEncoder(anomaly.base.AnomalyDetector, nn.Module):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x):
+    def learn_one(self, x: dict) -> "Autoencoder":
+        """
+        Performs one step of training with a single example.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        Autoencoder
+            The model itself.
+        """
+        if self.net is None:
+            self._init_net(n_features=len(x))
+        self.net.train()
+        x = dict2tensor(x, device=self.device)
         return self._learn(x)
 
-    def _learn(self, x):
-        x = dict2tensor(x, device=self.device)
-
-        if self.encoder is None or self.decoder is None:
-            self._init_net(n_features=x.shape[1])
-
-        self.train()
-        x_pred = self(x)
+    def _learn(self, x: torch.TensorType) -> "Autoencoder":
+        self.net.train()
+        x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
-        if self.scale_scores:
-            self.mean_meter.update(loss.item())
         return self
 
-    def score_one(self, x: dict):
+    def score_one(self, x: dict) -> float:
+        """
+        Returns an anomaly score for the provided example in the form of the autoencoder's reconstruction error.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        float
+            Anomaly score for the given example. Larger values indicate more anomalous examples.
+
+        """
+        if self.net is None:
+            self._init_net(n_features=len(x))
         x = dict2tensor(x, device=self.device)
 
-        if self.encoder is None or self.decoder is None:
-            self._init_net(n_features=x.shape[1])
-
-        self.eval()
+        self.net.eval()
         with torch.inference_mode():
-            x_rec = self(x)
+            x_rec = self.net(x)
         loss = self.loss_fn(x_rec, x).item()
-        if self.scale_scores and self.mean_meter.get() != 0:
-            loss /= self.mean_meter.get()
         return loss
 
-    def learn_many(self, x: pd.DataFrame):
+    def learn_many(self, x: pd.DataFrame) -> "Autoencoder":
+        """
+        Performs one step of training with a batch of examples.
+
+        Parameters
+        ----------
+        x
+            Input batch of examples.
+
+        Returns
+        -------
+        Autoencoder
+            The model itself.
+
+        """
+        x = df2tensor(x, device=self.device)
         return self._learn(x)
 
-    def score_many(self, x: pd.DataFrame) -> float:
+    def score_many(self, x: pd.DataFrame) -> np.ndarray:
+        """
+        Returns an anomaly score for the provided batch of examples in the form of the autoencoder's reconstruction error.
 
+        Parameters
+        ----------
+        x
+            Input batch of examples.
+
+        Returns
+        -------
+        float
+            Anomaly scores for the given batch of examples. Larger values indicate more anomalous examples.
+        """
+        if self.net is None:
+            self._init_net(n_features=x.shape[-1])
         x = dict2tensor(x, device=self.device)
-
-        if self.to_init:
-            self._init_net(n_features=x.shape[1])
 
         self.eval()
         with torch.inference_mode():
-            x_rec = self(x)
+            x_rec = self.net(x)
         loss = torch.mean(
             self.loss_fn(x_rec, x, reduction="none"),
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
-        if self.scale_scores and self.mean_meter.get() != 0:
-            score /= self.mean_meter.get()
         return score
 
-    def forward(self, x):
-        return self.decoder(self.encoder(x))
 
-    def _init_net(self, n_features):
-        self.encoder = self.encoder_fn(
-            n_features=n_features, **self._filter_args(self.encoder_fn)
-        )
-        self.decoder = self.decoder_fn(
-            n_features=n_features, **self._filter_args(self.decoder_fn)
-        )
+class AnomalyScaler(base.Wrapper, anomaly.base.AnomalyDetector):
+    """Wrapper around an anomaly detector that scales the output of the model to account for drift in the wrapped model's anomaly scores.
 
-        self.encoder = self.encoder.to(self.device)
-        self.decoder = self.decoder.to(self.device)
+    Parameters
+    ----------
+    anomaly_detector
+        Anomaly detector to be wrapped.
+    """
 
-        self.optimizer = self.configure_optimizers()
-        self.to_init = False
+    def __init__(self, anomaly_detector: anomaly.base.AnomalyDetector):
+        self.anomaly_detector = anomaly_detector
 
-    def _filter_args(self, fn, override=None):
-        """Filters `sk_params` and returns those in `fn`'s arguments.
-
-        # Arguments
-            fn : arbitrary function
-            override: dictionary, values to override `torch_params`
-
-        # Returns
-            res : dictionary containing variables
-                in both `sk_params` and `fn`'s arguments.
+    @classmethod
+    def _unit_test_params(self) -> dict:
         """
-        override = override or {}
-        res = {}
-        for name, value in self.net_params.items():
-            args = list(inspect.signature(fn).parameters)
-            if name in args:
-                res.update({name: value})
-        res.update(override)
-        return res
+        Returns a dictionary of parameters to be used for unit testing the respective class.
 
-    def configure_optimizers(self):
-        optimizer = self.optimizer_fn(
-            nn.ModuleList([self.encoder, self.decoder]).parameters(),
-            **self._filter_args(self.optimizer_fn),
-        )
-        return optimizer
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+        yield {"anomaly_detector": anomaly.HalfSpaceTrees()}
+
+    @classmethod
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
+
+    @property
+    def _wrapped_model(self):
+        return self.anomaly_detector
+
+    @abc.abstractmethod
+    def score_one(self, *args) -> float:
+        """Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+
+        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+
+        Parameters
+        ----------
+        *args
+            Depends on whether the underlying anomaly detector is supervised or not.
+
+        Returns
+        -------
+        An scaled anomaly score. Larger values indicate more anomalous examples.
+        """
+
+    def learn_one(self, *args) -> "AnomalyScaler":
+        """
+        Update the scaler and the underlying anomaly scaler.
+
+        Parameters
+        ----------
+        *args
+            Depends on whether the underlying anomaly detector is supervised or not.
+
+        Returns
+        -------
+        AnomalyScaler
+            The model itself.
+        """
+
+        self.anomaly_detector.learn_one(*args)
+        return self

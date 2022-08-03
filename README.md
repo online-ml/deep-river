@@ -14,27 +14,27 @@
 </p>
 
 ## 💈 Installation
+
 ```shell
 pip install river-torch
 ```
+
 You can install the latest development version from GitHub as so:
-```shell
-pip install https://github.com/online-ml/river-torch --upgrade
-```
 
-Or, through SSH:
 ```shell
-pip install git@github.com:online-ml/river-torch.git --upgrade
+pip install https://github.com/online-ml/river-torch/archive/refs/heads/master.zip
 ```
-
 
 ## 🍫 Quickstart
+
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
 For further examples check out the <a href="https://online-ml.github.io/river-torch">Documentation</a>.
+
 ### Classification
+
 ```python
->>> from river import datasets
+>>> from river.datasets import Phishing
 >>> from river import metrics
 >>> from river import preprocessing
 >>> from river import compose
@@ -46,24 +46,22 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 >>> _ = manual_seed(42)
 
 
->>> def build_torch_mlp_classifier(n_features):  # build neural architecture
+>>> def build_torch_mlp_classifier(n_features):
 ...     net = nn.Sequential(
 ...         nn.Linear(n_features, 5),
-...         nn.Linear(5, 5),
-...         nn.Linear(5, 5),
-...         nn.Linear(5, 5),
-...         nn.Linear(5, 1),
-...         nn.Sigmoid()
+...         nn.ReLU(),
+...         nn.Linear(5, 2),
+...         nn.Softmax(-1)
 ...     )
 ...     return net
 
 
 >>> model = compose.Pipeline(
 ...     preprocessing.StandardScaler(),
-...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='bce', optimizer_fn=optim.Adam, learning_rate=1e-3)
+...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy', optimizer_fn=optim.Adam, lr=1e-3)
 ... )
 
->>> dataset = datasets.Phishing()
+>>> dataset = Phishing()
 >>> metric = metrics.Accuracy()
 
 >>> for x, y in dataset:
@@ -72,7 +70,7 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 ...     model = model.learn_one(x, y)  # make the model learn
 
 >>> print(f'Accuracy: {metric.get()}')
-Accuracy: 0.8304
+Accuracy: 0.8336
 
 ```
 
@@ -80,42 +78,33 @@ Accuracy: 0.8304
 
 ```python
 >>> import math
->>> from river import datasets, metrics
->>> from river_torch.anomaly import AutoEncoder
+>>> from river import metrics, preprocessing
+>>> from river.datasets import CreditCard
+>>> from river_torch.anomaly import Autoencoder
 >>> from river_torch.utils import get_activation_fn
 >>> from torch import manual_seed, nn
 
 >>> _ = manual_seed(42)
 
->>> def get_encoder(activation_fn="selu", dropout=0.5, n_features=3):
-...     activation = get_activation_fn(activation_fn)
-...     encoder = nn.Sequential(
+>>> def get_ae(n_features=3, dropout=0.1):
+...     latent_dim = math.ceil(n_features / 2)
+...     net = nn.Sequential(
 ...         nn.Dropout(p=dropout),
-...         nn.Linear(in_features=n_features, out_features=math.ceil(n_features / 2)),
-...         activation(),
-...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=math.ceil(n_features / 4)),
-...         activation(),
+...         nn.Linear(in_features=n_features, out_features=latent_dim),
+...         nn.ReLU(),
+...         nn.Linear(in_features=latent_dim, out_features=n_features),
+...         nn.Sigmoid()
 ...     )
-...     return encoder
+...     return net
 
->>> def get_decoder(activation_fn="selu", dropout=0.5, n_features=3):
-...     activation = get_activation_fn(activation_fn)
-...     decoder = nn.Sequential(
-...         nn.Linear(in_features=math.ceil(n_features / 4), out_features=math.ceil(n_features / 2)),
-...         activation(),
-...         nn.Linear(in_features=math.ceil(n_features / 2), out_features=n_features),
-...     )
-...     return decoder
-
-
->>> dataset = datasets.CreditCard().take(5000)
+>>> dataset = CreditCard().take(5000)
 >>> metric = metrics.ROCAUC()
->>> encoder_fn = get_encoder
->>> decoder_fn = get_decoder
+>>> scaler = preprocessing.MinMaxScaler()
 
->>> model = AutoEncoder(encoder_fn=encoder_fn,decoder_fn=decoder_fn, lr=0.01)
+>>> model = Autoencoder(build_fn=get_ae, lr=0.01)
 
->>> for x,y in dataset:
+>>> for x, y in dataset:
+...     x = scaler.learn_one(x).transform_one(x)
 ...     score = model.score_one(x)
 ...     metric = metric.update(y_true=y, y_pred=score)
 ...     model = model.learn_one(x=x)
@@ -123,6 +112,7 @@ Accuracy: 0.8304
 ```
 
 ## 🏫 Affiliations
+
 <p align="center">
     <img src="https://upload.wikimedia.org/wikipedia/de/thumb/4/44/Fzi_logo.svg/1200px-Fzi_logo.svg.png?raw=true" alt="FZI Logo" height="200"/>
 </p>

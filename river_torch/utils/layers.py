@@ -2,7 +2,7 @@ import torch
 from torch import nn
 from torch.autograd import Variable
 
-from river_torch.utils.module_finder import get_activation_fn, get_init_fn
+from river_torch.utils.params import get_activation_fn, get_init_fn
 
 
 class DenseBlock(nn.Module):
@@ -61,3 +61,23 @@ class SequentialLSTM(nn.Module):
         hn = hn.view(-1, self.hidden_size)  # reshaping the data for Dense layer next
 
         return hn
+
+
+def find_output_layer(net: nn.Sequential) -> nn.Linear:
+    """Return the output layer of a network.
+
+    Parameters
+    ----------
+    net
+        The network to find the output layer of.
+
+    Returns
+    -------
+    nn.Linear
+        The output layer of the network.
+    """
+
+    for layer in list(net.children())[::-1]:
+        if isinstance(layer, nn.Linear):
+            return layer
+    raise ValueError("No dense layer found.")
