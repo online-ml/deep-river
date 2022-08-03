@@ -69,6 +69,10 @@ plugins:
   - awesome-pages
   - mkdocstrings:
       default_handler: python
+      handlers:
+        python:
+          options:
+            show_source: false
 
 extra_javascript:
   - javascripts/config.js
