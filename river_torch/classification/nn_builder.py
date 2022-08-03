@@ -4,6 +4,9 @@ from river_torch.utils import SequentialLSTM
 
 
 def build_torch_mlp_classifier(n_features, n_classes=2):
+    """
+    Wrapper for a MLP classifier
+    """
     net = nn.Sequential(
         nn.Linear(n_features, 5),
         nn.ReLU(),

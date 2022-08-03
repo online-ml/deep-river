@@ -15,18 +15,28 @@ copyright: Copyright &copy; 2019 - 2022
 # Configuration
 theme:
   name: material
+  custom_dir: docs/overrides
   language: en
   palette:
-    primary: indigo
-    accent: indigo
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to light mode
   font:
     text: Rubik
     code: Roboto Mono
   logo: img/logo_square.png
   #favicon: material/cloud
   features:
-    - navigation.instant
     - navigation.tabs
+    - navigation.instant
     - navigation.indexes
     - navigation.tracking
 
@@ -38,11 +48,6 @@ extra:
   version:
     - provider: mike
 
-# Google Analytics
-google_analytics:
-  - UA-63302552-3
-  - auto
-
 # Extensions
 markdown_extensions:
   - admonition
@@ -53,37 +58,31 @@ markdown_extensions:
   - pymdownx.details
   - pymdownx.arithmatex:
       generic: true
-  - pymdownx.highlight
+  - pymdownx.details
   - pymdownx.superfences
+  - pymdownx.highlight:
+        use_pygments: true
+        pygments_lang_class: true
 
 plugins:
   - search
+  - awesome-pages
   - autorefs
+  - mkdocs-jupyter:
+      execute: True
+      include: ["*.ipynb"]
+  - gen-files:
+      scripts:
+        - docs/scripts/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
   - mkdocstrings:
       default_handler: python
-      handlers: 
-        python:
-          paths: [.]
-          options:
-            docstring_style: numpy         
-            docstring_section_style: list
-            merge_init_into_class: True    
-            show_source: False 
-  - mkdocs-jupyter
 
 extra_javascript:
-
+  - javascripts/config.js
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
 extra_css:
+  - stylesheets/extra.css
 
-nav:
-  - Home: index.md
-  - Installation: installation.md
-  - Code Reference:
-      - Anomaly: anomaly.md
-      - Classification: classification.md
-      - Regression: regression.md
-  - Examples:
-      - Anomaly Detection: examples/example_autoencoder.ipynb
-      - Classification: examples/example_classification.ipynb
-      - Regression: examples/example_regression.ipynb
-  - About: about.md

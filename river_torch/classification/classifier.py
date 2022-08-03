@@ -46,7 +46,7 @@ class Classifier(DeepEstimator, base.Classifier):
     >>> from torch import nn, optim, manual_seed
     >>> from river_torch.classification import Classifier
     >>> _ = manual_seed(0)
-    >>> def build_torch_mlp_classifier(n_features):
+    >>> def build_torch_mlp_classifier(n_features): #build the neural architecture
     ...     net = nn.Sequential(
     ...         nn.Linear(n_features, 5),
     ...         nn.ReLU(),
