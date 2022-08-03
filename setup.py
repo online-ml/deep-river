@@ -44,6 +44,8 @@ docs_packages = [
     "mike==0.5.3",
     "mkdocs==1.2.3",
     "mkdocs-awesome-pages-plugin==2.7.0",
+    "mkdocs-gen-files==0.3.5",
+    "mkdocs-literate-nav==0.4.1",
     "mkdocs-material==8.1.11",
     "mkdocstrings-python==0.7.1",
     'pytkdocs[numpy-style]>=0.5.0',

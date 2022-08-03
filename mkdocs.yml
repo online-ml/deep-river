@@ -66,10 +66,16 @@ markdown_extensions:
 
 plugins:
   - search
+  - awesome-pages
+  - autorefs
   - mkdocs-jupyter:
       execute: True
-  - autorefs
-  - awesome-pages
+      include: ["*.ipynb"]
+  - gen-files:
+      scripts:
+        - docs/gen_ref_pages.py
+  - literate-nav:
+      nav_file: SUMMARY.md
   - mkdocstrings:
       default_handler: python
 
