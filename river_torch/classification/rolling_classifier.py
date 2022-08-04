@@ -12,6 +12,7 @@ from river_torch.utils.layers import find_output_layer
 from river_torch.utils.river_compat import (dict2tensor, list2tensor,
                                             output2proba, target2onehot)
 
+
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
     Wrapper that feeds a sliding window of the most recent examples to the wrapped PyTorch classification model. The class also automatically handles increases in the number of classes by adding output neurons in case the number of observed classes exceeds the current number of output neurons.
@@ -176,8 +177,12 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             y_pred = self.net(x)
             proba = output2proba(y_pred, self.observed_classes)
         else:
-            if len(self.observed_classes)>0:
-                mean_proba = 1 / len(self.observed_classes) if len(self.observed_classes) != 0 else 0.0
+            if len(self.observed_classes) > 0:
+                mean_proba = (
+                    1 / len(self.observed_classes)
+                    if len(self.observed_classes) != 0
+                    else 0.0
+                )
                 proba = {c: mean_proba for c in self.observed_classes}
             else:
                 proba = {c: 1.0 for c in self.observed_classes}

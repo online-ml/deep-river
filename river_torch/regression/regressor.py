@@ -1,4 +1,3 @@
-
 from typing import Callable, Union
 
 import torch
@@ -138,4 +137,3 @@ class Regressor(DeepEstimator, base.Regressor):
         x = dict2tensor(x, self.device)
         self.net.eval()
         return self.net(x).item()
-
