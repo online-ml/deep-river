@@ -1,4 +1,5 @@
 from typing import Callable, Union
+
 from scipy.special import ndtr
 
 from river_torch.anomaly import base

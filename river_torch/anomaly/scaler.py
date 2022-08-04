@@ -1,5 +1,6 @@
 from river.anomaly.base import AnomalyDetector
-from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMean, RollingMin
+from river.stats import (EWMean, Max, Mean, Min, RollingMax, RollingMean,
+                         RollingMin)
 
 from .base import AnomalyScaler
 

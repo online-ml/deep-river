@@ -6,7 +6,8 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
-from river_torch.utils.river_compat import dict2tensor, list2tensor, scalar2tensor
+from river_torch.utils.river_compat import (dict2tensor, list2tensor,
+                                            scalar2tensor)
 
 
 class Regressor(DeepEstimator, base.Regressor):
