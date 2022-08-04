@@ -53,7 +53,7 @@ class Regressor(DeepEstimator, base.Regressor):
 
 
     >>> model = (
-    ...     preprocessing.AnomalyStandardScaler() |
+    ...     preprocessing.StandardScaler() |
     ...     Regressor(
     ...         build_fn=build_torch_mlp,
     ...         loss_fn='mse',
