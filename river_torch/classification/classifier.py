@@ -9,12 +9,8 @@ from torch.nn import init, parameter
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
 from river_torch.utils.layers import find_output_layer
-from river_torch.utils.river_compat import (
-    dict2tensor,
-    list2tensor,
-    output2proba,
-    target2onehot,
-)
+from river_torch.utils.river_compat import (dict2tensor, list2tensor,
+                                            output2proba, target2onehot)
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -54,7 +50,7 @@ class Classifier(DeepEstimator, base.Classifier):
     ...         nn.Softmax(dim=-1),
     ...     )
     ...     return net
-    ...
+
     >>> model = Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy',optimizer_fn=optim.Adam, lr=1e-3)
     >>> dataset = Phishing()
     >>> metric = metrics.Accuracy()
