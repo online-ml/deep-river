@@ -2,14 +2,14 @@ import abc
 import inspect
 import math
 from typing import Callable, Union
-import numpy as np
 
+import numpy as np
 import pandas as pd
 import torch
 from river import anomaly, base
 from torch import nn
-from river_torch.base import DeepEstimator
 
+from river_torch.base import DeepEstimator
 from river_torch.utils import dict2tensor
 from river_torch.utils.river_compat import df2tensor
 

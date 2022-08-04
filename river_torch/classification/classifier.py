@@ -9,12 +9,8 @@ from torch.nn import init, parameter
 
 from river_torch.base import DeepEstimator, RollingDeepEstimator
 from river_torch.utils.layers import find_output_layer
-from river_torch.utils.river_compat import (
-    dict2tensor,
-    list2tensor,
-    output2proba,
-    target2onehot,
-)
+from river_torch.utils.river_compat import (dict2tensor, list2tensor,
+                                            output2proba, target2onehot)
 
 
 class Classifier(DeepEstimator, base.Classifier):
