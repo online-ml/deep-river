@@ -176,6 +176,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             y_pred = self.net(x)
             proba = output2proba(y_pred, self.observed_classes)
         else:
-            mean_proba = 1 / len(self.observed_classes)
-            proba = {c: mean_proba for c in self.observed_classes}
+            if len(self.observed_classes)>0:
+                mean_proba = 1 / len(self.observed_classes) if len(self.observed_classes) != 0 else 0.0
+                proba = {c: mean_proba for c in self.observed_classes}
+            else:
+                proba = {c: 1.0 for c in self.observed_classes}
         return proba

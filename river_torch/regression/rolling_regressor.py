@@ -1,4 +1,6 @@
 import copy
+import logging
+import warnings
 from typing import Callable, Union
 
 import torch
@@ -6,7 +8,7 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.river_compat import list2tensor, scalar2tensor
+from river_torch.utils.river_compat import list2tensor, scalar2tensor, dict2tensor
 
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
@@ -105,10 +107,10 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         RollingRegressor
             The regressor itself.
         """
+        self._x_window.append(list(x.values()))
         if self.net is None:
             self._init_net(len(x))
 
-        self._x_window.append(list(x.values()))
         if len(self._x_window) == self.window_size:
             x = list2tensor(self._x_window, device=self.device)
             y = scalar2tensor(y, device=self.device)
