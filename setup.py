@@ -14,13 +14,13 @@ REQUIRES_PYTHON = ">=3.6.0"
 
 # Package requirements.
 base_packages = [
-    "scikit-learn==1.0.2",
-    "torch==1.11",
+    "scikit-learn>=1.0.2",
+    "torch>=1.12",
     "pandas~=1.3.2",
     "numpy>=1.21.6",
-    "river==0.11.1",
+    "river>=0.11.1",
     "tqdm~=4.61.2",
-    "pytest==7.0.1",
+    "pytest>=7.0.1",
 ]
 
 dev_packages = base_packages + [
@@ -34,26 +34,26 @@ dev_packages = base_packages + [
     "black>=22.1.0",
     "flake8>=4.0.1",
     "isort>=5.9.3",
-    "jupyter==1.0.0",
+    "jupyter>=1.0.0",
 ]
 
 docs_packages = [
-    "flask==2.0.2",
-    "ipykernel==6.9.0",
-    "mike==0.5.3",
-    "mkdocs==1.2.3",
-    "mkdocs-awesome-pages-plugin==2.7.0",
-    "mkdocs-gen-files==0.3.5",
-    "mkdocs-literate-nav==0.4.1",
-    "mkdocs-material==8.1.11",
-    "mkdocstrings[python]==0.19.0",
+    "flask>=2.0.2",
+    "ipykernel>=6.9.0",
+    "mike>=0.5.3",
+    "mkdocs>=1.2.3",
+    "mkdocs-awesome-pages-plugin>=2.7.0",
+    "mkdocs-gen-files>=0.3.5",
+    "mkdocs-literate-nav>=0.4.1",
+    "mkdocs-material>=8.1.11",
+    "mkdocstrings[python]>=0.19.0",
     'pytkdocs[numpy-style]>=0.5.0',
-    "ipython_genutils==0.1.0",
-    "mkdocs-jupyter==0.20.0",
-    "nbconvert==6.4.2",
-    "numpydoc==1.2",
-    "spacy==3.2.2",
-    "jinja2==3.0.3",
+    "ipython_genutils>=0.1.0",
+    "mkdocs-jupyter>=0.20.0",
+    "nbconvert>=6.4.2",
+    "numpydoc>=1.2",
+    "spacy>=3.2.2",
+    "jinja2>=3.0.3",
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))

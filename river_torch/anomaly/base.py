@@ -2,14 +2,14 @@ import abc
 import inspect
 import math
 from typing import Callable, Union
-import numpy as np
 
+import numpy as np
 import pandas as pd
 import torch
 from river import anomaly, base
 from torch import nn
-from river_torch.base import DeepEstimator
 
+from river_torch.base import DeepEstimator
 from river_torch.utils import dict2tensor
 from river_torch.utils.river_compat import df2tensor
 
@@ -34,6 +34,40 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
         Random seed to be used for training the wrapped model.
     **net_params
         Parameters to be passed to the `build_fn` function aside from `n_features`.
+
+    Examples
+    --------
+    >>> from river_torch.anomaly import Autoencoder
+    >>> from river import metrics
+    >>> from river.datasets import CreditCard
+    >>> from torch import nn
+    >>> import math
+    >>> from river.compose import Pipeline
+    >>> from river.preprocessing import MinMaxScaler
+
+    >>> dataset = CreditCard().take(5000)
+    >>> metric = metrics.ROCAUC(n_thresholds=50)
+
+    >>> def get_fc_ae(n_features):
+    ...    latent_dim = math.ceil(n_features / 2)
+    ...    return nn.Sequential(
+    ...        nn.Linear(n_features, latent_dim),
+    ...        nn.SELU(),
+    ...        nn.Linear(latent_dim, n_features),
+    ...        nn.Sigmoid(),
+    ...    )
+
+    >>> ae = Autoencoder(build_fn=get_fc_ae, lr=0.005)
+    >>> scaler = MinMaxScaler()
+    >>> model = Pipeline(scaler, ae)
+
+    >>> for x, y in dataset:
+    ...    score = model.score_one(x)
+    ...    model = model.learn_one(x=x)
+    ...    metric = metric.update(y, score)
+    ...
+    >>> print(f"ROCAUC: {metric.get():.4f}")
+    ROCAUC: 0.9064
     """
 
     def __init__(
