@@ -1,5 +1,7 @@
+import math
 from typing import Callable, Union
 
+from river.stats import RollingMean, RollingVar
 from scipy.special import ndtr
 
 from river_torch.anomaly import base
@@ -28,6 +30,41 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         Random seed to be used for training the wrapped model.
     **net_params
         Parameters to be passed to the `build_fn` function aside from `n_features`.
+
+        Examples
+    --------
+    >>> from river_torch.anomaly import ProbabilityWeightedAutoencoder
+    >>> from river import metrics
+    >>> from river.datasets import CreditCard
+    >>> from torch import nn, manual_seed
+    >>> import math
+    >>> from river.compose import Pipeline
+    >>> from river.preprocessing import MinMaxScaler
+
+    >>> _ = manual_seed(42)
+    >>> dataset = CreditCard().take(5000)
+    >>> metric = metrics.ROCAUC(n_thresholds=50)
+
+    >>> def get_fc_ae(n_features):
+    ...    latent_dim = math.ceil(n_features / 2)
+    ...    return nn.Sequential(
+    ...        nn.Linear(n_features, latent_dim),
+    ...        nn.SELU(),
+    ...        nn.Linear(latent_dim, n_features),
+    ...        nn.Sigmoid(),
+    ...    )
+
+    >>> ae = ProbabilityWeightedAutoencoder(build_fn=get_fc_ae, lr=0.005)
+    >>> scaler = MinMaxScaler()
+    >>> model = Pipeline(scaler, ae)
+
+    >>> for x, y in dataset:
+    ...    score = model.score_one(x)
+    ...    model = model.learn_one(x=x)
+    ...    metric = metric.update(y, score)
+    ...
+    >>> print(f"ROCAUC: {metric.get():.4f}")
+    ROCAUC: 0.8128
     """
 
     def __init__(
@@ -39,6 +76,7 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         device: str = "cpu",
         seed: int = 42,
         skip_threshold: float = 0.9,
+        window_size = 250,
         **net_params,
     ):
         super().__init__(
@@ -50,7 +88,10 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
             seed=seed,
             **net_params,
         )
+        self.window_size = window_size
         self.skip_threshold = skip_threshold
+        self.rolling_mean = RollingMean(window_size=window_size)
+        self.rolling_var = RollingVar(window_size=window_size)
 
     def learn_one(self, x: dict) -> "ProbabilityWeightedAutoencoder":
         """
@@ -66,7 +107,7 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         ProbabilityWeightedAutoencoder
             The autoencoder itself.
         """
-        if self.to_init:
+        if self.net is None:
             self._init_net(n_features=len(x))
         x = dict2tensor(x, device=self.device)
 
@@ -77,12 +118,12 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
         loss_item = loss.item()
-        mean = self.mean_meter.get()
-        std = self.var_meter.get() if self.var_meter.get() > 0 else 1
-        self.mean_meter.update(loss_item)
-        self.var_meter.update(loss_item)
+        mean = self.rolling_mean.get()
+        var = self.rolling_var.get() if self.rolling_var.get() > 0 else 1
+        self.rolling_mean.update(loss_item)
+        self.rolling_var.update(loss_item)
 
-        loss_scaled = (loss_item - mean) / std
+        loss_scaled = (loss_item - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
         loss = (self.skip_threshold - prob) / self.skip_threshold * loss
 
