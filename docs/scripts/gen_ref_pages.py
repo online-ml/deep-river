@@ -28,10 +28,6 @@ for path in sorted(Path("river_torch").rglob("*.py")):
     with mkdocs_gen_files.open(full_doc_path, "w+") as fd:
         identifier = ".".join(parts)
         print(f'::: river_torch.{identifier}', file=fd)
-        print(f'    selection:', file=fd)
-        print(f'       docstring_style: numpy', file=fd)
-        print(f'    options:', file=fd)
-        print(f'       show_source: false', file=fd)
 
     mkdocs_gen_files.set_edit_path(full_doc_path, path)
 

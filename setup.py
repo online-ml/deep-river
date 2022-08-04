@@ -15,7 +15,6 @@ REQUIRES_PYTHON = ">=3.6.0"
 # Package requirements.
 base_packages = [
     "scikit-learn==1.0.2",
-    # "scikit-surprise==1.1.1",
     "torch==1.11",
     "pandas~=1.3.2",
     "numpy>=1.21.6",
@@ -47,7 +46,7 @@ docs_packages = [
     "mkdocs-gen-files==0.3.5",
     "mkdocs-literate-nav==0.4.1",
     "mkdocs-material==8.1.11",
-    "mkdocstrings-python==0.7.1",
+    "mkdocstrings[python]==0.19.0",
     'pytkdocs[numpy-style]>=0.5.0',
     "ipython_genutils==0.1.0",
     "mkdocs-jupyter==0.20.0",
