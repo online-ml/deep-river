@@ -54,7 +54,7 @@ class Classifier(DeepEstimator, base.Classifier):
     ...         nn.Softmax(dim=-1),
     ...     )
     ...     return net
-    ...
+
     >>> model = Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy',optimizer_fn=optim.Adam, lr=1e-3)
     >>> dataset = Phishing()
     >>> metric = metrics.Accuracy()
