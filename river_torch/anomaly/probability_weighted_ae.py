@@ -76,7 +76,7 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         device: str = "cpu",
         seed: int = 42,
         skip_threshold: float = 0.9,
-        window_size = 250,
+        window_size=250,
         **net_params,
     ):
         super().__init__(
