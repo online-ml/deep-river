@@ -47,7 +47,7 @@ def _get_metric(
         return METRICS[metric][metric_type](alpha=alpha)
 
 
-class StandardScaler(AnomalyScaler):
+class AnomalyStandardScaler(AnomalyScaler):
     """
     Wrapper around an anomaly detector that standardizes the model's output using incremental mean and variance metrics.
 
@@ -128,7 +128,7 @@ class StandardScaler(AnomalyScaler):
         return scores
 
 
-class MeanScaler(AnomalyScaler):
+class AnomalyMeanScaler(AnomalyScaler):
     """Wrapper around an anomaly detector that scales the model's output by the incremental mean of previous scores.
 
     Parameters
@@ -195,7 +195,7 @@ class MeanScaler(AnomalyScaler):
         return score
 
 
-class MinMaxScaler(AnomalyScaler):
+class AnomalyMinMaxScaler(AnomalyScaler):
     """Wrapper around an anomaly detector that scales the model's output to $[0, 1]$ using rolling min and max metrics.
 
     Parameters
