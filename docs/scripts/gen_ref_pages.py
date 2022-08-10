@@ -14,7 +14,7 @@ for path in sorted(Path("river_torch").rglob("*.py")):
     parts = list(module_path.parts)
 
     if parts[-1] == "__init__":
-        #parts = parts[:-1]
+        # parts = parts[:-1]
         continue
     elif parts[-1] == "__version__":
         continue
@@ -27,7 +27,7 @@ for path in sorted(Path("river_torch").rglob("*.py")):
 
     with mkdocs_gen_files.open(full_doc_path, "w+") as fd:
         identifier = ".".join(parts)
-        print(f'::: river_torch.{identifier}', file=fd)
+        print(f"::: river_torch.{identifier}", file=fd)
 
     mkdocs_gen_files.set_edit_path(full_doc_path, path)
 

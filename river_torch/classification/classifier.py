@@ -1,15 +1,17 @@
 import math
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, List, Union
 
+import pandas as pd
 import torch
 from river import base
 from river.base.typing import ClfTarget
 from torch.nn import init, parameter
 
-from river_torch.base import DeepEstimator, RollingDeepEstimator
+from river_torch.base import DeepEstimator
 from river_torch.utils.layers import find_output_layer
-from river_torch.utils.river_compat import (dict2tensor, list2tensor,
-                                            output2proba, target2onehot)
+from river_torch.utils.tensor_conversion import (class2onehot, df2tensor,
+                                                 dict2tensor, list2onehot,
+                                                 output2proba)
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -114,14 +116,14 @@ class Classifier(DeepEstimator, base.Classifier):
         if n_classes_to_add > 0:
             self._add_output_dims(n_classes_to_add)
 
-        y = target2onehot(
+        y = class2onehot(
             y,
             self.observed_classes,
             self.output_layer.out_features,
             device=self.device,
         )
         self.net.train()
-        return self._learn_one(x=x, y=y)
+        return self._learn(x=x, y=y)
 
     def _add_output_dims(self, n_classes_to_add: int) -> None:
         """
@@ -149,9 +151,9 @@ class Classifier(DeepEstimator, base.Classifier):
         self.output_layer.out_features += n_classes_to_add
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.lr)
 
-    def _learn_one(self, x: torch.TensorType, y: torch.TensorType):
+    def _learn(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
-        y_pred = self.net(x)[0]
+        y_pred = self.net(x)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
@@ -176,4 +178,70 @@ class Classifier(DeepEstimator, base.Classifier):
         x = dict2tensor(x, device=self.device)
         self.net.eval()
         y_pred = self.net(x)
-        return output2proba(y_pred, self.observed_classes)
+        return output2proba(y_pred, self.observed_classes)[0]
+
+    def learn_many(self, x: pd.DataFrame, y: List) -> "Classifier":
+        """
+        Performs one step of training with a batch of examples.
+
+        Parameters
+        ----------
+        x
+            Input examples.
+        y
+            Target values.
+
+        Returns
+        -------
+        Classifier
+            The classifier itself.
+        """
+        # check if model is initialized
+        if self.net is None:
+            self._init_net(len(x.columns))
+        x = df2tensor(x, device=self.device)
+
+        # check last layer
+        for y_i in y:
+            if y_i not in self.observed_classes:
+                self.observed_classes.append(y_i)
+
+        if self.output_layer is None:
+            self.output_layer = find_output_layer(self.net)
+
+        out_features_target = (
+            len(self.observed_classes) if len(self.observed_classes) > 2 else 1
+        )
+        n_classes_to_add = out_features_target - self.output_layer.out_features
+        if n_classes_to_add > 0:
+            self._add_output_dims(n_classes_to_add)
+
+        y = list2onehot(
+            y,
+            self.observed_classes,
+            self.output_layer.out_features,
+            device=self.device,
+        )
+        self.net.train()
+        return self._learn(x=x, y=y)
+
+    def predict_proba_many(self, x: pd.DataFrame) -> List:
+        """
+        Predict the probability of each label given the input.
+
+        Parameters
+        ----------
+        x
+            Input examples.
+
+        Returns
+        -------
+        List
+            List of dictionaries of probabilities for each label.
+        """
+        if self.net is None:
+            self._init_net(len(x.columns))
+        x = df2tensor(x, device=self.device)
+        self.net.eval()
+        y_preds = self.net(x)
+        return output2proba(y_preds, self.observed_classes)

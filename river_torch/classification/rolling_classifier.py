@@ -1,16 +1,21 @@
-import copy
 import math
-from typing import Callable, Dict, Union
+from typing import Callable, Dict, List, Union
 
+import pandas as pd
 import torch
 from river import base
 from river.base.typing import ClfTarget
 from torch.nn import init, parameter
 
-from river_torch.base import DeepEstimator, RollingDeepEstimator
+from river_torch.base import RollingDeepEstimator
 from river_torch.utils.layers import find_output_layer
-from river_torch.utils.river_compat import (dict2tensor, list2tensor,
-                                            output2proba, target2onehot)
+from river_torch.utils.tensor_conversion import (
+    class2onehot,
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    list2onehot,
+    output2proba,
+)
 
 
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
@@ -65,7 +70,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             **net_params,
         )
 
-    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
+    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples stored in the sliding window.
 
@@ -87,10 +92,11 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         self._x_window.append(list(x.values()))
 
-        # check last layer
+        # update observed classes
         if y not in self.observed_classes:
             self.observed_classes.append(y)
 
+        # check last layer
         if self.output_layer is None:
             self.output_layer = find_output_layer(self.net)
 
@@ -102,16 +108,15 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self._add_output_dims(n_classes_to_add)
 
         # training process
-        if len(self._x_window) == self.window_size:
-            self.net.train()
-            x = list2tensor(self._x_window, device=self.device)
-            y = target2onehot(
+        x = dict2rolling_tensor(x, self._x_window, device=self.device)
+        if x is not None:
+            y = class2onehot(
                 y,
                 self.observed_classes,
                 self.output_layer.out_features,
                 device=self.device,
             )
-            self._learn_window(x=x, y=y)
+            self._learn(x=x, y=y)
         return self
 
     def _add_output_dims(self, n_classes_to_add: int) -> None:
@@ -140,9 +145,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         self.output_layer.out_features += n_classes_to_add
         self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.lr)
 
-    def _learn_window(self, x: torch.TensorType, y: torch.TensorType):
+    def _learn(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
-        y_pred = self.net(x)[0]
+        y_pred = self.net(x)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
@@ -164,26 +169,90 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if self.net is None:
             self._init_net(len(x))
 
-        if self.append_predict:
-            self._x_window.append(list(x.values()))
-            x = self._x_window
-        else:
-            x = copy.deepcopy(self._x_window)
-            x.append(list(x.values()))
-
-        if len(self._x_window) == self.window_size:
-            x = list2tensor(x, device=self.device)
+        x = dict2rolling_tensor(x, self._x_window, device=self.device)
+        if x is not None:
             self.net.eval()
             y_pred = self.net(x)
-            proba = output2proba(y_pred, self.observed_classes)
+            proba = output2proba(y_pred, self.observed_classes)[0]
         else:
-            if len(self.observed_classes) > 0:
-                mean_proba = (
-                    1 / len(self.observed_classes)
-                    if len(self.observed_classes) != 0
-                    else 0.0
-                )
-                proba = {c: mean_proba for c in self.observed_classes}
-            else:
-                proba = {c: 1.0 for c in self.observed_classes}
+            proba = self._get_default_proba()
+        return proba
+
+    def learn_many(self, x: pd.DataFrame, y: list) -> "RollingClassifier":
+        """
+        Performs one step of training with the most recent training examples stored in the sliding window.
+
+        Parameters
+        ----------
+        x
+            Input examples.
+        y
+            Target values.
+
+        Returns
+        -------
+        Classifier
+            The classifier itself.
+        """
+        # check if model is initialized
+        if self.net is None:
+            self._init_net(len(x.columns))
+
+        # update observed classes
+        for y_i in y:
+            if y_i not in self.observed_classes:
+                self.observed_classes.append(y_i)
+
+        # check last layer
+        if self.output_layer is None:
+            self.output_layer = find_output_layer(self.net)
+
+        out_features_target = (
+            len(self.observed_classes) if len(self.observed_classes) > 2 else 1
+        )
+        n_classes_to_add = out_features_target - self.output_layer.out_features
+        if n_classes_to_add > 0:
+            self._add_output_dims(n_classes_to_add)
+
+        x = df2rolling_tensor(x, self._x_window, device=self.device)
+        y = list2onehot(
+            y,
+            self.observed_classes,
+            self.output_layer.out_features,
+            device=self.device,
+        )
+        if x is not None:
+            self._learn(x=x, y=y)
+        return self
+
+    def predict_proba_many(self, x: pd.DataFrame) -> List:
+        if self.net is None:
+            self._init_net(len(x.columns))
+
+        batch = df2rolling_tensor(
+            x, self._x_window, device=self.device, update_window=self.append_predict
+        )
+
+        if batch is not None:
+            self.net.eval()
+            y_preds = self.net(batch)
+            probas = output2proba(y_preds, self.observed_classes)
+            if len(probas) < len(x):
+                default_proba = self._get_default_proba()
+                probas = [default_proba] * (len(x) - len(probas)) + probas
+        else:
+            default_proba = self._get_default_proba()
+            probas = [default_proba] * len(x)
+        return probas
+
+    def _get_default_proba(self):
+        if len(self.observed_classes) > 0:
+            mean_proba = (
+                1 / len(self.observed_classes)
+                if len(self.observed_classes) != 0
+                else 0.0
+            )
+            proba = {c: mean_proba for c in self.observed_classes}
+        else:
+            proba = {c: 1.0 for c in self.observed_classes}
         return proba
