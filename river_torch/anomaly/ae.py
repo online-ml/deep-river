@@ -11,7 +11,7 @@ from torch import nn
 
 from river_torch.base import DeepEstimator
 from river_torch.utils import dict2tensor
-from river_torch.utils.river_compat import df2tensor
+from river_torch.utils.tensor_conversion import df2tensor
 
 
 class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
@@ -186,8 +186,8 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
 
         self.net.eval()
         with torch.inference_mode():
-            x_rec = self.net(x)
-        loss = self.loss_fn(x_rec, x).item()
+            x_pred = self.net(x)
+        loss = self.loss_fn(x_pred, x).item()
         return loss
 
     def learn_many(self, x: pd.DataFrame) -> "Autoencoder":
@@ -205,6 +205,9 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
             The model itself.
 
         """
+        if self.net is None:
+            self._init_net(n_features=len(x.columns))
+        self.net.train()
         x = df2tensor(x, device=self.device)
         return self._learn(x)
 
@@ -223,99 +226,15 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
             Anomaly scores for the given batch of examples. Larger values indicate more anomalous examples.
         """
         if self.net is None:
-            self._init_net(n_features=x.shape[-1])
+            self._init_net(n_features=len(x.columns))
         x = dict2tensor(x, device=self.device)
 
         self.eval()
         with torch.inference_mode():
-            x_rec = self.net(x)
+            x_pred = self.net(x)
         loss = torch.mean(
-            self.loss_fn(x_rec, x, reduction="none"),
+            self.loss_fn(x_pred, x, reduction="none"),
             dim=list(range(1, x.dim())),
         )
         score = loss.cpu().detach().numpy()
         return score
-
-
-class AnomalyScaler(base.Wrapper, anomaly.base.AnomalyDetector):
-    """Wrapper around an anomaly detector that scales the output of the model to account for drift in the wrapped model's anomaly scores.
-
-    Parameters
-    ----------
-    anomaly_detector
-        Anomaly detector to be wrapped.
-    """
-
-    def __init__(self, anomaly_detector: anomaly.base.AnomalyDetector):
-        self.anomaly_detector = anomaly_detector
-
-    @classmethod
-    def _unit_test_params(self) -> dict:
-        """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
-
-        Yields
-        -------
-        dict
-            Dictionary of parameters to be used for unit testing the respective class.
-        """
-        yield {"anomaly_detector": anomaly.HalfSpaceTrees()}
-
-    @classmethod
-    def _unit_test_skips(self) -> set:
-        """
-        Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
-        be able to pass certain checks.
-
-        Returns
-        -------
-        set
-            Set of checks to skip during unit testing.
-        """
-        return {
-            "check_pickling",
-            "check_shuffle_features_no_impact",
-            "check_emerging_features",
-            "check_disappearing_features",
-            "check_predict_proba_one",
-            "check_predict_proba_one_binary",
-        }
-
-    @property
-    def _wrapped_model(self):
-        return self.anomaly_detector
-
-    @abc.abstractmethod
-    def score_one(self, *args) -> float:
-        """Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector.
-
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
-
-        Parameters
-        ----------
-        *args
-            Depends on whether the underlying anomaly detector is supervised or not.
-
-        Returns
-        -------
-        An scaled anomaly score. Larger values indicate more anomalous examples.
-        """
-
-    def learn_one(self, *args) -> "AnomalyScaler":
-        """
-        Update the scaler and the underlying anomaly scaler.
-
-        Parameters
-        ----------
-        *args
-            Depends on whether the underlying anomaly detector is supervised or not.
-
-        Returns
-        -------
-        AnomalyScaler
-            The model itself.
-        """
-
-        self.anomaly_detector.learn_one(*args)
-        return self

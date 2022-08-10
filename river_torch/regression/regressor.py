@@ -1,11 +1,12 @@
-from typing import Callable, Union
+from typing import Callable, List, Union
 
 import torch
 from river import base
 from river.base.typing import RegTarget
+import pandas as pd
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.river_compat import dict2tensor, scalar2tensor
+from river_torch.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
 
 
 class Regressor(DeepEstimator, base.Regressor):
@@ -106,12 +107,12 @@ class Regressor(DeepEstimator, base.Regressor):
         if self.net is None:
             self._init_net(len(x))
         x = dict2tensor(x, self.device)
-        y = scalar2tensor(y, device=self.device)
+        y = float2tensor(y, device=self.device)
         self.net.train()
-        self._learn_one(x, y)
+        self._learn(x, y)
         return self
 
-    def _learn_one(self, x: torch.TensorType, y: torch.TensorType):
+    def _learn(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
         y_pred = self.net(x)
         loss = self.loss_fn(y_pred, y)
@@ -137,3 +138,48 @@ class Regressor(DeepEstimator, base.Regressor):
         x = dict2tensor(x, self.device)
         self.net.eval()
         return self.net(x).item()
+
+    def learn_many(self, x: pd.DataFrame, y: List) -> "Regressor":
+        """
+        Performs one step of training with a batch of examples.
+
+        Parameters
+        ----------
+        x
+            Input examples.
+        y
+            Target values.
+
+        Returns
+        -------
+        Regressor
+            The regressor itself.
+        """
+        if self.net is None:
+            self._init_net(len(x.columns))
+        x = df2tensor(x, device=self.device)
+        y = torch.tensor(y, device=self.device, dtype=torch.float32)
+        self.net.train()
+        self._learn(x, y)
+        return self
+
+    def predict_many(self, x: pd.DataFrame) -> List:
+        """
+        Predicts the target value for a batch of examples.
+
+        Parameters
+        ----------
+        x
+            Input examples.
+
+        Returns
+        -------
+        List
+            Predicted target values.
+        """
+        if self.net is None:
+            self._init_net(len(x.columns))
+            
+        x = df2tensor(x, device=self.device)
+        self.net.eval()
+        return self.net(x).detach().tolist()

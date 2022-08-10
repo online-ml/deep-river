@@ -1,14 +1,16 @@
 import math
 from typing import Callable, Union
 
+import pandas as pd
+import torch
 from river.stats import RollingMean, RollingVar
 from scipy.special import ndtr
 
-from river_torch.anomaly import base
+from river_torch.anomaly import ae
 from river_torch.utils import dict2tensor
 
 
-class ProbabilityWeightedAutoencoder(base.Autoencoder):
+class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     """
     Wrapper for PyTorch autoencoder models for anomaly detection that reduces the employed learning rate based on an outlier probability estimate of the input example as well as a threshold probability `skip_threshold`. If the outlier probability is above the threshold, the learning rate is reduced to less than 0. Given the probability estimate $p_out$, the adjusted learning rate $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
 
@@ -112,22 +114,41 @@ class ProbabilityWeightedAutoencoder(base.Autoencoder):
         x = dict2tensor(x, device=self.device)
 
         self.net.train()
-        return self._learn_one(x)
-
-    def _learn_one(self, x):
         x_pred = self.net(x)
         loss = self.loss_fn(x_pred, x)
-        loss_item = loss.item()
+        self._apply_loss(loss)
+        return self
+
+    def _apply_loss(self, loss):
+        losses_numpy = loss.detach().numpy()
         mean = self.rolling_mean.get()
         var = self.rolling_var.get() if self.rolling_var.get() > 0 else 1
-        self.rolling_mean.update(loss_item)
-        self.rolling_var.update(loss_item)
+        if losses_numpy.ndim == 0:
+            self.rolling_mean.update(losses_numpy)
+            self.rolling_var.update(losses_numpy)
+        else:
+            for loss_numpy in range(len(losses_numpy)):
+                self.rolling_mean.update(loss_numpy)
+                self.rolling_var.update(loss_numpy)
 
-        loss_scaled = (loss_item - mean) / math.sqrt(var)
+        loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
-        loss = (self.skip_threshold - prob) / self.skip_threshold * loss
+        loss = torch.tensor((self.skip_threshold - prob) / self.skip_threshold) * loss
 
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
+
+    def learn_many(self, x: pd.DataFrame) -> "ProbabilityWeightedAutoencoder":
+        if self.net is None:
+            self._init_net(n_features=len(x.columns))
+        x = dict2tensor(x, device=self.device)
+
+        self.net.train()
+        x_pred = self.net(x)
+        loss = torch.mean(
+            self.loss_fn(x_pred, x, reduction="none"),
+            dim=list(range(1, x.dim())),
+        )
+        self._apply_loss(loss)
         return self

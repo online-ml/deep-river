@@ -1,15 +1,16 @@
-import copy
-import logging
-import warnings
-from typing import Callable, Union
+from typing import Callable, List, Union
 
+import pandas as pd
 import torch
 from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.river_compat import (dict2tensor, list2tensor,
-                                            scalar2tensor)
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    float2tensor,
+)
 
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
@@ -78,15 +79,9 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         """
         if self.net is None:
             self._init_net(len(x))
-        if len(self._x_window) == self.window_size:
 
-            if self.append_predict:
-                self._x_window.append(list(x.values()))
-                x = list2tensor(self._x_window, self.device)
-            else:
-                x = copy.deepcopy(self._x_window)
-                x.append(list(x.values()))
-                x = list2tensor(x, self.device)
+        x = dict2rolling_tensor(x, self._x_window, device=self.device)
+        if x is not None:
             self.net.eval()
             return self.net(x).item()
         else:
@@ -112,17 +107,42 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         if self.net is None:
             self._init_net(len(x))
 
-        if len(self._x_window) == self.window_size:
-            x = list2tensor(self._x_window, device=self.device)
-            y = scalar2tensor(y, device=self.device)
+        x = dict2rolling_tensor(x, self._x_window, device=self.device)
+        if x is not None:
+            y = float2tensor(y, device=self.device)
             self.net.train()
-            self._learn_window(x, y)
+            self._learn(x, y)
 
         return self
 
-    def _learn_window(self, x: torch.TensorType, y: torch.TensorType):
+    def _learn(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
         y_pred = self.net(x)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
+
+    def learn_many(self, x: pd.DataFrame, y: List) -> "RollingDeepEstimator":
+        if self.net is None:
+            self._init_net(n_features=len(x.columns))
+
+        x = df2rolling_tensor(x, self._x_window, device=self.device)
+        if x is not None:
+            y = torch.tensor(y, dtype=torch.float32, device=self.device)
+            self._learn(x=x, y=y)
+        return self
+
+    def predict_many(self, x: pd.DataFrame) -> List:
+        if self.net is None:
+            self._init_net(n_features=len(x.columns))
+
+        batch = df2rolling_tensor(
+            x, self._x_window, device=self.device, update_window=self.append_predict
+        )
+        if batch is not None:
+            self.net.eval()
+            y_pred = self.net(batch).detach().tolist()
+            if len(y_pred) < len(batch):
+                y_pred = [0.0] * (len(batch) - len(y_pred)) + y_pred
+        else:
+            return [0.0] * len(x)

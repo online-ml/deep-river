@@ -1,8 +1,11 @@
+import abc
+
+import numpy as np
+from river import base
+from river.anomaly import HalfSpaceTrees
 from river.anomaly.base import AnomalyDetector
 from river.stats import (EWMean, Max, Mean, Min, RollingMax, RollingMean,
                          RollingMin)
-
-from .base import AnomalyScaler
 
 METRICS = {
     "mean": {"incremental": Mean, "rolling": RollingMean, "adaptive": EWMean},
@@ -45,6 +48,124 @@ def _get_metric(
         return METRICS[metric][metric_type](window_size=window_size)
     else:
         return METRICS[metric][metric_type](alpha=alpha)
+
+
+class AnomalyScaler(base.Wrapper, AnomalyDetector):
+    """Wrapper around an anomaly detector that scales the output of the model to account for drift in the wrapped model's anomaly scores.
+
+    Parameters
+    ----------
+    anomaly_detector
+        Anomaly detector to be wrapped.
+    """
+
+    def __init__(self, anomaly_detector: AnomalyDetector):
+        self.anomaly_detector = anomaly_detector
+
+    @classmethod
+    def _unit_test_params(self) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+        yield {"anomaly_detector": HalfSpaceTrees()}
+
+    @classmethod
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+        }
+
+    @property
+    def _wrapped_model(self):
+        return self.anomaly_detector
+
+    @abc.abstractmethod
+    def score_one(self, *args) -> float:
+        """Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+
+        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+
+        Parameters
+        ----------
+        *args
+            Depends on whether the underlying anomaly detector is supervised or not.
+
+        Returns
+        -------
+        An scaled anomaly score. Larger values indicate more anomalous examples.
+        """
+
+    def learn_one(self, *args) -> "AnomalyScaler":
+        """
+        Update the scaler and the underlying anomaly scaler.
+
+        Parameters
+        ----------
+        *args
+            Depends on whether the underlying anomaly detector is supervised or not.
+
+        Returns
+        -------
+        AnomalyScaler
+            The model itself.
+        """
+
+        self.anomaly_detector.learn_one(*args)
+        return self
+
+    @abc.abstractmethod
+    def score_many(self, *args) -> np.ndarray:
+        """Return scaled anomaly scores based on raw score provided by the wrapped anomaly detector.
+
+        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+
+        Parameters
+        ----------
+        *args
+            Depends on whether the underlying anomaly detector is supervised or not.
+
+        Returns
+        -------
+        Scaled anomaly scores. Larger values indicate more anomalous examples.
+        """
+
+    def learn_many(self, *args) -> "AnomalyScaler":
+        """
+        Update the scaler and the underlying anomaly scaler to a batch of examples.
+
+        Parameters
+        ----------
+        *args
+            Depends on whether the underlying anomaly detector is supervised or not.
+
+        Returns
+        -------
+        AnomalyScaler
+            The model itself.
+        """
+
+        self.anomaly_detector.learn_many(*args)
+        return self
 
 
 class AnomalyStandardScaler(AnomalyScaler):

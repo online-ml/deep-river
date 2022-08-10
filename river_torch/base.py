@@ -3,6 +3,7 @@ import collections
 import inspect
 from typing import Callable, Union
 
+import pandas as pd
 import torch
 from river import base
 
@@ -257,6 +258,25 @@ class RollingDeepEstimator(base.Estimator):
     def learn_one(self, x, y) -> "RollingDeepEstimator":
         """
         Performs one step of training with a sliding window of the most recent examples.
+
+        Parameters
+        ----------
+        x
+            Input example.
+        y
+            Target value.
+
+        Returns
+        -------
+        RollingDeepEstimator
+            The estimator itself.
+        """
+        return self
+
+    @abc.abstractmethod
+    def learn_many(self, x, y) -> "RollingDeepEstimator":
+        """
+        Performs one step of training with a batch of sliding windows of the most recent examples.
 
         Parameters
         ----------
