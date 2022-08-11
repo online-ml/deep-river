@@ -1,11 +1,13 @@
-![GitHub last commit](https://img.shields.io/github/last-commit/online-ml/river-torch)
+<p align="center">
+  <img height="150px" src="docs/img/logo.png" alt="incremental dl logo">
+</p>
+
+
+![PyPI](https://img.shields.io/pypi/v/river_torch)
 [![unit-tests](https://github.com/online-ml/river-torch/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/kulbachcedric/DeepRiver/actions/workflows/unit-tests.yml)
 [![codecov](https://codecov.io/gh/online-ml/river-torch/branch/master/graph/badge.svg?token=ZKUIISZAYA)](https://codecov.io/gh/online-ml/river-torch)
 [![docs](https://github.com/online-ml/river-torch/actions/workflows/mkdocs.yml/badge.svg)](https://github.com/online-ml/river-torch/actions/workflows/unit_test.yml)
 
-<p align="center">
-  <img height="150px" src="docs/img/logo.png" alt="incremental dl logo">
-</p>
 
 <p align="center">
     DeepRiver is a Python library for online deep learning.
