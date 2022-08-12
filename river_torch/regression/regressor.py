@@ -1,12 +1,13 @@
 from typing import Callable, List, Union
 
+import pandas as pd
 import torch
 from river import base
 from river.base.typing import RegTarget
-import pandas as pd
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
+from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                 float2tensor)
 
 
 class Regressor(DeepEstimator, base.Regressor):
@@ -179,7 +180,7 @@ class Regressor(DeepEstimator, base.Regressor):
         """
         if self.net is None:
             self._init_net(len(x.columns))
-            
+
         x = df2tensor(x, device=self.device)
         self.net.eval()
         return self.net(x).detach().tolist()

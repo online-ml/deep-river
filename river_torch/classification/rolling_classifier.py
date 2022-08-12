@@ -9,13 +9,10 @@ from torch.nn import init, parameter
 
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.layers import find_output_layer
-from river_torch.utils.tensor_conversion import (
-    class2onehot,
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    list2onehot,
-    output2proba,
-)
+from river_torch.utils.tensor_conversion import (class2onehot,
+                                                 df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 list2onehot, output2proba)
 
 
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
