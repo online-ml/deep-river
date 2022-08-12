@@ -139,7 +139,7 @@ class Regressor(DeepEstimator, base.Regressor):
         self.net.eval()
         return self.net(x).item()
 
-    def learn_many(self, x: pd.DataFrame, y: List) -> "Regressor":
+    def learn_many(self, X: pd.DataFrame, y: List) -> "Regressor":
         """
         Performs one step of training with a batch of examples.
 
@@ -156,14 +156,14 @@ class Regressor(DeepEstimator, base.Regressor):
             The regressor itself.
         """
         if self.net is None:
-            self._init_net(len(x.columns))
-        x = df2tensor(x, device=self.device)
+            self._init_net(len(X.columns))
+        X = df2tensor(X, device=self.device)
         y = torch.tensor(y, device=self.device, dtype=torch.float32)
         self.net.train()
-        self._learn(x, y)
+        self._learn(X, y)
         return self
 
-    def predict_many(self, x: pd.DataFrame) -> List:
+    def predict_many(self, X: pd.DataFrame) -> List:
         """
         Predicts the target value for a batch of examples.
 
@@ -178,8 +178,8 @@ class Regressor(DeepEstimator, base.Regressor):
             Predicted target values.
         """
         if self.net is None:
-            self._init_net(len(x.columns))
+            self._init_net(len(X.columns))
             
-        x = df2tensor(x, device=self.device)
+        X = df2tensor(X, device=self.device)
         self.net.eval()
-        return self.net(x).detach().tolist()
+        return torch.squeeze(self.net(X).detach()).tolist()

@@ -180,13 +180,13 @@ class Classifier(DeepEstimator, base.Classifier):
         y_pred = self.net(x)
         return output2proba(y_pred, self.observed_classes)[0]
 
-    def learn_many(self, x: pd.DataFrame, y: List) -> "Classifier":
+    def learn_many(self, X: pd.DataFrame, y: List) -> "Classifier":
         """
         Performs one step of training with a batch of examples.
 
         Parameters
         ----------
-        x
+        X
             Input examples.
         y
             Target values.
@@ -198,8 +198,8 @@ class Classifier(DeepEstimator, base.Classifier):
         """
         # check if model is initialized
         if self.net is None:
-            self._init_net(len(x.columns))
-        x = df2tensor(x, device=self.device)
+            self._init_net(len(X.columns))
+        X = df2tensor(X, device=self.device)
 
         # check last layer
         for y_i in y:
@@ -223,15 +223,15 @@ class Classifier(DeepEstimator, base.Classifier):
             device=self.device,
         )
         self.net.train()
-        return self._learn(x=x, y=y)
+        return self._learn(x=X, y=y)
 
-    def predict_proba_many(self, x: pd.DataFrame) -> List:
+    def predict_proba_many(self, X: pd.DataFrame) -> List:
         """
         Predict the probability of each label given the input.
 
         Parameters
         ----------
-        x
+        X
             Input examples.
 
         Returns
@@ -240,8 +240,8 @@ class Classifier(DeepEstimator, base.Classifier):
             List of dictionaries of probabilities for each label.
         """
         if self.net is None:
-            self._init_net(len(x.columns))
-        x = df2tensor(x, device=self.device)
+            self._init_net(len(X.columns))
+        X = df2tensor(X, device=self.device)
         self.net.eval()
-        y_preds = self.net(x)
+        y_preds = self.net(X)
         return output2proba(y_preds, self.observed_classes)
