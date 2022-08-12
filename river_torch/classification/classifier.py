@@ -180,7 +180,7 @@ class Classifier(DeepEstimator, base.Classifier):
         y_pred = self.net(x)
         return output2proba(y_pred, self.observed_classes)[0]
 
-    def learn_many(self, x: pd.DataFrame, y: List) -> "Classifier":
+    def learn_many(self, X  : pd.DataFrame, y: List) -> "Classifier":
         """
         Performs one step of training with a batch of examples.
 
