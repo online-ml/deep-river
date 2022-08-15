@@ -62,9 +62,16 @@ def df2rolling_tensor(
     return x
 
 
-def list2onehot(
-    y: list, classes: list, n_classes: int, device="cpu"
+def labels2onehot(
+    y: Union[base.typing.ClfTarget, List],
+    classes: list,
+    n_classes: int = None,
+    device="cpu",
 ) -> torch.TensorType:
+    if n_classes is None:
+        n_classes = len(classes)
+    if not isinstance(y, list):
+        y = [y]
     onehot = torch.zeros(len(y), n_classes, device=device)
     pos_idcs = [classes.index(y_i) for y_i in y]
     for i, pos_idx in enumerate(pos_idcs):
@@ -73,19 +80,16 @@ def list2onehot(
     return onehot
 
 
-def class2onehot(
-    y: base.typing.ClfTarget, classes: list, n_classes: int, device="cpu"
-) -> torch.TensorType:
-    onehot = torch.zeros(1, n_classes, device=device)
-    pos_idx = classes.index(y)
-    if pos_idx < n_classes:
-        onehot[0, classes.index(y)] = 1
-    return onehot
-
-
 def output2proba(preds: torch.TensorType, classes: List) -> List:
     preds = preds.detach().numpy()
     if preds.shape[1] == 1:
         preds = np.hstack((preds, 1 - preds))
-    probas = [dict(zip(classes, pred)) for pred in preds]
+    n_unobserved_classes = preds.shape[1] - len(classes)
+    if n_unobserved_classes > 0:
+        classes = classes + [f"unobserved {i}" for i in range(n_unobserved_classes)]
+    probas = (
+        dict(zip(classes, preds[0]))
+        if preds.shape[0] == 1
+        else [dict(zip(classes, pred)) for pred in preds]
+    )
     return probas
