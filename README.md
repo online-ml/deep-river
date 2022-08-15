@@ -10,8 +10,8 @@
 
 
 <p align="center">
-    DeepRiver is a Python library for online deep learning.
-    DeepRivers ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
+    river-torch is a Python library for online deep learning.
+    River-torch's ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
     It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>.
 </p>
 
