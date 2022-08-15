@@ -88,6 +88,30 @@ class Regressor(DeepEstimator, base.Regressor):
             **net_params
         )
 
+    @classmethod
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
+        def build_torch_linear_regressor(n_features):
+            net = torch.nn.Sequential(
+                torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
+            )
+            return net
+
+        yield {
+            "build_fn": build_torch_linear_regressor,
+            "loss_fn": "mse",
+            "optimizer_fn": "sgd",
+            "lr": 1e-3,
+        }
+
     def learn_one(self, x: dict, y: RegTarget) -> "Regressor":
         """
         Performs one step of training with a single example.
@@ -179,7 +203,7 @@ class Regressor(DeepEstimator, base.Regressor):
         """
         if self.net is None:
             self._init_net(len(x.columns))
-            
+
         x = df2tensor(x, device=self.device)
         self.net.eval()
         return self.net(x).detach().tolist()

@@ -6,9 +6,12 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor,
-                                                 float2tensor)
+from river_torch.utils.layers import SequentialLSTM
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    float2tensor,
+)
 
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
@@ -60,6 +63,34 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             seed=seed,
             **net_params
         )
+
+    @classmethod
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
+        def build_torch_lstm_classifier(n_features, hidden_size=1):
+            net = torch.nn.Sequential(
+                SequentialLSTM(
+                    input_size=n_features, hidden_size=hidden_size, num_layers=1
+                ),
+                torch.nn.Linear(hidden_size, 10),
+                torch.nn.Linear(10, 1),
+            )
+            return net
+
+        yield {
+            "build_fn": build_torch_lstm_classifier,
+            "loss_fn": "mse",
+            "optimizer_fn": "sgd",
+            "lr": 1e-3,
+        }
 
     def predict_one(self, x: dict) -> RegTarget:
         """
