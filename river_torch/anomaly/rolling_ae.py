@@ -7,7 +7,8 @@ import torch
 from river import anomaly
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import df2rolling_tensor, dict2rolling_tensor
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor)
 
 
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):

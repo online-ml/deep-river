@@ -6,11 +6,9 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    float2tensor,
-)
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 float2tensor)
 
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
@@ -122,22 +120,22 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         loss.backward()
         self.optimizer.step()
 
-    def learn_many(self, x: pd.DataFrame, y: List) -> "RollingDeepEstimator":
+    def learn_many(self, X: pd.DataFrame, y: List) -> "RollingDeepEstimator":
         if self.net is None:
-            self._init_net(n_features=len(x.columns))
+            self._init_net(n_features=len(X.columns))
 
-        x = df2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
+        X = df2rolling_tensor(X, self._x_window, device=self.device)
+        if X is not None:
             y = torch.tensor(y, dtype=torch.float32, device=self.device)
-            self._learn(x=x, y=y)
+            self._learn(x=X, y=y)
         return self
 
-    def predict_many(self, x: pd.DataFrame) -> List:
+    def predict_many(self, X: pd.DataFrame) -> List:
         if self.net is None:
-            self._init_net(n_features=len(x.columns))
+            self._init_net(n_features=len(X.columns))
 
         batch = df2rolling_tensor(
-            x, self._x_window, device=self.device, update_window=self.append_predict
+            X, self._x_window, device=self.device, update_window=self.append_predict
         )
         if batch is not None:
             self.net.eval()
@@ -145,4 +143,4 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             if len(y_pred) < len(batch):
                 y_pred = [0.0] * (len(batch) - len(y_pred)) + y_pred
         else:
-            return [0.0] * len(x)
+            return [0.0] * len(X)
