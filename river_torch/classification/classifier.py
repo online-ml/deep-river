@@ -9,9 +9,12 @@ from torch.nn import init, parameter
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.layers import find_output_layer
-from river_torch.utils.tensor_conversion import (class2onehot, df2tensor,
-                                                 dict2tensor, list2onehot,
-                                                 output2proba)
+from river_torch.utils.tensor_conversion import (
+    labels2onehot,
+    df2tensor,
+    dict2tensor,
+    output2proba,
+)
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -56,7 +59,7 @@ class Classifier(DeepEstimator, base.Classifier):
     >>> dataset = Phishing()
     >>> metric = metrics.Accuracy()
     >>> evaluate.progressive_val_score(dataset=dataset, model=model, metric=metric)
-    Accuracy: 79.82%
+    Accuracy: 79.68%
     """
 
     def __init__(
@@ -116,7 +119,7 @@ class Classifier(DeepEstimator, base.Classifier):
         if n_classes_to_add > 0:
             self._add_output_dims(n_classes_to_add)
 
-        y = class2onehot(
+        y = labels2onehot(
             y,
             self.observed_classes,
             self.output_layer.out_features,
@@ -178,7 +181,7 @@ class Classifier(DeepEstimator, base.Classifier):
         x = dict2tensor(x, device=self.device)
         self.net.eval()
         y_pred = self.net(x)
-        return output2proba(y_pred, self.observed_classes)[0]
+        return output2proba(y_pred, self.observed_classes)
 
     def learn_many(self, x: pd.DataFrame, y: List) -> "Classifier":
         """
@@ -216,7 +219,7 @@ class Classifier(DeepEstimator, base.Classifier):
         if n_classes_to_add > 0:
             self._add_output_dims(n_classes_to_add)
 
-        y = list2onehot(
+        y = labels2onehot(
             y,
             self.observed_classes,
             self.output_layer.out_features,

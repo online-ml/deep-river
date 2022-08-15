@@ -10,10 +10,9 @@ from torch.nn import init, parameter
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.layers import find_output_layer
 from river_torch.utils.tensor_conversion import (
-    class2onehot,
+    labels2onehot,
     df2rolling_tensor,
     dict2rolling_tensor,
-    list2onehot,
     output2proba,
 )
 
@@ -110,7 +109,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         # training process
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
         if x is not None:
-            y = class2onehot(
+            y = labels2onehot(
                 y,
                 self.observed_classes,
                 self.output_layer.out_features,
@@ -118,6 +117,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             )
             self._learn(x=x, y=y)
         return self
+
+
+
 
     def _add_output_dims(self, n_classes_to_add: int) -> None:
         """
@@ -173,7 +175,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if x is not None:
             self.net.eval()
             y_pred = self.net(x)
-            proba = output2proba(y_pred, self.observed_classes)[0]
+            proba = output2proba(y_pred, self.observed_classes)
         else:
             proba = self._get_default_proba()
         return proba
@@ -215,7 +217,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self._add_output_dims(n_classes_to_add)
 
         x = df2rolling_tensor(x, self._x_window, device=self.device)
-        y = list2onehot(
+        y = labels2onehot(
             y,
             self.observed_classes,
             self.output_layer.out_features,
