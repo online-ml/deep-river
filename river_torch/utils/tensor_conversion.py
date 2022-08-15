@@ -14,7 +14,7 @@ def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.TensorType:
 def float2tensor(
     y: Union[float, int], device="cpu", dtype=torch.float32
 ) -> torch.TensorType:
-    y = torch.tensor([y], device=device, dtype=dtype)
+    y = torch.tensor([[y]], device=device, dtype=dtype)
     return y
 
 
