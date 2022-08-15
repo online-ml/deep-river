@@ -8,12 +8,12 @@ from river.base.typing import ClfTarget
 from torch.nn import init, parameter
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.layers import find_output_layer
+from river_torch.utils.layers import SequentialLSTM, find_output_layer
 from river_torch.utils.tensor_conversion import (
     df2rolling_tensor,
     dict2rolling_tensor,
     output2proba,
-    labels2onehot
+    labels2onehot,
 )
 
 
@@ -69,6 +69,35 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             **net_params,
         )
 
+    @classmethod
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
+        def build_torch_lstm_classifier(n_features, hidden_size=1):
+            net = torch.nn.Sequential(
+                SequentialLSTM(
+                    input_size=n_features, hidden_size=hidden_size, num_layers=1
+                ),
+                torch.nn.Linear(hidden_size, 10),
+                torch.nn.Linear(10, 3),
+                torch.nn.Softmax(dim=-1),
+            )
+            return net
+
+        yield {
+            "build_fn": build_torch_lstm_classifier,
+            "loss_fn": "binary_cross_entropy",
+            "optimizer_fn": "sgd",
+            "lr": 1e-3,
+        }
+
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples stored in the sliding window.
@@ -117,9 +146,6 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             )
             self._learn(x=x, y=y)
         return self
-
-
-
 
     def _add_output_dims(self, n_classes_to_add: int) -> None:
         """

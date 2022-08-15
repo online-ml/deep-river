@@ -6,6 +6,7 @@ import torch
 from river import base
 from river.base.typing import ClfTarget
 from torch.nn import init, parameter
+from torch import nn
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.layers import find_output_layer
@@ -83,6 +84,33 @@ class Classifier(DeepEstimator, base.Classifier):
             seed=seed,
             **net_params,
         )
+
+    @classmethod
+    def _unit_test_params(cls) -> dict:
+        """
+        Returns a dictionary of parameters to be used for unit testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the respective class.
+        """
+
+        def build_torch_mlp_classifier(n_features):  # build the neural architecture
+            net = nn.Sequential(
+                nn.Linear(n_features, 5),
+                nn.ReLU(),
+                nn.Linear(5, 3),
+                nn.Softmax(dim=-1),
+            )
+            return net
+
+        yield {
+            "build_fn": build_torch_mlp_classifier,
+            "loss_fn": "binary_cross_entropy",
+            "optimizer_fn": "sgd",
+            "lr": 1e-3,
+        }
 
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
         """

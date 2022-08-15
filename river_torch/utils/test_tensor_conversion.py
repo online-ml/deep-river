@@ -20,7 +20,7 @@ def test_dict2tensor():
 
 def test_float2tensor():
     y = 1.0
-    assert float2tensor(y).tolist() == [1.0]
+    assert float2tensor(y).tolist() == [[1.0]]
 
 
 def test_dict2rolling_tensor():
