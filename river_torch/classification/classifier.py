@@ -65,24 +65,24 @@ class Classifier(DeepEstimator, base.Classifier):
 
     def __init__(
         self,
-        build_fn: Callable,
+        module: Union[torch.nn.Module, type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
-        **net_params,
+        **kwargs,
     ):
         self.observed_classes = []
         self.output_layer = None
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            build_fn=build_fn,
+            module=module,
             device=device,
             lr=lr,
             seed=seed,
-            **net_params,
+            **kwargs,
         )
 
     @classmethod
@@ -96,20 +96,28 @@ class Classifier(DeepEstimator, base.Classifier):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        def build_torch_mlp_classifier(n_features):  # build the neural architecture
-            net = nn.Sequential(
-                nn.Linear(n_features, 5),
-                nn.ReLU(),
-                nn.Linear(5, 3),
-                nn.Softmax(dim=-1),
-            )
-            return net
+        class MyModule(torch.nn.Module):
+            def __init__(self, num_units=10, nonlin=torch.nn.ReLU()):
+                super(MyModule, self).__init__()
+
+                self.dense0 = torch.nn.Linear(20, num_units)
+                self.nonlin = nonlin
+                self.dropout = torch.nn.Dropout(0.5)
+                self.dense1 = torch.nn.Linear(num_units, num_units)
+                self.output = torch.nn.Linear(num_units, 2)
+                self.softmax = torch.nn.Softmax(dim=-1)
+
+            def forward(self, X, **kwargs):
+                X = self.nonlin(self.dense0(X))
+                X = self.dropout(X)
+                X = self.nonlin(self.dense1(X))
+                X = self.softmax(self.output(X))
+                return X
 
         yield {
-            "build_fn": build_torch_mlp_classifier,
-            "loss_fn": "binary_cross_entropy",
+            "module": MyModule,
+            "loss_fn": "l1",
             "optimizer_fn": "sgd",
-            "lr": 1e-3,
         }
 
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
@@ -129,7 +137,7 @@ class Classifier(DeepEstimator, base.Classifier):
             The classifier itself.
         """
         # check if model is initialized
-        if self.net is None:
+        if self.module is None:
             self._init_net(len(x))
         x = dict2tensor(x, device=self.device)
 
