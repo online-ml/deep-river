@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Union
+from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
@@ -16,7 +16,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
     Parameters
     ----------
-    build_fn
+    module
         Function that builds the autoencoder to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
@@ -31,7 +31,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     seed
         Random seed to be used for training the wrapped model.
     **net_params
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+        Parameters to be passed to the `module` function aside from `n_features`.
 
         Examples
     --------
@@ -60,7 +60,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     ...         X = self.linear2(X)
     ...         return nn.functional.sigmoid(X)
 
-    >>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
+    >>> ae = ProbabilityWeightedAutoencoder(module=MyAutoEncoder, lr=0.005)
     >>> scaler = MinMaxScaler()
     >>> model = Pipeline(scaler, ae)
 
@@ -70,12 +70,12 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     ...    metric = metric.update(y, score)
     ...
     >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.8128
+    ROCAUC: 0.8599
     """
 
     def __init__(
         self,
-        build_fn: Callable,
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -86,7 +86,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         **net_params,
     ):
         super().__init__(
-            build_fn=build_fn,
+            module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             lr=lr,
@@ -114,12 +114,13 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         ProbabilityWeightedAutoencoder
             The autoencoder itself.
         """
-        if self.net is None:
-            self._init_net(n_features=len(x))
+        if not self.module_initialized:
+            self.kwargs["n_features"] = len(x)
+            self.initialize_module(**kwargs)
         x = dict2tensor(x, device=self.device)
 
-        self.net.train()
-        x_pred = self.net(x)
+        self.module.train()
+        x_pred = self.module(x)
         loss = self.loss_fn(x_pred, x)
         self._apply_loss(loss)
         return self
@@ -144,13 +145,14 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         loss.backward()
         self.optimizer.step()
 
-    def learn_many(self, x: pd.DataFrame) -> "ProbabilityWeightedAutoencoder":
-        if self.net is None:
-            self._init_net(n_features=len(x.columns))
+    def learn_many(self, X: pd.DataFrame) -> "ProbabilityWeightedAutoencoder":
+        if not self.module_initialized:
+            self.kwargs["n_features"] = len(X.columns)
+            self.initialize_module(**self.kwargs)
         x = dict2tensor(x, device=self.device)
 
-        self.net.train()
-        x_pred = self.net(x)
+        self.module.train()
+        x_pred = self.module(x)
         loss = torch.mean(
             self.loss_fn(x_pred, x, reduction="none"),
             dim=list(range(1, x.dim())),

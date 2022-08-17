@@ -72,7 +72,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
     ...    metric = metric.update(y, score)
     ...
     >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.9064
+    ROCAUC: 0.7447
     """
 
     def __init__(
@@ -113,13 +113,11 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
                 self.nonlin = torch.nn.LeakyReLU()
                 self.linear2 = nn.Linear(latent_dim, n_features)
 
-
             def forward(self, X, **kwargs):
                 X = self.linear1(X)
                 X = self.nonlin(X)
                 X = self.linear2(X)
                 return nn.functional.sigmoid(X)
-
 
         yield {
             "module": MyAutoEncoder,
@@ -165,6 +163,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
             The model itself.
         """
         if not self.module_initialized:
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**kwargs)
         x = dict2tensor(x, device=self.device)
         return self._learn(x)
@@ -195,7 +194,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
         """
 
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x = dict2tensor(x, device=self.device)
 
@@ -221,7 +220,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
 
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X = df2tensor(X, device=self.device)
         return self._learn(X)
@@ -241,7 +240,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
             Anomaly scores for the given batch of examples. Larger values indicate more anomalous examples.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X = df2tensor(X, device=self.device)
 
