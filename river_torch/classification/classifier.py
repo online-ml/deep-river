@@ -137,7 +137,7 @@ class Classifier(DeepEstimator, base.Classifier):
             The classifier itself.
         """
         # check if model is initialized
-        if self.module is None:
+        if self.module_initialized:
             self._init_net(len(x))
         x = dict2tensor(x, device=self.device)
 
@@ -146,7 +146,7 @@ class Classifier(DeepEstimator, base.Classifier):
             self.observed_classes.append(y)
 
         if self.output_layer is None:
-            self.output_layer = find_output_layer(self.net)
+            self.output_layer = find_output_layer(self.module)
 
         out_features_target = (
             len(self.observed_classes) if len(self.observed_classes) > 2 else 1
@@ -161,7 +161,7 @@ class Classifier(DeepEstimator, base.Classifier):
             self.output_layer.out_features,
             device=self.device,
         )
-        self.net.train()
+        self.module.train()
         return self._learn(x=x, y=y)
 
     def _add_output_dims(self, n_classes_to_add: int) -> None:
@@ -188,11 +188,11 @@ class Classifier(DeepEstimator, base.Classifier):
                 torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
-        self.optimizer = self.optimizer_fn(self.net.parameters(), lr=self.lr)
+        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
 
     def _learn(self, x: torch.TensorType, y: torch.TensorType):
         self.optimizer.zero_grad()
-        y_pred = self.net(x)
+        y_pred = self.module(x)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
@@ -212,11 +212,11 @@ class Classifier(DeepEstimator, base.Classifier):
         Dict[ClfTarget, float]
             Dictionary of probabilities for each label.
         """
-        if self.net is None:
-            self._init_net(len(x))
+        if not self.module_initialized:
+            self._init_module(len(x))
         x = dict2tensor(x, device=self.device)
-        self.net.eval()
-        y_pred = self.net(x)
+        self.module.eval()
+        y_pred = self.module(x)
         return output2proba(y_pred, self.observed_classes)
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "Classifier":
@@ -236,8 +236,8 @@ class Classifier(DeepEstimator, base.Classifier):
             The classifier itself.
         """
         # check if model is initialized
-        if self.net is None:
-            self._init_net(len(X.columns))
+        if self.module_initialized:
+            self._init_module(len(X.columns))
         X = df2tensor(X, device=self.device)
 
         # check last layer
@@ -246,7 +246,7 @@ class Classifier(DeepEstimator, base.Classifier):
                 self.observed_classes.append(y_i)
 
         if self.output_layer is None:
-            self.output_layer = find_output_layer(self.net)
+            self.output_layer = find_output_layer(self.module)
 
         out_features_target = (
             len(self.observed_classes) if len(self.observed_classes) > 2 else 1
@@ -261,7 +261,7 @@ class Classifier(DeepEstimator, base.Classifier):
             self.output_layer.out_features,
             device=self.device,
         )
-        self.net.train()
+        self.module.train()
         return self._learn(x=X, y=y)
 
     def predict_proba_many(self, X: pd.DataFrame) -> List:
@@ -278,9 +278,9 @@ class Classifier(DeepEstimator, base.Classifier):
         List
             List of dictionaries of probabilities for each label.
         """
-        if self.net is None:
+        if self.module is None:
             self._init_net(len(X.columns))
         X = df2tensor(X, device=self.device)
-        self.net.eval()
-        y_preds = self.net(X)
+        self.module.eval()
+        y_preds = self.module(X)
         return output2proba(y_preds, self.observed_classes)

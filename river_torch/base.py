@@ -50,6 +50,7 @@ class DeepEstimator(base.Estimator):
         self.device = device
         self.kwargs = kwargs
         self.seed = seed
+        self.module_initialized = False
         torch.manual_seed(seed)
 
     @classmethod
@@ -152,7 +153,8 @@ class DeepEstimator(base.Estimator):
         return res
 
     def initialize_module(self):
-        """       Parameters
+        """       
+        Parameters
         ----------
         module
           The instance or class or callable to be initialized, e.g.
@@ -165,12 +167,12 @@ class DeepEstimator(base.Estimator):
         instance
           The initialized component.
         """
-        is_init = isinstance(self.module, torch.nn.Module)
-        if not is_init:
+        if not isinstance(self.module, torch.nn.Module):
             self.module = self.module(**self._filter_kwargs(self.module))
 
         self.module.to(self.device)
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+        self.module_initialized = True
 
 class RollingDeepEstimator(base.Estimator):
     """
