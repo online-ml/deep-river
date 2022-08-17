@@ -33,39 +33,6 @@ class Regressor(DeepEstimator, base.Regressor):
     Examples
     --------
 
-    >>> from river.datasets import TrumpApproval
-    >>> from river import evaluate, metrics, preprocessing
-    >>> from river_torch.regression import Regressor
-    >>> import torch
-    >>> from torch import nn, optim
-
-    >>> _ = torch.manual_seed(0)
-
-    >>> dataset = TrumpApproval()
-    >>> def build_torch_mlp(n_features):
-    ...     net = nn.Sequential(
-    ...         nn.Linear(n_features, 5),
-    ...         nn.ReLU(),
-    ...         nn.Linear(5, 1)
-    ...     )
-    ...     return net
-    ...
-
-
-    >>> model = (
-    ...     preprocessing.StandardScaler() |
-    ...     Regressor(
-    ...         build_fn=build_torch_mlp,
-    ...         loss_fn='mse',
-    ...         optimizer_fn=torch.optim.SGD,
-    ...         batch_size=2
-    ...     )
-    ... )
-    >>> metric = metrics.MAE()
-
-    >>> evaluate.progressive_val_score(dataset, model, metric).get()
-    1.3456
-
     """
 
     def __init__(
@@ -121,6 +88,26 @@ class Regressor(DeepEstimator, base.Regressor):
             "module": MyModule,
             "loss_fn": "l1",
             "optimizer_fn": "sgd",
+        }
+
+    @classmethod
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
         }
 
     def learn_one(self, x: dict, y: RegTarget) -> "Regressor":

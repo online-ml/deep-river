@@ -6,7 +6,6 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.layers import SequentialLSTM
 from river_torch.utils.tensor_conversion import (
     df2rolling_tensor,
     dict2rolling_tensor,
@@ -41,7 +40,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def __init__(
         self,
-        build_fn: Callable,
+        module: Union[torch.nn.Module, type(torch.nn.Module)],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -49,10 +48,10 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         append_predict: bool = False,
         device: str = "cpu",
         seed: int = 42,
-        **net_params
+        **kwargs
     ):
         super().__init__(
-            build_fn=build_fn,
+            module=module,
             loss_fn=loss_fn,
             device=device,
             optimizer_fn=optimizer_fn,
@@ -60,7 +59,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             window_size=window_size,
             append_predict=append_predict,
             seed=seed,
-            **net_params
+            **kwargs
         )
 
     @classmethod
@@ -73,22 +72,42 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         dict
             Dictionary of parameters to be used for unit testing the respective class.
         """
+        class MyModule(torch.nn.Module):
 
-        def build_torch_lstm_classifier(n_features, hidden_size=1):
-            net = torch.nn.Sequential(
-                SequentialLSTM(
-                    input_size=n_features, hidden_size=hidden_size, num_layers=1
-                ),
-                torch.nn.Linear(hidden_size, 10),
-                torch.nn.Linear(10, 1),
-            )
-            return net
+            def __init__(self, n_features):
+                super().__init__()
+                self.hidden_size = 1
+                self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=self.hidden_size, num_layers=1)
+            def forward(self, X, **kwargs):
+                output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
+                hn = hn.view(-1, self.hidden_size)
+                return hn
 
         yield {
-            "build_fn": build_torch_lstm_classifier,
+            "module": MyModule,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
             "lr": 1e-3,
+        }
+
+    @classmethod
+    def _unit_test_skips(self) -> set:
+        """
+        Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        be able to pass certain checks.
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
+        """
+        return {
+            "check_pickling",
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
         }
 
     def predict_one(self, x: dict) -> RegTarget:
@@ -105,13 +124,14 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         RegTarget
             Predicted target value.
         """
-        if self.net is None:
-            self._init_net(len(x))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(x)
+            self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
         if x is not None:
-            self.net.eval()
-            return self.net(x).item()
+            self.module.eval()
+            return self.module(x).item()
         else:
             return 0.0
 
@@ -132,27 +152,28 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             The regressor itself.
         """
         self._x_window.append(list(x.values()))
-        if self.net is None:
-            self._init_net(len(x))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(x)
+            self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
         if x is not None:
             y = float2tensor(y, device=self.device)
-            self.net.train()
             self._learn(x, y)
 
         return self
 
-    def _learn(self, x: torch.TensorType, y: torch.TensorType):
+    def _learn(self, x: torch.Tensor, y: torch.Tensor):
         self.optimizer.zero_grad()
-        y_pred = self.net(x)
+        y_pred = self.module(x)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "RollingDeepEstimator":
-        if self.net is None:
-            self._init_net(n_features=len(X.columns))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(X.columns)
+            self.initialize_module(**self.kwargs)
 
         X = df2rolling_tensor(X, self._x_window, device=self.device)
         if X is not None:
@@ -161,15 +182,16 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         return self
 
     def predict_many(self, X: pd.DataFrame) -> List:
-        if self.net is None:
-            self._init_net(n_features=len(X.columns))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(X.columns)
+            self.initialize_module(**self.kwargs)
 
         batch = df2rolling_tensor(
             X, self._x_window, device=self.device, update_window=self.append_predict
         )
         if batch is not None:
-            self.net.eval()
-            y_pred = self.net(batch).detach().tolist()
+            self.module.eval()
+            y_pred = self.module(batch).detach().tolist()
             if len(y_pred) < len(batch):
                 y_pred = [0.0] * (len(batch) - len(y_pred)) + y_pred
         else:

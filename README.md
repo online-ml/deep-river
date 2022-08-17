@@ -36,94 +36,84 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 ### Classification
 
 ```python
->> > from river.datasets import Phishing
->> > from river import metrics
->> > from river import preprocessing
->> > from river import compose
->> > from river_torch import classification
->> > from torch import nn
->> > from torch import optim
->> > from torch import manual_seed
+>>> from river.datasets import Phishing
+>>> from river import metrics
+>>> from river import preprocessing
+>>> from river import compose
+>>> from river_torch import classification
+>>> from torch import nn
+>>> from torch import optim
+>>> from torch import manual_seed
 
->> > _ = manual_seed(42)
+>>> _ = manual_seed(42)
 
->> >
-
-def build_torch_mlp_classifier(n_features):
-
-
-    ...
-net = nn.Sequential(
-    ...
-nn.Linear(n_features, 5),
+>>> class MyModule(nn.Module):
+...     def __init__(self, n_features):
+...         super(MyModule, self).__init__()
+...         self.dense0 = nn.Linear(n_features, 5)
+...         self.nonlin = nn.ReLU()
+...         self.dense1 = nn.Linear(5, 2)
+...         self.softmax = nn.Softmax(dim=-1)
 ...
-nn.ReLU(),
-...
-nn.Linear(5, 2),
-...
-nn.Softmax(-1)
-...     )
-...
-return net
+...     def forward(self, X, **kwargs):
+...         X = self.nonlin(self.dense0(X))
+...         X = self.nonlin(self.dense1(X))
+...         X = self.softmax(X)
+...         return X
 
->> > model = compose.Pipeline(
-    ...
-preprocessing.StandardScaler(),
-...
-classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy', optimizer_fn=optim.Adam,
-                          lr=1e-3)
+>>> model = compose.Pipeline(
+... preprocessing.StandardScaler(),
+... classification.Classifier(module=MyModule, loss_fn='binary_cross_entropy', optimizer_fn='sgd')
 ... )
 
->> > dataset = Phishing()
->> > metric = metrics.Accuracy()
+>>> dataset = Phishing()
+>>> metric = metrics.Accuracy()
 
->> > for x, y in dataset:
-    ...
-y_pred = model.predict_one(x)  # make a prediction
-...
-metric = metric.update(y, y_pred)  # update the metric
-...
-model = model.learn_one(x)  # make the model learn
-
->> > print(f'Accuracy: {metric.get()}')
-Accuracy: 0.8336
+>>> for x, y in dataset:
+...     y_pred = model.predict_one(x)  # make a prediction
+...     metric = metric.update(y, y_pred)  # update the metric
+...     model = model.learn_one(x)  # make the model learn
 
 ```
 
 ### Anomaly Detection
 
 ```python
->>> import math
->>> from river import metrics, preprocessing
->>> from river.datasets import CreditCard
 >>> from river_torch.anomaly import Autoencoder
->>> from river_torch.utils import get_activation_fn
->>> from torch import manual_seed, nn
-
->>> _ = manual_seed(42)
-
->>> def get_ae(n_features=3, dropout=0.1):
-...     latent_dim = math.ceil(n_features / 2)
-...     net = nn.Sequential(
-...         nn.Dropout(p=dropout),
-...         nn.Linear(in_features=n_features, out_features=latent_dim),
-...         nn.ReLU(),
-...         nn.Linear(in_features=latent_dim, out_features=n_features),
-...         nn.Sigmoid()
-...     )
-...     return net
+>>> from river import metrics
+>>> from river.datasets import CreditCard
+>>> from torch import nn
+>>> import math
+>>> from river.compose import Pipeline
+>>> from river.preprocessing import MinMaxScaler
 
 >>> dataset = CreditCard().take(5000)
->>> metric = metrics.ROCAUC()
->>> scaler = preprocessing.MinMaxScaler()
+>>> metric = metrics.ROCAUC(n_thresholds=50)
 
->>> model = Autoencoder(build_fn=get_ae, lr=0.01)
+>>> class MyAutoEncoder(nn.Module):
+...     def __init__(self, n_features, latent_dim=3):
+...         super(MyAutoEncoder, self).__init__()
+...         self.linear1 = nn.Linear(n_features, latent_dim)
+...         self.nonlin = nn.LeakyReLU()
+...         self.linear2 = nn.Linear(latent_dim, n_features)
+...
+...     def forward(self, X, **kwargs):
+...         X = self.linear1(X)
+...         X = self.nonlin(X)
+...         X = self.linear2(X)
+...         return nn.functional.sigmoid(X)
+
+>>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
+>>> scaler = MinMaxScaler()
+>>> model = Pipeline(scaler, ae)
 
 >>> for x, y in dataset:
-...     x = scaler.learn_one(x).transform_one(x)
-...     score = model.score_one(x)
-...     metric = metric.update(y_true=y, y_pred=score)
-...     model = model.learn_one(x=x)
+...    score = model.score_one(x)
+...    model = model.learn_one(x=x)
+...    metric = metric.update(y, score)
+...
+>>> print(f"ROCAUC: {metric.get():.4f}")
+ROCAUC: 0.7447
 
 ```
 

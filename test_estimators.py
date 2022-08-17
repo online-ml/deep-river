@@ -7,7 +7,6 @@ import pytest
 import river
 
 from river_torch import utils
-from river_torch import classification, anomaly, regression
 
 
 def iter_estimators():
@@ -24,10 +23,6 @@ def iter_estimators():
 
 def iter_estimators_that_can_be_tested():
     ignored = (
-        classification.RollingClassifier,
-        regression.RollingRegressor,
-        anomaly.RollingAutoencoder,
-        anomaly.ProbabilityWeightedAutoencoder,
     )
 
     def can_be_tested(estimator):

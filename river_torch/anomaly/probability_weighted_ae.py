@@ -30,8 +30,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
         Random seed to be used for training the wrapped model.
-    **net_params
-        Parameters to be passed to the `module` function aside from `n_features`.
+    **kwargs
+        Parameters to be passed to the `module` function aside from `n_features`. #todo refactor
 
         Examples
     --------
@@ -83,7 +83,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         seed: int = 42,
         skip_threshold: float = 0.9,
         window_size=250,
-        **net_params,
+        **kwargs,
     ):
         super().__init__(
             module=module,
@@ -92,7 +92,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
             lr=lr,
             device=device,
             seed=seed,
-            **net_params,
+            **kwargs,
         )
         self.window_size = window_size
         self.skip_threshold = skip_threshold
@@ -149,13 +149,13 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        X = dict2tensor(X, device=self.device)
 
         self.module.train()
-        x_pred = self.module(x)
+        x_pred = self.module(X)
         loss = torch.mean(
-            self.loss_fn(x_pred, x, reduction="none"),
-            dim=list(range(1, x.dim())),
+            self.loss_fn(x_pred, X, reduction="none"),
+            dim=list(range(1, X.dim())),
         )
         self._apply_loss(loss)
         return self
