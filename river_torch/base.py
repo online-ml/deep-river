@@ -34,7 +34,7 @@ class DeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module,type[torch.nn.Module]],
+        module: Union[torch.nn.Module,type(torch.nn.Module)],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -128,7 +128,7 @@ class DeepEstimator(base.Estimator):
         """
         return self
 
-    def _filter_kwargs(self, fn: Callable, override=None) -> dict:
+    def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.
 
         Parameters
@@ -145,14 +145,14 @@ class DeepEstimator(base.Estimator):
         """
         override = override or {}
         res = {}
-        for name, value in self.kwargs.items():
+        for name, value in kwargs.items():
             args = list(inspect.signature(fn).parameters)
             if name in args:
                 res.update({name: value})
         res.update(override)
         return res
 
-    def initialize_module(self):
+    def initialize_module(self,**kwargs):
         """       
         Parameters
         ----------
@@ -168,7 +168,7 @@ class DeepEstimator(base.Estimator):
           The initialized component.
         """
         if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(**self._filter_kwargs(self.module))
+            self.module = self.module(**self._filter_kwargs(self.module,kwargs))
 
         self.module.to(self.device)
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)

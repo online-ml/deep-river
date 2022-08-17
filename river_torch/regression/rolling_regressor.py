@@ -13,7 +13,6 @@ from river_torch.utils.tensor_conversion import (
     float2tensor,
 )
 
-
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
     """
     Wrapper that feeds a sliding window of the most recent examples to the wrapped PyTorch regression model.

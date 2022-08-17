@@ -36,42 +36,56 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 ### Classification
 
 ```python
->>> from river.datasets import Phishing
->>> from river import metrics
->>> from river import preprocessing
->>> from river import compose
->>> from river_torch import classification
->>> from torch import nn
->>> from torch import optim
->>> from torch import manual_seed
+>> > from river.datasets import Phishing
+>> > from river import metrics
+>> > from river import preprocessing
+>> > from river import compose
+>> > from river_torch import classification
+>> > from torch import nn
+>> > from torch import optim
+>> > from torch import manual_seed
 
->>> _ = manual_seed(42)
+>> > _ = manual_seed(42)
+
+>> >
+
+def build_torch_mlp_classifier(n_features):
 
 
->>> def build_torch_mlp_classifier(n_features):
-...     net = nn.Sequential(
-...         nn.Linear(n_features, 5),
-...         nn.ReLU(),
-...         nn.Linear(5, 2),
-...         nn.Softmax(-1)
+    ...
+net = nn.Sequential(
+    ...
+nn.Linear(n_features, 5),
+...
+nn.ReLU(),
+...
+nn.Linear(5, 2),
+...
+nn.Softmax(-1)
 ...     )
-...     return net
+...
+return net
 
-
->>> model = compose.Pipeline(
-...     preprocessing.StandardScaler(),
-...     classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy', optimizer_fn=optim.Adam, lr=1e-3)
+>> > model = compose.Pipeline(
+    ...
+preprocessing.StandardScaler(),
+...
+classification.Classifier(build_fn=build_torch_mlp_classifier, loss_fn='binary_cross_entropy', optimizer_fn=optim.Adam,
+                          lr=1e-3)
 ... )
 
->>> dataset = Phishing()
->>> metric = metrics.Accuracy()
+>> > dataset = Phishing()
+>> > metric = metrics.Accuracy()
 
->>> for x, y in dataset:
-...     y_pred = model.predict_one(x)  # make a prediction
-...     metric = metric.update(y, y_pred)  # update the metric
-...     model = model.learn_one(x, y)  # make the model learn
+>> > for x, y in dataset:
+    ...
+y_pred = model.predict_one(x)  # make a prediction
+...
+metric = metric.update(y, y_pred)  # update the metric
+...
+model = model.learn_one(x)  # make the model learn
 
->>> print(f'Accuracy: {metric.get()}')
+>> > print(f'Accuracy: {metric.get()}')
 Accuracy: 0.8336
 
 ```

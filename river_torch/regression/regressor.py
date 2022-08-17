@@ -70,22 +70,22 @@ class Regressor(DeepEstimator, base.Regressor):
 
     def __init__(
         self,
-        build_fn: Callable,
+        module: Union[torch.nn.Module, type(torch.nn.Module)],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
-        **net_params
+        **kwargs
     ):
         super().__init__(
-            build_fn=build_fn,
+            module=module,
             loss_fn=loss_fn,
             device=device,
             optimizer_fn=optimizer_fn,
             lr=lr,
             seed=seed,
-            **net_params
+            **kwargs
         )
 
     @classmethod
@@ -99,17 +99,28 @@ class Regressor(DeepEstimator, base.Regressor):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        def build_torch_linear_regressor(n_features):
-            net = torch.nn.Sequential(
-                torch.nn.Linear(n_features, 1), torch.nn.Sigmoid()
-            )
-            return net
+        class MyModule(torch.nn.Module):
+            def __init__(self, n_features):
+                super(MyModule, self).__init__()
+
+                self.dense0 = torch.nn.Linear(n_features,10)
+                self.nonlin = torch.nn.ReLU()
+                self.dropout = torch.nn.Dropout(0.5)
+                self.dense1 = torch.nn.Linear(10, 5)
+                self.output = torch.nn.Linear(5, 1)
+                self.softmax = torch.nn.Softmax(dim=-1)
+
+            def forward(self, X, **kwargs):
+                X = self.nonlin(self.dense0(X))
+                X = self.dropout(X)
+                X = self.nonlin(self.dense1(X))
+                X = self.softmax(self.output(X))
+                return X
 
         yield {
-            "build_fn": build_torch_linear_regressor,
-            "loss_fn": "mse",
+            "module": MyModule,
+            "loss_fn": "l1",
             "optimizer_fn": "sgd",
-            "lr": 1e-3,
         }
 
     def learn_one(self, x: dict, y: RegTarget) -> "Regressor":
@@ -128,17 +139,18 @@ class Regressor(DeepEstimator, base.Regressor):
         Regressor
             The regressor itself.
         """
-        if self.net is None:
-            self._init_net(len(x))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(x)
+            self.initialize_module(**self.kwargs)
         x = dict2tensor(x, self.device)
         y = float2tensor(y, device=self.device)
-        self.net.train()
         self._learn(x, y)
         return self
 
-    def _learn(self, x: torch.TensorType, y: torch.TensorType):
+    def _learn(self, x: torch.Tensor, y: torch.Tensor):
+        self.module.train()
         self.optimizer.zero_grad()
-        y_pred = self.net(x)
+        y_pred = self.module(x)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
@@ -157,13 +169,14 @@ class Regressor(DeepEstimator, base.Regressor):
         RegTarget
             Predicted target value.
         """
-        if self.net is None:
-            self._init_net(len(x))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(x)
+            self.initialize_module(**self.kwargs)
         x = dict2tensor(x, self.device)
-        self.net.eval()
-        return self.net(x).item()
+        self.module.eval()
+        return self.module(x).item()
 
-    def learn_many(self, x: pd.DataFrame, y: List) -> "Regressor":
+    def learn_many(self, X: pd.DataFrame, y: List) -> "Regressor":
         """
         Performs one step of training with a batch of examples.
 
@@ -179,15 +192,16 @@ class Regressor(DeepEstimator, base.Regressor):
         Regressor
             The regressor itself.
         """
-        if self.net is None:
-            self._init_net(len(x.columns))
-        x = df2tensor(x, device=self.device)
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(X.columns)
+            self.initialize_module(**self.kwargs)
+        X = df2tensor(X, device=self.device)
         y = torch.tensor(y, device=self.device, dtype=torch.float32)
-        self.net.train()
-        self._learn(x, y)
+        self.module.train()
+        self._learn(X, y)
         return self
 
-    def predict_many(self, x: pd.DataFrame) -> List:
+    def predict_many(self, X: pd.DataFrame) -> List:
         """
         Predicts the target value for a batch of examples.
 
@@ -201,9 +215,10 @@ class Regressor(DeepEstimator, base.Regressor):
         List
             Predicted target values.
         """
-        if self.net is None:
-            self._init_net(len(x.columns))
+        if not self.module_initialized:
+            self.kwargs['n_features'] = len(X.columns)
+            self.initialize_module(**self.kwargs)
 
-        x = df2tensor(x, device=self.device)
-        self.net.eval()
-        return self.net(x).detach().tolist()
+        X = df2tensor(X, device=self.device)
+        self.module.eval()
+        return self.module(X).detach().tolist()

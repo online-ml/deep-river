@@ -16,7 +16,6 @@ from river_torch.utils.tensor_conversion import (
     labels2onehot,
 )
 
-
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
     Wrapper that feeds a sliding window of the most recent examples to the wrapped PyTorch classification model. The class also automatically handles increases in the number of classes by adding output neurons in case the number of observed classes exceeds the current number of output neurons.

@@ -4,16 +4,17 @@ import numpy as np
 import pandas as pd
 import torch
 from river import base
+from river.base.typing import RegTarget
 
 
-def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.TensorType:
+def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.Tensor:
     x = torch.tensor([list(x.values())], device=device, dtype=dtype)
     return x
 
 
 def float2tensor(
-    y: Union[float, int], device="cpu", dtype=torch.float32
-) -> torch.TensorType:
+    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+) -> torch.Tensor:
     y = torch.tensor([[y]], device=device, dtype=dtype)
     return y
 
@@ -35,7 +36,7 @@ def dict2rolling_tensor(
     return output
 
 
-def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.TensorType:
+def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.Tensor:
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
