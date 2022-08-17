@@ -47,16 +47,20 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     >>> dataset = CreditCard().take(5000)
     >>> metric = metrics.ROCAUC(n_thresholds=50)
 
-    >>> def get_fc_ae(n_features):
-    ...    latent_dim = math.ceil(n_features / 2)
-    ...    return nn.Sequential(
-    ...        nn.Linear(n_features, latent_dim),
-    ...        nn.SELU(),
-    ...        nn.Linear(latent_dim, n_features),
-    ...        nn.Sigmoid(),
-    ...    )
+    >>> class MyAutoEncoder(torch.nn.Module):
+    ...     def __init__(self, n_features, latent_dim=3):
+    ...         super(MyAutoEncoder, self).__init__()
+    ...         self.linear1 = nn.Linear(n_features, latent_dim)
+    ...         self.nonlin = torch.nn.LeakyReLU()
+    ...         self.linear2 = nn.Linear(latent_dim, n_features)
+    ...
+    ...     def forward(self, X, **kwargs):
+    ...         X = self.linear1(X)
+    ...         X = self.nonlin(X)
+    ...         X = self.linear2(X)
+    ...         return nn.functional.sigmoid(X)
 
-    >>> ae = ProbabilityWeightedAutoencoder(build_fn=get_fc_ae, lr=0.005)
+    >>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
     >>> scaler = MinMaxScaler()
     >>> model = Pipeline(scaler, ae)
 

@@ -1,7 +1,7 @@
 import abc
 import inspect
 import math
-from typing import Callable, Union
+from typing import Callable, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -60,7 +60,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
     ...         X = self.linear1(X)
     ...         X = self.nonlin(X)
     ...         X = self.linear2(X)
-    ...         return X
+    ...         return nn.functional.sigmoid(X)
 
     >>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
     >>> scaler = MinMaxScaler()
@@ -77,7 +77,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -118,7 +118,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
                 X = self.linear1(X)
                 X = self.nonlin(X)
                 X = self.linear2(X)
-                return X
+                return nn.functional.sigmoid(X)
 
 
         yield {
