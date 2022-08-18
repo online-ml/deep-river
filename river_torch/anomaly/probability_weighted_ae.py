@@ -53,12 +53,13 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     ...         self.linear1 = nn.Linear(n_features, latent_dim)
     ...         self.nonlin = torch.nn.LeakyReLU()
     ...         self.linear2 = nn.Linear(latent_dim, n_features)
+    ...         self.sigmoid = nn.Sigmoid()
     ...
     ...     def forward(self, X, **kwargs):
     ...         X = self.linear1(X)
     ...         X = self.nonlin(X)
     ...         X = self.linear2(X)
-    ...         return nn.functional.sigmoid(X)
+    ...         return self.sigmoid(X)
 
     >>> ae = ProbabilityWeightedAutoencoder(module=MyAutoEncoder, lr=0.005)
     >>> scaler = MinMaxScaler()
@@ -149,7 +150,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        X = dict2tensor(X, device=self.device)
+        X = dict2tensor(X.to_dict(), device=self.device)
 
         self.module.train()
         x_pred = self.module(X)
