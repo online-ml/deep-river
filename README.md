@@ -96,12 +96,13 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 ...         self.linear1 = nn.Linear(n_features, latent_dim)
 ...         self.nonlin = nn.LeakyReLU()
 ...         self.linear2 = nn.Linear(latent_dim, n_features)
+...         self.sigmoid = nn.Sigmoid()
 ...
 ...     def forward(self, X, **kwargs):
 ...         X = self.linear1(X)
 ...         X = self.nonlin(X)
 ...         X = self.linear2(X)
-...         return nn.functional.sigmoid(X)
+...         return self.sigmoid(X)
 
 >>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
 >>> scaler = MinMaxScaler()

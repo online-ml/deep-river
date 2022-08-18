@@ -134,19 +134,22 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         Classifier
             The classifier itself.
         """
-        # check if model is initialized
+
         if not self.module_initialized:
             self.kwargs['n_features'] = len(x)
             self.initialize_module(**self.kwargs)
 
         self._x_window.append(list(x.values()))
 
+        # check last layer
+        if y not in self.observed_classes:
+            self.observed_classes.append(y)
+
         # training process
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
         if x is not None:
-            self._learn(x=x, y=y)
+            return self._learn(x=x, y=y)
         return self
-
 
     def _learn(self, x: torch.TensorType, y: Union[ClfTarget,List[ClfTarget]]):
         self.module.train()
@@ -157,6 +160,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
+        return self
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """
