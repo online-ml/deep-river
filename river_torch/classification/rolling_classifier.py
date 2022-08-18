@@ -1,20 +1,18 @@
-import math
 from typing import Callable, Dict, List, Union
 
 import pandas as pd
 import torch
 from river import base
 from river.base.typing import ClfTarget
-from torch.nn import init, parameter
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.layers import find_output_layer
 from river_torch.utils.tensor_conversion import (
     df2rolling_tensor,
     dict2rolling_tensor,
     output2proba,
     labels2onehot,
 )
+
 
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
@@ -43,16 +41,16 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
-        loss_fn: Union[str, Callable] = "binary_cross_entropy",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        window_size: int = 10,
-        append_predict: bool = False,
-        **kwargs,
+            self,
+            module: Union[torch.nn.Module, type(torch.nn.Module)],
+            loss_fn: Union[str, Callable] = "binary_cross_entropy",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            window_size: int = 10,
+            append_predict: bool = False,
+            **kwargs,
     ):
         self.observed_classes = []
         self.output_layer = None
@@ -83,7 +81,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             def __init__(self, n_features):
                 super().__init__()
                 self.hidden_size = 2
-                self.n_features=n_features
+                self.n_features = n_features
                 self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=self.hidden_size, num_layers=1)
                 self.softmax = torch.nn.Softmax(dim=-1)
 
@@ -151,12 +149,12 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             return self._learn(x=x, y=y)
         return self
 
-    def _learn(self, x: torch.TensorType, y: Union[ClfTarget,List[ClfTarget]]):
+    def _learn(self, x: torch.TensorType, y: Union[ClfTarget, List[ClfTarget]]):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-        y = labels2onehot(y=y,classes=self.observed_classes,n_classes=n_classes, device=self.device)
+        y = labels2onehot(y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
