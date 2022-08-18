@@ -122,7 +122,7 @@ def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
         except KeyError:
             raise err
     elif not isinstance(
-        optim_fn(params=[torch.empty(1)], lr=1e-3), torch.optim.Optimizer
+            optim_fn(params=[torch.empty(1)], lr=1e-3), torch.optim.Optimizer
     ):
         raise err
     return optim_fn

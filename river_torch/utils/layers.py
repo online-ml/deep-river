@@ -1,4 +1,6 @@
 from torch import nn
+
+
 def find_output_layer(net: nn.Sequential) -> nn.Linear:
     """Return the output layer of a network.
 

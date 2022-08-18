@@ -1,9 +1,9 @@
 from typing import Callable, List, Union
 
+import pandas as pd
 import torch
 from river import base
 from river.base.typing import RegTarget
-import pandas as pd
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
@@ -36,14 +36,14 @@ class Regressor(DeepEstimator, base.Regressor):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        **kwargs
+            self,
+            module: Union[torch.nn.Module, type(torch.nn.Module)],
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            **kwargs
     ):
         super().__init__(
             module=module,
@@ -70,7 +70,7 @@ class Regressor(DeepEstimator, base.Regressor):
             def __init__(self, n_features):
                 super(MyModule, self).__init__()
 
-                self.dense0 = torch.nn.Linear(n_features,10)
+                self.dense0 = torch.nn.Linear(n_features, 10)
                 self.nonlin = torch.nn.ReLU()
                 self.dropout = torch.nn.Dropout(0.5)
                 self.dense1 = torch.nn.Linear(10, 5)

@@ -12,6 +12,7 @@ from river_torch.utils.tensor_conversion import (
     float2tensor,
 )
 
+
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
     """
     Wrapper that feeds a sliding window of the most recent examples to the wrapped PyTorch regression model.
@@ -39,16 +40,16 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        window_size: int = 10,
-        append_predict: bool = False,
-        device: str = "cpu",
-        seed: int = 42,
-        **kwargs
+            self,
+            module: Union[torch.nn.Module, type(torch.nn.Module)],
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            window_size: int = 10,
+            append_predict: bool = False,
+            device: str = "cpu",
+            seed: int = 42,
+            **kwargs
     ):
         super().__init__(
             module=module,
@@ -72,12 +73,14 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         dict
             Dictionary of parameters to be used for unit testing the respective class.
         """
+
         class MyModule(torch.nn.Module):
 
             def __init__(self, n_features):
                 super().__init__()
                 self.hidden_size = 1
                 self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=self.hidden_size, num_layers=1)
+
             def forward(self, X, **kwargs):
                 output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
                 hn = hn.view(-1, self.hidden_size)

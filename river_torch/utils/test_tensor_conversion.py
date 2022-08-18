@@ -1,3 +1,9 @@
+from collections import deque
+
+import numpy as np
+import pandas as pd
+import torch
+
 from river_torch.utils import (
     dict2tensor,
     labels2onehot,
@@ -7,10 +13,6 @@ from river_torch.utils import (
     float2tensor,
     output2proba
 )
-from collections import deque
-import numpy as np
-import pandas as pd
-import torch
 
 
 def test_dict2tensor():

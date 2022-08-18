@@ -35,14 +35,14 @@ class DeepEstimator(base.Estimator):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module,type(torch.nn.Module)],
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        **kwargs
+            self,
+            module: Union[torch.nn.Module, type(torch.nn.Module)],
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            **kwargs
     ):
         super().__init__()
         self.module = module
@@ -98,7 +98,7 @@ class DeepEstimator(base.Estimator):
         res.update(override)
         return res
 
-    def initialize_module(self,**kwargs):
+    def initialize_module(self, **kwargs):
         """       
         Parameters
         ----------
@@ -114,11 +114,12 @@ class DeepEstimator(base.Estimator):
           The initialized component.
         """
         if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(**self._filter_kwargs(self.module,kwargs))
+            self.module = self.module(**self._filter_kwargs(self.module, kwargs))
 
         self.module.to(self.device)
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
         self.module_initialized = True
+
 
 class RollingDeepEstimator(base.Estimator):
     """
@@ -147,16 +148,16 @@ class RollingDeepEstimator(base.Estimator):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module,type(torch.nn.Module)],
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        window_size: int = 10,
-        append_predict: bool = False,
-        **kwargs
+            self,
+            module: Union[torch.nn.Module, type(torch.nn.Module)],
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            window_size: int = 10,
+            append_predict: bool = False,
+            **kwargs
     ):
         self.module = module
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)
@@ -174,7 +175,7 @@ class RollingDeepEstimator(base.Estimator):
         self._batch_i = 0
 
     @abc.abstractmethod
-    def learn_one(self, x: dict, y:RegTarget) -> "RollingDeepEstimator":
+    def learn_one(self, x: dict, y: RegTarget) -> "RollingDeepEstimator":
         """
         Performs one step of training with a sliding window of the most recent examples.
 
@@ -193,7 +194,7 @@ class RollingDeepEstimator(base.Estimator):
         return self
 
     @abc.abstractmethod
-    def learn_many(self, X:pd.DataFrame, y:list) -> "RollingDeepEstimator":
+    def learn_many(self, X: pd.DataFrame, y: list) -> "RollingDeepEstimator":
         """
         Performs one step of training with a batch of sliding windows of the most recent examples.
 

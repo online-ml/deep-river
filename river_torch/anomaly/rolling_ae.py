@@ -1,12 +1,11 @@
-import abc
 import collections
 from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from torch import nn
 from river import anomaly
+from torch import nn
 
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.tensor_conversion import (df2rolling_tensor,
@@ -40,16 +39,16 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        window_size: int = 10,
-        append_predict: bool = False,
-        **kwargs,
+            self,
+            module: Union[torch.nn.Module, type(torch.nn.Module)],
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            window_size: int = 10,
+            append_predict: bool = False,
+            **kwargs,
     ):
         super().__init__(
             module=module,
@@ -147,7 +146,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self._learn(x=x)
         return self
 
-    def learn_many(self, X: pd.DataFrame, y:None) -> "RollingAutoencoder":
+    def learn_many(self, X: pd.DataFrame, y: None) -> "RollingAutoencoder":
         """
         Performs one step of training with a batch of examples.
 
