@@ -19,8 +19,8 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     Parameters
     ----------
-    build_fn
-        Function that builds the PyTorch regressor to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example. For the dynamic adaptation of the number of possible classes, the returned network should be a torch.nn.Sequential model with a Linear layer as the last module.
+    module
+        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
@@ -35,8 +35,8 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         Number of recent examples to be fed to the wrapped model at each step.
     append_predict
         Whether to append inputs passed for prediction to the rolling window.
-    **net_params
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    **kwargs
+        Parameters to be passed to the `Module` or the `optimizer`.
     """
 
     def __init__(

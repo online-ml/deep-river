@@ -18,8 +18,7 @@ class DeepEstimator(base.Estimator):
     Parameters
     ----------
     module
-        #todo change description
-        Function that builds the PyTorch model to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
@@ -30,8 +29,8 @@ class DeepEstimator(base.Estimator):
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
         Random seed to be used for training the wrapped model.
-    **net_params
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    **kwargs
+        Parameters to be passed to the `Module` or the `optimizer`.
     """
 
     def __init__(
@@ -127,8 +126,8 @@ class RollingDeepEstimator(base.Estimator):
 
     Parameters
     ----------
-    build_fn
-        Function that builds the PyTorch model to be wrapped. The function should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+    module
+        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
@@ -143,8 +142,8 @@ class RollingDeepEstimator(base.Estimator):
         Size of the rolling window used for storing previous examples.
     append_predict
         Whether to append inputs passed for prediction to the rolling window.
-    **net_params
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    **kwargs
+        Parameters to be passed to the `Module` or the `optimizer`.
     """
 
     def __init__(
