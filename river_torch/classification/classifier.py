@@ -1,23 +1,18 @@
-import math
-from typing import Callable, Dict, List, Union, Type
+from typing import Callable, Dict, List, Union
 
 import pandas as pd
 import torch
 from river import base
 from river.base.typing import ClfTarget
-from torch.nn import init, parameter
 from torch import nn
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.layers import find_output_layer
 from river_torch.utils.tensor_conversion import (
     labels2onehot,
     df2tensor,
     dict2tensor,
     output2proba,
 )
-
-
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -158,6 +153,7 @@ class Classifier(DeepEstimator, base.Classifier):
             "check_predict_proba_one",
             "check_predict_proba_one_binary",
         }
+
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
         """
         Performs one step of training with a single example.
@@ -185,12 +181,13 @@ class Classifier(DeepEstimator, base.Classifier):
             self.observed_classes.append(y)
 
         return self._learn(x=x, y=y)
-    def _learn(self, x: torch.Tensor, y: Union[ClfTarget,List[ClfTarget]]):
+
+    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-        y = labels2onehot(y=y,classes=self.observed_classes,n_classes=n_classes, device=self.device)
+        y = labels2onehot(y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device)
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
