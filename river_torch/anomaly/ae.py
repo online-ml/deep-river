@@ -1,12 +1,9 @@
-import abc
-import inspect
-import math
 from typing import Callable, Type, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from river import anomaly, base
+from river import anomaly
 from torch import nn
 
 from river_torch.base import DeepEstimator
@@ -77,14 +74,14 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
     """
 
     def __init__(
-        self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        **kwargs
+            self,
+            module: Union[torch.nn.Module, Type[torch.nn.Module]],
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            **kwargs
     ):
         super().__init__(
             module=module,
