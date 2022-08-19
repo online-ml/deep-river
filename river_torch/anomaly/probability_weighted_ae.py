@@ -117,7 +117,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
-            self.initialize_module(**kwargs)
+            self.initialize_module(**self.kwargs)
         x = dict2tensor(x, device=self.device)
 
         self.module.train()

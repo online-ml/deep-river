@@ -161,7 +161,7 @@ class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
         """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
-            self.initialize_module(**kwargs)
+            self.initialize_module(**self.kwargs)
         x = dict2tensor(x, device=self.device)
         return self._learn(x)
 
