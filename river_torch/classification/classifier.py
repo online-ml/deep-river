@@ -38,11 +38,7 @@ class Classifier(DeepEstimator, base.Classifier):
 
         Examples
         --------
-
-    >>> from river.datasets import Phishing
-    >>> from river import metrics
-    >>> from river import preprocessing
-    >>> from river import compose
+    >>> from river import metrics, preprocessing, compose, datasets
     >>> from river_torch import classification
     >>> from torch import nn
     >>> from torch import manual_seed
@@ -62,23 +58,23 @@ class Classifier(DeepEstimator, base.Classifier):
     ...         X = self.nonlin(self.dense1(X))
     ...         X = self.softmax(X)
     ...         return X
-    ...
 
-    >>> model = compose.Pipeline(
-    ... preprocessing.StandardScaler(),
-    ... classification.Classifier(module=MyModule, loss_fn='binary_cross_entropy', optimizer_fn='sgd')
+    >>> model_pipeline = compose.Pipeline(
+    ...     preprocessing.StandardScaler,
+    ...     Classifier(module=MyModule,loss_fn="binary_cross_entropy",optimizer_fn='adam')
     ... )
 
-    >>> dataset = Phishing()
+
+    >>> dataset = datasets.Phishing()
     >>> metric = metrics.Accuracy()
 
     >>> for x, y in dataset:
-    ...     y_pred = model.predict_one(x)  # make a prediction
+    ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
     ...     metric = metric.update(y, y_pred)  # update the metric
-    ...     model = model.learn_one(x)  # make the model learn
+    ...     model_pipeline = model_pipeline.learn_one(x,y)  # make the model learn
 
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.0
+    Accuracy: 0.6728
     """
 
     def __init__(
