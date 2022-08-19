@@ -39,16 +39,16 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            window_size: int = 10,
-            append_predict: bool = False,
-            **kwargs,
+        self,
+        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 10,
+        append_predict: bool = False,
+        **kwargs,
     ):
         super().__init__(
             module=module,
@@ -138,7 +138,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             The estimator itself.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
@@ -164,7 +164,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             The estimator itself.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         X = df2rolling_tensor(X, self._x_window, device=self.device)
@@ -174,7 +174,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 
     def score_one(self, x: dict) -> float:
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
@@ -188,7 +188,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 
     def score_many(self, X: pd.DataFrame) -> float:
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         batch = df2rolling_tensor(

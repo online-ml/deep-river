@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Type, Union
 
 import pandas as pd
 import torch
@@ -6,12 +6,9 @@ from river import base
 from river.base.typing import ClfTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    output2proba,
-    labels2onehot,
-)
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 labels2onehot, output2proba)
 
 
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
@@ -41,16 +38,16 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "binary_cross_entropy",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            window_size: int = 10,
-            append_predict: bool = False,
-            **kwargs,
+        self,
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        loss_fn: Union[str, Callable] = "binary_cross_entropy",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 10,
+        append_predict: bool = False,
+        **kwargs,
     ):
         self.observed_classes = []
         self.output_layer = None
@@ -82,11 +79,15 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 super().__init__()
                 self.hidden_size = 2
                 self.n_features = n_features
-                self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=self.hidden_size, num_layers=1)
+                self.lstm = torch.nn.LSTM(
+                    input_size=n_features, hidden_size=self.hidden_size, num_layers=1
+                )
                 self.softmax = torch.nn.Softmax(dim=-1)
 
             def forward(self, X, **kwargs):
-                output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
+                output, (hn, cn) = self.lstm(
+                    X
+                )  # lstm with input, hidden, and internal state
                 hn = hn.view(-1, self.hidden_size)
                 return self.softmax(hn)
 
@@ -134,7 +135,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         """
 
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
         self._x_window.append(list(x.values()))
@@ -149,12 +150,14 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             return self._learn(x=x, y=y)
         return self
 
-    def _learn(self, x: torch.TensorType, y: Union[ClfTarget, List[ClfTarget]]):
+    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-        y = labels2onehot(y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device)
+        y = labels2onehot(
+            y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device
+        )
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
@@ -175,7 +178,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             Dictionary of probabilities for each label.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
@@ -205,7 +208,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         """
         # check if model is initialized
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         x = df2rolling_tensor(X, self._x_window, device=self.device)
@@ -221,7 +224,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
     def predict_proba_many(self, X: pd.DataFrame) -> List:
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         batch = df2rolling_tensor(

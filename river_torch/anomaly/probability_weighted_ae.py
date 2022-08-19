@@ -75,16 +75,16 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, Type[torch.nn.Module]],
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            skip_threshold: float = 0.9,
-            window_size=250,
-            **kwargs,
+        self,
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        skip_threshold: float = 0.9,
+        window_size=250,
+        **kwargs,
     ):
         super().__init__(
             module=module,
