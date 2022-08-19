@@ -4,23 +4,24 @@ import numpy as np
 import pandas as pd
 import torch
 from river import base
+from river.base.typing import RegTarget
 
 
-def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.TensorType:
+def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.Tensor:
     x = torch.tensor([list(x.values())], device=device, dtype=dtype)
     return x
 
 
 def float2tensor(
-    y: Union[float, int], device="cpu", dtype=torch.float32
-) -> torch.TensorType:
+    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+) -> torch.Tensor:
     y = torch.tensor([[y]], device=device, dtype=dtype)
     return y
 
 
 def dict2rolling_tensor(
     x: Dict, window: Deque, device="cpu", dtype=torch.float32, update_window=True
-) -> torch.TensorType:
+) -> torch.Tensor:
     output = None
     excess_len = len(window) + 1 - window.maxlen
     if update_window:
@@ -35,7 +36,7 @@ def dict2rolling_tensor(
     return output
 
 
-def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.TensorType:
+def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.Tensor:
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
@@ -46,7 +47,7 @@ def df2rolling_tensor(
     device="cpu",
     dtype=torch.float32,
     update_window=True,
-) -> torch.TensorType:
+) -> torch.Tensor:
     x_old = list(window)
     if len(window) >= window.maxlen:
         x_old = x_old[1:]
@@ -67,7 +68,7 @@ def labels2onehot(
     classes: list,
     n_classes: int = None,
     device="cpu",
-) -> torch.TensorType:
+) -> torch.Tensor:
     if n_classes is None:
         n_classes = len(classes)
     if not isinstance(y, list):
@@ -80,7 +81,7 @@ def labels2onehot(
     return onehot
 
 
-def output2proba(preds: torch.TensorType, classes: List) -> List:
+def output2proba(preds: torch.Tensor, classes: List) -> List:
     preds = preds.detach().numpy()
     if preds.shape[1] == 1:
         preds = np.hstack((preds, 1 - preds))

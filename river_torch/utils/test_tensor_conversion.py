@@ -1,16 +1,12 @@
-from river_torch.utils import (
-    dict2tensor,
-    labels2onehot,
-    dict2rolling_tensor,
-    df2rolling_tensor,
-    df2tensor,
-    float2tensor,
-    output2proba
-)
 from collections import deque
+
 import numpy as np
 import pandas as pd
 import torch
+
+from river_torch.utils import (df2rolling_tensor, df2tensor,
+                               dict2rolling_tensor, dict2tensor, float2tensor,
+                               labels2onehot, output2proba)
 
 
 def test_dict2tensor():

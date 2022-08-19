@@ -22,7 +22,8 @@ def iter_estimators():
 
 
 def iter_estimators_that_can_be_tested():
-    ignored = ()
+    ignored = (
+    )
 
     def can_be_tested(estimator):
         return not inspect.isabstract(estimator) and not issubclass(estimator, ignored)
