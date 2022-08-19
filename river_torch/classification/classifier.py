@@ -7,12 +7,8 @@ from river.base.typing import ClfTarget
 from torch import nn
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (
-    labels2onehot,
-    df2tensor,
-    dict2tensor,
-    output2proba,
-)
+from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                 labels2onehot, output2proba)
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -78,14 +74,14 @@ class Classifier(DeepEstimator, base.Classifier):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "binary_cross_entropy",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs,
+        self,
+        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        loss_fn: Union[str, Callable] = "binary_cross_entropy",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
     ):
         self.observed_classes = []
         self.output_layer = None
@@ -168,7 +164,7 @@ class Classifier(DeepEstimator, base.Classifier):
         """
         # check if model is initialized
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x = dict2tensor(x, device=self.device)
 
@@ -183,7 +179,9 @@ class Classifier(DeepEstimator, base.Classifier):
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-        y = labels2onehot(y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device)
+        y = labels2onehot(
+            y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device
+        )
         loss = self.loss_fn(y_pred, y)
         loss.backward()
         self.optimizer.step()
@@ -204,7 +202,7 @@ class Classifier(DeepEstimator, base.Classifier):
             Dictionary of probabilities for each label.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x = dict2tensor(x, device=self.device)
         self.module.eval()
@@ -229,7 +227,7 @@ class Classifier(DeepEstimator, base.Classifier):
         """
         # check if model is initialized
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X = df2tensor(X, device=self.device)
 
@@ -262,7 +260,7 @@ class Classifier(DeepEstimator, base.Classifier):
             List of dictionaries of probabilities for each label.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X = df2tensor(X, device=self.device)
         self.module.eval()
