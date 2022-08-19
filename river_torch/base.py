@@ -34,14 +34,14 @@ class DeepEstimator(base.Estimator):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs
+        self,
+        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs
     ):
         super().__init__()
         self.module = module
@@ -98,7 +98,7 @@ class DeepEstimator(base.Estimator):
         return res
 
     def initialize_module(self, **kwargs):
-        """       
+        """
         Parameters
         ----------
         module
@@ -147,16 +147,16 @@ class RollingDeepEstimator(base.Estimator):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            window_size: int = 10,
-            append_predict: bool = False,
-            **kwargs
+        self,
+        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 10,
+        append_predict: bool = False,
+        **kwargs
     ):
         self.module = module
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)

@@ -13,15 +13,15 @@ def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.Tensor:
 
 
 def float2tensor(
-        y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     y = torch.tensor([[y]], device=device, dtype=dtype)
     return y
 
 
 def dict2rolling_tensor(
-        x: Dict, window: Deque, device="cpu", dtype=torch.float32, update_window=True
-) -> torch.TensorType:
+    x: Dict, window: Deque, device="cpu", dtype=torch.float32, update_window=True
+) -> torch.Tensor:
     output = None
     excess_len = len(window) + 1 - window.maxlen
     if update_window:
@@ -42,19 +42,19 @@ def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.Tenso
 
 
 def df2rolling_tensor(
-        x: pd.DataFrame,
-        window: Deque,
-        device="cpu",
-        dtype=torch.float32,
-        update_window=True,
-) -> torch.TensorType:
+    x: pd.DataFrame,
+    window: Deque,
+    device="cpu",
+    dtype=torch.float32,
+    update_window=True,
+) -> torch.Tensor:
     x_old = list(window)
     if len(window) >= window.maxlen:
         x_old = x_old[1:]
     x_new = x.values.tolist()
     x = x_old + x_new
     if len(x) >= window.maxlen:
-        x = [x[i: i + window.maxlen] for i in range(len(x) - window.maxlen + 1)]
+        x = [x[i : i + window.maxlen] for i in range(len(x) - window.maxlen + 1)]
         x = torch.tensor(x, device=device, dtype=dtype)
     else:
         x = None
@@ -64,11 +64,11 @@ def df2rolling_tensor(
 
 
 def labels2onehot(
-        y: Union[base.typing.ClfTarget, List],
-        classes: list,
-        n_classes: int = None,
-        device="cpu",
-) -> torch.TensorType:
+    y: Union[base.typing.ClfTarget, List],
+    classes: list,
+    n_classes: int = None,
+    device="cpu",
+) -> torch.Tensor:
     if n_classes is None:
         n_classes = len(classes)
     if not isinstance(y, list):
@@ -81,7 +81,7 @@ def labels2onehot(
     return onehot
 
 
-def output2proba(preds: torch.TensorType, classes: List) -> List:
+def output2proba(preds: torch.Tensor, classes: List) -> List:
     preds = preds.detach().numpy()
     if preds.shape[1] == 1:
         preds = np.hstack((preds, 1 - preds))

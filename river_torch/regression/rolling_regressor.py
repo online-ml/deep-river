@@ -1,4 +1,4 @@
-from typing import Callable, List, Union
+from typing import Callable, List, Type, Union
 
 import pandas as pd
 import torch
@@ -6,11 +6,9 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    float2tensor,
-)
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 float2tensor)
 
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
@@ -40,16 +38,16 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            window_size: int = 10,
-            append_predict: bool = False,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs
+        self,
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        window_size: int = 10,
+        append_predict: bool = False,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs
     ):
         super().__init__(
             module=module,
@@ -75,14 +73,17 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         """
 
         class MyModule(torch.nn.Module):
-
             def __init__(self, n_features):
                 super().__init__()
                 self.hidden_size = 1
-                self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=self.hidden_size, num_layers=1)
+                self.lstm = torch.nn.LSTM(
+                    input_size=n_features, hidden_size=self.hidden_size, num_layers=1
+                )
 
             def forward(self, X, **kwargs):
-                output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
+                output, (hn, cn) = self.lstm(
+                    X
+                )  # lstm with input, hidden, and internal state
                 hn = hn.view(-1, self.hidden_size)
                 return hn
 
@@ -128,7 +129,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             Predicted target value.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
@@ -156,7 +157,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         """
         self._x_window.append(list(x.values()))
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
@@ -175,7 +176,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "RollingDeepEstimator":
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         X = df2rolling_tensor(X, self._x_window, device=self.device)
@@ -186,7 +187,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def predict_many(self, X: pd.DataFrame) -> List:
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         batch = df2rolling_tensor(
@@ -196,6 +197,6 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             self.module.eval()
             y_pred = self.module(batch).detach().tolist()
             if len(y_pred) < len(batch):
-                y_pred = [0.0] * (len(batch) - len(y_pred)) + y_pred
+                return [0.0] * (len(batch) - len(y_pred)) + y_pred
         else:
             return [0.0] * len(X)

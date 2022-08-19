@@ -15,7 +15,7 @@ METRICS = {
 
 
 def _get_metric(
-        metric: str, metric_type: str, window_size: int = 250, alpha: float = 0.3
+    metric: str, metric_type: str, window_size: int = 250, alpha: float = 0.3
 ):
     """
     Returns the metric class for the given metric and metric type.
@@ -39,7 +39,7 @@ def _get_metric(
 
     assert metric in METRICS.keys(), f"Invalid metric: {metric}"
     assert (
-            metric_type in METRICS[metric].keys()
+        metric_type in METRICS[metric].keys()
     ), f"Invalid metric type {metric_type} for metric: {metric}"
 
     if metric_type == "incremental":
@@ -187,12 +187,12 @@ class AnomalyStandardScaler(AnomalyScaler):
     """
 
     def __init__(
-            self,
-            anomaly_detector: AnomalyDetector,
-            with_std: bool = True,
-            metric_type: str = "rolling",
-            window_size: int = 250,
-            alpha: float = 0.3,
+        self,
+        anomaly_detector: AnomalyDetector,
+        with_std: bool = True,
+        metric_type: str = "rolling",
+        window_size: int = 250,
+        alpha: float = 0.3,
     ):
         super().__init__(anomaly_detector)
         self.metric_type = metric_type
@@ -218,8 +218,8 @@ class AnomalyStandardScaler(AnomalyScaler):
         raw_score = self.anomaly_detector.score_one(*args)
         mean = self.mean.update(raw_score).get()
         if self.with_std:
-            var = self.sq_mean.update(raw_score ** 2).get() - mean ** 2
-            score = (raw_score - mean) / var ** 0.5
+            var = self.sq_mean.update(raw_score**2).get() - mean**2
+            score = (raw_score - mean) / var**0.5
         else:
             score = raw_score - mean
 
@@ -241,8 +241,8 @@ class AnomalyStandardScaler(AnomalyScaler):
         raw_scores = self.anomaly_detector.score_many(*args)
         mean = self.mean.update_many(raw_scores).get()
         if self.with_std:
-            var = self.sq_mean.update(raw_scores ** 2).get() - mean ** 2
-            scores = (raw_scores - mean) / var ** 0.5
+            var = self.sq_mean.update(raw_scores**2).get() - mean**2
+            scores = (raw_scores - mean) / var**0.5
         else:
             scores = raw_scores - mean
 
@@ -265,11 +265,11 @@ class AnomalyMeanScaler(AnomalyScaler):
     """
 
     def __init__(
-            self,
-            anomaly_detector: AnomalyDetector,
-            metric_type: str = "rolling",
-            window_size: int = 250,
-            alpha: float = 0.3,
+        self,
+        anomaly_detector: AnomalyDetector,
+        metric_type: str = "rolling",
+        window_size: int = 250,
+        alpha: float = 0.3,
     ):
         super().__init__(anomaly_detector=anomaly_detector)
         self.metric_type = metric_type
@@ -332,11 +332,11 @@ class AnomalyMinMaxScaler(AnomalyScaler):
     """
 
     def __init__(
-            self,
-            anomaly_detector: AnomalyDetector,
-            metric_type: str = "rolling",
-            window_size: int = 250,
-            alpha: float = 0.3,
+        self,
+        anomaly_detector: AnomalyDetector,
+        metric_type: str = "rolling",
+        window_size: int = 250,
+        alpha: float = 0.3,
     ):
         super().__init__(anomaly_detector)
         self.metric_type = metric_type

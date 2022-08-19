@@ -1,4 +1,4 @@
-from typing import Callable, List, Union
+from typing import Callable, List, Type, Union
 
 import pandas as pd
 import torch
@@ -6,7 +6,8 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
+from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                 float2tensor)
 
 
 class Regressor(DeepEstimator, base.Regressor):
@@ -36,14 +37,14 @@ class Regressor(DeepEstimator, base.Regressor):
     """
 
     def __init__(
-            self,
-            module: Union[torch.nn.Module, type(torch.nn.Module)],
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs
+        self,
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs
     ):
         super().__init__(
             module=module,
@@ -127,7 +128,7 @@ class Regressor(DeepEstimator, base.Regressor):
             The regressor itself.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x = dict2tensor(x, self.device)
         y = float2tensor(y, device=self.device)
@@ -157,7 +158,7 @@ class Regressor(DeepEstimator, base.Regressor):
             Predicted target value.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(x)
+            self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x = dict2tensor(x, self.device)
         self.module.eval()
@@ -180,7 +181,7 @@ class Regressor(DeepEstimator, base.Regressor):
             The regressor itself.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X = df2tensor(X, device=self.device)
         y = torch.tensor(y, device=self.device, dtype=torch.float32)
@@ -203,7 +204,7 @@ class Regressor(DeepEstimator, base.Regressor):
             Predicted target values.
         """
         if not self.module_initialized:
-            self.kwargs['n_features'] = len(X.columns)
+            self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
         X = df2tensor(X, device=self.device)
