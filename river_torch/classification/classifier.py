@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Union
+from typing import Callable, Dict, List, Type, Union
 
 import pandas as pd
 import torch
@@ -75,7 +75,7 @@ class Classifier(DeepEstimator, base.Classifier):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "binary_cross_entropy",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -266,3 +266,23 @@ class Classifier(DeepEstimator, base.Classifier):
         self.module.eval()
         y_preds = self.module(X)
         return output2proba(y_preds, self.observed_classes)
+
+
+    def find_output_layer(self) -> nn.Linear:
+        """Return the output layer of a network.
+
+        Parameters
+        ----------
+        net
+            The network to find the output layer of.
+
+        Returns
+        -------
+        nn.Linear
+            The output layer of the network.
+        """
+
+        for layer in list(self.module.children())[::-1]:
+            if isinstance(layer, nn.Linear):
+                return layer
+        raise ValueError("No dense layer found.")
