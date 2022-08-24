@@ -20,6 +20,7 @@
 ```shell
 pip install river-torch
 ```
+or
 ```shell
 pip install "river[torch]"
 ```
