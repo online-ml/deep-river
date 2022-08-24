@@ -20,7 +20,9 @@
 ```shell
 pip install river-torch
 ```
-
+```shell
+pip install "river[torch]"
+```
 You can install the latest development version from GitHub as so:
 
 ```shell
