@@ -7,20 +7,20 @@ from river import base
 from river.base.typing import RegTarget
 
 
-def dict2tensor(x: dict, device="cpu", dtype=torch.float32) -> torch.Tensor:
+def dict2tensor(x: dict, device="cpu", dtype=None) -> torch.Tensor:
     x = torch.tensor([list(x.values())], device=device, dtype=dtype)
     return x
 
 
 def float2tensor(
-    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+    y: Union[float, int, RegTarget], device="cpu", dtype=None
 ) -> torch.Tensor:
     y = torch.tensor([[y]], device=device, dtype=dtype)
     return y
 
 
 def dict2rolling_tensor(
-    x: Dict, window: Deque, device="cpu", dtype=torch.float32, update_window=True
+    x: Dict, window: Deque, device="cpu", dtype=None, update_window=True
 ) -> torch.Tensor:
     output = None
     excess_len = len(window) + 1 - window.maxlen
@@ -36,7 +36,7 @@ def dict2rolling_tensor(
     return output
 
 
-def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.Tensor:
+def df2tensor(x: pd.DataFrame, device="cpu", dtype=None) -> torch.Tensor:
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
@@ -45,7 +45,7 @@ def df2rolling_tensor(
     x: pd.DataFrame,
     window: Deque,
     device="cpu",
-    dtype=torch.float32,
+    dtype=None,
     update_window=True,
 ) -> torch.Tensor:
     x_old = list(window)
@@ -68,12 +68,13 @@ def labels2onehot(
     classes: list,
     n_classes: int = None,
     device="cpu",
+    dtype=None
 ) -> torch.Tensor:
     if n_classes is None:
         n_classes = len(classes)
     if not isinstance(y, list):
         y = [y]
-    onehot = torch.zeros(len(y), n_classes, device=device)
+    onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
     pos_idcs = [classes.index(y_i) for y_i in y]
     for i, pos_idx in enumerate(pos_idcs):
         if pos_idx < n_classes:
