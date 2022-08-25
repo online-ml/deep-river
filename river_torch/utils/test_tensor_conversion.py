@@ -4,9 +4,15 @@ import numpy as np
 import pandas as pd
 import torch
 
-from river_torch.utils import (df2rolling_tensor, df2tensor,
-                               dict2rolling_tensor, dict2tensor, float2tensor,
-                               labels2onehot, output2proba)
+from river_torch.utils import (
+    df2rolling_tensor,
+    df2tensor,
+    dict2rolling_tensor,
+    dict2tensor,
+    float2tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 def test_dict2tensor():
@@ -24,9 +30,9 @@ def test_dict2rolling_tensor():
     x = {"a": 1, "b": 2, "c": 3}
 
     assert dict2rolling_tensor(x, window, update_window=False).tolist() == [
-        [1, 1, 1],
-        [1, 1, 1],
-        [1, 2, 3],
+        [[1, 1, 1]],
+        [[1, 1, 1]],
+        [[1, 2, 3]],
     ]
     assert list(window) == [
         [1, 1, 1],
@@ -34,9 +40,9 @@ def test_dict2rolling_tensor():
         [1, 1, 1],
     ]
     assert dict2rolling_tensor(x, window, update_window=True).tolist() == [
-        [1, 1, 1],
-        [1, 1, 1],
-        [1, 2, 3],
+        [[1, 1, 1]],
+        [[1, 1, 1]],
+        [[1, 2, 3]],
     ]
     assert list(window) == [
         [1, 1, 1],
@@ -58,10 +64,12 @@ def test_df2rolling_tensor():
         [
             [1, 1, 1],
             [1, 1, 1],
-            [0, 0, 0],
         ],
         [
             [1, 1, 1],
+            [0, 0, 0],
+        ],
+        [
             [0, 0, 0],
             [0, 0, 0],
         ],
@@ -71,10 +79,12 @@ def test_df2rolling_tensor():
         [
             [1, 1, 1],
             [1, 1, 1],
-            [0, 0, 0],
         ],
         [
             [1, 1, 1],
+            [0, 0, 0],
+        ],
+        [
             [0, 0, 0],
             [0, 0, 0],
         ],

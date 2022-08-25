@@ -20,19 +20,23 @@ def float2tensor(
 
 
 def dict2rolling_tensor(
-    x: Dict, window: Deque, device="cpu", dtype=None, update_window=True
+    x: Dict,
+    window: Deque,
+    device="cpu",
+    dtype=None,
+    update_window=True,
 ) -> torch.Tensor:
     output = None
     excess_len = len(window) + 1 - window.maxlen
     if update_window:
         window.append(list(x.values()))
-        if excess_len >= 0:
-            output = torch.tensor(window, device=device, dtype=dtype)
-    else:
-        if excess_len >= 0:
-            window_copy = list(window)[excess_len:] + [list(x.values())]
-            output = torch.tensor(window_copy, device=device, dtype=dtype)
-
+        new_window = window
+    
+    if excess_len >= 0:
+        if not update_window: 
+            new_window = list(window)[excess_len:] + [list(x.values())]
+        output = torch.tensor(new_window, device=device, dtype=dtype)
+        output = torch.unsqueeze(output, 1)
     return output
 
 
@@ -54,7 +58,7 @@ def df2rolling_tensor(
     x_new = x.values.tolist()
     x = x_old + x_new
     if len(x) >= window.maxlen:
-        x = [x[i : i + window.maxlen] for i in range(len(x) - window.maxlen + 1)]
+        x = [x[i : i + len(x) - window.maxlen + 1] for i in range(window.maxlen)]
         x = torch.tensor(x, device=device, dtype=dtype)
     else:
         x = None
@@ -68,7 +72,7 @@ def labels2onehot(
     classes: list,
     n_classes: int = None,
     device="cpu",
-    dtype=None
+    dtype=None,
 ) -> torch.Tensor:
     if n_classes is None:
         n_classes = len(classes)

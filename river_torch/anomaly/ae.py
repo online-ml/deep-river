@@ -3,7 +3,7 @@ from typing import Callable, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from river import anomaly
+from river.anomaly.base import AnomalyDetector
 from torch import nn
 
 from river_torch.base import DeepEstimator
@@ -11,7 +11,7 @@ from river_torch.utils import dict2tensor
 from river_torch.utils.tensor_conversion import df2tensor
 
 
-class Autoencoder(DeepEstimator, anomaly.base.AnomalyDetector):
+class Autoencoder(DeepEstimator, AnomalyDetector):
     """
     Wrapper for PyTorch autoencoder models that uses the networks reconstruction error for scoring the anomalousness of a given example.
 

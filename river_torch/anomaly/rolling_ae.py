@@ -1,5 +1,5 @@
 import collections
-from typing import Callable, Union
+from typing import Callable, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -19,7 +19,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch module that builds the autoencoder to be wrapped. The module should accept inputs with shape `(window_size, batch_size, n_features)`. It should also feature a parameter `n_features` used to adapt the network to the number of features in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
     optimizer_fn
@@ -40,7 +40,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -156,7 +156,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             Input batch of examples.
 
         y
-            should be None
+            Should be None
 
         Returns
         -------
