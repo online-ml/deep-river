@@ -8,8 +8,39 @@ from river import anomaly
 from torch import nn
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor)
+from river_torch.utils.tensor_conversion import df2rolling_tensor, dict2rolling_tensor
+
+
+class _TestLSTMAutoencoder(nn.Module):
+    def __init__(self, n_features, hidden_size=10, n_layers=1, batch_first=False):
+        super().__init__()
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+        self.n_layers = n_layers
+        self.batch_first = batch_first
+        self.time_axis = 1 if batch_first else 0
+        self.encoder = nn.LSTM(
+            input_size=n_features,
+            hidden_size=hidden_size,
+            num_layers=n_layers,
+            batch_first=batch_first,
+        )
+        self.decoder = nn.LSTM(
+            input_size=hidden_size,
+            hidden_size=n_features,
+            num_layers=n_layers,
+            batch_first=batch_first,
+        )
+
+    def forward(self, x):
+        _, (h, _) = self.encoder(x)
+        h = h[-1].view(1, 1, -1)
+        x_flipped = torch.flip(x[1:], dims=[self.time_axis])
+        input = torch.cat((h, x_flipped), dim=self.time_axis)
+        x_hat, _ = self.decoder(input)
+        x_hat = torch.flip(x_hat, dims=[self.time_axis])
+
+        return x_hat
 
 
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
@@ -75,21 +106,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyAutoEncoder(torch.nn.Module):
-            def __init__(self, n_features, latent_dim=3):
-                super(MyAutoEncoder, self).__init__()
-                self.linear1 = nn.Linear(n_features, latent_dim)
-                self.nonlin = torch.nn.LeakyReLU()
-                self.linear2 = nn.Linear(latent_dim, n_features)
-
-            def forward(self, X, **kwargs):
-                X = self.linear1(X)
-                X = self.nonlin(X)
-                X = self.linear2(X)
-                return torch.nn.functional.sigmoid(X)
-
         yield {
-            "module": MyAutoEncoder,
+            "module": _TestLSTMAutoencoder,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
         }
@@ -106,7 +124,6 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",

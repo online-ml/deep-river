@@ -6,8 +6,26 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                 float2tensor)
+from river_torch.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
+
+
+class _TestModule(torch.nn.Module):
+    def __init__(self, n_features):
+        super(_TestModule, self).__init__()
+
+        self.dense0 = torch.nn.Linear(n_features, 10)
+        self.nonlin = torch.nn.ReLU()
+        self.dropout = torch.nn.Dropout(0.5)
+        self.dense1 = torch.nn.Linear(10, 5)
+        self.output = torch.nn.Linear(5, 1)
+        self.softmax = torch.nn.Softmax(dim=-1)
+
+    def forward(self, X, **kwargs):
+        X = self.nonlin(self.dense0(X))
+        X = self.dropout(X)
+        X = self.nonlin(self.dense1(X))
+        X = self.softmax(self.output(X))
+        return X
 
 
 class Regressor(DeepEstimator, base.Regressor):
@@ -67,26 +85,8 @@ class Regressor(DeepEstimator, base.Regressor):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyModule(torch.nn.Module):
-            def __init__(self, n_features):
-                super(MyModule, self).__init__()
-
-                self.dense0 = torch.nn.Linear(n_features, 10)
-                self.nonlin = torch.nn.ReLU()
-                self.dropout = torch.nn.Dropout(0.5)
-                self.dense1 = torch.nn.Linear(10, 5)
-                self.output = torch.nn.Linear(5, 1)
-                self.softmax = torch.nn.Softmax(dim=-1)
-
-            def forward(self, X, **kwargs):
-                X = self.nonlin(self.dense0(X))
-                X = self.dropout(X)
-                X = self.nonlin(self.dense1(X))
-                X = self.softmax(self.output(X))
-                return X
-
         yield {
-            "module": MyModule,
+            "module": _TestModule,
             "loss_fn": "l1",
             "optimizer_fn": "sgd",
         }
@@ -103,7 +103,6 @@ class Regressor(DeepEstimator, base.Regressor):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",
