@@ -2,12 +2,11 @@ from torch import nn
 
 
 class ForwardOrderTracker:
-    def __init__(self, layers_to_track) -> None:
+    def __init__(self) -> None:
         self.ordered_modules = []
-        self.layers_to_track = layers_to_track
 
     def __call__(self, module, input, output):
-        if isinstance(module, self.layers_to_track):
+        if list(module.parameters()) and not list(module.children()):
             self.ordered_modules.append(module)
 
 

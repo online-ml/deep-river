@@ -94,6 +94,7 @@ class Classifier(DeepEstimator, base.Classifier):
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
         output_is_logit: bool = True,
+        is_class_incremental: bool = True,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -101,6 +102,7 @@ class Classifier(DeepEstimator, base.Classifier):
         self.observed_classes = OrderedSet()
         self.output_layer = None
         self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
@@ -319,7 +321,7 @@ class Classifier(DeepEstimator, base.Classifier):
     def find_output_layer(self, n_features):
 
         handles = []
-        tracker = ForwardOrderTracker(layers_to_track=(nn.Linear,))
+        tracker = ForwardOrderTracker()
         apply_hooks(module=self.module, hook=tracker, handles=handles)
 
         x_dummy = torch.empty((1, n_features), device=self.device)
@@ -328,7 +330,9 @@ class Classifier(DeepEstimator, base.Classifier):
         for h in handles:
             h.remove()
 
-        if tracker.ordered_modules:
+        if tracker.ordered_modules and isinstance(
+            tracker.ordered_modules[-1], nn.Linear
+        ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
             warnings.warn(
