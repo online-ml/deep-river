@@ -23,6 +23,7 @@ LOSS_FNS = {
     "cross_entropy": F.cross_entropy,
     "kl_div": F.kl_div,
     "huber": F.huber_loss,
+    "binary_cross_entropy_with_logits": F.binary_cross_entropy_with_logits,
 }
 
 OPTIMIZER_FNS = {

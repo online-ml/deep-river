@@ -1,14 +1,24 @@
+import math
 from typing import Callable, Dict, List, Type, Union
+import warnings
 
 import pandas as pd
 import torch
 from river import base
 from river.base.typing import ClfTarget
 from torch import nn
+from torch.nn import init
+from torch.nn import parameter
+from orderedset import OrderedSet
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                 labels2onehot, output2proba)
+from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
+from river_torch.utils.tensor_conversion import (
+    df2tensor,
+    dict2tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -20,11 +30,15 @@ class Classifier(DeepEstimator, base.Classifier):
         module
             Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
         loss_fn
-            Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+            Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_cross_entropy_with_logits', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
         optimizer_fn
             Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
         lr
             Learning rate of the optimizer.
+        output_is_logit
+            Whether the module produces logits as output. If true, either softmax or sigmoid is applied to the outputs when predicting.
+        is_class_incremental
+            Whether the classifier should adapt to the appearance of previously unobserved classes by adding an unit to the output layer of the network. This works only if the last trainable layer is an nn.Linear layer. Note also, that output activation functions can not be adapted, meaning that a binary classifier with a sigmoid output can not be altered to perform multi-class predictions.
         device
             Device to run the wrapped model on. Can be "cpu" or "cuda".
         seed
@@ -76,15 +90,17 @@ class Classifier(DeepEstimator, base.Classifier):
     def __init__(
         self,
         module: Union[torch.nn.Module, Type[torch.nn.Module]],
-        loss_fn: Union[str, Callable] = "binary_cross_entropy",
+        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        output_is_logit: bool = True,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
     ):
-        self.observed_classes = []
+        self.observed_classes = OrderedSet()
         self.output_layer = None
+        self.output_is_logit = output_is_logit
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
@@ -111,18 +127,16 @@ class Classifier(DeepEstimator, base.Classifier):
                 super(MyModule, self).__init__()
                 self.dense0 = torch.nn.Linear(n_features, 5)
                 self.nonlin = torch.nn.ReLU()
-                self.dense1 = torch.nn.Linear(5, 2)
-                self.softmax = torch.nn.Softmax(dim=-1)
+                self.dense1 = torch.nn.Linear(5, 1)
 
             def forward(self, X, **kwargs):
                 X = self.nonlin(self.dense0(X))
-                X = self.nonlin(self.dense1(X))
-                X = self.softmax(X)
+                X = self.dense1(X)
                 return X
 
         yield {
             "module": MyModule,
-            "loss_fn": "l1",
+            "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
         }
 
@@ -162,6 +176,7 @@ class Classifier(DeepEstimator, base.Classifier):
         Classifier
             The classifier itself.
         """
+
         # check if model is initialized
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
@@ -169,8 +184,9 @@ class Classifier(DeepEstimator, base.Classifier):
         x = dict2tensor(x, device=self.device)
 
         # check last layer
-        if y not in self.observed_classes:
-            self.observed_classes.append(y)
+        self.observed_classes.add(y)
+        if self.is_class_incremental:
+            self._adapt_output_dim()
 
         return self._learn(x=x, y=y)
 
@@ -207,7 +223,7 @@ class Classifier(DeepEstimator, base.Classifier):
         x = dict2tensor(x, device=self.device)
         self.module.eval()
         y_pred = self.module(x)
-        return output2proba(y_pred, self.observed_classes)
+        return output2proba(y_pred, self.observed_classes, self.output_is_logit)
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "Classifier":
         """
@@ -231,10 +247,9 @@ class Classifier(DeepEstimator, base.Classifier):
             self.initialize_module(**self.kwargs)
         X = df2tensor(X, device=self.device)
 
-        # check last layer
-        for y_i in y:
-            if y_i not in self.observed_classes:
-                self.observed_classes.append(y_i)
+        self.observed_classes.update(y)
+        if self.is_class_incremental:
+            self._adapt_output_dim()
 
         y = labels2onehot(
             y,
@@ -267,22 +282,60 @@ class Classifier(DeepEstimator, base.Classifier):
         y_preds = self.module(X)
         return output2proba(y_preds, self.observed_classes)
 
+    def _adapt_output_dim(self):
+        out_features_target = (
+            len(self.observed_classes) if len(self.observed_classes) > 2 else 1
+        )
+        n_classes_to_add = out_features_target - self.output_layer.out_features
+        if n_classes_to_add > 0:
+            self._add_output_features(n_classes_to_add)
 
-    def find_output_layer(self) -> nn.Linear:
-        """Return the output layer of a network.
+    def _add_output_features(self, n_classes_to_add: int) -> None:
+        """
+        Adds output dimensions to the model by adding new rows of weights to the existing weights of the last layer.
 
         Parameters
         ----------
-        net
-            The network to find the output layer of.
-
-        Returns
-        -------
-        nn.Linear
-            The output layer of the network.
+        n_classes_to_add
+            Number of output dimensions to add.
         """
+        new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
+        init.kaiming_uniform_(new_weights, a=math.sqrt(5))
+        self.output_layer.weight = parameter.Parameter(
+            torch.cat([self.output_layer.weight, new_weights], axis=0)
+        )
 
-        for layer in list(self.module.children())[::-1]:
-            if isinstance(layer, nn.Linear):
-                return layer
-        raise ValueError("No dense layer found.")
+        if self.output_layer.bias is not None:
+            new_bias = torch.empty(n_classes_to_add)
+            fan_in, _ = init._calculate_fan_in_and_fan_out(self.output_layer.weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            init.uniform_(new_bias, -bound, bound)
+            self.output_layer.bias = parameter.Parameter(
+                torch.cat([self.output_layer.bias, new_bias], axis=0)
+            )
+        self.output_layer.out_features += n_classes_to_add
+        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+
+    def find_output_layer(self, n_features):
+
+        handles = []
+        tracker = ForwardOrderTracker(layers_to_track=(nn.Linear,))
+        apply_hooks(module=self.module, hook=tracker, handles=handles)
+
+        x_dummy = torch.empty((1, n_features), device=self.device)
+        self.module(x_dummy)
+
+        for h in handles:
+            h.remove()
+
+        if tracker.ordered_modules:
+            self.output_layer = tracker.ordered_modules[-1]
+        else:
+            warnings.warn(
+                "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
+            )
+            self.is_class_incremental = False
+
+    def initialize_module(self, **kwargs):
+        super().initialize_module(**kwargs)
+        self.find_output_layer(n_features=kwargs["n_features"])
