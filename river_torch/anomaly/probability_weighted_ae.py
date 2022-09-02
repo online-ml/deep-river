@@ -3,8 +3,8 @@ from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
-from scipy.special import ndtr
 from river import stats, utils
+from scipy.special import ndtr
 
 from river_torch.anomaly import ae
 from river_torch.utils import dict2tensor
@@ -97,8 +97,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         )
         self.window_size = window_size
         self.skip_threshold = skip_threshold
-        self.rolling_mean = utils.Rolling(stats.Mean(),window_size=window_size)
-        self.rolling_var = utils.Rolling(stats.Var(),window_size=window_size)
+        self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
+        self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
     def learn_one(self, x: dict, **kwargs) -> "ProbabilityWeightedAutoencoder":
         """
