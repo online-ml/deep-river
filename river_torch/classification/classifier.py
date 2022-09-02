@@ -7,8 +7,27 @@ from river.base.typing import ClfTarget
 from torch import nn
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                 labels2onehot, output2proba)
+from river_torch.utils.tensor_conversion import (
+    df2tensor,
+    dict2tensor,
+    labels2onehot,
+    output2proba,
+)
+
+
+class _TestModule(torch.nn.Module):
+    def __init__(self, n_features):
+        super(_TestModule, self).__init__()
+        self.dense0 = torch.nn.Linear(n_features, 5)
+        self.nonlin = torch.nn.ReLU()
+        self.dense1 = torch.nn.Linear(5, 2)
+        self.softmax = torch.nn.Softmax(dim=-1)
+
+    def forward(self, X, **kwargs):
+        X = self.nonlin(self.dense0(X))
+        X = self.nonlin(self.dense1(X))
+        X = self.softmax(X)
+        return X
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -106,22 +125,8 @@ class Classifier(DeepEstimator, base.Classifier):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyModule(torch.nn.Module):
-            def __init__(self, n_features):
-                super(MyModule, self).__init__()
-                self.dense0 = torch.nn.Linear(n_features, 5)
-                self.nonlin = torch.nn.ReLU()
-                self.dense1 = torch.nn.Linear(5, 2)
-                self.softmax = torch.nn.Softmax(dim=-1)
-
-            def forward(self, X, **kwargs):
-                X = self.nonlin(self.dense0(X))
-                X = self.nonlin(self.dense1(X))
-                X = self.softmax(X)
-                return X
-
         yield {
-            "module": MyModule,
+            "module": _TestModule,
             "loss_fn": "l1",
             "optimizer_fn": "sgd",
         }
@@ -138,7 +143,6 @@ class Classifier(DeepEstimator, base.Classifier):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",
@@ -266,7 +270,6 @@ class Classifier(DeepEstimator, base.Classifier):
         self.module.eval()
         y_preds = self.module(X)
         return output2proba(y_preds, self.observed_classes)
-
 
     def find_output_layer(self) -> nn.Linear:
         """Return the output layer of a network.

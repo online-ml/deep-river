@@ -6,9 +6,28 @@ from river import base
 from river.base.typing import ClfTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor,
-                                                 labels2onehot, output2proba)
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    labels2onehot,
+    output2proba,
+)
+
+
+class _TestLSTM(torch.nn.Module):
+    def __init__(self, n_features, hidden_size=2):
+        super().__init__()
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+        self.lstm = torch.nn.LSTM(
+            input_size=n_features, hidden_size=hidden_size, num_layers=1
+        )
+        self.softmax = torch.nn.Softmax(dim=-1)
+
+    def forward(self, X, **kwargs):
+        output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
+        hn = hn.view(-1, self.hidden_size)
+        return self.softmax(hn)
 
 
 class RollingClassifier(RollingDeepEstimator, base.Classifier):
@@ -74,25 +93,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyModule(torch.nn.Module):
-            def __init__(self, n_features):
-                super().__init__()
-                self.hidden_size = 2
-                self.n_features = n_features
-                self.lstm = torch.nn.LSTM(
-                    input_size=n_features, hidden_size=self.hidden_size, num_layers=1
-                )
-                self.softmax = torch.nn.Softmax(dim=-1)
-
-            def forward(self, X, **kwargs):
-                output, (hn, cn) = self.lstm(
-                    X
-                )  # lstm with input, hidden, and internal state
-                hn = hn.view(-1, self.hidden_size)
-                return self.softmax(hn)
-
         yield {
-            "module": MyModule,
+            "module": _TestLSTM,
             "optimizer_fn": "sgd",
             "lr": 1e-3,
         }
@@ -109,7 +111,6 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",

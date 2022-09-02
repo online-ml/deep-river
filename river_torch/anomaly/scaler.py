@@ -4,8 +4,7 @@ import numpy as np
 from river import base
 from river.anomaly import HalfSpaceTrees
 from river.anomaly.base import AnomalyDetector
-from river.stats import (EWMean, Max, Mean, Min, RollingMax, RollingMean,
-                         RollingMin)
+from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMean, RollingMin
 
 METRICS = {
     "mean": {"incremental": Mean, "rolling": RollingMean, "adaptive": EWMean},
@@ -87,7 +86,6 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",
