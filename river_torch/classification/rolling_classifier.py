@@ -6,12 +6,9 @@ from river import base
 from river.base.typing import ClfTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    labels2onehot,
-    output2proba,
-)
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 labels2onehot, output2proba)
 
 
 class _TestLSTM(torch.nn.Module):

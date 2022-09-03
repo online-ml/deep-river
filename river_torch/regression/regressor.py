@@ -6,7 +6,8 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
+from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                 float2tensor)
 
 
 class _TestModule(torch.nn.Module):

@@ -14,12 +14,6 @@ from river_torch.base import DeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
 from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
                                                  labels2onehot, output2proba)
-from river_torch.utils.tensor_conversion import (
-    df2tensor,
-    dict2tensor,
-    labels2onehot,
-    output2proba,
-)
 
 
 class _TestModule(torch.nn.Module):

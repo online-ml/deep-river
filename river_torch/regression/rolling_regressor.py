@@ -6,11 +6,9 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    float2tensor,
-)
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 float2tensor)
 
 
 class _TestLSTM(torch.nn.Module):
