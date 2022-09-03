@@ -7,6 +7,7 @@
 [![unit-tests](https://github.com/online-ml/river-torch/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/kulbachcedric/DeepRiver/actions/workflows/unit-tests.yml)
 [![codecov](https://codecov.io/gh/online-ml/river-torch/branch/master/graph/badge.svg?token=ZKUIISZAYA)](https://codecov.io/gh/online-ml/river-torch)
 [![docs](https://github.com/online-ml/river-torch/actions/workflows/mkdocs.yml/badge.svg)](https://github.com/online-ml/river-torch/actions/workflows/unit_test.yml)
+![PyPI - Downloads](https://img.shields.io/pypi/dw/river-torch)
 
 
 <p align="center">
