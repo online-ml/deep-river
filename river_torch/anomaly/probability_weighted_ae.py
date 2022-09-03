@@ -3,7 +3,7 @@ from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
-from river.stats import RollingMean, RollingVar
+from river import stats, utils
 from scipy.special import ndtr
 
 from river_torch.anomaly import ae
@@ -97,8 +97,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         )
         self.window_size = window_size
         self.skip_threshold = skip_threshold
-        self.rolling_mean = RollingMean(window_size=window_size)
-        self.rolling_var = RollingVar(window_size=window_size)
+        self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
+        self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
     def learn_one(self, x: dict, **kwargs) -> "ProbabilityWeightedAutoencoder":
         """

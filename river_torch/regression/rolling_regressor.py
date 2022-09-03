@@ -6,9 +6,25 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor,
-                                                 float2tensor)
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    float2tensor,
+)
+
+
+class _TestLSTM(torch.nn.Module):
+    def __init__(self, n_features):
+        super().__init__()
+        self.hidden_size = 1
+        self.lstm = torch.nn.LSTM(
+            input_size=n_features, hidden_size=self.hidden_size, num_layers=1
+        )
+
+    def forward(self, X, **kwargs):
+        output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
+        hn = hn.view(-1, self.hidden_size)
+        return hn
 
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
@@ -72,23 +88,8 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyModule(torch.nn.Module):
-            def __init__(self, n_features):
-                super().__init__()
-                self.hidden_size = 1
-                self.lstm = torch.nn.LSTM(
-                    input_size=n_features, hidden_size=self.hidden_size, num_layers=1
-                )
-
-            def forward(self, X, **kwargs):
-                output, (hn, cn) = self.lstm(
-                    X
-                )  # lstm with input, hidden, and internal state
-                hn = hn.view(-1, self.hidden_size)
-                return hn
-
         yield {
-            "module": MyModule,
+            "module": _TestLSTM,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
             "lr": 1e-3,
@@ -106,7 +107,6 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",

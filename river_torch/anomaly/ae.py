@@ -11,6 +11,19 @@ from river_torch.utils import dict2tensor
 from river_torch.utils.tensor_conversion import df2tensor
 
 
+class _TestAutoencoder(torch.nn.Module):
+            def __init__(self, n_features, latent_dim=3):
+                super(_TestAutoencoder, self).__init__()
+                self.linear1 = nn.Linear(n_features, latent_dim)
+                self.nonlin = torch.nn.LeakyReLU()
+                self.linear2 = nn.Linear(latent_dim, n_features)
+
+            def forward(self, X, **kwargs):
+                X = self.linear1(X)
+                X = self.nonlin(X)
+                X = self.linear2(X)
+                return nn.functional.sigmoid(X)
+
 class Autoencoder(DeepEstimator, AnomalyDetector):
     """
     Wrapper for PyTorch autoencoder models that uses the networks reconstruction error for scoring the anomalousness of a given example.
@@ -103,21 +116,10 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyAutoEncoder(torch.nn.Module):
-            def __init__(self, n_features, latent_dim=3):
-                super(MyAutoEncoder, self).__init__()
-                self.linear1 = nn.Linear(n_features, latent_dim)
-                self.nonlin = torch.nn.LeakyReLU()
-                self.linear2 = nn.Linear(latent_dim, n_features)
-
-            def forward(self, X, **kwargs):
-                X = self.linear1(X)
-                X = self.nonlin(X)
-                X = self.linear2(X)
-                return nn.functional.sigmoid(X)
+        
 
         yield {
-            "module": MyAutoEncoder,
+            "module": _TestAutoencoder,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
         }
@@ -135,7 +137,6 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             Set of checks to skip during unit testing.
         """
         return {
-            "check_pickling",
             "check_shuffle_features_no_impact",
             "check_emerging_features",
             "check_disappearing_features",
