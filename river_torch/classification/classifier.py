@@ -133,18 +133,6 @@ class Classifier(DeepEstimator, base.Classifier):
             Dictionary of parameters to be used for unit testing the respective class.
         """
 
-        class MyModule(torch.nn.Module):
-            def __init__(self, n_features):
-                super(MyModule, self).__init__()
-                self.dense0 = torch.nn.Linear(n_features, 5)
-                self.nonlin = torch.nn.ReLU()
-                self.dense1 = torch.nn.Linear(5, 1)
-
-            def forward(self, X, **kwargs):
-                X = self.nonlin(self.dense0(X))
-                X = self.dense1(X)
-                return X
-
         yield {
             "module": _TestModule,
             "loss_fn": "binary_cross_entropy_with_logits",
@@ -339,7 +327,7 @@ class Classifier(DeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-                tracker.ordered_modules[-1], nn.Linear
+            tracker.ordered_modules[-1], nn.Linear
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
@@ -347,8 +335,6 @@ class Classifier(DeepEstimator, base.Classifier):
                 "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
             )
             self.is_class_incremental = False
-
-
 
     def initialize_module(self, **kwargs):
         super().initialize_module(**kwargs)

@@ -7,6 +7,7 @@ import torch
 from orderedset import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
+from torch import nn
 
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
@@ -14,7 +15,6 @@ from river_torch.utils.tensor_conversion import (df2rolling_tensor,
                                                  dict2rolling_tensor,
                                                  labels2onehot, output2proba)
 
-from torch import nn
 
 class _TestLSTM(torch.nn.Module):
     def __init__(self, n_features, hidden_size=2):
@@ -266,7 +266,6 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             proba = {c: 1.0 for c in self.observed_classes}
         return proba
 
-
     def _adapt_output_dim(self):
         out_features_target = (
             len(self.observed_classes) if len(self.observed_classes) > 2 else 1
@@ -314,7 +313,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-                tracker.ordered_modules[-1], nn.Linear
+            tracker.ordered_modules[-1], nn.Linear
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
@@ -322,4 +321,3 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
             )
             self.is_class_incremental = False
-
