@@ -44,7 +44,7 @@ def test_dict2rolling_tensor():
         [1, 2, 3],
     ]
     window = deque(np.ones((1, 3)).tolist(), maxlen=3)
-    assert dict2rolling_tensor(x, window, update_window=True) == None
+    assert dict2rolling_tensor(x, window, update_window=True) is None
     assert list(window) == [
         [1, 1, 1],
         [1, 2, 3],
@@ -85,7 +85,7 @@ def test_df2rolling_tensor():
     ]
     assert list(window) == [[1, 1, 1], [0, 0, 0], [0, 0, 0]]
     window = deque(np.ones((3, 3)).tolist(), maxlen=6)
-    assert df2rolling_tensor(x, window, update_window=True) == None
+    assert df2rolling_tensor(x, window, update_window=True) is None
     assert list(window) == [[1, 1, 1]] * 3 + [[0, 0, 0]] * 2
 
 

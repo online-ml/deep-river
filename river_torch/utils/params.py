@@ -59,17 +59,25 @@ def get_init_fn(init_fn):
     """
     init_fn_ = INIT_FNS.get(init_fn, "xavier_uniform")
     if init_fn.startswith("xavier"):
-        result = lambda weight, activation_fn: init_fn_(
-            weight, gain=nn.init.calculate_gain(activation_fn)
-        )
+
+        def result(weight, activation_fn):
+            return init_fn_(weight, gain=nn.init.calculate_gain(activation_fn))
+
     elif init_fn.startswith("kaiming"):
-        result = lambda weight, activation_fn: init_fn_(
-            weight, nonlinearity=activation_fn
-        )
+
+        def result(weight, activation_fn):
+            return init_fn_(weight, nonlinearity=activation_fn)
+
     elif init_fn == "uniform":
-        result = lambda weight, activation_fn: 0
+
+        def result(weight, activation_fn):
+            return 0
+
     else:
-        result = lambda weight, activation_fn=None: init_fn_(weight)
+
+        def result(weight, activation_fn=None):
+            return init_fn_(weight)
+
     return result
 
 

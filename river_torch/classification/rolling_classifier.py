@@ -27,7 +27,8 @@ class _TestLSTM(torch.nn.Module):
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, X, **kwargs):
-        output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
+        # lstm with input, hidden, and internal state
+        output, (hn, cn) = self.lstm(X)
         hn = hn.view(-1, self.hidden_size)
         return self.softmax(hn)
 
