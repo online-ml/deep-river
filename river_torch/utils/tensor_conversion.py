@@ -1,10 +1,10 @@
 from turtle import pos
 from typing import Deque, Dict, List, Type, Union
-from orderedset import OrderedSet
 
 import numpy as np
 import pandas as pd
 import torch
+from orderedset import OrderedSet
 from river import base
 from river.base.typing import RegTarget
 

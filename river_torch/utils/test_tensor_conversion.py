@@ -4,15 +4,9 @@ import numpy as np
 import pandas as pd
 import torch
 
-from river_torch.utils import (
-    df2rolling_tensor,
-    df2tensor,
-    dict2rolling_tensor,
-    dict2tensor,
-    float2tensor,
-    labels2onehot,
-    output2proba,
-)
+from river_torch.utils import (df2rolling_tensor, df2tensor,
+                               dict2rolling_tensor, dict2tensor, float2tensor,
+                               labels2onehot, output2proba)
 
 
 def test_dict2tensor():

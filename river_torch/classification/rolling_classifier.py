@@ -25,6 +25,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
+    output_is_logit
+            Whether the module produces logits as output. If true, either softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental
+        Whether the classifier should adapt to the appearance of previously unobserved classes by adding an unit to the output layer of the network. This works only if the last trainable layer is an nn.Linear layer. Note also, that output activation functions can not be adapted, meaning that a binary classifier with a sigmoid output can not be altered to perform multi-class predictions.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -43,6 +47,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         loss_fn: Union[str, Callable] = "binary_cross_entropy",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        output_is_logit: bool = True,
+        is_class_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         window_size: int = 10,
@@ -51,6 +57,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     ):
         self.observed_classes = []
         self.output_layer = None
+        self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
         super().__init__(
             module=module,
             loss_fn=loss_fn,

@@ -1,24 +1,19 @@
 import math
-from typing import Callable, Dict, List, Type, Union
 import warnings
+from typing import Callable, Dict, List, Type, Union
 
 import pandas as pd
 import torch
+from orderedset import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
 from torch import nn
-from torch.nn import init
-from torch.nn import parameter
-from orderedset import OrderedSet
+from torch.nn import init, parameter
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
-from river_torch.utils.tensor_conversion import (
-    df2tensor,
-    dict2tensor,
-    labels2onehot,
-    output2proba,
-)
+from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                 labels2onehot, output2proba)
 
 
 class Classifier(DeepEstimator, base.Classifier):
@@ -94,7 +89,7 @@ class Classifier(DeepEstimator, base.Classifier):
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
         output_is_logit: bool = True,
-        is_class_incremental: bool = True,
+        is_class_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
