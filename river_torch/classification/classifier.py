@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Type, Union
 
 import pandas as pd
 import torch
-from orderedset import OrderedSet
+from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
 from torch import nn

@@ -21,7 +21,7 @@ base_packages = [
     "river~=0.12.0",
     "tqdm~=4.61.2",
     "pytest~=7.0.1",
-    "orderedset~=2.0.3",
+    "ordered-set~=4.1.0",
 ]
 
 dev_packages = base_packages + [
