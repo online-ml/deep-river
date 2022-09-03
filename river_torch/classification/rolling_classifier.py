@@ -1,17 +1,19 @@
+import math
+import warnings
 from typing import Callable, Dict, List, Type, Union
 
 import pandas as pd
 import torch
+from orderedset import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
+from torch import nn
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-    labels2onehot,
-    output2proba,
-)
+from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor,
+                                                 labels2onehot, output2proba)
 
 
 class _TestLSTM(torch.nn.Module):
@@ -44,6 +46,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
+    output_is_logit
+            Whether the module produces logits as output. If true, either softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental
+        Whether the classifier should adapt to the appearance of previously unobserved classes by adding an unit to the output layer of the network. This works only if the last trainable layer is an nn.Linear layer. Note also, that output activation functions can not be adapted, meaning that a binary classifier with a sigmoid output can not be altered to perform multi-class predictions.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -62,14 +68,18 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         loss_fn: Union[str, Callable] = "binary_cross_entropy",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        output_is_logit: bool = True,
+        is_class_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         window_size: int = 10,
         append_predict: bool = False,
         **kwargs,
     ):
-        self.observed_classes = []
+        self.observed_classes = OrderedSet()
         self.output_layer = None
+        self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
         super().__init__(
             module=module,
             loss_fn=loss_fn,
@@ -142,8 +152,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         self._x_window.append(list(x.values()))
 
         # check last layer
-        if y not in self.observed_classes:
-            self.observed_classes.append(y)
+        self.observed_classes.add(y)
+        if self.is_class_incremental:
+            self._adapt_output_dim()
 
         # training process
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
@@ -211,7 +222,6 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-
         x = df2rolling_tensor(X, self._x_window, device=self.device)
         y = labels2onehot(
             y,
@@ -255,3 +265,59 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         else:
             proba = {c: 1.0 for c in self.observed_classes}
         return proba
+
+    def _adapt_output_dim(self):
+        out_features_target = (
+            len(self.observed_classes) if len(self.observed_classes) > 2 else 1
+        )
+        n_classes_to_add = out_features_target - self.output_layer.out_features
+        if n_classes_to_add > 0:
+            self._add_output_features(n_classes_to_add)
+
+    def _add_output_features(self, n_classes_to_add: int) -> None:
+        """
+        Adds output dimensions to the model by adding new rows of weights to the existing weights of the last layer.
+
+        Parameters
+        ----------
+        n_classes_to_add
+            Number of output dimensions to add.
+        """
+        new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
+        nn.init.kaiming_uniform_(new_weights, a=math.sqrt(5))
+        self.output_layer.weight = nn.parameter.Parameter(
+            torch.cat([self.output_layer.weight, new_weights], axis=0)
+        )
+
+        if self.output_layer.bias is not None:
+            new_bias = torch.empty(n_classes_to_add)
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
+            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+            nn.init.uniform_(new_bias, -bound, bound)
+            self.output_layer.bias = nn.parameter.Parameter(
+                torch.cat([self.output_layer.bias, new_bias], axis=0)
+            )
+        self.output_layer.out_features += n_classes_to_add
+        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+
+    def find_output_layer(self, n_features):
+
+        handles = []
+        tracker = ForwardOrderTracker()
+        apply_hooks(module=self.module, hook=tracker, handles=handles)
+
+        x_dummy = torch.empty((1, n_features), device=self.device)
+        self.module(x_dummy)
+
+        for h in handles:
+            h.remove()
+
+        if tracker.ordered_modules and isinstance(
+            tracker.ordered_modules[-1], nn.Linear
+        ):
+            self.output_layer = tracker.ordered_modules[-1]
+        else:
+            warnings.warn(
+                "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
+            )
+            self.is_class_incremental = False

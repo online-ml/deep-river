@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Callable, Union
+from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
@@ -35,7 +35,7 @@ class DeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -148,7 +148,7 @@ class RollingDeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, type(torch.nn.Module)],
+        module: Union[torch.nn.Module, Type[torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,

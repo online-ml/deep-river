@@ -12,17 +12,18 @@ from river_torch.utils.tensor_conversion import df2tensor
 
 
 class _TestAutoencoder(torch.nn.Module):
-            def __init__(self, n_features, latent_dim=3):
-                super(_TestAutoencoder, self).__init__()
-                self.linear1 = nn.Linear(n_features, latent_dim)
-                self.nonlin = torch.nn.LeakyReLU()
-                self.linear2 = nn.Linear(latent_dim, n_features)
+    def __init__(self, n_features, latent_dim=3):
+        super(_TestAutoencoder, self).__init__()
+        self.linear1 = nn.Linear(n_features, latent_dim)
+        self.nonlin = torch.nn.LeakyReLU()
+        self.linear2 = nn.Linear(latent_dim, n_features)
 
-            def forward(self, X, **kwargs):
-                X = self.linear1(X)
-                X = self.nonlin(X)
-                X = self.linear2(X)
-                return nn.functional.sigmoid(X)
+    def forward(self, X, **kwargs):
+        X = self.linear1(X)
+        X = self.nonlin(X)
+        X = self.linear2(X)
+        return nn.functional.sigmoid(X)
+
 
 class Autoencoder(DeepEstimator, AnomalyDetector):
     """
@@ -115,8 +116,6 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         dict
             Dictionary of parameters to be used for unit testing the respective class.
         """
-
-        
 
         yield {
             "module": _TestAutoencoder,

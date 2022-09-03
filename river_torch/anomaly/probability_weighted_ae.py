@@ -12,7 +12,11 @@ from river_torch.utils import dict2tensor
 
 class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     """
-    Wrapper for PyTorch autoencoder models for anomaly detection that reduces the employed learning rate based on an outlier probability estimate of the input example as well as a threshold probability `skip_threshold`. If the outlier probability is above the threshold, the learning rate is reduced to less than 0. Given the probability estimate $p_out$, the adjusted learning rate $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
+    Wrapper for PyTorch autoencoder models for anomaly detection that reduces the employed learning rate based on
+    an outlier probability estimate of the input example as well as a threshold probability `skip_threshold`.
+    If the outlier probability is above the threshold, the learning rate is reduced to less than 0.
+    Given the probability estimate $p_out$, the adjusted learning rate
+    $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
 
     Parameters
     ----------

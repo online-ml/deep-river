@@ -8,7 +8,8 @@ from river import anomaly
 from torch import nn
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import df2rolling_tensor, dict2rolling_tensor
+from river_torch.utils.tensor_conversion import (df2rolling_tensor,
+                                                 dict2rolling_tensor)
 
 
 class _TestLSTMAutoencoder(nn.Module):
