@@ -14,14 +14,14 @@ REQUIRES_PYTHON = ">=3.6.0"
 
 # Package requirements.
 base_packages = [
-    "scikit-learn>=1.0.2",
+    "scikit-learn~=1.0.2",
     "torch~=1.12.0",
     "pandas~=1.3.2",
-    "numpy>=1.21.6",
+    "numpy~=1.23.2",
     "river~=0.12.0",
     "tqdm~=4.61.2",
-    "pytest>=7.0.1",
-    "orderedset",
+    "pytest~=7.0.1",
+    "orderedset~=2.0.3",
 ]
 
 dev_packages = base_packages + [

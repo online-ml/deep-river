@@ -8,7 +8,6 @@ from orderedset import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
 from torch import nn
-from torch.nn import init, parameter
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
@@ -311,17 +310,17 @@ class Classifier(DeepEstimator, base.Classifier):
             Number of output dimensions to add.
         """
         new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
-        init.kaiming_uniform_(new_weights, a=math.sqrt(5))
-        self.output_layer.weight = parameter.Parameter(
+        nn.init.kaiming_uniform_(new_weights, a=math.sqrt(5))
+        self.output_layer.weight = nn.parameter.Parameter(
             torch.cat([self.output_layer.weight, new_weights], axis=0)
         )
 
         if self.output_layer.bias is not None:
             new_bias = torch.empty(n_classes_to_add)
-            fan_in, _ = init._calculate_fan_in_and_fan_out(self.output_layer.weight)
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
-            init.uniform_(new_bias, -bound, bound)
-            self.output_layer.bias = parameter.Parameter(
+            nn.init.uniform_(new_bias, -bound, bound)
+            self.output_layer.bias = nn.parameter.Parameter(
                 torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
@@ -340,7 +339,7 @@ class Classifier(DeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], nn.Linear
+                tracker.ordered_modules[-1], nn.Linear
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
@@ -348,6 +347,8 @@ class Classifier(DeepEstimator, base.Classifier):
                 "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
             )
             self.is_class_incremental = False
+
+
 
     def initialize_module(self, **kwargs):
         super().initialize_module(**kwargs)
