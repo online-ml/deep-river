@@ -223,7 +223,12 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        x = df2rolling_tensor(X, self._x_window, device=self.device)
+        X = df2rolling_tensor(X, self._x_window, device=self.device)
+
+        self.observed_classes.update(y)
+        if self.is_class_incremental:
+            self._adapt_output_dim()
+
         y = labels2onehot(
             y,
             self.observed_classes,
@@ -231,7 +236,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             device=self.device,
         )
         if X is not None:
-            self._learn(x=x, y=y)
+            self._learn(x=X, y=y)
         return self
 
     def predict_proba_many(self, X: pd.DataFrame) -> List:
@@ -271,35 +276,33 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         out_features_target = (
             len(self.observed_classes) if len(self.observed_classes) > 2 else 1
         )
-        n_classes_to_add = out_features_target - self.output_layer.out_features
-        if n_classes_to_add > 0:
-            self._add_output_features(n_classes_to_add)
+        if isinstance(self.output_layer, nn.Linear):
+            n_classes_to_add = out_features_target - self.output_layer.out_features
+            if n_classes_to_add > 0:
+                new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
+                nn.init.kaiming_uniform_(new_weights, a=math.sqrt(5))
+                self.output_layer.weight = nn.parameter.Parameter(
+                    torch.cat([self.output_layer.weight, new_weights], axis=0)
+                )
 
-    def _add_output_features(self, n_classes_to_add: int) -> None:
-        """
-        Adds output dimensions to the model by adding new rows of weights to the existing weights of the last layer.
+                if self.output_layer.bias is not None:
+                    new_bias = torch.empty(n_classes_to_add)
+                    fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
+                    bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
+                    nn.init.uniform_(new_bias, -bound, bound)
+                    self.output_layer.bias = nn.parameter.Parameter(
+                        torch.cat([self.output_layer.bias, new_bias], axis=0)
+                    )
+                self.output_layer.out_features += n_classes_to_add
+        elif isinstance(self.output_layer,nn.LSTM):
+            n_classes_to_add = out_features_target - self.output_layer.hidden_size
+            if n_classes_to_add > 0:
+                new_weights = torch.empty(4*n_classes_to_add,
+                                          self.output_layer.input_size)
+                self.output_layer.hidden_size += n_classes_to_add
 
-        Parameters
-        ----------
-        n_classes_to_add
-            Number of output dimensions to add.
-        """
-        new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
-        nn.init.kaiming_uniform_(new_weights, a=math.sqrt(5))
-        self.output_layer.weight = nn.parameter.Parameter(
-            torch.cat([self.output_layer.weight, new_weights], axis=0)
-        )
-
-        if self.output_layer.bias is not None:
-            new_bias = torch.empty(n_classes_to_add)
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
-            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
-            nn.init.uniform_(new_bias, -bound, bound)
-            self.output_layer.bias = nn.parameter.Parameter(
-                torch.cat([self.output_layer.bias, new_bias], axis=0)
-            )
-        self.output_layer.out_features += n_classes_to_add
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+
 
     def find_output_layer(self, n_features):
 
@@ -314,7 +317,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], nn.Linear
+            tracker.ordered_modules[-1], (nn.Linear, nn.LSTM)
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
@@ -322,3 +325,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
             )
             self.is_class_incremental = False
+
+    def initialize_module(self, **kwargs):
+        super().initialize_module(**kwargs)
+        self.find_output_layer(n_features=kwargs["n_features"])

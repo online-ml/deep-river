@@ -330,7 +330,7 @@ class Classifier(DeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], nn.Linear
+            tracker.ordered_modules[-1], (nn.Linear)
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
