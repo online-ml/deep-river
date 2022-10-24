@@ -297,8 +297,11 @@ class Classifier(DeepEstimator, base.Classifier):
         n_classes_to_add
             Number of output dimensions to add.
         """
-        new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
-        nn.init.kaiming_uniform_(new_weights, a=math.sqrt(5))
+        new_weights = torch.mean(self.output_layer.weight, dim=0).unsqueeze(1).T
+        if n_classes_to_add > 1:
+            new_weights = (
+                new_weights.unsqueeze(1).T.repeat(1, n_classes_to_add, 1).squeeze()
+            )
         self.output_layer.weight = nn.parameter.Parameter(
             torch.cat([self.output_layer.weight, new_weights], axis=0)
         )
