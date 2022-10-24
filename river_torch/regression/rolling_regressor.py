@@ -134,7 +134,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         x = dict2rolling_tensor(x, self._x_window, device=self.device)
         if x is not None:
             self.module.eval()
-            return self.module(x).item()
+            return self.module(x)
         else:
             return 0.0
 
