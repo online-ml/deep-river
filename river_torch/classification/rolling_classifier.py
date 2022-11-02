@@ -302,32 +302,25 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 input_weights = [w_ii, w_if, w_ig, w_io]
                 hidden_weights = [w_hi, w_hf, w_hg, w_ho]
                 mean_input_weights = [torch.mean(w,dim=0).unsqueeze(1).T for w in input_weights]
-                mean_hidden_weights_dim_0 = [torch.mean(w,dim=0).unsqueeze(1) for w in hidden_weights]
+                mean_hidden_weights_dim_0 = [torch.mean(w,dim=0).unsqueeze(0) for w in hidden_weights]
                 mean_hidden_weights_dim_1 = [torch.mean(w,dim=1).unsqueeze(1) for w in hidden_weights]
 
                 if n_classes_to_add > 1:
-                    mean_input_weights = [w.unsqueeze(1).repeat(1, n_classes_to_add,1).squeeze() for w in mean_input_weights]
-                    if len(mean_input_weights[0].shape) == 1:
-                        mean_input_weights = [w.unsqueeze(1) for w in mean_input_weights]
-
-                    mean_hidden_weights_dim_0 = [w.unsqueeze(1).T.repeat(1, n_classes_to_add,1).squeeze() for w in mean_hidden_weights_dim_0]
-                    if len(mean_hidden_weights_dim_0[0].shape) == 1:
-                        mean_hidden_weights_dim_0 = [w.unsqueeze(1) for w in mean_hidden_weights_dim_0]
-
-                    mean_hidden_weights_dim_1 = [w.unsqueeze(1).repeat(1, n_classes_to_add, 1).squeeze() for w in mean_hidden_weights_dim_1]
-                    if len(mean_hidden_weights_dim_1[0].shape) == 1:
-                        mean_hidden_weights_dim_1 = [w.unsqueeze(1) for w in mean_hidden_weights_dim_1]
-
+                    mean_input_weights = [w.repeat(n_classes_to_add,1) for w in mean_input_weights]
+                    mean_hidden_weights_dim_0 = [w.repeat(n_classes_to_add,1) for w in mean_hidden_weights_dim_0]
+                    mean_hidden_weights_dim_1 = [w.repeat(1,n_classes_to_add) for w in mean_hidden_weights_dim_1]
 
                 self.output_layer.weight_ih_l0 = nn.parameter.Parameter(
-                    torch.cat([input_weights[0],
-                               mean_input_weights[0],
-                               input_weights[1],
-                               mean_input_weights[1],
-                               input_weights[2],
-                               mean_input_weights[2],
-                               input_weights[3],
-                               mean_input_weights[3]], axis=0))
+                    torch.cat([
+                        input_weights[0],
+                        mean_input_weights[0],
+                        input_weights[1],
+                        mean_input_weights[1],
+                        input_weights[2],
+                        mean_input_weights[2],
+                        input_weights[3],
+                        mean_input_weights[3]
+                    ], axis=0))
                 self.output_layer.weight_hh_l0 = nn.parameter.Parameter(
                     torch.cat([
                         torch.cat([
@@ -338,15 +331,16 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                            hidden_weights[2],
                            mean_hidden_weights_dim_0[2],
                            hidden_weights[3],
-                           mean_hidden_weights_dim_0[3]], axis=0),
+                           mean_hidden_weights_dim_0[3]
+                        ], axis=0),
                         torch.cat([
-                            mean_hidden_weights_dim_1[0].T,
+                            mean_hidden_weights_dim_1[0],
                             torch.empty(n_classes_to_add, n_classes_to_add),
-                            mean_hidden_weights_dim_1[1].T,
+                            mean_hidden_weights_dim_1[1],
                             torch.empty(n_classes_to_add, n_classes_to_add),
-                            mean_hidden_weights_dim_1[2].T,
+                            mean_hidden_weights_dim_1[2],
                             torch.empty(n_classes_to_add, n_classes_to_add),
-                            mean_hidden_weights_dim_1[3].T,
+                            mean_hidden_weights_dim_1[3],
                             torch.empty(n_classes_to_add, n_classes_to_add),
                         ], axis=0)
                     ],axis=1))
