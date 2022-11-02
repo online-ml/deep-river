@@ -37,7 +37,7 @@ jobs:
           pip install -e ".[dev]" codecov
 
       - name: Download datasets
-        run: python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download()"
+        run: python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
       - name: pytest
         run: pytest --cov=river_torch -m "not datasets"
