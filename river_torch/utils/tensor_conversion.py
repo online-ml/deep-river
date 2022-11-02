@@ -59,7 +59,7 @@ def df2rolling_tensor(
     x_new = x.values.tolist()
     x = x_old + x_new
     if len(x) >= window.maxlen:
-        x = [x[i : i + len(x) - window.maxlen + 1] for i in range(window.maxlen)]
+        x = [x[i: i + len(x) - window.maxlen + 1] for i in range(window.maxlen)]
         x = torch.tensor(x, device=device, dtype=dtype)
     else:
         x = None
