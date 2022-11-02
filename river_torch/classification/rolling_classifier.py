@@ -82,12 +82,11 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     ...        hn = hn.view(-1, self.lstm.hidden_size)
     ...        return self.softmax(hn)
 
-    >>> dataset = datasets.Bikes()
+    >>> dataset = datasets.Keystroke()
     >>> metric = metrics.Accuracy()
     >>> optimizer_fn = torch.optim.SGD
 
-    >>> model_pipeline = compose.Select('clouds', 'humidity', 'pressure', 'temperature', 'wind')
-    >>> model_pipeline |= preprocessing.StandardScaler()
+    >>> model_pipeline = preprocessing.StandardScaler()
     >>> model_pipeline |= RollingClassifier(
     ...     module=MyModule,
     ...     loss_fn="binary_cross_entropy",
@@ -95,7 +94,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     ...     window_size=20,
     ...     lr=1e-2,
     ...     append_predict=True,
-    ...     is_class_incremental=False
+    ...     is_class_incremental=True
     ... )
 
     >>> for x, y in dataset.take(5000):
@@ -103,7 +102,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     ...     metric = metric.update(y, y_pred)  # update the metric
     ...     model = model_pipeline.learn_one(x, y)  # make the model learn
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.08
+    Accuracy: 0.4468
     """
 
     def __init__(
