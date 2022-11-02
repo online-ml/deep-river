@@ -8,12 +8,12 @@ class MyModule(torch.nn.Module):
         super().__init__()
         self.n_features=n_features
         self.hidden_size = hidden_size
-        self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=hidden_size, num_layers=1)
+        self.lstm = torch.nn.LSTM(input_size=n_features, hidden_size=hidden_size, batch_first=False, num_layers=1, bias=False)
         self.softmax = torch.nn.Softmax(dim=-1)
 
     def forward(self, X, **kwargs):
         output, (hn, cn) = self.lstm(X)  # lstm with input, hidden, and internal state
-        hn = hn.view(-1, self.hidden_size)
+        hn = hn.view(-1, self.lstm.hidden_size)
         return self.softmax(hn)
 
 if __name__ == '__main__':

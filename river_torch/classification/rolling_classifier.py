@@ -279,10 +279,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if isinstance(self.output_layer, nn.Linear):
             n_classes_to_add = out_features_target - self.output_layer.out_features
             if n_classes_to_add > 0:
-                new_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
-                nn.init.kaiming_uniform_(new_weights, a=math.sqrt(5))
+                mean_input_weights = torch.empty(n_classes_to_add, self.output_layer.in_features)
+                nn.init.kaiming_uniform_(mean_input_weights, a=math.sqrt(5))
                 self.output_layer.weight = nn.parameter.Parameter(
-                    torch.cat([self.output_layer.weight, new_weights], axis=0)
+                    torch.cat([self.output_layer.weight, mean_input_weights], axis=0)
                 )
 
                 if self.output_layer.bias is not None:
@@ -297,9 +297,71 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         elif isinstance(self.output_layer,nn.LSTM):
             n_classes_to_add = out_features_target - self.output_layer.hidden_size
             if n_classes_to_add > 0:
-                new_weights = torch.empty(4*n_classes_to_add,
-                                          self.output_layer.input_size)
+                w_ii, w_if, w_ig, w_io = torch.chunk(self.output_layer.weight_ih_l0, chunks=4, dim=0)
+                w_hi, w_hf, w_hg, w_ho = torch.chunk(self.output_layer.weight_hh_l0, chunks=4, dim=0)
+                input_weights = [w_ii, w_if, w_ig, w_io]
+                hidden_weights = [w_hi, w_hf, w_hg, w_ho]
+                mean_input_weights = [torch.mean(w,dim=0).unsqueeze(1).T for w in input_weights]
+                mean_hidden_weights_dim_0 = [torch.mean(w,dim=0).unsqueeze(1) for w in hidden_weights]
+                mean_hidden_weights_dim_1 = [torch.mean(w,dim=1).unsqueeze(1) for w in hidden_weights]
+
+                if n_classes_to_add > 1:
+                    mean_input_weights = [w.unsqueeze(1).repeat(1, n_classes_to_add,1).squeeze() for w in mean_input_weights]
+                    if len(mean_input_weights[0].shape) == 1:
+                        mean_input_weights = [w.unsqueeze(1) for w in mean_input_weights]
+
+                    mean_hidden_weights_dim_0 = [w.unsqueeze(1).T.repeat(1, n_classes_to_add,1).squeeze() for w in mean_hidden_weights_dim_0]
+                    if len(mean_hidden_weights_dim_0[0].shape) == 1:
+                        mean_hidden_weights_dim_0 = [w.unsqueeze(1) for w in mean_hidden_weights_dim_0]
+
+                    mean_hidden_weights_dim_1 = [w.unsqueeze(1).repeat(1, n_classes_to_add, 1).squeeze() for w in mean_hidden_weights_dim_1]
+                    if len(mean_hidden_weights_dim_1[0].shape) == 1:
+                        mean_hidden_weights_dim_1 = [w.unsqueeze(1) for w in mean_hidden_weights_dim_1]
+
+
+                self.output_layer.weight_ih_l0 = nn.parameter.Parameter(
+                    torch.cat([input_weights[0],
+                               mean_input_weights[0],
+                               input_weights[1],
+                               mean_input_weights[1],
+                               input_weights[2],
+                               mean_input_weights[2],
+                               input_weights[3],
+                               mean_input_weights[3]], axis=0))
+                self.output_layer.weight_hh_l0 = nn.parameter.Parameter(
+                    torch.cat([
+                        torch.cat([
+                           hidden_weights[0],
+                           mean_hidden_weights_dim_0[0],
+                           hidden_weights[1],
+                           mean_hidden_weights_dim_0[1],
+                           hidden_weights[2],
+                           mean_hidden_weights_dim_0[2],
+                           hidden_weights[3],
+                           mean_hidden_weights_dim_0[3]], axis=0),
+                        torch.cat([
+                            mean_hidden_weights_dim_1[0].T,
+                            torch.empty(n_classes_to_add, n_classes_to_add),
+                            mean_hidden_weights_dim_1[1].T,
+                            torch.empty(n_classes_to_add, n_classes_to_add),
+                            mean_hidden_weights_dim_1[2].T,
+                            torch.empty(n_classes_to_add, n_classes_to_add),
+                            mean_hidden_weights_dim_1[3].T,
+                            torch.empty(n_classes_to_add, n_classes_to_add),
+                        ], axis=0)
+                    ],axis=1))
+
+                if self.output_layer.bias == True:
+                    new_bias_hh_l0 = torch.empty(n_classes_to_add*4)
+                    new_bias_ih_l0 = torch.empty(n_classes_to_add*4)
+                    self.output_layer.bias_hh_l0 = nn.parameter.Parameter(
+                        torch.cat([self.output_layer.bias_hh_l0, new_bias_hh_l0], axis=0)
+                    )
+                    self.output_layer.bias_ih_l0 = nn.parameter.Parameter(
+                        torch.cat([self.output_layer.bias_ih_l0, new_bias_ih_l0], axis=0)
+                    )
                 self.output_layer.hidden_size += n_classes_to_add
+
 
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
 
