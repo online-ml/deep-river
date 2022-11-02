@@ -2,7 +2,7 @@
   <img height="150px" src="docs/img/logo.png" alt="incremental dl logo">
 </p>
 <p align="center">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/river_torch">
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/river-torch">
     <a href="https://codecov.io/gh/online-ml/river-torch" > 
         <img src="https://codecov.io/gh/online-ml/river-torch/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
     </a>
