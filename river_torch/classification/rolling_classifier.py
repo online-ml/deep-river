@@ -339,6 +339,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         elif isinstance(self.output_layer,nn.LSTM):
             n_classes_to_add = out_features_target - self.output_layer.hidden_size
             if n_classes_to_add > 0:
+                assert not self.output_layer.bidirectional, "Bidirectional LSTM not supported"
+                assert self.output_layer.num_layers >= 1, "Multi-layer LSTM not supported"
                 w_ii, w_if, w_ig, w_io = torch.chunk(self.output_layer.weight_ih_l0, chunks=4, dim=0)
                 w_hi, w_hf, w_hg, w_ho = torch.chunk(self.output_layer.weight_hh_l0, chunks=4, dim=0)
                 input_weights = [w_ii, w_if, w_ig, w_io]
