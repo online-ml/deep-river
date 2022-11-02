@@ -17,11 +17,12 @@ class MyModule(torch.nn.Module):
         return self.softmax(hn)
 
 if __name__ == '__main__':
-    dataset = datasets.Keystroke().take(10000)
+    dataset = datasets.Bikes()
     metric = metrics.Accuracy()
     optimizer_fn = torch.optim.SGD
 
-    model_pipeline = preprocessing.StandardScaler()
+    model_pipeline = compose.Select('clouds', 'humidity', 'pressure', 'temperature', 'wind')
+    model_pipeline |= preprocessing.StandardScaler()
     model_pipeline |= RollingClassifier(
         module=MyModule,
         loss_fn="binary_cross_entropy",
@@ -29,10 +30,10 @@ if __name__ == '__main__':
         window_size=20,
         lr=1e-2,
         append_predict=True,
-        is_class_incremental=True
+        is_class_incremental=False
     )
 
-    for x, y in dataset:
+    for x, y in dataset.take(5000):
         y_pred = model_pipeline.predict_one(x)  # make a prediction
         metric = metric.update(y, y_pred)  # update the metric
         model = model_pipeline.learn_one(x, y)  # make the model learn
