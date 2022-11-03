@@ -457,6 +457,75 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                         )
                     )
                 self.output_layer.hidden_size += n_classes_to_add
+        elif isinstance(self.output_layer, nn.RNN):
+            n_classes_to_add = out_features_target - self.output_layer.hidden_size
+            if n_classes_to_add > 0:
+                assert (
+                    not self.output_layer.bidirectional
+                ), "Bidirectional RNN not supported. Set bidirectional=False."
+                assert (
+                        self.output_layer.num_layers >= 1
+                ), "Multi-layer RNN not supported. Set num_layers=1."
+
+                mean_input_weights = torch.mean(self.output_layer.weight_ih_l0, dim=0).unsqueeze(1).T
+                mean_hidden_weights_dim_0 = torch.mean(self.output_layer.weight_hh_l0, dim=0).unsqueeze(0)
+                mean_hidden_weights_dim_1 = torch.mean(self.output_layer.weight_hh_l0, dim=1).unsqueeze(1)
+
+                if n_classes_to_add > 1:
+                    mean_input_weights = mean_input_weights.repeat(n_classes_to_add, 1)
+                    mean_hidden_weights_dim_0 = mean_hidden_weights_dim_0.repeat(n_classes_to_add,1)
+                    mean_hidden_weights_dim_1 = mean_hidden_weights_dim_1.repeat(1,n_classes_to_add)
+
+                self.output_layer.weight_ih_l0 = nn.parameter.Parameter(
+                    torch.cat(
+                        [
+                            self.output_layer.weight_ih_l0,
+                            mean_input_weights
+                        ],
+                        axis=0,
+                    )
+                )
+                self.output_layer.weight_hh_l0 = nn.parameter.Parameter(
+                    torch.cat(
+                        [
+                            torch.cat(
+                                [
+                                    self.output_layer.weight_hh_l0,
+                                    mean_hidden_weights_dim_0
+                                ],
+                                axis=0,
+                            ),
+                            torch.cat(
+                                [
+                                    mean_hidden_weights_dim_1,
+                                    torch.normal(
+                                        0,
+                                        0.5,
+                                        size=(n_classes_to_add, n_classes_to_add),
+                                    )
+                                ],
+                                axis=0,
+                            ),
+                        ],
+                        axis=1,
+                    )
+                )
+
+                if self.output_layer.bias:
+                    new_bias_hh_l0 = torch.empty(n_classes_to_add)
+                    new_bias_ih_l0 = torch.empty(n_classes_to_add)
+                    self.output_layer.bias_hh_l0 = nn.parameter.Parameter(
+                        torch.cat(
+                            [self.output_layer.bias_hh_l0, new_bias_hh_l0], axis=0
+                        )
+                    )
+                    self.output_layer.bias_ih_l0 = nn.parameter.Parameter(
+                        torch.cat(
+                            [self.output_layer.bias_ih_l0, new_bias_ih_l0], axis=0
+                        )
+                    )
+                self.output_layer.hidden_size += n_classes_to_add
+
 
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
 
@@ -473,7 +542,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], (nn.Linear, nn.LSTM)
+            tracker.ordered_modules[-1], (nn.Linear, nn.LSTM, nn.RNN)
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
