@@ -249,12 +249,6 @@ class Classifier(DeepEstimator, base.Classifier):
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        y = labels2onehot(
-            y,
-            self.observed_classes,
-            self.output_layer.out_features,
-            device=self.device,
-        )
         self.module.train()
         return self._learn(x=X, y=y)
 
