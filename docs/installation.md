@@ -1,4 +1,4 @@
-# Installation
+#💈Installation
 
 River is meant to work with Python 3.8 and above. Installation can be done via `pip`:
 
