@@ -86,8 +86,6 @@ plugins:
             merge_init_into_class: True
 
 
-
-
 extra_javascript:
   - javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
