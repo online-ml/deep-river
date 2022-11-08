@@ -17,7 +17,7 @@ from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
 
 class _TestModule(torch.nn.Module):
     def __init__(self, n_features):
-        super(_TestModule, self).__init__()
+        super().__init__()
         self.dense0 = torch.nn.Linear(n_features, 5)
         self.nonlin = torch.nn.ReLU()
         self.dense1 = torch.nn.Linear(5, 2)
@@ -336,3 +336,4 @@ class Classifier(DeepEstimator, base.Classifier):
     def initialize_module(self, **kwargs):
         super().initialize_module(**kwargs)
         self.find_output_layer(n_features=kwargs["n_features"])
+

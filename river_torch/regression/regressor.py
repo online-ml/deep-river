@@ -12,7 +12,7 @@ from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
 
 class _TestModule(torch.nn.Module):
     def __init__(self, n_features):
-        super(_TestModule, self).__init__()
+        super().__init__()
 
         self.dense0 = torch.nn.Linear(n_features, 10)
         self.nonlin = torch.nn.ReLU()

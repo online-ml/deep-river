@@ -13,7 +13,7 @@ from river_torch.utils.tensor_conversion import df2tensor
 
 class _TestAutoencoder(torch.nn.Module):
     def __init__(self, n_features, latent_dim=3):
-        super(_TestAutoencoder, self).__init__()
+        super().__init__()
         self.linear1 = nn.Linear(n_features, latent_dim)
         self.nonlin = torch.nn.LeakyReLU()
         self.linear2 = nn.Linear(latent_dim, n_features)
