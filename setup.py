@@ -20,21 +20,20 @@ base_packages = [
     "numpy~=1.23.2",
     "river~=0.14.0",
     "tqdm~=4.61.2",
-    "pytest~=7.0.1",
     "ordered-set~=4.1.0",
 ]
 
 dev_packages = base_packages + [
     "graphviz>=0.10.1",
     "matplotlib>=3.0.2",
-    "mypy>=0.761",
-    "pre-commit>=2.9.2",
-    "pytest>=4.5.0",
-    "pytest-cov>=2.6.1",
+    "mypy>=0.990",
+    "pre-commit>=2.20.0",
+    "pytest>=7.2.0",
+    "pytest-cov>=4.0.0",
     "scikit-learn>=0.22.1",
-    "black>=22.1.0",
-    "flake8>=4.0.1",
-    "isort>=5.9.3",
+    "black>=22.10.0",
+    "flake8>=5.0.4",
+    "isort>=5.10.1",
     "jupyter>=1.0.0",
 ]
 
