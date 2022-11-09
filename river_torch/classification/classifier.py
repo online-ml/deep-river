@@ -336,4 +336,3 @@ class Classifier(DeepEstimator, base.Classifier):
     def initialize_module(self, **kwargs):
         super().initialize_module(**kwargs)
         self.find_output_layer(n_features=kwargs["n_features"])
-
