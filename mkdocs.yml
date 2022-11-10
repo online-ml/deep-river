@@ -29,9 +29,7 @@ theme:
       toggle:
         icon: material/toggle-switch-off-outline
         name: Switch to light mode
-  font:
-    text: Rubik
-    code: Roboto Mono
+  font: false
   logo: img/logo_square.png
   #favicon: material/cloud
   features:
