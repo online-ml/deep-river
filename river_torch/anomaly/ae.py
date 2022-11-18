@@ -27,16 +27,25 @@ class _TestAutoencoder(torch.nn.Module):
 
 class Autoencoder(DeepEstimator, AnomalyDetector):
     """
-    Wrapper for PyTorch autoencoder models that uses the networks reconstruction error for scoring the anomalousness of a given example.
+    Wrapper for PyTorch autoencoder models that uses the networks
+    reconstruction error for scoring the anomalousness of a given example.
 
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the returned
+        model's input shape can be determined based on the number of features
+        in the initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model. Can be a
+        loss function provided by `torch.nn.functional` or one of the
+        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model. Can be an
+        optimizer class provided by `torch.optim` or one of the following:
+        "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
     device
@@ -44,7 +53,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
     seed
         Random seed to be used for training the wrapped model.
     **kwargs
-        Parameters to be passed to the `torch.Module` class aside from `n_features`.
+        Parameters to be passed to the `torch.Module` class
+        aside from `n_features`.
 
     Examples
     --------
@@ -109,12 +119,14 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
     @classmethod
     def _unit_test_params(cls) -> dict:
         """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
+        Returns a dictionary of parameters to be used for unit testing
+        the respective class.
 
         Yields
         -------
         dict
-            Dictionary of parameters to be used for unit testing the respective class.
+            Dictionary of parameters to be used for unit testing
+            the respective class.
         """
 
         yield {
@@ -127,7 +139,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
     def _unit_test_skips(self) -> set:
         """
         Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        Most estimators pass the full test suite. However, in some cases,
+        some estimators might not
         be able to pass certain checks.
 
         Returns
@@ -176,7 +189,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
     def score_one(self, x: dict) -> float:
         """
-        Returns an anomaly score for the provided example in the form of the autoencoder's reconstruction error.
+        Returns an anomaly score for the provided example in the form of
+        the autoencoder's reconstruction error.
 
         Parameters
         ----------
@@ -186,7 +200,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         Returns
         -------
         float
-            Anomaly score for the given example. Larger values indicate more anomalous examples.
+            Anomaly score for the given example. Larger values indicate
+            more anomalous examples.
 
         """
 
@@ -224,7 +239,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
     def score_many(self, X: pd.DataFrame) -> np.ndarray:
         """
-        Returns an anomaly score for the provided batch of examples in the form of the autoencoder's reconstruction error.
+        Returns an anomaly score for the provided batch of examples in
+        the form of the autoencoder's reconstruction error.
 
         Parameters
         ----------
@@ -234,7 +250,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         Returns
         -------
         float
-            Anomaly scores for the given batch of examples. Larger values indicate more anomalous examples.
+            Anomaly scores for the given batch of examples. Larger values
+            indicate more anomalous examples.
         """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)

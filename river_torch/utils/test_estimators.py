@@ -13,7 +13,8 @@ def iter_estimators():
     for submodule in importlib.import_module("river_torch").__all__:
 
         def is_estimator(obj):
-            return inspect.isclass(obj) and issubclass(obj, river.base.Estimator)
+            return inspect.isclass(obj) and \
+                   issubclass(obj, river.base.Estimator)
 
         for _, obj in inspect.getmembers(
             importlib.import_module(f"river_torch.{submodule}"), is_estimator
@@ -25,7 +26,8 @@ def iter_estimators_that_can_be_tested():
     ignored = ()
 
     def can_be_tested(estimator):
-        return not inspect.isabstract(estimator) and not issubclass(estimator, ignored)
+        return not inspect.isabstract(estimator) and \
+               not issubclass(estimator, ignored)
 
     for estimator in filter(can_be_tested, iter_estimators()):
         for params in estimator._unit_test_params():

@@ -28,16 +28,25 @@ class _TestLSTM(torch.nn.Module):
 
 class RollingRegressor(RollingDeepEstimator, base.Regressor):
     """
-    Wrapper that feeds a sliding window of the most recent examples to the wrapped PyTorch regression model.
+    Wrapper that feeds a sliding window of the most recent examples to the
+    wrapped PyTorch regression model.
 
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the returned
+        model's input shape can be determined based on the number of features
+        in the initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model. Can be a
+        loss function provided by `torch.nn.functional` or one of the
+        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model. Can be an
+        optimizer class provided by `torch.optim` or one of the following:
+        "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
     device
@@ -79,12 +88,14 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
     @classmethod
     def _unit_test_params(cls) -> dict:
         """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
+        Returns a dictionary of parameters to be used for unit testing
+        the respective class.
 
         Yields
         -------
         dict
-            Dictionary of parameters to be used for unit testing the respective class.
+            Dictionary of parameters to be used for unit testing
+            the respective class.
         """
 
         yield {
@@ -98,7 +109,8 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
     def _unit_test_skips(self) -> set:
         """
         Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        Most estimators pass the full test suite. However,
+        in some cases, some estimators might not
         be able to pass certain checks.
         Returns
         -------
@@ -115,7 +127,8 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def predict_one(self, x: dict) -> RegTarget:
         """
-        Predicts the target value for the current sliding window of most recent examples.
+        Predicts the target value for the current sliding
+        window of most recent examples.
 
         Parameters
         ----------
@@ -140,7 +153,8 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def learn_one(self, x: dict, y: RegTarget) -> "RollingRegressor":
         """
-        Performs one step of training with the sliding window of the most recent examples.
+        Performs one step of training with the sliding
+        window of the most recent examples.
 
         Parameters
         ----------
@@ -190,7 +204,10 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             self.initialize_module(**self.kwargs)
 
         batch = df2rolling_tensor(
-            X, self._x_window, device=self.device, update_window=self.append_predict
+            X,
+            self._x_window,
+            device=self.device,
+            update_window=self.append_predict
         )
         if batch is not None:
             self.module.eval()

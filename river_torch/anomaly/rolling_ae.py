@@ -13,7 +13,11 @@ from river_torch.utils.tensor_conversion import (df2rolling_tensor,
 
 
 class _TestLSTMAutoencoder(nn.Module):
-    def __init__(self, n_features, hidden_size=10, n_layers=1, batch_first=False):
+    def __init__(self,
+                 n_features,
+                 hidden_size=10,
+                 n_layers=1,
+                 batch_first=False):
         super().__init__()
         self.n_features = n_features
         self.hidden_size = hidden_size
@@ -46,16 +50,28 @@ class _TestLSTMAutoencoder(nn.Module):
 
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     """
-    Wrapper for PyTorch autoencoder models that uses the networks reconstruction error for scoring the anomalousness of a given example. The class also features a rolling window to allow the model to make predictions based on the reconstructability of multiple previous examples.
+    Wrapper for PyTorch autoencoder models that uses the networks
+    reconstruction error for scoring the anomalousness of a given example.
+    The class also features a rolling window to allow the model to make
+    predictions based on the reconstructability of multiple previous examples.
 
     Parameters
     ----------
     module
-        Torch module that builds the autoencoder to be wrapped. The module should accept inputs with shape `(window_size, batch_size, n_features)`. It should also feature a parameter `n_features` used to adapt the network to the number of features in the initial training example.
+        Torch module that builds the autoencoder to be wrapped.
+        he module should accept inputs with shape
+        `(window_size, batch_size, n_features)`. It should also
+        feature a parameter `n_features` used to adapt the network to the
+        number of features in the initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model. Can be a
+        loss function provided by `torch.nn.functional` or one of the
+        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model. Can be an
+        optimizer class provided by `torch.optim` or one of the following:
+        "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
     device
@@ -99,12 +115,14 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     @classmethod
     def _unit_test_params(cls) -> dict:
         """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
+        Returns a dictionary of parameters to be used for unit testing
+        the respective class.
 
         Yields
         -------
         dict
-            Dictionary of parameters to be used for unit testing the respective class.
+            Dictionary of parameters to be used for unit testing
+            the respective class.
         """
 
         yield {
@@ -117,7 +135,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     def _unit_test_skips(self) -> set:
         """
         Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        Most estimators pass the full test suite. However, in some cases,
+        some estimators might not
         be able to pass certain checks.
         Returns
         -------
@@ -210,7 +229,10 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self.initialize_module(**self.kwargs)
 
         batch = df2rolling_tensor(
-            X, self._x_window, device=self.device, update_window=self.append_predict
+            X,
+            self._x_window,
+            device=self.device,
+            update_window=self.append_predict
         )
 
         if batch is not None:

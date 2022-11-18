@@ -12,26 +12,42 @@ from river_torch.utils import dict2tensor
 
 class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     """
-    Wrapper for PyTorch autoencoder models for anomaly detection that reduces the employed learning rate based on an outlier probability estimate of the input example as well as a threshold probability `skip_threshold`. If the outlier probability is above the threshold, the learning rate is reduced to less than 0. Given the probability estimate $p_out$, the adjusted learning rate $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
+    Wrapper for PyTorch autoencoder models for anomaly detection that
+    reduces the employed learning rate based on an outlier probability
+    estimate of the input example as well as a threshold probability
+    `skip_threshold`. If the outlier probability is above the threshold,
+    the learning rate is reduced to less than 0. Given the probability
+    estimate $p_out$, the adjusted learning rate
+    $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
 
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the returned
+        model's input shape can be determined based on the number of features
+        in the initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model.
+        an be a loss function provided by `torch.nn.functional` or one of the
+        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Base learning rate of the optimizer.
     skip_threshold
-        Threshold probability to use as a reference for the reduction of the base learning rate.
+        Threshold probability to use as a reference for the reduction
+        of the base learning rate.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
         Random seed to be used for training the wrapped model.
     **kwargs
-        Parameters to be passed to the `module` function aside from `n_features`. #todo refactor
+        Parameters to be passed to the `module` function
+        aside from `n_features`.
 
         Examples
     --------
@@ -97,12 +113,16 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         )
         self.window_size = window_size
         self.skip_threshold = skip_threshold
-        self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
-        self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
+        self.rolling_mean = utils.Rolling(stats.Mean(),
+                                          window_size=window_size)
+        self.rolling_var = utils.Rolling(stats.Var(),
+                                         window_size=window_size)
 
     def learn_one(self, x: dict, **kwargs) -> "ProbabilityWeightedAutoencoder":
         """
-        Performs one step of training with a single example, scaling the employed learning rate based on the outlier probability estimate of the input example.
+        Performs one step of training with a single example,
+        scaling the employed learning rate based on the outlier
+        probability estimate of the input example.
 
         Parameters
         ----------
@@ -140,7 +160,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
         loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
-        loss = torch.tensor((self.skip_threshold - prob) / self.skip_threshold) * loss
+        loss = torch.tensor((self.skip_threshold - prob) /
+                            self.skip_threshold) * loss
 
         self.optimizer.zero_grad()
         loss.backward()

@@ -4,11 +4,12 @@ import numpy as np
 from river import base, utils
 from river.anomaly import HalfSpaceTrees
 from river.anomaly.base import AnomalyDetector
-from river.stats import EWMean, Max, Mean, Min, RollingMax, RollingMin
+from river.stats import Mean, Min
 
 
 class AnomalyScaler(base.Wrapper, AnomalyDetector):
-    """Wrapper around an anomaly detector that scales the output of the model to account for drift in the wrapped model's anomaly scores.
+    """Wrapper around an anomaly detector that scales the output of the model
+    to account for drift in the wrapped model's anomaly scores.
 
     Parameters
     ----------
@@ -22,12 +23,14 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
     @classmethod
     def _unit_test_params(self) -> dict:
         """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
+        Returns a dictionary of parameters to be used for unit testing
+        the respective class.
 
         Yields
         -------
         dict
-            Dictionary of parameters to be used for unit testing the respective class.
+            Dictionary of parameters to be used for unit testing the
+            respective class.
         """
         yield {"anomaly_detector": HalfSpaceTrees()}
 
@@ -35,7 +38,8 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
     def _unit_test_skips(self) -> set:
         """
         Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        Most estimators pass the full test suite. However, in some cases,
+        some estimators might not
         be able to pass certain checks.
 
         Returns
@@ -57,18 +61,22 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
 
     @abc.abstractmethod
     def score_one(self, *args) -> float:
-        """Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector.
+        """Return a scaled anomaly score based on raw score provided by
+        the wrapped anomaly detector.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+        A high score is indicative of an anomaly. A low score corresponds
+        to a normal observation.
 
         Parameters
         ----------
         *args
-            Depends on whether the underlying anomaly detector is supervised or not.
+            Depends on whether the underlying anomaly detector
+            is supervised or not.
 
         Returns
         -------
-        An scaled anomaly score. Larger values indicate more anomalous examples.
+        An scaled anomaly score. Larger values indicate
+        more anomalous examples.
         """
 
     def learn_one(self, *args) -> "AnomalyScaler":
@@ -78,7 +86,8 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         Parameters
         ----------
         *args
-            Depends on whether the underlying anomaly detector is supervised or not.
+            Depends on whether the underlying anomaly detector
+            is supervised or not.
 
         Returns
         -------
@@ -91,14 +100,17 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
 
     @abc.abstractmethod
     def score_many(self, *args) -> np.ndarray:
-        """Return scaled anomaly scores based on raw score provided by the wrapped anomaly detector.
+        """Return scaled anomaly scores based on raw score provided by
+        the wrapped anomaly detector.
 
-        A high score is indicative of an anomaly. A low score corresponds to a normal observation.
+        A high score is indicative of an anomaly. A low score corresponds
+        to a normal observation.
 
         Parameters
         ----------
         *args
-            Depends on whether the underlying anomaly detector is supervised or not.
+            Depends on whether the underlying anomaly detector is
+            supervised or not.
 
         Returns
         -------
@@ -108,7 +120,8 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
 
 class AnomalyStandardScaler(AnomalyScaler):
     """
-    Wrapper around an anomaly detector that standardizes the model's output using incremental mean and variance metrics.
+    Wrapper around an anomaly detector that standardizes the model's output
+    using incremental mean and variance metrics.
 
     Parameters
     ----------
@@ -132,24 +145,30 @@ class AnomalyStandardScaler(AnomalyScaler):
         super().__init__(anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
-        self.mean = utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
+        self.mean = utils.Rolling(Mean(), self.window_size) \
+            if self.rolling else Mean()
         self.sq_mean = (
-            utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
+            utils.Rolling(Mean(), self.window_size)
+            if self.rolling else Mean()
         )
         self.with_std = with_std
 
     def score_one(self, *args):
         """
-        Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
+        Return a scaled anomaly score based on raw score provided by the
+        wrapped anomaly detector. Larger values indicate more
+        anomalous examples.
 
         Parameters
         ----------
         *args
-            Depends on whether the underlying anomaly detector is supervised or not.
+            Depends on whether the underlying anomaly detector
+            is supervised or not.
 
         Returns
         -------
-        An scaled anomaly score. Larger values indicate more anomalous examples.
+        An scaled anomaly score. Larger values indicate more
+        anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args)
         mean = self.mean.update(raw_score).get()
@@ -165,7 +184,8 @@ class AnomalyStandardScaler(AnomalyScaler):
 
 
 class AnomalyMeanScaler(AnomalyScaler):
-    """Wrapper around an anomaly detector that scales the model's output by the incremental mean of previous scores.
+    """Wrapper around an anomaly detector that scales the model's output
+    by the incremental mean of previous scores.
 
     Parameters
     ----------
@@ -188,20 +208,25 @@ class AnomalyMeanScaler(AnomalyScaler):
         super().__init__(anomaly_detector=anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
-        self.mean = utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
+        self.mean = utils.Rolling(Mean(), self.window_size) \
+            if self.rolling else Mean()
 
     def score_one(self, *args):
         """
-        Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
+        Return a scaled anomaly score based on raw score provided by the
+        wrapped anomaly detector. Larger values indicate more
+        anomalous examples.
 
         Parameters
         ----------
         *args
-            Depends on whether the underlying anomaly detector is supervised or not.
+            Depends on whether the underlying anomaly detector is
+            supervised or not.
 
         Returns
         -------
-        An scaled anomaly score. Larger values indicate more anomalous examples.
+        An scaled anomaly score. Larger values indicate more
+        anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args)
         mean = self.mean.update(raw_score).get()
@@ -211,7 +236,8 @@ class AnomalyMeanScaler(AnomalyScaler):
 
 
 class AnomalyMinMaxScaler(AnomalyScaler):
-    """Wrapper around an anomaly detector that scales the model's output to $[0, 1]$ using rolling min and max metrics.
+    """Wrapper around an anomaly detector that scales the model's output to
+    $[0, 1]$ using rolling min and max metrics.
 
     Parameters
     ----------
@@ -232,21 +258,27 @@ class AnomalyMinMaxScaler(AnomalyScaler):
         super().__init__(anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
-        self.min = utils.Rolling(Min(), self.window_size) if self.rolling else Min()
-        self.max = utils.Rolling(Min(), self.window_size) if self.rolling else Min()
+        self.min = utils.Rolling(Min(), self.window_size) \
+            if self.rolling else Min()
+        self.max = utils.Rolling(Min(), self.window_size) \
+            if self.rolling else Min()
 
     def score_one(self, *args):
         """
-        Return a scaled anomaly score based on raw score provided by the wrapped anomaly detector. Larger values indicate more anomalous examples.
+        Return a scaled anomaly score based on raw score provided by the
+        wrapped anomaly detector. Larger values indicate more
+        anomalous examples.
 
         Parameters
         ----------
         *args
-            Depends on whether the underlying anomaly detector is supervised or not.
+            Depends on whether the underlying anomaly detector is
+            supervised or not.
 
         Returns
         -------
-        An scaled anomaly score. Larger values indicate more anomalous examples.
+        An scaled anomaly score. Larger values indicate more
+        anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args)
         min = self.min.update(raw_score).get()

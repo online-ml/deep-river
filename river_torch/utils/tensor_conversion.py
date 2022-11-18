@@ -41,7 +41,8 @@ def dict2rolling_tensor(
     return output
 
 
-def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) -> torch.Tensor:
+def df2tensor(x: pd.DataFrame, device="cpu", dtype=torch.float32) \
+        -> torch.Tensor:
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
@@ -59,7 +60,8 @@ def df2rolling_tensor(
     x_new = x.values.tolist()
     x = x_old + x_new
     if len(x) >= window.maxlen:
-        x = [x[i : i + len(x) - window.maxlen + 1] for i in range(window.maxlen)]
+        x = [x[i: i + len(x) - window.maxlen + 1] for i in
+             range(window.maxlen)]
         x = torch.tensor(x, device=device, dtype=dtype)
     else:
         x = None
@@ -107,7 +109,8 @@ def output2proba(
     n_unobserved_classes = preds.shape[1] - len(classes)
     if n_unobserved_classes > 0:
         classes = list(classes)
-        classes.extend([f"unobserved {i}" for i in range(n_unobserved_classes)])
+        classes.extend([f"unobserved {i}" for i in
+                        range(n_unobserved_classes)])
     probas = (
         dict(zip(classes, preds[0]))
         if preds.shape[0] == 1

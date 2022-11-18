@@ -31,16 +31,25 @@ class _TestModule(torch.nn.Module):
 
 class Regressor(DeepEstimator, base.Regressor):
     """
-    Wrapper for PyTorch regression models that enables compatibility with River.
+    Wrapper for PyTorch regression models that enables
+    compatibility with River.
 
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the
+        returned model's input shape can be determined based on the number
+        of features in the initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model.
+        Can be a loss function provided by `torch.nn.functional` or one of
+        the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
     device
@@ -78,12 +87,14 @@ class Regressor(DeepEstimator, base.Regressor):
     @classmethod
     def _unit_test_params(cls) -> dict:
         """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
+        Returns a dictionary of parameters to be used for unit
+        testing the respective class.
 
         Yields
         -------
         dict
-            Dictionary of parameters to be used for unit testing the respective class.
+            Dictionary of parameters to be used for unit testing the
+            respective class.
         """
 
         yield {
@@ -96,7 +107,8 @@ class Regressor(DeepEstimator, base.Regressor):
     def _unit_test_skips(self) -> set:
         """
         Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        Most estimators pass the full test suite. However, in some cases,
+        some estimators might not
         be able to pass certain checks.
         Returns
         -------

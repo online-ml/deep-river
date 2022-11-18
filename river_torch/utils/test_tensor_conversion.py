@@ -129,7 +129,8 @@ def test_output2proba():
     assert_dicts_almost_equal(
         output2proba(y, classes),
         dict(
-            zip(["first class", "unobserved 0"], np.array([0.6, 0.4], dtype=np.float32))
+            zip(["first class", "unobserved 0"], np.array([0.6, 0.4],
+                                                          dtype=np.float32))
         ),
     )
     y = torch.tensor([[0.6, 0.4, 0.0]])

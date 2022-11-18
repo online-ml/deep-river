@@ -13,16 +13,25 @@ from river_torch.utils import get_loss_fn, get_optim_fn
 
 class DeepEstimator(base.Estimator):
     """
-    Abstract base class that implements basic functionality of River-compatible PyTorch wrappers.
+    Abstract base class that implements basic functionality of
+    River-compatible PyTorch wrappers.
 
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the returned
+        model's input shape can be determined based on the number of features
+        in the initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model. Can be a loss
+        function provided by `torch.nn.functional` or one of the following:
+        'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
     device
@@ -86,7 +95,8 @@ class DeepEstimator(base.Estimator):
         Returns
         -------
         dict
-            Dictionary containing variables in both `sk_params` and `fn`'s arguments.
+            Dictionary containing variables in both `sk_params` and
+            `fn`'s arguments.
         """
         override = override or {}
         res = {}
@@ -113,25 +123,37 @@ class DeepEstimator(base.Estimator):
           The initialized component.
         """
         if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(**self._filter_kwargs(self.module, kwargs))
+            self.module = self.module(
+                **self._filter_kwargs(self.module, kwargs))
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+        self.optimizer = self.optimizer_fn(self.module.parameters(),
+                                           lr=self.lr)
         self.module_initialized = True
 
 
 class RollingDeepEstimator(base.Estimator):
     """
-    Abstract base class that implements basic functionality of River-compatible PyTorch wrappers including a rolling window to allow the model to make predictions based on multiple previous examples.
+    Abstract base class that implements basic functionality of
+    River-compatible PyTorch wrappers including a rolling window to allow the
+    model to make predictions based on multiple previous examples.
 
     Parameters
     ----------
     module
-        Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+        Torch Module that builds the autoencoder to be wrapped. The Module
+        should accept parameter `n_features` so that the returned model's
+        input shape can be determined based on the number of features in the
+        initial training example.
     loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+        Loss function to be used for training the wrapped model. Can be a loss
+        function provided by `torch.nn.functional` or one of the following:
+        'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
     optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
     device
@@ -176,7 +198,8 @@ class RollingDeepEstimator(base.Estimator):
     @abc.abstractmethod
     def learn_one(self, x: dict, y: RegTarget) -> "RollingDeepEstimator":
         """
-        Performs one step of training with a sliding window of the most recent examples.
+        Performs one step of training with a sliding window of
+        the most recent examples.
 
         Parameters
         ----------
@@ -195,7 +218,8 @@ class RollingDeepEstimator(base.Estimator):
     @abc.abstractmethod
     def learn_many(self, X: pd.DataFrame, y: list) -> "RollingDeepEstimator":
         """
-        Performs one step of training with a batch of sliding windows of the most recent examples.
+        Performs one step of training with a batch of sliding windows of
+        the most recent examples.
 
         Parameters
         ----------
@@ -224,7 +248,8 @@ class RollingDeepEstimator(base.Estimator):
         Returns
         -------
         dict
-            Dictionary containing variables in both `sk_params` and `fn`'s arguments.
+            Dictionary containing variables in both `sk_params` and
+            `fn`'s arguments.
         """
         override = override or {}
         res = {}
@@ -251,8 +276,11 @@ class RollingDeepEstimator(base.Estimator):
           The initialized component.
         """
         if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(**self._filter_kwargs(self.module, kwargs))
+            self.module = self.module(
+                **self._filter_kwargs(self.module, kwargs))
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+        self.optimizer = self.optimizer_fn(
+            self.module.parameters(),
+            lr=self.lr)
         self.module_initialized = True
