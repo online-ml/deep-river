@@ -8,16 +8,16 @@ from river import anomaly
 from torch import nn
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor)
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+)
 
 
 class _TestLSTMAutoencoder(nn.Module):
-    def __init__(self,
-                 n_features,
-                 hidden_size=10,
-                 n_layers=1,
-                 batch_first=False):
+    def __init__(
+        self, n_features, hidden_size=10, n_layers=1, batch_first=False
+    ):
         super().__init__()
         self.n_features = n_features
         self.hidden_size = hidden_size
@@ -232,7 +232,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             X,
             self._x_window,
             device=self.device,
-            update_window=self.append_predict
+            update_window=self.append_predict,
         )
 
         if batch is not None:

@@ -11,9 +11,12 @@ from torch import nn
 
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor,
-                                                 labels2onehot, output2proba)
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 class _TestLSTM(torch.nn.Module):
@@ -196,8 +199,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, y: ClfTarget, **kwargs) \
-            -> "RollingClassifier":
+    def learn_one(
+        self, x: dict, y: ClfTarget, **kwargs
+    ) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
@@ -241,7 +245,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             y=y,
             classes=self.observed_classes,
             n_classes=n_classes,
-            device=self.device
+            device=self.device,
         )
         loss = self.loss_fn(y_pred, y)
         loss.backward()
@@ -322,7 +326,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             X,
             self._x_window,
             device=self.device,
-            update_window=self.append_predict
+            update_window=self.append_predict,
         )
 
         if batch is not None:
@@ -354,16 +358,18 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             len(self.observed_classes) if len(self.observed_classes) > 2 else 1
         )
         if isinstance(self.output_layer, nn.Linear):
-            n_classes_to_add = out_features_target - \
-                               self.output_layer.out_features
+            n_classes_to_add = (
+                out_features_target - self.output_layer.out_features
+            )
             if n_classes_to_add > 0:
                 mean_input_weights = torch.empty(
                     n_classes_to_add, self.output_layer.in_features
                 )
                 nn.init.kaiming_uniform_(mean_input_weights, a=math.sqrt(5))
                 self.output_layer.weight = nn.parameter.Parameter(
-                    torch.cat([self.output_layer.weight, mean_input_weights],
-                              axis=0)
+                    torch.cat(
+                        [self.output_layer.weight, mean_input_weights], axis=0
+                    )
                 )
 
                 if self.output_layer.bias is not None:
@@ -378,8 +384,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                     )
                 self.output_layer.out_features += n_classes_to_add
         elif isinstance(self.output_layer, nn.LSTM):
-            n_classes_to_add = out_features_target - \
-                               self.output_layer.hidden_size
+            n_classes_to_add = (
+                out_features_target - self.output_layer.hidden_size
+            )
             if n_classes_to_add > 0:
                 assert (
                     not self.output_layer.bidirectional
@@ -407,16 +414,16 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
                 if n_classes_to_add > 1:
                     mean_input_weights = [
-                        w.repeat(n_classes_to_add, 1) for w in
-                        mean_input_weights
+                        w.repeat(n_classes_to_add, 1)
+                        for w in mean_input_weights
                     ]
                     mean_hidden_weights_dim_0 = [
-                        w.repeat(n_classes_to_add, 1) for w in
-                        mean_hidden_weights_dim_0
+                        w.repeat(n_classes_to_add, 1)
+                        for w in mean_hidden_weights_dim_0
                     ]
                     mean_hidden_weights_dim_1 = [
-                        w.repeat(1, n_classes_to_add) for w in
-                        mean_hidden_weights_dim_1
+                        w.repeat(1, n_classes_to_add)
+                        for w in mean_hidden_weights_dim_1
                     ]
 
                 self.output_layer.weight_ih_l0 = nn.parameter.Parameter(
@@ -456,29 +463,37 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                                     torch.normal(
                                         0,
                                         0.5,
-                                        size=(n_classes_to_add,
-                                              n_classes_to_add),
+                                        size=(
+                                            n_classes_to_add,
+                                            n_classes_to_add,
+                                        ),
                                     ),
                                     mean_hidden_weights_dim_1[1],
                                     torch.normal(
                                         0,
                                         0.5,
-                                        size=(n_classes_to_add,
-                                              n_classes_to_add),
+                                        size=(
+                                            n_classes_to_add,
+                                            n_classes_to_add,
+                                        ),
                                     ),
                                     mean_hidden_weights_dim_1[2],
                                     torch.normal(
                                         0,
                                         0.5,
-                                        size=(n_classes_to_add,
-                                              n_classes_to_add),
+                                        size=(
+                                            n_classes_to_add,
+                                            n_classes_to_add,
+                                        ),
                                     ),
                                     mean_hidden_weights_dim_1[3],
                                     torch.normal(
                                         0,
                                         0.5,
-                                        size=(n_classes_to_add,
-                                              n_classes_to_add),
+                                        size=(
+                                            n_classes_to_add,
+                                            n_classes_to_add,
+                                        ),
                                     ),
                                 ],
                                 axis=0,
@@ -494,19 +509,20 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                     self.output_layer.bias_hh_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_hh_l0, new_bias_hh_l0],
-                            axis=0
+                            axis=0,
                         )
                     )
                     self.output_layer.bias_ih_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_ih_l0, new_bias_ih_l0],
-                            axis=0
+                            axis=0,
                         )
                     )
                 self.output_layer.hidden_size += n_classes_to_add
         elif isinstance(self.output_layer, nn.RNN):
-            n_classes_to_add = out_features_target - \
-                               self.output_layer.hidden_size
+            n_classes_to_add = (
+                out_features_target - self.output_layer.hidden_size
+            )
             if n_classes_to_add > 0:
                 assert (
                     not self.output_layer.bidirectional
@@ -517,7 +533,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
                 mean_input_weights = (
                     torch.mean(self.output_layer.weight_ih_l0, dim=0)
-                    .unsqueeze(1).T
+                    .unsqueeze(1)
+                    .T
                 )
                 mean_hidden_weights_dim_0 = torch.mean(
                     self.output_layer.weight_hh_l0, dim=0
@@ -527,12 +544,15 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 ).unsqueeze(1)
 
                 if n_classes_to_add > 1:
-                    mean_input_weights = mean_input_weights\
-                        .repeat(n_classes_to_add, 1)
-                    mean_hidden_weights_dim_0 = mean_hidden_weights_dim_0\
-                        .repeat(n_classes_to_add, 1)
-                    mean_hidden_weights_dim_1 = \
+                    mean_input_weights = mean_input_weights.repeat(
+                        n_classes_to_add, 1
+                    )
+                    mean_hidden_weights_dim_0 = (
+                        mean_hidden_weights_dim_0.repeat(n_classes_to_add, 1)
+                    )
+                    mean_hidden_weights_dim_1 = (
                         mean_hidden_weights_dim_1.repeat(1, n_classes_to_add)
+                    )
 
                 self.output_layer.weight_ih_l0 = nn.parameter.Parameter(
                     torch.cat(
@@ -556,8 +576,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                                     torch.normal(
                                         0,
                                         0.5,
-                                        size=(n_classes_to_add,
-                                              n_classes_to_add),
+                                        size=(
+                                            n_classes_to_add,
+                                            n_classes_to_add,
+                                        ),
                                     ),
                                 ],
                                 axis=0,
@@ -573,19 +595,20 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                     self.output_layer.bias_hh_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_hh_l0, new_bias_hh_l0],
-                            axis=0
+                            axis=0,
                         )
                     )
                     self.output_layer.bias_ih_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_ih_l0, new_bias_ih_l0],
-                            axis=0
+                            axis=0,
                         )
                     )
                 self.output_layer.hidden_size += n_classes_to_add
 
-        self.optimizer = self.optimizer_fn(self.module.parameters(),
-                                           lr=self.lr)
+        self.optimizer = self.optimizer_fn(
+            self.module.parameters(), lr=self.lr
+        )
 
     def find_output_layer(self, n_features):
 
@@ -606,7 +629,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         else:
             warnings.warn(
                 "The model will not be able to adapt its output to new "
-                + "classes since no linear layer output layer was found."
+                "classes since no linear layer output layer was found."
             )
             self.is_class_incremental = False
 

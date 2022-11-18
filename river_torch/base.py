@@ -50,7 +50,7 @@ class DeepEstimator(base.Estimator):
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.module = module
@@ -124,11 +124,13 @@ class DeepEstimator(base.Estimator):
         """
         if not isinstance(self.module, torch.nn.Module):
             self.module = self.module(
-                **self._filter_kwargs(self.module, kwargs))
+                **self._filter_kwargs(self.module, kwargs)
+            )
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(self.module.parameters(),
-                                           lr=self.lr)
+        self.optimizer = self.optimizer_fn(
+            self.module.parameters(), lr=self.lr
+        )
         self.module_initialized = True
 
 
@@ -178,7 +180,7 @@ class RollingDeepEstimator(base.Estimator):
         seed: int = 42,
         window_size: int = 10,
         append_predict: bool = False,
-        **kwargs
+        **kwargs,
     ):
         self.module = module
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)
@@ -277,10 +279,11 @@ class RollingDeepEstimator(base.Estimator):
         """
         if not isinstance(self.module, torch.nn.Module):
             self.module = self.module(
-                **self._filter_kwargs(self.module, kwargs))
+                **self._filter_kwargs(self.module, kwargs)
+            )
 
         self.module.to(self.device)
         self.optimizer = self.optimizer_fn(
-            self.module.parameters(),
-            lr=self.lr)
+            self.module.parameters(), lr=self.lr
+        )
         self.module_initialized = True

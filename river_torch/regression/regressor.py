@@ -6,8 +6,11 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                 float2tensor)
+from river_torch.utils.tensor_conversion import (
+    df2tensor,
+    dict2tensor,
+    float2tensor,
+)
 
 
 class _TestModule(torch.nn.Module):
@@ -72,7 +75,7 @@ class Regressor(DeepEstimator, base.Regressor):
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             module=module,
@@ -81,7 +84,7 @@ class Regressor(DeepEstimator, base.Regressor):
             optimizer_fn=optimizer_fn,
             lr=lr,
             seed=seed,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod

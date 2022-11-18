@@ -99,9 +99,9 @@ def get_activation_fn(activation_fn: Union[str, Callable]) -> Callable:
         The class of the requested activation function.
     """
     err = ValueError(
-        BASE_PARAM_ERROR.format("activation function",
-                                activation_fn,
-                                "nn.Module")
+        BASE_PARAM_ERROR.format(
+            "activation function", activation_fn, "nn.Module"
+        )
     )
     if isinstance(activation_fn, str):
         try:
@@ -127,9 +127,9 @@ def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
     Callable
         The class of the requested optimizer.
     """
-    err = ValueError(BASE_PARAM_ERROR.format("optimizer",
-                                             optim_fn,
-                                             "nn.Module"))
+    err = ValueError(
+        BASE_PARAM_ERROR.format("optimizer", optim_fn, "nn.Module")
+    )
     if isinstance(optim_fn, str):
         try:
             optim_fn = OPTIMIZER_FNS[optim_fn]
@@ -155,9 +155,9 @@ def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
     Callable
         The function of the requested loss function.
     """
-    err = ValueError(BASE_PARAM_ERROR.format("loss function",
-                                             loss_fn,
-                                             "function"))
+    err = ValueError(
+        BASE_PARAM_ERROR.format("loss function", loss_fn, "function")
+    )
     if isinstance(loss_fn, str):
         try:
             loss_fn = LOSS_FNS[loss_fn]

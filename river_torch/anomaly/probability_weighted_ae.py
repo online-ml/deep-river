@@ -113,10 +113,10 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         )
         self.window_size = window_size
         self.skip_threshold = skip_threshold
-        self.rolling_mean = utils.Rolling(stats.Mean(),
-                                          window_size=window_size)
-        self.rolling_var = utils.Rolling(stats.Var(),
-                                         window_size=window_size)
+        self.rolling_mean = utils.Rolling(
+            stats.Mean(), window_size=window_size
+        )
+        self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
     def learn_one(self, x: dict, **kwargs) -> "ProbabilityWeightedAutoencoder":
         """
@@ -160,8 +160,10 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
         loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
-        loss = torch.tensor((self.skip_threshold - prob) /
-                            self.skip_threshold) * loss
+        loss = (
+            torch.tensor(
+                (self.skip_threshold - prob) / self.skip_threshold) * loss
+        )
 
         self.optimizer.zero_grad()
         loss.backward()

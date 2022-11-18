@@ -4,9 +4,15 @@ import numpy as np
 import pandas as pd
 import torch
 
-from river_torch.utils import (df2rolling_tensor, df2tensor,
-                               dict2rolling_tensor, dict2tensor, float2tensor,
-                               labels2onehot, output2proba)
+from river_torch.utils import (
+    df2rolling_tensor,
+    df2tensor,
+    dict2rolling_tensor,
+    dict2tensor,
+    float2tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 def test_dict2tensor():
@@ -129,8 +135,10 @@ def test_output2proba():
     assert_dicts_almost_equal(
         output2proba(y, classes),
         dict(
-            zip(["first class", "unobserved 0"], np.array([0.6, 0.4],
-                                                          dtype=np.float32))
+            zip(
+                ["first class", "unobserved 0"],
+                np.array([0.6, 0.4], dtype=np.float32),
+            )
         ),
     )
     y = torch.tensor([[0.6, 0.4, 0.0]])

@@ -104,7 +104,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             module=module,

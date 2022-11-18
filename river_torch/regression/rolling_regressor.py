@@ -6,9 +6,11 @@ from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (df2rolling_tensor,
-                                                 dict2rolling_tensor,
-                                                 float2tensor)
+from river_torch.utils.tensor_conversion import (
+    df2rolling_tensor,
+    dict2rolling_tensor,
+    float2tensor,
+)
 
 
 class _TestLSTM(torch.nn.Module):
@@ -71,7 +73,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         append_predict: bool = False,
         device: str = "cpu",
         seed: int = 42,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             module=module,
@@ -82,7 +84,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             window_size=window_size,
             append_predict=append_predict,
             seed=seed,
-            **kwargs
+            **kwargs,
         )
 
     @classmethod
@@ -207,7 +209,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             X,
             self._x_window,
             device=self.device,
-            update_window=self.append_predict
+            update_window=self.append_predict,
         )
         if batch is not None:
             self.module.eval()
