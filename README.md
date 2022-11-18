@@ -1,5 +1,5 @@
 <p align="center">
-  <img height="150px" src="docs/img/logo.png" alt="incremental dl logo">
+  <img height="150px" src="https://raw.githubusercontent.com/online-ml/river-torch/master/docs/img/logo.png" alt="incremental dl logo">
 </p>
 <p align="center">
     <img alt="PyPI" src="https://img.shields.io/pypi/v/river-torch">
