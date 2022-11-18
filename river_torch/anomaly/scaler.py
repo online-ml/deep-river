@@ -32,7 +32,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             Dictionary of parameters to be used for unit testing the
             respective class.
         """
-        yield {"anomaly_detector": HalfSpaceTrees()}
+        return {"anomaly_detector": HalfSpaceTrees()}
 
     @classmethod
     def _unit_test_skips(self) -> set:
