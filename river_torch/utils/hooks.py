@@ -1,6 +1,3 @@
-from torch import nn
-
-
 class ForwardOrderTracker:
     def __init__(self) -> None:
         self.ordered_modules = []

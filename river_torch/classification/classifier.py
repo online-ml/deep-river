@@ -11,8 +11,12 @@ from torch import nn
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
-from river_torch.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                 labels2onehot, output2proba)
+from river_torch.utils.tensor_conversion import (
+    df2tensor,
+    dict2tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 class _TestModule(torch.nn.Module):
@@ -32,28 +36,48 @@ class _TestModule(torch.nn.Module):
 
 class Classifier(DeepEstimator, base.Classifier):
     """
-        Wrapper for PyTorch classification models that automatically handles increases in the number of classes by adding output neurons in case the number of observed classes exceeds the current number of output neurons.
+        Wrapper for PyTorch classification models that automatically handles
+        increases in the number of classes by adding output neurons in case
+        the number of observed classes exceeds the current
+        number of output neurons.
 
         Parameters
         ----------
         module
-            Torch Module that builds the autoencoder to be wrapped. The Module should accept parameter `n_features` so that the returned model's input shape can be determined based on the number of features in the initial training example.
+            Torch Module that builds the autoencoder to be wrapped.
+            The Module should accept parameter `n_features` so that the
+            returned model's input shape can be determined based on the number
+            of features in the initial training example.
         loss_fn
-            Loss function to be used for training the wrapped model. Can be a loss function provided by `torch.nn.functional` or one of the following: 'mse', 'l1', 'cross_entropy', 'binary_cross_entropy_with_logits', 'binary_crossentropy', 'smooth_l1', 'kl_div'.
+            Loss function to be used for training the wrapped model. Can be a
+            loss function provided by `torch.nn.functional` or one of the
+            following: 'mse', 'l1', 'cross_entropy',
+            'binary_cross_entropy_with_logits', 'binary_crossentropy',
+            'smooth_l1', 'kl_div'.
         optimizer_fn
-            Optimizer to be used for training the wrapped model. Can be an optimizer class provided by `torch.optim` or one of the following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+            Optimizer to be used for training the wrapped model.
+            Can be an optimizer class provided by `torch.optim` or one of the
+            following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
         lr
             Learning rate of the optimizer.
         output_is_logit
-            Whether the module produces logits as output. If true, either softmax or sigmoid is applied to the outputs when predicting.
+            Whether the module produces logits as output. If true, either
+            softmax or sigmoid is applied to the outputs when predicting.
         is_class_incremental
-            Whether the classifier should adapt to the appearance of previously unobserved classes by adding an unit to the output layer of the network. This works only if the last trainable layer is an nn.Linear layer. Note also, that output activation functions can not be adapted, meaning that a binary classifier with a sigmoid output can not be altered to perform multi-class predictions.
+            Whether the classifier should adapt to the appearance of
+            previously unobserved classes by adding an unit to the output
+            layer of the network. This works only if the last trainable
+            layer is an nn.Linear layer. Note also, that output activation
+            functions can not be adapted, meaning that a binary classifier
+            with a sigmoid output can not be altered to perform multi-class
+            predictions.
         device
             Device to run the wrapped model on. Can be "cpu" or "cuda".
         seed
             Random seed to be used for training the wrapped model.
         **net_params
-            Parameters to be passed to the `build_fn` function aside from `n_features`.
+            Parameters to be passed to the `build_fn` function aside from
+            `n_features`.
 
         Examples
         --------
@@ -80,7 +104,9 @@ class Classifier(DeepEstimator, base.Classifier):
 
     >>> model_pipeline = compose.Pipeline(
     ...     preprocessing.StandardScaler,
-    ...     Classifier(module=MyModule,loss_fn="binary_cross_entropy",optimizer_fn='adam')
+    ...     Classifier(module=MyModule,
+    ...                loss_fn="binary_cross_entropy",
+    ...                optimizer_fn='adam')
     ... )
 
 
@@ -90,7 +116,7 @@ class Classifier(DeepEstimator, base.Classifier):
     >>> for x, y in dataset:
     ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
     ...     metric = metric.update(y, y_pred)  # update the metric
-    ...     model_pipeline = model_pipeline.learn_one(x,y)  # make the model learn
+    ...     model_pipeline = model_pipeline.learn_one(x,y)
 
     >>> print(f'Accuracy: {metric.get()}')
     Accuracy: 0.6728
@@ -125,12 +151,14 @@ class Classifier(DeepEstimator, base.Classifier):
     @classmethod
     def _unit_test_params(cls) -> dict:
         """
-        Returns a dictionary of parameters to be used for unit testing the respective class.
+        Returns a dictionary of parameters to be used for unit testing the
+        respective class.
 
         Yields
         -------
         dict
-            Dictionary of parameters to be used for unit testing the respective class.
+            Dictionary of parameters to be used for unit testing the
+            respective class.
         """
 
         yield {
@@ -143,7 +171,8 @@ class Classifier(DeepEstimator, base.Classifier):
     def _unit_test_skips(self) -> set:
         """
         Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases, some estimators might not
+        Most estimators pass the full test suite.
+        However, in some cases, some estimators might not
         be able to pass certain checks.
         Returns
         -------
@@ -194,7 +223,10 @@ class Classifier(DeepEstimator, base.Classifier):
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
         y = labels2onehot(
-            y=y, classes=self.observed_classes, n_classes=n_classes, device=self.device
+            y=y,
+            classes=self.observed_classes,
+            n_classes=n_classes,
+            device=self.device,
         )
         loss = self.loss_fn(y_pred, y)
         loss.backward()
@@ -221,7 +253,9 @@ class Classifier(DeepEstimator, base.Classifier):
         x = dict2tensor(x, device=self.device)
         self.module.eval()
         y_pred = self.module(x)
-        return output2proba(y_pred, self.observed_classes, self.output_is_logit)
+        return output2proba(
+            y_pred, self.observed_classes, self.output_is_logit
+        )
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "Classifier":
         """
@@ -284,17 +318,22 @@ class Classifier(DeepEstimator, base.Classifier):
 
     def _add_output_features(self, n_classes_to_add: int) -> None:
         """
-        Adds output dimensions to the model by adding new rows of weights to the existing weights of the last layer.
+        Adds output dimensions to the model by adding new rows of weights to
+        the existing weights of the last layer.
 
         Parameters
         ----------
         n_classes_to_add
             Number of output dimensions to add.
         """
-        new_weights = torch.mean(self.output_layer.weight, dim=0).unsqueeze(1).T
+        new_weights = (
+            torch.mean(self.output_layer.weight, dim=0).unsqueeze(1).T
+        )
         if n_classes_to_add > 1:
             new_weights = (
-                new_weights.unsqueeze(1).T.repeat(1, n_classes_to_add, 1).squeeze()
+                new_weights.unsqueeze(1)
+                .T.repeat(1, n_classes_to_add, 1)
+                .squeeze()
             )
         self.output_layer.weight = nn.parameter.Parameter(
             torch.cat([self.output_layer.weight, new_weights], axis=0)
@@ -302,14 +341,18 @@ class Classifier(DeepEstimator, base.Classifier):
 
         if self.output_layer.bias is not None:
             new_bias = torch.empty(n_classes_to_add)
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(
+                self.output_layer.weight
+            )
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(new_bias, -bound, bound)
             self.output_layer.bias = nn.parameter.Parameter(
                 torch.cat([self.output_layer.bias, new_bias], axis=0)
             )
         self.output_layer.out_features += n_classes_to_add
-        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+        self.optimizer = self.optimizer_fn(
+            self.module.parameters(), lr=self.lr
+        )
 
     def find_output_layer(self, n_features):
 
@@ -329,7 +372,8 @@ class Classifier(DeepEstimator, base.Classifier):
             self.output_layer = tracker.ordered_modules[-1]
         else:
             warnings.warn(
-                "The model will not be able to adapt its output to new classes since no linear layer output layer was found."
+                "The model will not be able to adapt its output to new "
+                "classes since no linear layer output layer was found."
             )
             self.is_class_incremental = False
 
