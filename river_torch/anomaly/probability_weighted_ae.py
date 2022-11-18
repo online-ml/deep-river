@@ -161,8 +161,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
         loss = (
-            torch.tensor(
-                (self.skip_threshold - prob) / self.skip_threshold) * loss
+            torch.tensor((self.skip_threshold - prob) / self.skip_threshold)
+            * loss
         )
 
         self.optimizer.zero_grad()
