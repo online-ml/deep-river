@@ -48,6 +48,7 @@ module = [
     "pytest.*",
     "pandas.*",
     "scipy.*",
+    "torch.*",
     "graphviz.*",
     "vaex.*",
     "torch.*",
@@ -55,3 +56,7 @@ module = [
     "requests.*"
 ]
 ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+show_error_codes = true
+check_untyped_defs = true
