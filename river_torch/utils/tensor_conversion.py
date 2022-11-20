@@ -57,14 +57,13 @@ def float2tensor(
 
 
 def dict2rolling_tensor(
-    x: Dict,
     window: Deque,
     device="cpu",
     dtype=torch.float32,
-    update_window=True,
 ) -> torch.Tensor:
     """
     Convert a dictionary to a rolling tensor.
+
     Parameters
     ----------
     x
@@ -75,26 +74,13 @@ def dict2rolling_tensor(
         Device.
     dtype
         Dtype.
-    update_window
-        Update the rolling window.
 
     Returns
     -------
         torch.Tensor
     """
-    output = None
-    max_len = window.maxlen if window.maxlen else 0
-    excess_len = len(window) + 1 - max_len
-    if update_window:
-        window.append(list(x.values()))
-        new_window = window
-
-    if excess_len >= 0:
-        if not update_window:
-            new_window = list(window)[excess_len:] + [list(x.values())]
-        output = torch.tensor(new_window, device=device, dtype=dtype)
-        output = torch.unsqueeze(output, 1)
-    return output
+    output = torch.tensor(window, device=device, dtype=dtype)
+    return torch.unsqueeze(output, 1)
 
 
 def df2tensor(

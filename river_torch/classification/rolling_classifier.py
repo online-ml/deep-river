@@ -127,7 +127,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
     ...     metric = metric.update(y, y_pred)  # update the metric
     ...     model = model_pipeline.learn_one(x, y)  # make the model learn
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.4468
+    Accuracy: 0.4552
     """
 
     def __init__(
@@ -231,8 +231,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self._adapt_output_dim()
 
         # training process
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
+        if len(self._x_window) == self.window_size:
+            x = dict2rolling_tensor(self._x_window, device=self.device)
             return self._learn(x=x, y=y)
         return self
 
@@ -271,13 +271,19 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
+        if len(self._x_window) == self.window_size:
             self.module.eval()
-            y_pred = self.module(x)
+            x_win = self._x_window.copy()
+            x_win.append(list(x.values()))
+            x_t = dict2rolling_tensor(x_win, device=self.device)
+            y_pred = self.module(x_t)
             proba = output2proba(y_pred, self.observed_classes)
         else:
             proba = self._get_default_proba()
+
+        if self.append_predict:
+            self._x_window.append(list(x.values()))
+
         return proba
 
     def learn_many(self, X: pd.DataFrame, y: list) -> "RollingClassifier":
@@ -287,7 +293,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         Parameters
         ----------
-        x
+        X
             Input examples.
         y
             Target values.

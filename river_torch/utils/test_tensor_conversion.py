@@ -26,20 +26,21 @@ def test_float2tensor():
 
 
 def test_dict2rolling_tensor():
-    window = deque(np.ones((3, 3)).tolist(), maxlen=3)
-    x = {"a": 1, "b": 2, "c": 3}
+    window = deque(np.ones((2, 3)).tolist(), maxlen=3)
 
-    assert dict2rolling_tensor(x, window, update_window=False).tolist() == [
+    assert dict2rolling_tensor(window).tolist() == [
         [[1, 1, 1]],
         [[1, 1, 1]],
-        [[1, 2, 3]],
     ]
+    assert list(window) == [[1, 1, 1], [1, 1, 1]]
+    window.append([1,2,3])
+
     assert list(window) == [
         [1, 1, 1],
         [1, 1, 1],
-        [1, 1, 1],
+        [1, 2, 3],
     ]
-    assert dict2rolling_tensor(x, window, update_window=True).tolist() == [
+    assert dict2rolling_tensor(window).tolist() == [
         [[1, 1, 1]],
         [[1, 1, 1]],
         [[1, 2, 3]],
@@ -49,13 +50,6 @@ def test_dict2rolling_tensor():
         [1, 1, 1],
         [1, 2, 3],
     ]
-    window = deque(np.ones((1, 3)).tolist(), maxlen=3)
-    assert dict2rolling_tensor(x, window, update_window=True) is None
-    assert list(window) == [
-        [1, 1, 1],
-        [1, 2, 3],
-    ]
-
 
 def test_df2rolling_tensor():
     window = deque(np.ones((3, 3)).tolist(), maxlen=3)

@@ -142,16 +142,21 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         RegTarget
             Predicted target value.
         """
+        res = 0.0
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
+        if len(self._x_window) == self.window_size:
             self.module.eval()
-            return self.module(x).detach().numpy().item()
-        else:
-            return 0.0
+            x_win = self._x_window.copy()
+            x_win.append(list(x.values()))
+            x_t = dict2rolling_tensor(x_win, device=self.device)
+            res = self.module(x_t).detach().numpy().item()
+
+        if self.append_predict:
+            self._x_window.append(list(x.values()))
+        return res
 
     def learn_one(self, x: dict, y: RegTarget) -> "RollingRegressor":
         """
@@ -170,19 +175,21 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         RollingRegressor
             The regressor itself.
         """
-        self._x_window.append(list(x.values()))
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
-            y = float2tensor(y, device=self.device)
-            self._learn(x, y)
+        self._x_window.append(list(x.values()))
+
+        if len(self._x_window) == self.window_size:
+            x_t = dict2rolling_tensor(self._x_window, device=self.device)
+            y_t = float2tensor(y, device=self.device)
+            self._learn(x_t, y_t)
 
         return self
 
     def _learn(self, x: torch.Tensor, y: torch.Tensor):
+        self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         loss = self.loss_fn(y_pred, y)

@@ -107,10 +107,6 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             seed=seed,
             **kwargs,
         )
-        self.append_predict = append_predict
-        self.window_size = window_size
-        self._x_window = collections.deque(maxlen=window_size)
-        self._batch_i = 0
 
     @classmethod
     def _unit_test_params(cls) -> dict:
@@ -178,9 +174,11 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
-            self._learn(x=x)
+        self._x_window.append(list(x.values()))
+
+        if self._x_window.is_full():
+            x_t = dict2rolling_tensor(self._x_window, device=self.device)
+            self._learn(x=x_t)
         return self
 
     def learn_many(self, X: pd.DataFrame, y: None) -> "RollingAutoencoder":
@@ -210,18 +208,23 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         return self
 
     def score_one(self, x: dict) -> float:
+        res = 0.0
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
+        if len(self._x_window) == self.window_size:
+            x_win = self._x_window.copy()
+            x_win.append(list(x.values()))
+            x_t = dict2rolling_tensor(x_win, device=self.device)
             self.module.eval()
-            x_pred = self.module(x)
-            loss = self.loss_fn(x_pred, x)
-            return loss.item()
-        else:
-            return 0.0
+            x_pred = self.module(x_t)
+            loss = self.loss_fn(x_pred, x_t)
+            res =  loss.item()
+
+        if self.append_predict:
+            self._x_window.append(list(x.values()))
+        return res
 
     def score_many(self, X: pd.DataFrame) -> float:
         if not self.module_initialized:
