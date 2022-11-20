@@ -8,26 +8,26 @@ from river import base
 from river.base.typing import RegTarget
 
 
-def dict2tensor(x: dict,
-                device: str = "cpu",
-                dtype: torch.dtype = torch.float32) -> torch.Tensor:
+def dict2tensor(
+    x: dict, device: str = "cpu", dtype: torch.dtype = torch.float32
+) -> torch.Tensor:
     x = torch.tensor([list(x.values())], device=device, dtype=dtype)
     return x
 
 
 def float2tensor(
-        y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     y = torch.tensor([[y]], device=device, dtype=dtype)
     return y
 
 
 def dict2rolling_tensor(
-        x: Dict,
-        window: Deque,
-        device="cpu",
-        dtype=torch.float32,
-        update_window=True,
+    x: Dict,
+    window: Deque,
+    device="cpu",
+    dtype=torch.float32,
+    update_window=True,
 ) -> torch.Tensor:
     output = None
     excess_len = len(window) + 1 - window.maxlen
@@ -44,18 +44,18 @@ def dict2rolling_tensor(
 
 
 def df2tensor(
-        x: pd.DataFrame, device="cpu", dtype=torch.float32
+    x: pd.DataFrame, device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
 
 def df2rolling_tensor(
-        x: pd.DataFrame,
-        window: Deque,
-        device="cpu",
-        dtype=torch.float32,
-        update_window=True,
+    x: pd.DataFrame,
+    window: Deque,
+    device="cpu",
+    dtype=torch.float32,
+    update_window=True,
 ) -> torch.Tensor:
     x_old = list(window)
     if len(window) >= window.maxlen:
@@ -64,7 +64,7 @@ def df2rolling_tensor(
     x = x_old + x_new
     if len(x) >= window.maxlen:
         x = [
-            x[i: i + len(x) - window.maxlen + 1] for i in range(window.maxlen)
+            x[i : i + len(x) - window.maxlen + 1] for i in range(window.maxlen)
         ]
         x = torch.tensor(x, device=device, dtype=dtype)
     else:
@@ -75,11 +75,11 @@ def df2rolling_tensor(
 
 
 def labels2onehot(
-        y: Union[base.typing.ClfTarget, List],
-        classes: Type[OrderedSet],
-        n_classes: int = None,
-        device="cpu",
-        dtype=torch.float32,
+    y: Union[base.typing.ClfTarget, List],
+    classes: Type[OrderedSet],
+    n_classes: int = None,
+    device="cpu",
+    dtype=torch.float32,
 ) -> torch.Tensor:
     if n_classes is None:
         n_classes = len(classes)
@@ -99,7 +99,7 @@ def labels2onehot(
 
 
 def output2proba(
-        preds: torch.Tensor, classes: Type[OrderedSet], with_logits=False
+    preds: torch.Tensor, classes: Type[OrderedSet], with_logits=False
 ) -> List:
     if with_logits:
         if preds.shape[-1] >= 1:
