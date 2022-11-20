@@ -9,17 +9,51 @@ from river.base.typing import RegTarget
 
 
 def dict2tensor(
-    x: dict, device: str = "cpu", dtype: torch.dtype = torch.float32
+        x: dict,
+        device: str = "cpu",
+        dtype: torch.dtype = torch.float32
 ) -> torch.Tensor:
-    x = torch.tensor([list(x.values())], device=device, dtype=dtype)
-    return x
+    """
+    Convert a dictionary to a tensor.
+
+    Parameters
+    ----------
+    x
+        Dictionary.
+    device
+        Device.
+    dtype
+        Dtype.
+
+    Returns
+    -------
+        torch.Tensor
+    """
+    return torch.tensor([list(x.values())], device=device, dtype=dtype)
 
 
 def float2tensor(
-    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+        y: Union[float, int, RegTarget],
+        device="cpu",
+        dtype=torch.float32
 ) -> torch.Tensor:
-    y = torch.tensor([[y]], device=device, dtype=dtype)
-    return y
+    """
+    Convert a float to a tensor.
+
+    Parameters
+    ----------
+    y
+        Float.
+    device
+        Device.
+    dtype
+        Dtype.
+
+    Returns
+    -------
+        torch.Tensor
+    """
+    return torch.tensor([[y]], device=device, dtype=dtype)
 
 
 def dict2rolling_tensor(
@@ -29,8 +63,28 @@ def dict2rolling_tensor(
     dtype=torch.float32,
     update_window=True,
 ) -> torch.Tensor:
+    """
+    Convert a dictionary to a rolling tensor.
+    Parameters
+    ----------
+    x
+        Dictionary.
+    window
+        Rolling window.
+    device
+        Device.
+    dtype
+        Dtype.
+    update_window
+        Update the rolling window.
+
+    Returns
+    -------
+        torch.Tensor
+    """
     output = None
-    excess_len = len(window) + 1 - window.maxlen
+    max_len = window.maxlen if window.maxlen else 0
+    excess_len = len(window) + 1 - max_len
     if update_window:
         window.append(list(x.values()))
         new_window = window
@@ -44,8 +98,25 @@ def dict2rolling_tensor(
 
 
 def df2tensor(
-    x: pd.DataFrame, device="cpu", dtype=torch.float32
+        x: pd.DataFrame,
+        device="cpu",
+        dtype=torch.float32
 ) -> torch.Tensor:
+    """
+    Convert a dataframe to a tensor.
+    Parameters
+    ----------
+    x
+        Dataframe.
+    device
+        Device.
+    dtype
+        Dtype.
+
+    Returns
+    -------
+        torch.Tensor
+    """
     x = torch.tensor(x.values, device=device, dtype=dtype)
     return x
 
@@ -81,6 +152,26 @@ def labels2onehot(
     device="cpu",
     dtype=torch.float32,
 ) -> torch.Tensor:
+    """
+    Convert a label or a list of labels to a one-hot encoded tensor.
+
+    Parameters
+    ----------
+    y
+        Label or list of labels.
+    classes
+        Classes.
+    n_classes
+        Number of classes.
+    device
+        Device.
+    dtype
+        Dtype.
+
+    Returns
+    -------
+        torch.Tensor
+    """
     if n_classes is None:
         n_classes = len(classes)
     if isinstance(y, list):
