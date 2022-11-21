@@ -1,4 +1,4 @@
-from typing import Deque, Dict, List, Type, Union, Optional
+from typing import Deque, Dict, List, Type, Union, Optional, Collection, Any
 
 import numpy as np
 import pandas as pd
@@ -108,7 +108,7 @@ def df2tensor(
 
 def labels2onehot(
     y: Union[base.typing.ClfTarget, List],
-    classes: OrderedSet,
+    classes: OrderedSet[int],
     n_classes: Optional[int] = None,
     device="cpu",
     dtype=torch.float32,
@@ -139,12 +139,12 @@ def labels2onehot(
         onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
         pos_idcs = [classes.index(y_i) for y_i in y]
         for i, pos_idx in enumerate(pos_idcs):
-            if pos_idx < n_classes:
+            if isinstance(pos_idx,int) and pos_idx < n_classes:
                 onehot[i, pos_idx] = 1
     else:
         onehot = torch.zeros(1, n_classes, device=device, dtype=dtype)
         pos_idx = classes.index(y)
-        if pos_idx < n_classes:
+        if isinstance(pos_idx,int) and pos_idx < n_classes:
             onehot[0, pos_idx] = 1
 
     return onehot
@@ -152,25 +152,24 @@ def labels2onehot(
 
 def output2proba(
     preds: torch.Tensor, classes: OrderedSet, with_logits=False
-) -> List:
+) -> Collection[Any]:
     if with_logits:
         if preds.shape[-1] >= 1:
             preds = torch.softmax(preds, dim=-1)
         else:
             preds = torch.sigmoid(preds)
 
-    preds = preds.detach().numpy()
-    if preds.shape[1] == 1:
-        preds = np.hstack((preds, 1 - preds))
-    n_unobserved_classes = preds.shape[1] - len(classes)
+    preds_np = preds.detach().numpy()
+    if preds_np.shape[1] == 1:
+        preds_np = np.hstack((preds_np, 1 - preds_np))
+    n_unobserved_classes = preds_np.shape[1] - len(classes)
     if n_unobserved_classes > 0:
-        classes = list(classes)
-        classes.extend(
-            [f"unobserved {i}" for i in range(n_unobserved_classes)]
-        )
+        classes = classes.copy()
+        [classes.append(f"unobserved {i}")
+         for i in range(n_unobserved_classes)]
     probas = (
-        dict(zip(classes, preds[0]))
-        if preds.shape[0] == 1
-        else [dict(zip(classes, pred)) for pred in preds]
+        dict(zip(classes, preds_np[0]))
+        if preds_np.shape[0] == 1
+        else [dict(zip(classes, pred)) for pred in preds_np]
     )
     return probas

@@ -336,7 +336,7 @@ class Classifier(DeepEstimator, base.Classifier):
                 .squeeze()
             )
         self.output_layer.weight = nn.parameter.Parameter(
-            torch.cat([self.output_layer.weight, new_weights], axis=0)
+            torch.cat([self.output_layer.weight, new_weights], dim=0)
         )
 
         if self.output_layer.bias is not None:
@@ -347,7 +347,7 @@ class Classifier(DeepEstimator, base.Classifier):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(new_bias, -bound, bound)
             self.output_layer.bias = nn.parameter.Parameter(
-                torch.cat([self.output_layer.bias, new_bias], axis=0)
+                torch.cat([self.output_layer.bias, new_bias], dim=0)
             )
         self.output_layer.out_features += n_classes_to_add
         self.optimizer = self.optimizer_fn(

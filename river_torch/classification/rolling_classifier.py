@@ -231,8 +231,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         # training process
         if len(self._x_window) == self.window_size:
-            x = deque2rolling_tensor(self._x_window, device=self.device)
-            return self._learn(x=x, y=y)
+            x_t = deque2rolling_tensor(self._x_window, device=self.device)
+            return self._learn(x=x_t, y=y)
         return self
 
     def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
