@@ -5,7 +5,7 @@ from torch import nn
 
 class ForwardOrderTracker:
     def __init__(self) -> None:
-        self.ordered_modules: List[nn.Modules] = []
+        self.ordered_modules: List[nn.Module] = []
 
     def __call__(self, module, input, output):
         if list(module.parameters()) and not list(module.children()):

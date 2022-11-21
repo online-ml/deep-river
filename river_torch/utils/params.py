@@ -76,7 +76,7 @@ def get_init_fn(init_fn):
 
     else:
 
-        def result(weight, activation_fn=None):
+        def result(weight, activation_fn):
             return init_fn_(weight)
 
     return result
