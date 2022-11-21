@@ -1,4 +1,4 @@
-from typing import Deque, Dict, List, Type, Union, Optional, Collection, Any
+from typing import Any, Collection, Deque, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -9,9 +9,7 @@ from river.base.typing import RegTarget
 
 
 def dict2tensor(
-        x: dict,
-        device: str = "cpu",
-        dtype: torch.dtype = torch.float32
+    x: dict, device: str = "cpu", dtype: torch.dtype = torch.float32
 ) -> torch.Tensor:
     """
     Convert a dictionary to a tensor.
@@ -33,9 +31,7 @@ def dict2tensor(
 
 
 def float2tensor(
-        y: Union[float, int, RegTarget],
-        device="cpu",
-        dtype=torch.float32
+    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     """
     Convert a float to a tensor.
@@ -84,9 +80,7 @@ def deque2rolling_tensor(
 
 
 def df2tensor(
-        X: pd.DataFrame,
-        device="cpu",
-        dtype=torch.float32
+    X: pd.DataFrame, device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     """
     Convert a dataframe to a tensor.
@@ -139,12 +133,12 @@ def labels2onehot(
         onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
         pos_idcs = [classes.index(y_i) for y_i in y]
         for i, pos_idx in enumerate(pos_idcs):
-            if isinstance(pos_idx,int) and pos_idx < n_classes:
+            if isinstance(pos_idx, int) and pos_idx < n_classes:
                 onehot[i, pos_idx] = 1
     else:
         onehot = torch.zeros(1, n_classes, device=device, dtype=dtype)
         pos_idx = classes.index(y)
-        if isinstance(pos_idx,int) and pos_idx < n_classes:
+        if isinstance(pos_idx, int) and pos_idx < n_classes:
             onehot[0, pos_idx] = 1
 
     return onehot
@@ -165,8 +159,10 @@ def output2proba(
     n_unobserved_classes = preds_np.shape[1] - len(classes)
     if n_unobserved_classes > 0:
         classes = classes.copy()
-        [classes.append(f"unobserved {i}")
-         for i in range(n_unobserved_classes)]
+        [
+            classes.append(f"unobserved {i}")
+            for i in range(n_unobserved_classes)
+        ]
     probas = (
         dict(zip(classes, preds_np[0]))
         if preds_np.shape[0] == 1

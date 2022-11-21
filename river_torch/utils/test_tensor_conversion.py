@@ -5,8 +5,8 @@ import pandas as pd
 import torch
 
 from river_torch.utils import (
-    df2tensor,
     deque2rolling_tensor,
+    df2tensor,
     dict2tensor,
     float2tensor,
     labels2onehot,
@@ -32,7 +32,7 @@ def test_deque2rolling_tensor():
         [[1, 1, 1]],
     ]
     assert list(window) == [[1, 1, 1], [1, 1, 1]]
-    window.append([1,2,3])
+    window.append([1, 2, 3])
 
     assert list(window) == [
         [1, 1, 1],

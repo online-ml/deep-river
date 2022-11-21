@@ -1,5 +1,4 @@
-import collections
-from typing import Callable, Type, Union, List, Any
+from typing import Any, Callable, List, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -180,7 +179,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self._learn(x=x_t)
         return self
 
-    def learn_many(self, X: pd.DataFrame, y= None) -> "RollingAutoencoder":
+    def learn_many(self, X: pd.DataFrame, y=None) -> "RollingAutoencoder":
         """
         Performs one step of training with a batch of examples.
 
@@ -220,7 +219,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self.module.eval()
             x_pred = self.module(x_t)
             loss = self.loss_fn(x_pred, x_t)
-            res =  loss.item()
+            res = loss.item()
 
         if self.append_predict:
             self._x_window.append(list(x.values()))

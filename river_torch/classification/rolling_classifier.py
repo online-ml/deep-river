@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Callable, Dict, List, Type, Union, Optional
+from typing import Callable, Dict, List, Optional, Type, Union
 
 import pandas as pd
 import torch
@@ -285,7 +285,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         return proba
 
-    def learn_many(self, X: pd.DataFrame, y: List[ClfTarget]) -> "RollingClassifier":
+    def learn_many(
+        self, X: pd.DataFrame, y: List[ClfTarget]
+    ) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
