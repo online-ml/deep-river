@@ -373,7 +373,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 nn.init.kaiming_uniform_(mean_input_weights, a=math.sqrt(5))
                 self.output_layer.weight = nn.parameter.Parameter(
                     torch.cat(
-                        [self.output_layer.weight, mean_input_weights], axis=0
+                        [self.output_layer.weight, mean_input_weights], dim=0
                     )
                 )
 
@@ -385,7 +385,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                     bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
                     nn.init.uniform_(new_bias, -bound, bound)
                     self.output_layer.bias = nn.parameter.Parameter(
-                        torch.cat([self.output_layer.bias, new_bias], axis=0)
+                        torch.cat([self.output_layer.bias, new_bias], dim=0)
                     )
                 self.output_layer.out_features += n_classes_to_add
         elif isinstance(self.output_layer, nn.LSTM):
@@ -443,7 +443,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                             input_weights[3],
                             mean_input_weights[3],
                         ],
-                        axis=0,
+                        dim=0,
                     )
                 )
                 self.output_layer.weight_hh_l0 = nn.parameter.Parameter(
@@ -460,7 +460,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                                     hidden_weights[3],
                                     mean_hidden_weights_dim_0[3],
                                 ],
-                                axis=0,
+                                dim=0,
                             ),
                             torch.cat(
                                 [
@@ -501,10 +501,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                                         ),
                                     ),
                                 ],
-                                axis=0,
+                                dim=0,
                             ),
                         ],
-                        axis=1,
+                        dim=1,
                     )
                 )
 
@@ -514,13 +514,13 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                     self.output_layer.bias_hh_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_hh_l0, new_bias_hh_l0],
-                            axis=0,
+                            dim=0,
                         )
                     )
                     self.output_layer.bias_ih_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_ih_l0, new_bias_ih_l0],
-                            axis=0,
+                            dim=0,
                         )
                     )
                 self.output_layer.hidden_size += n_classes_to_add
@@ -562,7 +562,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                 self.output_layer.weight_ih_l0 = nn.parameter.Parameter(
                     torch.cat(
                         [self.output_layer.weight_ih_l0, mean_input_weights],
-                        axis=0,
+                        dim=0,
                     )
                 )
                 self.output_layer.weight_hh_l0 = nn.parameter.Parameter(
@@ -573,7 +573,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                                     self.output_layer.weight_hh_l0,
                                     mean_hidden_weights_dim_0,
                                 ],
-                                axis=0,
+                                dim=0,
                             ),
                             torch.cat(
                                 [
@@ -587,10 +587,10 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                                         ),
                                     ),
                                 ],
-                                axis=0,
+                                dim=0,
                             ),
                         ],
-                        axis=1,
+                        dim=1,
                     )
                 )
 
@@ -600,13 +600,13 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
                     self.output_layer.bias_hh_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_hh_l0, new_bias_hh_l0],
-                            axis=0,
+                            dim=0,
                         )
                     )
                     self.output_layer.bias_ih_l0 = nn.parameter.Parameter(
                         torch.cat(
                             [self.output_layer.bias_ih_l0, new_bias_ih_l0],
-                            axis=0,
+                            dim=0,
                         )
                     )
                 self.output_layer.hidden_size += n_classes_to_add
