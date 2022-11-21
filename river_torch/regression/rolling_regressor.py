@@ -64,7 +64,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,

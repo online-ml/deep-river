@@ -117,7 +117,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.

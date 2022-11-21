@@ -124,7 +124,7 @@ class Classifier(DeepEstimator, base.Classifier):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,

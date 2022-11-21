@@ -29,7 +29,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model.
-        an be a loss function provided by `torch.nn.functional` or one of the
+        Can be a loss function provided by `torch.nn.functional` or one of the
         following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
         'smooth_l1', 'kl_div'.
     optimizer_fn
@@ -138,11 +138,11 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        x_t = dict2tensor(x, device=self.device)
 
         self.module.train()
-        x_pred = self.module(x)
-        loss = self.loss_fn(x_pred, x)
+        x_pred = self.module(x_t)
+        loss = self.loss_fn(x_pred, x_t)
         self._apply_loss(loss)
         return self
 

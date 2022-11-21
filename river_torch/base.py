@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Callable, Type, Union, Optional, Any, List
+from typing import Callable, Type, Union, Optional, Any, List, Deque
 
 import pandas as pd
 import torch
@@ -53,7 +53,8 @@ class DeepEstimator(base.Estimator):
         **kwargs,
     ):
         super().__init__()
-        self.module = module
+        self.module_cls = module
+        self.module: torch.nn.Module = None
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.lr = lr
@@ -122,9 +123,9 @@ class DeepEstimator(base.Estimator):
         instance
           The initialized component.
         """
-        if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(
-                **self._filter_kwargs(self.module, kwargs)
+        if not isinstance(self.module_cls, torch.nn.Module):
+            self.module = self.module_cls(
+                **self._filter_kwargs(self.module_cls, kwargs)
             )
 
         self.module.to(self.device)
@@ -182,7 +183,8 @@ class RollingDeepEstimator(base.Estimator):
         append_predict: bool = False,
         **kwargs,
     ):
-        self.module = module
+        self.module_cls = module
+        self.module: torch.nn.Module = None
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.lr = lr
@@ -194,7 +196,7 @@ class RollingDeepEstimator(base.Estimator):
         self.module_initialized = False
         torch.manual_seed(seed)
 
-        self._x_window = collections.deque(maxlen=window_size)
+        self._x_window: Deque = collections.deque(maxlen=window_size)
         self._batch_i = 0
 
     @abc.abstractmethod
@@ -278,8 +280,8 @@ class RollingDeepEstimator(base.Estimator):
           The initialized component.
         """
         if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(
-                **self._filter_kwargs(self.module, kwargs)
+            self.module = self.module_cls(
+                **self._filter_kwargs(self.module_cls, kwargs)
             )
 
         self.module.to(self.device)

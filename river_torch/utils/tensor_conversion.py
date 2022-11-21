@@ -1,4 +1,4 @@
-from typing import Deque, Dict, List, Type, Union
+from typing import Deque, Dict, List, Type, Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -109,7 +109,7 @@ def df2tensor(
 def labels2onehot(
     y: Union[base.typing.ClfTarget, List],
     classes: OrderedSet,
-    n_classes: int = None,
+    n_classes: Optional[int] = None,
     device="cpu",
     dtype=torch.float32,
 ) -> torch.Tensor:

@@ -85,7 +85,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -108,7 +108,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.

@@ -131,7 +131,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "binary_cross_entropy",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -285,7 +285,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         return proba
 
-    def learn_many(self, X: pd.DataFrame, y: list) -> "RollingClassifier":
+    def learn_many(self, X: pd.DataFrame, y: List[ClfTarget]) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
