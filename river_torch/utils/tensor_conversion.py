@@ -56,7 +56,7 @@ def float2tensor(
     return torch.tensor([[y]], device=device, dtype=dtype)
 
 
-def dict2rolling_tensor(
+def deque2rolling_tensor(
     window: Deque,
     device="cpu",
     dtype=torch.float32,
@@ -84,7 +84,7 @@ def dict2rolling_tensor(
 
 
 def df2tensor(
-        x: pd.DataFrame,
+        X: pd.DataFrame,
         device="cpu",
         dtype=torch.float32
 ) -> torch.Tensor:
@@ -92,7 +92,7 @@ def df2tensor(
     Convert a dataframe to a tensor.
     Parameters
     ----------
-    x
+    X
         Dataframe.
     device
         Device.
@@ -103,32 +103,7 @@ def df2tensor(
     -------
         torch.Tensor
     """
-    x = torch.tensor(x.values, device=device, dtype=dtype)
-    return x
-
-
-def df2rolling_tensor(
-    x: pd.DataFrame,
-    window: Deque,
-    device="cpu",
-    dtype=torch.float32,
-    update_window=True,
-) -> torch.Tensor:
-    x_old = list(window)
-    if len(window) >= window.maxlen:
-        x_old = x_old[1:]
-    x_new = x.values.tolist()
-    x = x_old + x_new
-    if len(x) >= window.maxlen:
-        x = [
-            x[i : i + len(x) - window.maxlen + 1] for i in range(window.maxlen)
-        ]
-        x = torch.tensor(x, device=device, dtype=dtype)
-    else:
-        x = None
-    if update_window:
-        window.extend(x_new)
-    return x
+    return torch.tensor(X.values, device=device, dtype=dtype)
 
 
 def labels2onehot(

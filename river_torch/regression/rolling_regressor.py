@@ -7,8 +7,7 @@ from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
+    deque2rolling_tensor,
     float2tensor,
 )
 
@@ -151,7 +150,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             self.module.eval()
             x_win = self._x_window.copy()
             x_win.append(list(x.values()))
-            x_t = dict2rolling_tensor(x_win, device=self.device)
+            x_t = deque2rolling_tensor(x_win, device=self.device)
             res = self.module(x_t).detach().numpy().item()
 
         if self.append_predict:
@@ -182,7 +181,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         self._x_window.append(list(x.values()))
 
         if len(self._x_window) == self.window_size:
-            x_t = dict2rolling_tensor(self._x_window, device=self.device)
+            x_t = deque2rolling_tensor(self._x_window, device=self.device)
             y_t = float2tensor(y, device=self.device)
             self._learn(x_t, y_t)
 
@@ -201,27 +200,29 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
-        X = df2rolling_tensor(X, self._x_window, device=self.device)
-        if X is not None:
-            y = torch.tensor(y, dtype=torch.float32, device=self.device)
-            self._learn(x=X, y=y)
+        self._x_window.extend(X.values.tolist())
+        if len(self._x_window) == self.window_size:
+            x_t = deque2rolling_tensor(self._x_window, device=self.device)
+            y_t = torch.unsqueeze(torch.tensor(y, device=self.device), 1)
+            self._learn(x_t, y_t)
+
         return self
 
     def predict_many(self, X: pd.DataFrame) -> List:
+        res = [0.0] * len(X)
+
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
-        batch = df2rolling_tensor(
-            X,
-            self._x_window,
-            device=self.device,
-            update_window=self.append_predict,
-        )
-        if batch is not None:
+        x_win = self._x_window.copy()
+        x_win.extend(X.values.tolist())
+        if len(x_win) == self.window_size:
             self.module.eval()
-            y_pred = self.module(batch).detach().tolist()
-            if len(y_pred) < len(batch):
-                return [0.0] * (len(batch) - len(y_pred)) + y_pred
-        else:
-            return [0.0] * len(X)
+            x_t = deque2rolling_tensor(x_win, device=self.device)
+            res = self.module(x_t).detach().tolist()
+
+        if self.append_predict:
+            self._x_window.extend(X.values.tolist())
+
+        return res

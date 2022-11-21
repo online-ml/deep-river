@@ -12,8 +12,7 @@ from torch import nn
 from river_torch.base import RollingDeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
 from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
+    deque2rolling_tensor,
     labels2onehot,
     output2proba,
 )
@@ -232,7 +231,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         # training process
         if len(self._x_window) == self.window_size:
-            x = dict2rolling_tensor(self._x_window, device=self.device)
+            x = deque2rolling_tensor(self._x_window, device=self.device)
             return self._learn(x=x, y=y)
         return self
 
@@ -275,7 +274,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self.module.eval()
             x_win = self._x_window.copy()
             x_win.append(list(x.values()))
-            x_t = dict2rolling_tensor(x_win, device=self.device)
+            x_t = deque2rolling_tensor(x_win, device=self.device)
             y_pred = self.module(x_t)
             proba = output2proba(y_pred, self.observed_classes)
         else:
@@ -307,6 +306,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
+
         X = df2rolling_tensor(X, self._x_window, device=self.device)
 
         self.observed_classes.update(y)

@@ -5,9 +5,8 @@ import pandas as pd
 import torch
 
 from river_torch.utils import (
-    df2rolling_tensor,
     df2tensor,
-    dict2rolling_tensor,
+    deque2rolling_tensor,
     dict2tensor,
     float2tensor,
     labels2onehot,
@@ -25,10 +24,10 @@ def test_float2tensor():
     assert float2tensor(y).tolist() == [[1.0]]
 
 
-def test_dict2rolling_tensor():
+def test_deque2rolling_tensor():
     window = deque(np.ones((2, 3)).tolist(), maxlen=3)
 
-    assert dict2rolling_tensor(window).tolist() == [
+    assert deque2rolling_tensor(window).tolist() == [
         [[1, 1, 1]],
         [[1, 1, 1]],
     ]
@@ -40,7 +39,7 @@ def test_dict2rolling_tensor():
         [1, 1, 1],
         [1, 2, 3],
     ]
-    assert dict2rolling_tensor(window).tolist() == [
+    assert deque2rolling_tensor(window).tolist() == [
         [[1, 1, 1]],
         [[1, 1, 1]],
         [[1, 2, 3]],
@@ -50,43 +49,6 @@ def test_dict2rolling_tensor():
         [1, 1, 1],
         [1, 2, 3],
     ]
-
-def test_df2rolling_tensor():
-    window = deque(np.ones((3, 3)).tolist(), maxlen=3)
-    x = pd.DataFrame(np.zeros((2, 3)))
-    assert df2rolling_tensor(x, window, update_window=False).tolist() == [
-        [
-            [1, 1, 1],
-            [1, 1, 1],
-        ],
-        [
-            [1, 1, 1],
-            [0, 0, 0],
-        ],
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-        ],
-    ]
-    assert list(window) == [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-    assert df2rolling_tensor(x, window, update_window=True).tolist() == [
-        [
-            [1, 1, 1],
-            [1, 1, 1],
-        ],
-        [
-            [1, 1, 1],
-            [0, 0, 0],
-        ],
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-        ],
-    ]
-    assert list(window) == [[1, 1, 1], [0, 0, 0], [0, 0, 0]]
-    window = deque(np.ones((3, 3)).tolist(), maxlen=6)
-    assert df2rolling_tensor(x, window, update_window=True) is None
-    assert list(window) == [[1, 1, 1]] * 3 + [[0, 0, 0]] * 2
 
 
 def test_df2tensor():
