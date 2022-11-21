@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Callable, Dict, List, Type, Union
+from typing import Callable, Dict, List, Type, Union, Collection, Any
 
 import pandas as pd
 import torch
@@ -149,7 +149,7 @@ class Classifier(DeepEstimator, base.Classifier):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing the
         respective class.
@@ -250,9 +250,9 @@ class Classifier(DeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        x_t = dict2tensor(x, device=self.device)
         self.module.eval()
-        y_pred = self.module(x)
+        y_pred = self.module(x_t)
         return output2proba(
             y_pred, self.observed_classes, self.output_is_logit
         )
@@ -286,7 +286,7 @@ class Classifier(DeepEstimator, base.Classifier):
         self.module.train()
         return self._learn(x=X, y=y)
 
-    def predict_proba_many(self, X: pd.DataFrame) -> List:
+    def predict_proba_many(self, X: pd.DataFrame) -> Collection[Any]:
         """
         Predict the probability of each label given the input.
 
@@ -303,9 +303,9 @@ class Classifier(DeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
+        X_t = df2tensor(X, device=self.device)
         self.module.eval()
-        y_preds = self.module(X)
+        y_preds = self.module(X_t)
         return output2proba(y_preds, self.observed_classes)
 
     def _adapt_output_dim(self):

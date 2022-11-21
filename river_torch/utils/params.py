@@ -15,7 +15,7 @@ ACTIVATION_FNS = {
     "linear": nn.Identity,
 }
 
-LOSS_FNS = {
+LOSS_FNS ={
     "mse": F.mse_loss,
     "l1": F.l1_loss,
     "smooth_l1": F.smooth_l1_loss,
@@ -113,7 +113,7 @@ def get_activation_fn(activation_fn: Union[str, Callable]) -> Callable:
     return activation_fn
 
 
-def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
+def get_optim_fn(optim_fn: Union[str, Callable]):
     """Returns the requested optimizer as a nn.Module class.
 
     Parameters
@@ -142,7 +142,7 @@ def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
     return optim_fn
 
 
-def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
+def get_loss_fn(loss_fn: Union[str, Callable]):
     """Returns the requested loss function as a function.
 
     Parameters

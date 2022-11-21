@@ -175,9 +175,9 @@ class Regressor(DeepEstimator, base.Regressor):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, self.device)
+        x_t = dict2tensor(x, self.device)
         self.module.eval()
-        return self.module(x).item()
+        return self.module(x_t).item()
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "Regressor":
         """

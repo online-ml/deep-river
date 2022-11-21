@@ -1,4 +1,4 @@
-from typing import Callable, List, Type, Union
+from typing import Callable, List, Type, Union, Any
 
 import pandas as pd
 import torch
@@ -87,7 +87,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.
@@ -195,7 +195,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         loss.backward()
         self.optimizer.step()
 
-    def learn_many(self, X: pd.DataFrame, y: List) -> "RollingDeepEstimator":
+    def learn_many(self, X: pd.DataFrame, y: List[Any]) -> "RollingDeepEstimator":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
