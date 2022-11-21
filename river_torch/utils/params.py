@@ -160,7 +160,7 @@ def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
     )
     if isinstance(loss_fn, str):
         try:
-            loss_fn = LOSS_FNS[loss_fn]
+            return LOSS_FNS[loss_fn]
         except KeyError:
             raise err
     elif not callable(loss_fn):
