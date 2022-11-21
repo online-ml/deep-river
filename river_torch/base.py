@@ -65,7 +65,7 @@ class DeepEstimator(base.Estimator):
         torch.manual_seed(seed)
 
     @abc.abstractmethod
-    def learn_one(self, x:dict, y:Optional[Any]) -> "DeepEstimator":
+    def learn_one(self, x:dict, y: Optional[Any]) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
 
@@ -81,7 +81,7 @@ class DeepEstimator(base.Estimator):
         DeepEstimator
             The estimator itself.
         """
-        return self
+        raise NotImplementedError
 
     def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.
@@ -237,7 +237,7 @@ class RollingDeepEstimator(base.Estimator):
         RollingDeepEstimator
             The estimator itself.
         """
-        return self
+        raise NotImplementedError
 
     def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.

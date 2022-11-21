@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Callable, Dict, List, Type, Union
+from typing import Callable, Dict, List, Type, Union, Optional
 
 import pandas as pd
 import torch
@@ -144,7 +144,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         **kwargs,
     ):
         self.observed_classes = OrderedSet()
-        self.output_layer = None
+        self.output_layer: Optional[nn.Module] = None
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
         super().__init__(

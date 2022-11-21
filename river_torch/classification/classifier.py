@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Callable, Dict, List, Type, Union
+from typing import Callable, Dict, List, Type, Union, Any
 
 import pandas as pd
 import torch
@@ -134,7 +134,7 @@ class Classifier(DeepEstimator, base.Classifier):
         seed: int = 42,
         **kwargs,
     ):
-        self.observed_classes = OrderedSet()
+        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
         self.output_layer: nn.Module
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
