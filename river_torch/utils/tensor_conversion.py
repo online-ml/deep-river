@@ -1,11 +1,11 @@
-from typing import Any, Collection, Deque, List, Optional, Union
+from typing import Any, Collection, Deque, List, Optional, Union, Dict
 
 import numpy as np
 import pandas as pd
 import torch
 from ordered_set import OrderedSet
 from river import base
-from river.base.typing import RegTarget
+from river.base.typing import RegTarget, ClfTarget
 
 
 def dict2tensor(
@@ -146,7 +146,7 @@ def labels2onehot(
 
 def output2proba(
     preds: torch.Tensor, classes: OrderedSet, with_logits=False
-) -> Collection[Any]:
+) -> Dict[ClfTarget, float]:
     if with_logits:
         if preds.shape[-1] >= 1:
             preds = torch.softmax(preds, dim=-1)
@@ -168,4 +168,4 @@ def output2proba(
         if preds_np.shape[0] == 1
         else [dict(zip(classes, pred)) for pred in preds_np]
     )
-    return probas
+    return dict(probas)

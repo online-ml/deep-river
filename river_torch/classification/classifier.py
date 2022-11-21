@@ -217,7 +217,9 @@ class Classifier(DeepEstimator, base.Classifier):
 
         return self._learn(x=x_t, y=y)
 
-    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
+    def _learn(self,
+               x: torch.Tensor,
+               y: Union[ClfTarget, List[ClfTarget]]) -> "Classifier":
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
@@ -257,7 +259,7 @@ class Classifier(DeepEstimator, base.Classifier):
             y_pred, self.observed_classes, self.output_is_logit
         )
 
-    def learn_many(self, X: pd.DataFrame, y: List) -> "Classifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
         Performs one step of training with a batch of examples.
 
@@ -284,9 +286,9 @@ class Classifier(DeepEstimator, base.Classifier):
             self._adapt_output_dim()
 
         self.module.train()
-        return self._learn(x=X, y=y)
+        return self._learn(x=X, y=y.tolist())
 
-    def predict_proba_many(self, X: pd.DataFrame) -> Collection[Any]:
+    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Predict the probability of each label given the input.
 
@@ -306,7 +308,7 @@ class Classifier(DeepEstimator, base.Classifier):
         X_t = df2tensor(X, device=self.device)
         self.module.eval()
         y_preds = self.module(X_t)
-        return output2proba(y_preds, self.observed_classes)
+        return pd.Dataframe(output2proba(y_preds, self.observed_classes))
 
     def _adapt_output_dim(self):
         out_features_target = (

@@ -326,7 +326,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self._learn(x=X_t, y=y)
         return self
 
-    def predict_proba_many(self, X: pd.DataFrame) -> List:
+    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
@@ -344,7 +344,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         else:
             default_proba = self._get_default_proba()
             probas = [default_proba] * len(X)
-        return probas
+        return pd.DataFrame(probas)
 
     def _get_default_proba(self):
         if len(self.observed_classes) > 0:
