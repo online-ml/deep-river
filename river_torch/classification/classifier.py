@@ -208,14 +208,14 @@ class Classifier(DeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        x_t = dict2tensor(x, device=self.device)
 
         # check last layer
         self.observed_classes.add(y)
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        return self._learn(x=x, y=y)
+        return self._learn(x=x_t, y=y)
 
     def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
         self.module.train()
