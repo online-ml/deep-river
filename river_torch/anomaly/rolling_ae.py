@@ -120,7 +120,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             the respective class.
         """
 
-        return {
+        yield {
             "module": _TestLSTMAutoencoder,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
