@@ -307,7 +307,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
-        X = df2rolling_tensor(X, self._x_window, device=self.device)
+        self._x_window.extend(X.values.tolist())
 
         self.observed_classes.update(y)
         if self.is_class_incremental:
@@ -319,8 +319,9 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self.output_layer.out_features,
             device=self.device,
         )
-        if X is not None:
-            self._learn(x=X, y=y)
+        if len(self._x_window) == self.window_size:
+            X_t = deque2rolling_tensor(self._x_window, device=self.device)
+            self._learn(x=X_t, y=y)
         return self
 
     def predict_proba_many(self, X: pd.DataFrame) -> List:
@@ -328,17 +329,13 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
-        batch = df2rolling_tensor(
-            X,
-            self._x_window,
-            device=self.device,
-            update_window=self.append_predict,
-        )
+        x_win = self._x_window.copy()
+        x_win.extend(X.values.tolist())
 
-        if batch is not None:
+        if len(x_win) == self.window_size:
             self.module.eval()
-            y_preds = self.module(batch)
-            probas = output2proba(y_preds, self.observed_classes)
+            x_t = deque2rolling_tensor(x_win, device=self.device)
+            probas = self.module(x_t).detach().tolist()
             if len(probas) < len(X):
                 default_proba = self._get_default_proba()
                 probas = [default_proba] * (len(X) - len(probas)) + probas

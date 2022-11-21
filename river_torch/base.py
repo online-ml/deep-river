@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Callable, Type, Union
+from typing import Callable, Type, Union, Optional, Any, List
 
 import pandas as pd
 import torch
@@ -44,7 +44,7 @@ class DeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -64,7 +64,7 @@ class DeepEstimator(base.Estimator):
         torch.manual_seed(seed)
 
     @abc.abstractmethod
-    def learn_one(self, x, y) -> "DeepEstimator":
+    def learn_one(self, x:dict, y:Optional[Any]) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
 
@@ -172,7 +172,7 @@ class RollingDeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -218,7 +218,7 @@ class RollingDeepEstimator(base.Estimator):
         return self
 
     @abc.abstractmethod
-    def learn_many(self, X: pd.DataFrame, y: list) -> "RollingDeepEstimator":
+    def learn_many(self, X: pd.DataFrame, y: Optional[List[Any]]) -> "RollingDeepEstimator":
         """
         Performs one step of training with a batch of sliding windows of
         the most recent examples.

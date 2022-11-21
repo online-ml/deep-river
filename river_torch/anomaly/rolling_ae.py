@@ -1,5 +1,5 @@
 import collections
-from typing import Callable, Type, Union
+from typing import Callable, Type, Union, List, Any
 
 import numpy as np
 import pandas as pd
@@ -56,7 +56,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     ----------
     module
         Torch module that builds the autoencoder to be wrapped.
-        he module should accept inputs with shape
+        The module should accept inputs with shape
         `(window_size, batch_size, n_features)`. It should also
         feature a parameter `n_features` used to adapt the network to the
         number of features in the initial training example.
@@ -120,7 +120,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             the respective class.
         """
 
-        yield {
+        return {
             "module": _TestLSTMAutoencoder,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
@@ -180,7 +180,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self._learn(x=x_t)
         return self
 
-    def learn_many(self, X: pd.DataFrame, y: None) -> "RollingAutoencoder":
+    def learn_many(self, X: pd.DataFrame, y= None) -> "RollingAutoencoder":
         """
         Performs one step of training with a batch of examples.
 
@@ -226,7 +226,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self._x_window.append(list(x.values()))
         return res
 
-    def score_many(self, X: pd.DataFrame) -> float:
+    def score_many(self, X: pd.DataFrame) -> List[Any]:
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)

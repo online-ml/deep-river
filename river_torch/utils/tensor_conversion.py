@@ -108,7 +108,7 @@ def df2tensor(
 
 def labels2onehot(
     y: Union[base.typing.ClfTarget, List],
-    classes: Type[OrderedSet],
+    classes: OrderedSet,
     n_classes: int = None,
     device="cpu",
     dtype=torch.float32,
@@ -151,7 +151,7 @@ def labels2onehot(
 
 
 def output2proba(
-    preds: torch.Tensor, classes: Type[OrderedSet], with_logits=False
+    preds: torch.Tensor, classes: OrderedSet, with_logits=False
 ) -> List:
     if with_logits:
         if preds.shape[-1] >= 1:

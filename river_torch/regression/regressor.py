@@ -198,10 +198,9 @@ class Regressor(DeepEstimator, base.Regressor):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
-        y = torch.tensor(y, device=self.device, dtype=torch.float32)
-        self.module.train()
-        self._learn(X, y)
+        X_t = df2tensor(X, device=self.device)
+        y_t = torch.tensor(y, device=self.device, dtype=torch.float32)
+        self._learn(X_t, y_t)
         return self
 
     def predict_many(self, X: pd.DataFrame) -> List:

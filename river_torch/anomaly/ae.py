@@ -1,4 +1,4 @@
-from typing import Callable, Type, Union
+from typing import Callable, Type, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -98,7 +98,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -156,7 +156,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, **kwargs) -> "Autoencoder":
+    def learn_one(self, x: dict, y: Any = None, **kwargs) -> "Autoencoder":
         """
         Performs one step of training with a single example.
 
@@ -175,8 +175,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
-        return self._learn(x)
+        return self._learn(dict2tensor(x, device=self.device))
 
     def _learn(self, x: torch.Tensor) -> "Autoencoder":
         self.module.train()
@@ -208,12 +207,12 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
 
+        x_t = dict2tensor(x, device=self.device)
         self.module.eval()
         with torch.inference_mode():
-            x_pred = self.module(x)
-        loss = self.loss_fn(x_pred, x).item()
+            x_pred = self.module(x_t)
+        loss = self.loss_fn(x_pred, x_t).item()
         return loss
 
     def learn_many(self, X: pd.DataFrame) -> "Autoencoder":
