@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Callable, Dict, List, Type, Union, Collection, Any
+from typing import Any, Callable, Collection, Dict, List, Type, Union
 
 import pandas as pd
 import torch

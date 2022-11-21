@@ -1,4 +1,4 @@
-from typing import Callable, List, Type, Union, Any
+from typing import Any, Callable, List, Type, Union
 
 import pandas as pd
 import torch
@@ -195,7 +195,9 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         loss.backward()
         self.optimizer.step()
 
-    def learn_many(self, X: pd.DataFrame, y: List[Any]) -> "RollingDeepEstimator":
+    def learn_many(
+        self, X: pd.DataFrame, y: List[Any]
+    ) -> "RollingDeepEstimator":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)

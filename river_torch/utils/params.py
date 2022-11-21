@@ -15,7 +15,7 @@ ACTIVATION_FNS = {
     "linear": nn.Identity,
 }
 
-LOSS_FNS ={
+LOSS_FNS = {
     "mse": F.mse_loss,
     "l1": F.l1_loss,
     "smooth_l1": F.smooth_l1_loss,
