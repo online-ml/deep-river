@@ -69,7 +69,7 @@ class Regressor(DeepEstimator, base.Regressor):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -88,7 +88,7 @@ class Regressor(DeepEstimator, base.Regressor):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit
         testing the respective class.
@@ -107,7 +107,7 @@ class Regressor(DeepEstimator, base.Regressor):
         }
 
     @classmethod
-    def _unit_test_skips(self) -> set:
+    def _unit_test_skips(cls) -> set:
         """
         Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite. However, in some cases,
@@ -145,9 +145,9 @@ class Regressor(DeepEstimator, base.Regressor):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, self.device)
+        x_t = dict2tensor(x, self.device)
         y = float2tensor(y, device=self.device)
-        self._learn(x, y)
+        self._learn(x_t, y)
         return self
 
     def _learn(self, x: torch.Tensor, y: torch.Tensor):
@@ -175,9 +175,9 @@ class Regressor(DeepEstimator, base.Regressor):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, self.device)
+        x_t = dict2tensor(x, self.device)
         self.module.eval()
-        return self.module(x).item()
+        return self.module(x_t).item()
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "Regressor":
         """
@@ -198,10 +198,9 @@ class Regressor(DeepEstimator, base.Regressor):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
-        y = torch.tensor(y, device=self.device, dtype=torch.float32)
-        self.module.train()
-        self._learn(X, y)
+        X_t = df2tensor(X, device=self.device)
+        y_t = torch.tensor(y, device=self.device, dtype=torch.float32)
+        self._learn(X_t, y_t)
         return self
 
     def predict_many(self, X: pd.DataFrame) -> List:

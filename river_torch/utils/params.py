@@ -76,7 +76,7 @@ def get_init_fn(init_fn):
 
     else:
 
-        def result(weight, activation_fn=None):
+        def result(weight, activation_fn):
             return init_fn_(weight)
 
     return result
@@ -113,7 +113,7 @@ def get_activation_fn(activation_fn: Union[str, Callable]) -> Callable:
     return activation_fn
 
 
-def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
+def get_optim_fn(optim_fn: Union[str, Callable]):
     """Returns the requested optimizer as a nn.Module class.
 
     Parameters
@@ -142,7 +142,7 @@ def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
     return optim_fn
 
 
-def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
+def get_loss_fn(loss_fn: Union[str, Callable]):
     """Returns the requested loss function as a function.
 
     Parameters
@@ -160,7 +160,7 @@ def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
     )
     if isinstance(loss_fn, str):
         try:
-            loss_fn = LOSS_FNS[loss_fn]
+            return LOSS_FNS[loss_fn]
         except KeyError:
             raise err
     elif not callable(loss_fn):

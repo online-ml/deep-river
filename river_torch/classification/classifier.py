@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Callable, Dict, List, Type, Union
+from typing import Callable, Dict, List, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -8,6 +8,7 @@ from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
 from torch import nn
+from torch.utils.hooks import RemovableHandle
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
@@ -124,7 +125,7 @@ class Classifier(DeepEstimator, base.Classifier):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -134,8 +135,8 @@ class Classifier(DeepEstimator, base.Classifier):
         seed: int = 42,
         **kwargs,
     ):
-        self.observed_classes = OrderedSet()
-        self.output_layer = None
+        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
+        self.output_layer: nn.Module
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
         super().__init__(
@@ -149,7 +150,7 @@ class Classifier(DeepEstimator, base.Classifier):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing the
         respective class.
@@ -168,7 +169,7 @@ class Classifier(DeepEstimator, base.Classifier):
         }
 
     @classmethod
-    def _unit_test_skips(self) -> set:
+    def _unit_test_skips(cls) -> set:
         """
         Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite.
@@ -208,16 +209,18 @@ class Classifier(DeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        x_t = dict2tensor(x, device=self.device)
 
         # check last layer
         self.observed_classes.add(y)
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        return self._learn(x=x, y=y)
+        return self._learn(x=x_t, y=y)
 
-    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
+    def _learn(
+        self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]
+    ) -> "Classifier":
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
@@ -250,14 +253,14 @@ class Classifier(DeepEstimator, base.Classifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        x_t = dict2tensor(x, device=self.device)
         self.module.eval()
-        y_pred = self.module(x)
+        y_pred = self.module(x_t)
         return output2proba(
             y_pred, self.observed_classes, self.output_is_logit
         )
 
-    def learn_many(self, X: pd.DataFrame, y: List) -> "Classifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
         Performs one step of training with a batch of examples.
 
@@ -284,9 +287,9 @@ class Classifier(DeepEstimator, base.Classifier):
             self._adapt_output_dim()
 
         self.module.train()
-        return self._learn(x=X, y=y)
+        return self._learn(x=X, y=y.tolist())
 
-    def predict_proba_many(self, X: pd.DataFrame) -> List:
+    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """
         Predict the probability of each label given the input.
 
@@ -297,16 +300,16 @@ class Classifier(DeepEstimator, base.Classifier):
 
         Returns
         -------
-        List
-            List of dictionaries of probabilities for each label.
+        pd.DataFrame
+            DataFrame of probabilities for each label.
         """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
+        X_t = df2tensor(X, device=self.device)
         self.module.eval()
-        y_preds = self.module(X)
-        return output2proba(y_preds, self.observed_classes)
+        y_preds = self.module(X_t)
+        return pd.Dataframe(output2proba(y_preds, self.observed_classes))
 
     def _adapt_output_dim(self):
         out_features_target = (
@@ -327,7 +330,9 @@ class Classifier(DeepEstimator, base.Classifier):
             Number of output dimensions to add.
         """
         new_weights = (
-            torch.mean(self.output_layer.weight, dim=0).unsqueeze(1).T
+            torch.mean(cast(torch.Tensor, self.output_layer.weight), dim=0)
+            .unsqueeze(1)
+            .T
         )
         if n_classes_to_add > 1:
             new_weights = (
@@ -336,7 +341,13 @@ class Classifier(DeepEstimator, base.Classifier):
                 .squeeze()
             )
         self.output_layer.weight = nn.parameter.Parameter(
-            torch.cat([self.output_layer.weight, new_weights], axis=0)
+            torch.cat(
+                [
+                    cast(torch.Tensor, self.output_layer.weight),
+                    cast(torch.Tensor, new_weights),
+                ],
+                dim=0,
+            )
         )
 
         if self.output_layer.bias is not None:
@@ -347,16 +358,22 @@ class Classifier(DeepEstimator, base.Classifier):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(new_bias, -bound, bound)
             self.output_layer.bias = nn.parameter.Parameter(
-                torch.cat([self.output_layer.bias, new_bias], axis=0)
+                torch.cat(
+                    [
+                        cast(torch.Tensor, self.output_layer.bias),
+                        cast(torch.Tensor, new_bias),
+                    ],
+                    dim=0,
+                )
             )
-        self.output_layer.out_features += n_classes_to_add
+        self.output_layer.out_features += torch.Tensor([n_classes_to_add])
         self.optimizer = self.optimizer_fn(
             self.module.parameters(), lr=self.lr
         )
 
-    def find_output_layer(self, n_features):
+    def find_output_layer(self, n_features: int):
 
-        handles = []
+        handles: List[RemovableHandle] = []
         tracker = ForwardOrderTracker()
         apply_hooks(module=self.module, hook=tracker, handles=handles)
 

@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Type, Union
+from typing import Any, Callable, Type, Union
 
 import pandas as pd
 import torch
@@ -29,7 +29,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         in the initial training example.
     loss_fn
         Loss function to be used for training the wrapped model.
-        an be a loss function provided by `torch.nn.functional` or one of the
+        Can be a loss function provided by `torch.nn.functional` or one of the
         following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
         'smooth_l1', 'kl_div'.
     optimizer_fn
@@ -92,7 +92,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -118,7 +118,9 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         )
         self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
-    def learn_one(self, x: dict, **kwargs) -> "ProbabilityWeightedAutoencoder":
+    def learn_one(
+        self, x: dict, y: Any = None, **kwargs
+    ) -> "ProbabilityWeightedAutoencoder":
         """
         Performs one step of training with a single example,
         scaling the employed learning rate based on the outlier
@@ -138,11 +140,11 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
-        x = dict2tensor(x, device=self.device)
+        x_t = dict2tensor(x, device=self.device)
 
         self.module.train()
-        x_pred = self.module(x)
-        loss = self.loss_fn(x_pred, x)
+        x_pred = self.module(x_t)
+        loss = self.loss_fn(x_pred, x_t)
         self._apply_loss(loss)
         return self
 

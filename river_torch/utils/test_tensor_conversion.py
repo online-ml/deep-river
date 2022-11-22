@@ -3,11 +3,11 @@ from collections import deque
 import numpy as np
 import pandas as pd
 import torch
+from ordered_set import OrderedSet
 
 from river_torch.utils import (
-    df2rolling_tensor,
+    deque2rolling_tensor,
     df2tensor,
-    dict2rolling_tensor,
     dict2tensor,
     float2tensor,
     labels2onehot,
@@ -25,21 +25,22 @@ def test_float2tensor():
     assert float2tensor(y).tolist() == [[1.0]]
 
 
-def test_dict2rolling_tensor():
-    window = deque(np.ones((3, 3)).tolist(), maxlen=3)
-    x = {"a": 1, "b": 2, "c": 3}
+def test_deque2rolling_tensor():
+    window = deque(np.ones((2, 3)).tolist(), maxlen=3)
 
-    assert dict2rolling_tensor(x, window, update_window=False).tolist() == [
+    assert deque2rolling_tensor(window).tolist() == [
         [[1, 1, 1]],
         [[1, 1, 1]],
-        [[1, 2, 3]],
     ]
+    assert list(window) == [[1, 1, 1], [1, 1, 1]]
+    window.append([1, 2, 3])
+
     assert list(window) == [
         [1, 1, 1],
         [1, 1, 1],
-        [1, 1, 1],
+        [1, 2, 3],
     ]
-    assert dict2rolling_tensor(x, window, update_window=True).tolist() == [
+    assert deque2rolling_tensor(window).tolist() == [
         [[1, 1, 1]],
         [[1, 1, 1]],
         [[1, 2, 3]],
@@ -49,50 +50,6 @@ def test_dict2rolling_tensor():
         [1, 1, 1],
         [1, 2, 3],
     ]
-    window = deque(np.ones((1, 3)).tolist(), maxlen=3)
-    assert dict2rolling_tensor(x, window, update_window=True) is None
-    assert list(window) == [
-        [1, 1, 1],
-        [1, 2, 3],
-    ]
-
-
-def test_df2rolling_tensor():
-    window = deque(np.ones((3, 3)).tolist(), maxlen=3)
-    x = pd.DataFrame(np.zeros((2, 3)))
-    assert df2rolling_tensor(x, window, update_window=False).tolist() == [
-        [
-            [1, 1, 1],
-            [1, 1, 1],
-        ],
-        [
-            [1, 1, 1],
-            [0, 0, 0],
-        ],
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-        ],
-    ]
-    assert list(window) == [[1, 1, 1], [1, 1, 1], [1, 1, 1]]
-    assert df2rolling_tensor(x, window, update_window=True).tolist() == [
-        [
-            [1, 1, 1],
-            [1, 1, 1],
-        ],
-        [
-            [1, 1, 1],
-            [0, 0, 0],
-        ],
-        [
-            [0, 0, 0],
-            [0, 0, 0],
-        ],
-    ]
-    assert list(window) == [[1, 1, 1], [0, 0, 0], [0, 0, 0]]
-    window = deque(np.ones((3, 3)).tolist(), maxlen=6)
-    assert df2rolling_tensor(x, window, update_window=True) is None
-    assert list(window) == [[1, 1, 1]] * 3 + [[0, 0, 0]] * 2
 
 
 def test_df2tensor():
@@ -101,17 +58,17 @@ def test_df2tensor():
 
 
 def test_labels2onehot():
-    classes = ["first class", "second class", "third class"]
+    classes = OrderedSet(["first class", "second class", "third class"])
     y1 = "first class"
     y2 = "third class"
     assert labels2onehot(y1, classes).tolist() == [[1, 0, 0]]
     assert labels2onehot(y2, classes).tolist() == [[0, 0, 1]]
-    classes = ["first class"]
+    classes = OrderedSet(["first class"])
     n_classes = 3
     assert labels2onehot(y1, classes, n_classes).tolist() == [[1, 0, 0]]
 
-    classes = ["first class", "second class", "third class"]
-    y1 = ["first class", "third class"]
+    classes = OrderedSet(["first class", "second class", "third class"])
+    y1 = pd.Series(["first class", "third class"])
     assert labels2onehot(y1, classes).tolist() == [[1, 0, 0], [0, 0, 1]]
     assert labels2onehot(y1, classes, n_classes=4).tolist() == [
         [1, 0, 0, 0],

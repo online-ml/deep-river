@@ -1,5 +1,4 @@
-import collections
-from typing import Callable, Type, Union
+from typing import Any, Callable, List, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -8,10 +7,7 @@ from river import anomaly
 from torch import nn
 
 from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import (
-    df2rolling_tensor,
-    dict2rolling_tensor,
-)
+from river_torch.utils.tensor_conversion import deque2rolling_tensor
 
 
 class _TestLSTMAutoencoder(nn.Module):
@@ -59,7 +55,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     ----------
     module
         Torch module that builds the autoencoder to be wrapped.
-        he module should accept inputs with shape
+        The module should accept inputs with shape
         `(window_size, batch_size, n_features)`. It should also
         feature a parameter `n_features` used to adapt the network to the
         number of features in the initial training example.
@@ -88,7 +84,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -105,15 +101,13 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             lr=lr,
             device=device,
             seed=seed,
+            window_size=window_size,
+            append_predict=append_predict,
             **kwargs,
         )
-        self.append_predict = append_predict
-        self.window_size = window_size
-        self._x_window = collections.deque(maxlen=window_size)
-        self._batch_i = 0
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.
@@ -178,12 +172,14 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
-            self._learn(x=x)
+        self._x_window.append(list(x.values()))
+
+        if len(self._x_window) == self.window_size:
+            x_t = deque2rolling_tensor(self._x_window, device=self.device)
+            self._learn(x=x_t)
         return self
 
-    def learn_many(self, X: pd.DataFrame, y: None) -> "RollingAutoencoder":
+    def learn_many(self, X: pd.DataFrame, y=None) -> "RollingAutoencoder":
         """
         Performs one step of training with a batch of examples.
 
@@ -204,43 +200,48 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
-        X = df2rolling_tensor(X, self._x_window, device=self.device)
-        if X is not None:
-            self._learn(x=X)
+        self._x_window.append(X.values.tolist())
+        if len(self._x_window) == self.window_size:
+            X_t = deque2rolling_tensor(self._x_window, device=self.device)
+            self._learn(x=X_t)
         return self
 
     def score_one(self, x: dict) -> float:
+        res = 0.0
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
 
-        x = dict2rolling_tensor(x, self._x_window, device=self.device)
-        if x is not None:
+        if len(self._x_window) == self.window_size:
+            x_win = self._x_window.copy()
+            x_win.append(list(x.values()))
+            x_t = deque2rolling_tensor(x_win, device=self.device)
             self.module.eval()
-            x_pred = self.module(x)
-            loss = self.loss_fn(x_pred, x)
-            return loss.item()
-        else:
-            return 0.0
+            x_pred = self.module(x_t)
+            loss = self.loss_fn(x_pred, x_t)
+            res = loss.item()
 
-    def score_many(self, X: pd.DataFrame) -> float:
+        if self.append_predict:
+            self._x_window.append(list(x.values()))
+        return res
+
+    def score_many(self, X: pd.DataFrame) -> List[Any]:
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
 
-        batch = df2rolling_tensor(
-            X,
-            self._x_window,
-            device=self.device,
-            update_window=self.append_predict,
-        )
+        x_win = self._x_window.copy()
+        x_win.append(X.values.tolist())
+        if self.append_predict:
+            self._x_window.append(X.values.tolist())
 
-        if batch is not None:
+        if len(self._x_window) == self.window_size:
             self.module.eval()
-            x_pred = self.module(batch)
+            X_t = deque2rolling_tensor(x_win, device=self.device)
+            x_pred = self.module(X_t)
             loss = torch.mean(
-                self.loss_fn(x_pred, batch, reduction="none"),
-                dim=list(range(1, batch.dim())),
+                self.loss_fn(x_pred, x_pred, reduction="none"),
+                dim=list(range(1, x_pred.dim())),
             )
             losses = loss.detach().numpy()
             if len(losses) < len(X):

@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Callable, Type, Union
+from typing import Any, Callable, Deque, Optional, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -44,7 +44,7 @@ class DeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -53,7 +53,8 @@ class DeepEstimator(base.Estimator):
         **kwargs,
     ):
         super().__init__()
-        self.module = module
+        self.module_cls = module
+        self.module: torch.nn.Module = cast(torch.nn.Module, None)  # cleaner
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.lr = lr
@@ -64,7 +65,7 @@ class DeepEstimator(base.Estimator):
         torch.manual_seed(seed)
 
     @abc.abstractmethod
-    def learn_one(self, x, y) -> "DeepEstimator":
+    def learn_one(self, x: dict, y: Optional[Any]) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
 
@@ -80,7 +81,7 @@ class DeepEstimator(base.Estimator):
         DeepEstimator
             The estimator itself.
         """
-        return self
+        raise NotImplementedError
 
     def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.
@@ -122,9 +123,9 @@ class DeepEstimator(base.Estimator):
         instance
           The initialized component.
         """
-        if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(
-                **self._filter_kwargs(self.module, kwargs)
+        if not isinstance(self.module_cls, torch.nn.Module):
+            self.module = self.module_cls(
+                **self._filter_kwargs(self.module_cls, kwargs)
             )
 
         self.module.to(self.device)
@@ -172,7 +173,7 @@ class RollingDeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: Union[torch.nn.Module, Type[torch.nn.Module]],
+        module: Type[torch.nn.Module],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -182,7 +183,8 @@ class RollingDeepEstimator(base.Estimator):
         append_predict: bool = False,
         **kwargs,
     ):
-        self.module = module
+        self.module_cls = module
+        self.module: torch.nn.Module = cast(torch.nn.Module, None)  # cleaner
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.lr = lr
@@ -194,7 +196,7 @@ class RollingDeepEstimator(base.Estimator):
         self.module_initialized = False
         torch.manual_seed(seed)
 
-        self._x_window = collections.deque(maxlen=window_size)
+        self._x_window: Deque = collections.deque(maxlen=window_size)
         self._batch_i = 0
 
     @abc.abstractmethod
@@ -218,7 +220,9 @@ class RollingDeepEstimator(base.Estimator):
         return self
 
     @abc.abstractmethod
-    def learn_many(self, X: pd.DataFrame, y: list) -> "RollingDeepEstimator":
+    def learn_many(
+        self, X: pd.DataFrame, y: pd.Series
+    ) -> "RollingDeepEstimator":
         """
         Performs one step of training with a batch of sliding windows of
         the most recent examples.
@@ -235,7 +239,7 @@ class RollingDeepEstimator(base.Estimator):
         RollingDeepEstimator
             The estimator itself.
         """
-        return self
+        raise NotImplementedError
 
     def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.
@@ -278,8 +282,8 @@ class RollingDeepEstimator(base.Estimator):
           The initialized component.
         """
         if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module(
-                **self._filter_kwargs(self.module, kwargs)
+            self.module = self.module_cls(
+                **self._filter_kwargs(self.module_cls, kwargs)
             )
 
         self.module.to(self.device)
