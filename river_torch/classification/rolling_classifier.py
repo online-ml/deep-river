@@ -143,7 +143,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         append_predict: bool = False,
         **kwargs,
     ):
-        self.observed_classes = OrderedSet()
+        self.observed_classes:OrderedSet[ClfTarget] = OrderedSet()
         self.output_layer: Optional[nn.Module] = None
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
@@ -160,7 +160,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         )
 
     @classmethod
-    def _unit_test_params(cls) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.
@@ -179,7 +179,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         }
 
     @classmethod
-    def _unit_test_skips(self) -> set:
+    def _unit_test_skips(cls) -> set:
         """
         Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite. However,

@@ -107,7 +107,7 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
         }
 
     @classmethod
-    def _unit_test_skips(self) -> set:
+    def _unit_test_skips(cls) -> set:
         """
         Indicates which checks to skip during unit testing.
         Most estimators pass the full test suite. However,
