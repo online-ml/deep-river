@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Any, Callable, Collection, Dict, List, Type, Union
+from typing import Any, Callable, Collection, Dict, List, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -8,6 +8,7 @@ from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
 from torch import nn
+from torch.utils.hooks import RemovableHandle
 
 from river_torch.base import DeepEstimator
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
@@ -217,9 +218,9 @@ class Classifier(DeepEstimator, base.Classifier):
 
         return self._learn(x=x_t, y=y)
 
-    def _learn(self,
-               x: torch.Tensor,
-               y: Union[ClfTarget, List[ClfTarget]]) -> "Classifier":
+    def _learn(
+        self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]
+    ) -> "Classifier":
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
@@ -329,7 +330,9 @@ class Classifier(DeepEstimator, base.Classifier):
             Number of output dimensions to add.
         """
         new_weights = (
-            torch.mean(self.output_layer.weight, dim=0).unsqueeze(1).T
+            torch.mean(cast(torch.Tensor, self.output_layer.weight), dim=0)
+            .unsqueeze(1)
+            .T
         )
         if n_classes_to_add > 1:
             new_weights = (
@@ -338,7 +341,13 @@ class Classifier(DeepEstimator, base.Classifier):
                 .squeeze()
             )
         self.output_layer.weight = nn.parameter.Parameter(
-            torch.cat([self.output_layer.weight, new_weights], dim=0)
+            torch.cat(
+                [
+                    cast(torch.Tensor, self.output_layer.weight),
+                    cast(torch.Tensor, new_weights),
+                ],
+                dim=0,
+            )
         )
 
         if self.output_layer.bias is not None:
@@ -349,16 +358,22 @@ class Classifier(DeepEstimator, base.Classifier):
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(new_bias, -bound, bound)
             self.output_layer.bias = nn.parameter.Parameter(
-                torch.cat([self.output_layer.bias, new_bias], dim=0)
+                torch.cat(
+                    [
+                        cast(torch.Tensor, self.output_layer.bias),
+                        cast(torch.Tensor, new_bias),
+                    ],
+                    dim=0,
+                )
             )
-        self.output_layer.out_features += n_classes_to_add
+        self.output_layer.out_features += torch.Tensor([n_classes_to_add])
         self.optimizer = self.optimizer_fn(
             self.module.parameters(), lr=self.lr
         )
 
-    def find_output_layer(self, n_features):
+    def find_output_layer(self, n_features: int):
 
-        handles = []
+        handles: List[RemovableHandle] = []
         tracker = ForwardOrderTracker()
         apply_hooks(module=self.module, hook=tracker, handles=handles)
 

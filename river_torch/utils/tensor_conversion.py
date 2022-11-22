@@ -1,11 +1,11 @@
-from typing import Any, Collection, Deque, List, Optional, Union, Dict
+from typing import Any, Collection, Deque, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
 import torch
 from ordered_set import OrderedSet
 from river import base
-from river.base.typing import RegTarget, ClfTarget
+from river.base.typing import ClfTarget, RegTarget
 
 
 def dict2tensor(

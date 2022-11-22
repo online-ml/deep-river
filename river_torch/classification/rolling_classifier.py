@@ -143,7 +143,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         append_predict: bool = False,
         **kwargs,
     ):
-        self.observed_classes:OrderedSet[ClfTarget] = OrderedSet()
+        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
         self.output_layer: Optional[nn.Module] = None
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
@@ -285,9 +285,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         return proba
 
-    def learn_many(
-        self, X: pd.DataFrame, y: pd.Series
-    ) -> "RollingClassifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
@@ -317,8 +315,8 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
 
         y = labels2onehot(
             y,
-            self.observed_classes,
-            self.output_layer.out_features,
+            classes=self.observed_classes,
+            # n_classes=self.output_layer.out_features,
             device=self.device,
         )
         if len(self._x_window) == self.window_size:
