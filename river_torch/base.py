@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Any, Callable, Deque, List, Optional, Type, Union
+from typing import Any, Callable, Deque, List, Optional, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -54,7 +54,9 @@ class DeepEstimator(base.Estimator):
     ):
         super().__init__()
         self.module_cls = module
-        self.module: torch.nn.Module = None
+        self.module: torch.nn.Module = cast(
+            torch.nn.Module, None
+        )  # cleaner
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.lr = lr
@@ -184,7 +186,9 @@ class RollingDeepEstimator(base.Estimator):
         **kwargs,
     ):
         self.module_cls = module
-        self.module: torch.nn.Module = None
+        self.module: torch.nn.Module = cast(
+            torch.nn.Module, None
+        )  # cleaner
         self.loss_fn = get_loss_fn(loss_fn=loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
         self.lr = lr
