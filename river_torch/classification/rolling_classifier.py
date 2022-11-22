@@ -286,7 +286,7 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         return proba
 
     def learn_many(
-        self, X: pd.DataFrame, y: List[ClfTarget]
+        self, X: pd.DataFrame, y: pd.Series
     ) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples

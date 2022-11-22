@@ -101,8 +101,8 @@ def df2tensor(
 
 
 def labels2onehot(
-    y: Union[base.typing.ClfTarget, List],
-    classes: OrderedSet[int],
+    y: Union[base.typing.ClfTarget, pd.Series],
+    classes: OrderedSet[base.typing.ClfTarget],
     n_classes: Optional[int] = None,
     device="cpu",
     dtype=torch.float32,
@@ -129,7 +129,7 @@ def labels2onehot(
     """
     if n_classes is None:
         n_classes = len(classes)
-    if isinstance(y, list):
+    if isinstance(y, pd.Series):
         onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
         pos_idcs = [classes.index(y_i) for y_i in y]
         for i, pos_idx in enumerate(pos_idcs):

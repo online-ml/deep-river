@@ -3,6 +3,7 @@ from collections import deque
 import numpy as np
 import pandas as pd
 import torch
+from ordered_set import OrderedSet
 
 from river_torch.utils import (
     deque2rolling_tensor,
@@ -57,17 +58,17 @@ def test_df2tensor():
 
 
 def test_labels2onehot():
-    classes = ["first class", "second class", "third class"]
+    classes = OrderedSet(["first class", "second class", "third class"])
     y1 = "first class"
     y2 = "third class"
     assert labels2onehot(y1, classes).tolist() == [[1, 0, 0]]
     assert labels2onehot(y2, classes).tolist() == [[0, 0, 1]]
-    classes = ["first class"]
+    classes = OrderedSet(["first class"])
     n_classes = 3
     assert labels2onehot(y1, classes, n_classes).tolist() == [[1, 0, 0]]
 
-    classes = ["first class", "second class", "third class"]
-    y1 = ["first class", "third class"]
+    classes = OrderedSet(["first class", "second class", "third class"])
+    y1 = pd.Series(["first class", "third class"])
     assert labels2onehot(y1, classes).tolist() == [[1, 0, 0], [0, 0, 1]]
     assert labels2onehot(y1, classes, n_classes=4).tolist() == [
         [1, 0, 0, 0],

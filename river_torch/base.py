@@ -221,7 +221,7 @@ class RollingDeepEstimator(base.Estimator):
 
     @abc.abstractmethod
     def learn_many(
-        self, X: pd.DataFrame, y: Optional[List[Any]]
+        self, X: pd.DataFrame, y: pd.Series
     ) -> "RollingDeepEstimator":
         """
         Performs one step of training with a batch of sliding windows of

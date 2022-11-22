@@ -299,8 +299,8 @@ class Classifier(DeepEstimator, base.Classifier):
 
         Returns
         -------
-        List
-            List of dictionaries of probabilities for each label.
+        pd.DataFrame
+            DataFrame of probabilities for each label.
         """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
