@@ -126,7 +126,6 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             "check_predict_proba_one_binary",
         }
 
-
     def learn_one(self, x: dict, y: RegTarget) -> "RollingRegressor":
         """
         Performs one step of training with the sliding
@@ -202,8 +201,6 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         if self.append_predict:
             self._x_window.append(list(x.values()))
         return res
-
-
 
     def predict_many(self, X: pd.DataFrame) -> List:
         res = [0.0] * len(X)

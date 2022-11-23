@@ -1,19 +1,15 @@
 import math
-import warnings
-from typing import Callable, Dict, List, Optional, Type, Union
+from typing import Callable, Dict, List, Type, Union
 
 import pandas as pd
 import torch
-from ordered_set import OrderedSet
 from river.base.typing import ClfTarget
 from torch import nn
 
 from river_torch.base import RollingDeepEstimator
 from river_torch.classification import Classifier
-from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
 from river_torch.utils.tensor_conversion import (
     deque2rolling_tensor,
-    labels2onehot,
     output2proba,
 )
 
@@ -156,7 +152,11 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             append_predict=append_predict,
             **kwargs,
         )
-        self._supported_output_layers = (nn.Linear, nn.LSTM, nn.RNN)
+        self._supported_output_layers: List[Type[nn.Module]] = [
+            nn.Linear,
+            nn.LSTM,
+            nn.RNN,
+        ]
 
     @classmethod
     def _unit_test_params(cls):
@@ -601,4 +601,3 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         self.optimizer = self.optimizer_fn(
             self.module.parameters(), lr=self.lr
         )
-

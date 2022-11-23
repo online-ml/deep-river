@@ -148,8 +148,7 @@ class Classifier(DeepEstimator, base.Classifier):
         self.output_layer: nn.Module
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
-        self._supported_output_layers = (nn.Linear,)
-
+        self._supported_output_layers: List[Type[nn.Module]] = [nn.Linear]
 
     @classmethod
     def _unit_test_params(cls):
@@ -190,9 +189,7 @@ class Classifier(DeepEstimator, base.Classifier):
             "check_predict_proba_one_binary",
         }
 
-    def _learn(
-        self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]
-    ):
+    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
@@ -385,7 +382,7 @@ class Classifier(DeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], self._supported_output_layers
+            tracker.ordered_modules[-1], tuple(self._supported_output_layers)
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
