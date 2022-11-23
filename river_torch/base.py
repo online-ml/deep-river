@@ -3,11 +3,9 @@ import collections
 import inspect
 from typing import Any, Callable, Deque, Optional, Type, Union, cast
 
-import pandas as pd
+
 import torch
 from river import base
-from river.base.typing import RegTarget
-
 from river_torch.utils import get_loss_fn, get_optim_fn
 
 
@@ -135,7 +133,7 @@ class DeepEstimator(base.Estimator):
         self.module_initialized = True
 
 
-class RollingDeepEstimator(base.Estimator):
+class RollingDeepEstimator(DeepEstimator):
     """
     Abstract base class that implements basic functionality of
     River-compatible PyTorch wrappers including a rolling window to allow the
@@ -183,111 +181,17 @@ class RollingDeepEstimator(base.Estimator):
         append_predict: bool = False,
         **kwargs,
     ):
-        self.module_cls = module
-        self.module: torch.nn.Module = cast(torch.nn.Module, None)  # cleaner
-        self.loss_fn = get_loss_fn(loss_fn=loss_fn)
-        self.optimizer_fn = get_optim_fn(optimizer_fn)
-        self.lr = lr
-        self.device = device
-        self.kwargs = kwargs
-        self.window_size = window_size
-        self.seed = seed
-        self.append_predict = append_predict
-        self.module_initialized = False
-        torch.manual_seed(seed)
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            lr=lr,
+            device=device,
+            seed=seed,
+            **kwargs,
+        )
 
+        self.window_size = window_size
+        self.append_predict = append_predict
         self._x_window: Deque = collections.deque(maxlen=window_size)
         self._batch_i = 0
-
-    @abc.abstractmethod
-    def learn_one(self, x: dict, y: RegTarget) -> "RollingDeepEstimator":
-        """
-        Performs one step of training with a sliding window of
-        the most recent examples.
-
-        Parameters
-        ----------
-        x
-            Input example.
-        y
-            Target value.
-
-        Returns
-        -------
-        RollingDeepEstimator
-            The estimator itself.
-        """
-        return self
-
-    @abc.abstractmethod
-    def learn_many(
-        self, X: pd.DataFrame, y: pd.Series
-    ) -> "RollingDeepEstimator":
-        """
-        Performs one step of training with a batch of sliding windows of
-        the most recent examples.
-
-        Parameters
-        ----------
-        X
-            Input example.
-        y
-            Target value.
-
-        Returns
-        -------
-        RollingDeepEstimator
-            The estimator itself.
-        """
-        raise NotImplementedError
-
-    def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
-        """Filters `net_params` and returns those in `fn`'s arguments.
-
-        Parameters
-        ----------
-        fn
-            Arbitrary function
-        override
-            Dictionary, values to override `torch_params`
-
-        Returns
-        -------
-        dict
-            Dictionary containing variables in both `sk_params` and
-            `fn`'s arguments.
-        """
-        override = override or {}
-        res = {}
-        for name, value in kwargs.items():
-            args = list(inspect.signature(fn).parameters)
-            if name in args:
-                res.update({name: value})
-        res.update(override)
-        return res
-
-    def initialize_module(self, **kwargs):
-        """
-        Parameters
-        ----------
-        module
-          The instance or class or callable to be initialized, e.g.
-          ``self.module``.
-        kwargs : dict
-          The keyword arguments to initialize the instance or class. Can be an
-          empty dict.
-        Returns
-        -------
-        instance
-          The initialized component.
-        """
-        if not isinstance(self.module, torch.nn.Module):
-            self.module = self.module_cls(
-                **self._filter_kwargs(self.module_cls, kwargs)
-            )
-
-        self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(
-            self.module.parameters(), lr=self.lr
-        )
-        self.module_initialized = True

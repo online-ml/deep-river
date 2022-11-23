@@ -2,10 +2,10 @@ from typing import Any, Callable, List, Type, Union
 
 import pandas as pd
 import torch
-from river import base
 from river.base.typing import RegTarget
 
 from river_torch.base import RollingDeepEstimator
+from river_torch.regression import Regressor
 from river_torch.utils.tensor_conversion import (
     deque2rolling_tensor,
     float2tensor,
@@ -27,7 +27,7 @@ class _TestLSTM(torch.nn.Module):
         return hn
 
 
-class RollingRegressor(RollingDeepEstimator, base.Regressor):
+class RollingRegressor(RollingDeepEstimator, Regressor):
     """
     Wrapper that feeds a sliding window of the most recent examples to the
     wrapped PyTorch regression model.
@@ -126,36 +126,6 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             "check_predict_proba_one_binary",
         }
 
-    def predict_one(self, x: dict) -> RegTarget:
-        """
-        Predicts the target value for the current sliding
-        window of most recent examples.
-
-        Parameters
-        ----------
-        x
-            Input example.
-
-        Returns
-        -------
-        RegTarget
-            Predicted target value.
-        """
-        res = 0.0
-        if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-
-        if len(self._x_window) == self.window_size:
-            self.module.eval()
-            x_win = self._x_window.copy()
-            x_win.append(list(x.values()))
-            x_t = deque2rolling_tensor(x_win, device=self.device)
-            res = self.module(x_t).detach().numpy().item()
-
-        if self.append_predict:
-            self._x_window.append(list(x.values()))
-        return res
 
     def learn_one(self, x: dict, y: RegTarget) -> "RollingRegressor":
         """
@@ -187,14 +157,6 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
 
         return self
 
-    def _learn(self, x: torch.Tensor, y: torch.Tensor):
-        self.module.train()
-        self.optimizer.zero_grad()
-        y_pred = self.module(x)
-        loss = self.loss_fn(y_pred, y)
-        loss.backward()
-        self.optimizer.step()
-
     def learn_many(
         self, X: pd.DataFrame, y: List[Any]
     ) -> "RollingDeepEstimator":
@@ -209,6 +171,39 @@ class RollingRegressor(RollingDeepEstimator, base.Regressor):
             self._learn(x_t, y_t)
 
         return self
+
+    def predict_one(self, x: dict) -> RegTarget:
+        """
+        Predicts the target value for the current sliding
+        window of most recent examples.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        RegTarget
+            Predicted target value.
+        """
+        res = 0.0
+        if not self.module_initialized:
+            self.kwargs["n_features"] = len(x)
+            self.initialize_module(**self.kwargs)
+
+        if len(self._x_window) == self.window_size:
+            self.module.eval()
+            x_win = self._x_window.copy()
+            x_win.append(list(x.values()))
+            x_t = deque2rolling_tensor(x_win, device=self.device)
+            res = self.module(x_t).detach().numpy().item()
+
+        if self.append_predict:
+            self._x_window.append(list(x.values()))
+        return res
+
+
 
     def predict_many(self, X: pd.DataFrame) -> List:
         res = [0.0] * len(X)

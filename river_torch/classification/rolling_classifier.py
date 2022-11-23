@@ -5,11 +5,11 @@ from typing import Callable, Dict, List, Optional, Type, Union
 import pandas as pd
 import torch
 from ordered_set import OrderedSet
-from river import base
 from river.base.typing import ClfTarget
 from torch import nn
 
 from river_torch.base import RollingDeepEstimator
+from river_torch.classification import Classifier
 from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
 from river_torch.utils.tensor_conversion import (
     deque2rolling_tensor,
@@ -35,7 +35,7 @@ class _TestLSTM(torch.nn.Module):
         return self.softmax(hn)
 
 
-class RollingClassifier(RollingDeepEstimator, base.Classifier):
+class RollingClassifier(Classifier, RollingDeepEstimator):
     """
     Wrapper that feeds a sliding window of the most recent examples to the
     wrapped PyTorch classification model. The class also automatically handles
@@ -143,21 +143,20 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         append_predict: bool = False,
         **kwargs,
     ):
-        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
-        self.output_layer: Optional[nn.Module] = None
-        self.output_is_logit = output_is_logit
-        self.is_class_incremental = is_class_incremental
         super().__init__(
             module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
+            lr=lr,
+            output_is_logit=output_is_logit,
+            is_class_incremental=is_class_incremental,
+            device=device,
+            seed=seed,
             window_size=window_size,
             append_predict=append_predict,
-            device=device,
-            lr=lr,
-            seed=seed,
             **kwargs,
         )
+        self._supported_output_layers = (nn.Linear, nn.LSTM, nn.RNN)
 
     @classmethod
     def _unit_test_params(cls):
@@ -235,22 +234,6 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             return self._learn(x=x_t, y=y)
         return self
 
-    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
-        self.module.train()
-        self.optimizer.zero_grad()
-        y_pred = self.module(x)
-        n_classes = y_pred.shape[-1]
-        y = labels2onehot(
-            y=y,
-            classes=self.observed_classes,
-            n_classes=n_classes,
-            device=self.device,
-        )
-        loss = self.loss_fn(y_pred, y)
-        loss.backward()
-        self.optimizer.step()
-        return self
-
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """
         Predict the probability of each label given the most recent examples
@@ -313,18 +296,24 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        y = labels2onehot(
-            y,
-            classes=self.observed_classes,
-            # n_classes=self.output_layer.out_features,
-            device=self.device,
-        )
         if len(self._x_window) == self.window_size:
             X_t = deque2rolling_tensor(self._x_window, device=self.device)
-            self._learn(x=X_t, y=y)
+            self._learn(x=X_t, y=y.tolist())
         return self
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
+        """
+        Predict the probability of each label given the most recent examples
+
+        Parameters
+        ----------
+        X
+
+        Returns
+        -------
+        pd.DataFrame
+            DataFrame of probabilities for each label.
+        """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
@@ -613,29 +602,3 @@ class RollingClassifier(RollingDeepEstimator, base.Classifier):
             self.module.parameters(), lr=self.lr
         )
 
-    def find_output_layer(self, n_features):
-
-        handles = []
-        tracker = ForwardOrderTracker()
-        apply_hooks(module=self.module, hook=tracker, handles=handles)
-
-        x_dummy = torch.empty((1, n_features), device=self.device)
-        self.module(x_dummy)
-
-        for h in handles:
-            h.remove()
-
-        if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], (nn.Linear, nn.LSTM, nn.RNN)
-        ):
-            self.output_layer = tracker.ordered_modules[-1]
-        else:
-            warnings.warn(
-                "The model will not be able to adapt its output to new "
-                "classes since no linear layer output layer was found."
-            )
-            self.is_class_incremental = False
-
-    def initialize_module(self, **kwargs):
-        super().initialize_module(**kwargs)
-        self.find_output_layer(n_features=kwargs["n_features"])
