@@ -135,10 +135,6 @@ class Classifier(DeepEstimator, base.Classifier):
         seed: int = 42,
         **kwargs,
     ):
-        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
-        self.output_layer: nn.Module
-        self.output_is_logit = output_is_logit
-        self.is_class_incremental = is_class_incremental
         super().__init__(
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
@@ -148,6 +144,11 @@ class Classifier(DeepEstimator, base.Classifier):
             seed=seed,
             **kwargs,
         )
+        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
+        self.output_layer: nn.Module
+        self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
+        self._supported_output_layers: List[Type[nn.Module]] = [nn.Linear]
 
     @classmethod
     def _unit_test_params(cls):
@@ -188,6 +189,22 @@ class Classifier(DeepEstimator, base.Classifier):
             "check_predict_proba_one_binary",
         }
 
+    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
+        self.module.train()
+        self.optimizer.zero_grad()
+        y_pred = self.module(x)
+        n_classes = y_pred.shape[-1]
+        y = labels2onehot(
+            y=y,
+            classes=self.observed_classes,
+            n_classes=n_classes,
+            device=self.device,
+        )
+        loss = self.loss_fn(y_pred, y)
+        loss.backward()
+        self.optimizer.step()
+        return self
+
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
         """
         Performs one step of training with a single example.
@@ -217,24 +234,6 @@ class Classifier(DeepEstimator, base.Classifier):
             self._adapt_output_dim()
 
         return self._learn(x=x_t, y=y)
-
-    def _learn(
-        self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]
-    ) -> "Classifier":
-        self.module.train()
-        self.optimizer.zero_grad()
-        y_pred = self.module(x)
-        n_classes = y_pred.shape[-1]
-        y = labels2onehot(
-            y=y,
-            classes=self.observed_classes,
-            n_classes=n_classes,
-            device=self.device,
-        )
-        loss = self.loss_fn(y_pred, y)
-        loss.backward()
-        self.optimizer.step()
-        return self
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """
@@ -286,7 +285,6 @@ class Classifier(DeepEstimator, base.Classifier):
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        self.module.train()
         return self._learn(x=X, y=y.tolist())
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -384,7 +382,7 @@ class Classifier(DeepEstimator, base.Classifier):
             h.remove()
 
         if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], (nn.Linear)
+            tracker.ordered_modules[-1], tuple(self._supported_output_layers)
         ):
             self.output_layer = tracker.ordered_modules[-1]
         else:
