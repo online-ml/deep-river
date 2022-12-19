@@ -20,6 +20,7 @@ base_packages = [
     "river~=0.14.0",
     "tqdm~=4.61.2",
     "ordered-set~=4.1.0",
+    "torchviz~=0.0.2",
 ]
 
 dev_packages = base_packages + [

@@ -8,6 +8,14 @@ from river import base
 
 from river_torch.utils import get_loss_fn, get_optim_fn
 
+try:
+    from graphviz import Digraph
+    from torchviz import make_dot
+except ImportError as e:
+    raise ValueError(
+        "You have to install graphviz to use the draw method"
+    ) from e
+
 
 class DeepEstimator(base.Estimator):
     """
@@ -105,6 +113,15 @@ class DeepEstimator(base.Estimator):
                 res.update({name: value})
         res.update(override)
         return res
+
+    def draw(self) -> Digraph:
+        """Draws the wrapped model."""
+        first_parameter = next(self.module.parameters())
+        input_shape = first_parameter.size()
+        y_pred = self.module(torch.rand(input_shape))
+        return make_dot(
+            y_pred.mean(), params=dict(self.module.named_parameters())
+        )
 
     def initialize_module(self, **kwargs):
         """
