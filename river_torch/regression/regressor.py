@@ -177,7 +177,9 @@ class Regressor(DeepEstimator, base.Regressor):
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, self.device)
         self.module.eval()
-        return self.module(x_t).item()
+        with torch.inference_mode():
+            y_pred = self.module(x_t).item()
+        return y_pred
 
     def learn_many(self, X: pd.DataFrame, y: List) -> "Regressor":
         """
@@ -223,4 +225,6 @@ class Regressor(DeepEstimator, base.Regressor):
 
         X = df2tensor(X, device=self.device)
         self.module.eval()
-        return self.module(X).detach().tolist()
+        with torch.inference_mode():
+            y_preds = self.module(X).detach().tolist()
+        return y_preds
