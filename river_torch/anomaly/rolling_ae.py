@@ -154,7 +154,9 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         loss.backward()
         self.optimizer.step()
 
-    def learn_one(self, x: dict, y: None) -> "RollingAutoencoder":
+    def learn_one(
+        self, x: dict, y: Any = None, **kwargs
+    ) -> "RollingAutoencoder":
         """
         Performs one step of training with a single example.
 
