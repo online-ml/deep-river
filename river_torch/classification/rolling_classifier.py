@@ -254,12 +254,12 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             self.initialize_module(**self.kwargs)
 
         if len(self._x_window) == self.window_size:
-            self.module.eval()
-            x_win = self._x_window.copy()
-            x_win.append(list(x.values()))
-            x_t = deque2rolling_tensor(x_win, device=self.device)
-            y_pred = self.module(x_t)
-            proba = output2proba(y_pred, self.observed_classes)
+            with torch.inference_mode():
+                x_win = self._x_window.copy()
+                x_win.append(list(x.values()))
+                x_t = deque2rolling_tensor(x_win, device=self.device)
+                y_pred = self.module(x_t)
+                proba = output2proba(y_pred, self.observed_classes)
         else:
             proba = self._get_default_proba()
 
@@ -322,12 +322,12 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         x_win.extend(X.values.tolist())
 
         if len(x_win) == self.window_size:
-            self.module.eval()
-            x_t = deque2rolling_tensor(x_win, device=self.device)
-            probas = self.module(x_t).detach().tolist()
-            if len(probas) < len(X):
-                default_proba = self._get_default_proba()
-                probas = [default_proba] * (len(X) - len(probas)) + probas
+            with torch.inference_mode():
+                x_t = deque2rolling_tensor(x_win, device=self.device)
+                probas = self.module(x_t).detach().tolist()
+                if len(probas) < len(X):
+                    default_proba = self._get_default_proba()
+                    probas = [default_proba] * (len(X) - len(probas)) + probas
         else:
             default_proba = self._get_default_proba()
             probas = [default_proba] * len(X)

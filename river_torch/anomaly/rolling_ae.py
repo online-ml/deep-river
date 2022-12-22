@@ -219,7 +219,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             x_win.append(list(x.values()))
             x_t = deque2rolling_tensor(x_win, device=self.device)
             self.module.eval()
-            x_pred = self.module(x_t)
+            with torch.inference_mode():
+                x_pred = self.module(x_t)
             loss = self.loss_fn(x_pred, x_t)
             res = loss.item()
 
@@ -240,7 +241,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         if len(self._x_window) == self.window_size:
             self.module.eval()
             X_t = deque2rolling_tensor(x_win, device=self.device)
-            x_pred = self.module(X_t)
+            with torch.inference_mode():
+                x_pred = self.module(X_t)
             loss = torch.mean(
                 self.loss_fn(x_pred, x_pred, reduction="none"),
                 dim=list(range(1, x_pred.dim())),

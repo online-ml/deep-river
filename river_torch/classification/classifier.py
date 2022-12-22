@@ -254,7 +254,8 @@ class Classifier(DeepEstimator, base.Classifier):
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, device=self.device)
         self.module.eval()
-        y_pred = self.module(x_t)
+        with torch.inference_mode():
+            y_pred = self.module(x_t)
         return output2proba(
             y_pred, self.observed_classes, self.output_is_logit
         )
@@ -306,7 +307,8 @@ class Classifier(DeepEstimator, base.Classifier):
             self.initialize_module(**self.kwargs)
         X_t = df2tensor(X, device=self.device)
         self.module.eval()
-        y_preds = self.module(X_t)
+        with torch.inference_mode():
+            y_preds = self.module(X_t)
         return pd.Dataframe(output2proba(y_preds, self.observed_classes))
 
     def _adapt_output_dim(self):
