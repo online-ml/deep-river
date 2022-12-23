@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from ordered_set import OrderedSet
 
-from river_torch.utils import (
+from deep_river.utils import (
     deque2rolling_tensor,
     df2tensor,
     dict2tensor,

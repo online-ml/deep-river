@@ -10,9 +10,9 @@ from river.base.typing import ClfTarget
 from torch import nn
 from torch.utils.hooks import RemovableHandle
 
-from river_torch.base import DeepEstimator
-from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
-from river_torch.utils.tensor_conversion import (
+from deep_river.base import DeepEstimator
+from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
+from deep_river.utils.tensor_conversion import (
     df2tensor,
     dict2tensor,
     labels2onehot,
@@ -83,7 +83,7 @@ class Classifier(DeepEstimator, base.Classifier):
         Examples
         --------
     >>> from river import metrics, preprocessing, compose, datasets
-    >>> from river_torch import classification
+    >>> from deep_river import classification
     >>> from torch import nn
     >>> from torch import manual_seed
 

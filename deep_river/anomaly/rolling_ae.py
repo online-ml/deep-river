@@ -6,8 +6,8 @@ import torch
 from river import anomaly
 from torch import nn
 
-from river_torch.base import RollingDeepEstimator
-from river_torch.utils.tensor_conversion import deque2rolling_tensor
+from deep_river.base import RollingDeepEstimator
+from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 
 class _TestLSTMAutoencoder(nn.Module):

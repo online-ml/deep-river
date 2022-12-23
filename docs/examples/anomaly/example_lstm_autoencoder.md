@@ -4,11 +4,10 @@ There is a multitude of successful architecture. In the following we demonstrate
 
 ## Models
 
-
 ```python
 from river import compose, preprocessing, metrics, datasets
 
-from river_torch.anomaly import RollingAutoencoder
+from deep_river.anomaly import RollingAutoencoder
 from torch import nn, manual_seed
 import torch
 from tqdm import tqdm

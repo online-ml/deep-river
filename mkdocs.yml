@@ -1,13 +1,13 @@
 # Project information
-site_name: river-torch
-site_description: river-torch is a Python library for incremental deep learning and serves as extension for river.
+site_name: deep-river
+site_description: deep-river is a Python library for incremental deep learning and serves as extension for river.
 site_author: Cedric Kulbach
-site_url: https://github.com/kulbachcedric/river-torch
+site_url: https://github.com/kulbachcedric/deep-river
 
 # Repository
-repo_name: river-torch
-repo_url: https://github.com/online-ml/river-torch
-edit_uri: "https://github.com/online-ml/river-torch"
+repo_name: deep-river
+repo_url: https://github.com/online-ml/deep-river
+edit_uri: "https://github.com/online-ml/deep-river"
 
 # Copyright
 copyright: Copyright &copy; 2019 - 2022
@@ -42,7 +42,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github-alt
-      link: https://github.com/online-ml/river-torch
+      link: https://github.com/online-ml/deep-river
   version:
     - provider: mike
 

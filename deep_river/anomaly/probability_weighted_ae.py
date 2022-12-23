@@ -6,8 +6,8 @@ import torch
 from river import stats, utils
 from scipy.special import ndtr
 
-from river_torch.anomaly import ae
-from river_torch.utils import dict2tensor
+from deep_river.anomaly import ae
+from deep_river.utils import dict2tensor
 
 
 class ProbabilityWeightedAutoencoder(ae.Autoencoder):
@@ -51,7 +51,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
         Examples
     --------
-    >>> from river_torch.anomaly import ProbabilityWeightedAutoencoder
+    >>> from deep_river.anomaly import ProbabilityWeightedAutoencoder
     >>> from river import metrics
     >>> from river.datasets import CreditCard
     >>> from torch import nn, manual_seed

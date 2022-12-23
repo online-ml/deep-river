@@ -5,8 +5,8 @@ import torch
 from river import base
 from river.base.typing import RegTarget
 
-from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (
+from deep_river.base import DeepEstimator
+from deep_river.utils.tensor_conversion import (
     df2tensor,
     dict2tensor,
     float2tensor,

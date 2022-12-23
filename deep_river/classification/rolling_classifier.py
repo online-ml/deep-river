@@ -6,9 +6,9 @@ import torch
 from river.base.typing import ClfTarget
 from torch import nn
 
-from river_torch.base import RollingDeepEstimator
-from river_torch.classification import Classifier
-from river_torch.utils.tensor_conversion import (
+from deep_river.base import RollingDeepEstimator
+from deep_river.classification import Classifier
+from deep_river.utils.tensor_conversion import (
     deque2rolling_tensor,
     output2proba,
 )
@@ -80,7 +80,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
     Examples
     --------
-    >>> from river_torch.classification import RollingClassifier
+    >>> from deep_river.classification import RollingClassifier
     >>> from river import metrics, datasets, compose, preprocessing
     >>> import torch
 

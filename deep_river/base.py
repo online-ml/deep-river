@@ -6,7 +6,7 @@ from typing import Any, Callable, Deque, Optional, Type, Union, cast
 import torch
 from river import base
 
-from river_torch.utils import get_loss_fn, get_optim_fn
+from deep_river.utils import get_loss_fn, get_optim_fn
 
 try:
     from graphviz import Digraph

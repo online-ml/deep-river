@@ -1,10 +1,9 @@
 # Simple Fully Connected Autoencoder
 
-
 ```python
 from river import compose, preprocessing, metrics, datasets
 
-from river_torch.anomaly import Autoencoder
+from deep_river.anomaly import Autoencoder
 from torch import nn, manual_seed
 ```
 
