@@ -49,6 +49,7 @@ module = [
     "pandas.*",
     "scipy.*",
     "torch.*",
+    "torchviz.*",
     "graphviz.*",
     "vaex.*",
     "torch.*",

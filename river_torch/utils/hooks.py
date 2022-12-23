@@ -12,8 +12,9 @@ class ForwardOrderTracker:
             self.ordered_modules.append(module)
 
 
-def apply_hooks(module, hook, handles):
+def apply_hooks(module, hook, handles=[]):
     for child in module.children():
         apply_hooks(child, hook, handles)
     handle = module.register_forward_hook(hook)
     handles.append(handle)
+    return handles
