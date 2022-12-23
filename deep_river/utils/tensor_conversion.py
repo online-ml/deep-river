@@ -1,4 +1,4 @@
-from typing import Deque, Dict, Optional, Union
+from typing import Deque, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -146,7 +146,7 @@ def labels2onehot(
 
 def output2proba(
     preds: torch.Tensor, classes: OrderedSet, with_logits=False
-) -> Dict[ClfTarget, float]:
+) -> List[Dict[ClfTarget, float]]:
     if with_logits:
         if preds.shape[-1] >= 1:
             preds = torch.softmax(preds, dim=-1)
@@ -168,4 +168,4 @@ def output2proba(
         if preds_np.shape[0] == 1
         else [dict(zip(classes, pred)) for pred in preds_np]
     )
-    return dict(probas)
+    return [probas] if isinstance(probas, dict) else list(probas)

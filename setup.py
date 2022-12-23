@@ -3,10 +3,10 @@ import os
 import setuptools
 
 # Package meta-data.
-NAME = "river_torch"
+NAME = "deep_river"
 DESCRIPTION = "Online Deep Learning for river"
 LONG_DESCRIPTION_CONTENT_TYPE = "text/markdown"
-URL = "https://github.com/kulbachcedric/IncrementalTorch"
+URL = "https://online-ml.github.io/deep-river/"
 EMAIL = "cedric.kulbach@googlemail.com"
 AUTHOR = "Cedric Kulbach"
 REQUIRES_PYTHON = ">=3.6.0"

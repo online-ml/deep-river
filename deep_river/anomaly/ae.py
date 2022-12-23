@@ -6,9 +6,9 @@ import torch
 from river.anomaly.base import AnomalyDetector
 from torch import nn
 
-from river_torch.base import DeepEstimator
-from river_torch.utils import dict2tensor
-from river_torch.utils.tensor_conversion import df2tensor
+from deep_river.base import DeepEstimator
+from deep_river.utils import dict2tensor
+from deep_river.utils.tensor_conversion import df2tensor
 
 
 class _TestAutoencoder(torch.nn.Module):
@@ -58,7 +58,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
     Examples
     --------
-    >>> from river_torch.anomaly import Autoencoder
+    >>> from deep_river.anomaly import Autoencoder
     >>> from river import metrics
     >>> from river.datasets import CreditCard
     >>> from torch import nn

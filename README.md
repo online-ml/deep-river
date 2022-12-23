@@ -1,46 +1,46 @@
 <p align="center">
-  <img height="150px" src="https://raw.githubusercontent.com/online-ml/river-torch/master/docs/img/logo.png" alt="incremental dl logo">
+  <img height="150px" src="https://raw.githubusercontent.com/online-ml/deep-river/master/docs/img/logo.png" alt="incremental dl logo">
 </p>
 <p align="center">
-    <img alt="PyPI" src="https://img.shields.io/pypi/v/river-torch">
-    <a href="https://codecov.io/gh/online-ml/river-torch" > 
-        <img src="https://codecov.io/gh/online-ml/river-torch/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
+    <img alt="PyPI" src="https://img.shields.io/pypi/v/deep-river">
+    <a href="https://codecov.io/gh/online-ml/deep-river" > 
+        <img src="https://codecov.io/gh/online-ml/deep-river/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
     </a>
-    <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dw/river-torch">
-    <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/river-torch">
+    <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dw/deep-river">
+    <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/deep-river">
 </p>
 <p align="center">
-    river-torch is a Python library for online deep learning.
-    River-torch's ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
+    deep-river is a Python library for online deep learning.
+    deep-river's ambition is to enable <a href="https://www.wikiwand.com/en/Online_machine_learning">online machine learning</a> for neural networks.
     It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>.
 </p>
 
 ## 💈 Installation
 
 ```shell
-pip install river-torch
+pip install deep-river
 ```
 or
 ```shell
-pip install "river[torch]"
+pip install "river[deep]"
 ```
 You can install the latest development version from GitHub as so:
 
 ```shell
-pip install https://github.com/online-ml/river-torch/archive/refs/heads/master.zip
+pip install https://github.com/online-ml/deep-river/archive/refs/heads/master.zip
 ```
 
 ## 🍫 Quickstart
 
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
-For further examples check out the <a href="https://online-ml.github.io/river-torch">Documentation</a>.
+For further examples check out the <a href="https://online-ml.github.io/deep-river">Documentation</a>.
 
 ### Classification
 
 ```python
 >>> from river import metrics, datasets, preprocessing, compose
->>> from river_torch import classification
+>>> from deep_river import classification
 >>> from torch import nn
 >>> from torch import optim
 >>> from torch import manual_seed
@@ -72,7 +72,7 @@ For further examples check out the <a href="https://online-ml.github.io/river-to
 >>> for x, y in dataset:
 ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
 ...     metric = metric.update(y, y_pred)  # update the metric
-...     model_pipeline = model_pipeline.learn_one(x,y)  # make the model learn
+...     model_pipeline = model_pipeline.learn_one(x, y)  # make the model learn
 >>> print(f"Accuracy: {metric.get():.4f}")
 Accuracy: 0.6728
 
@@ -81,7 +81,7 @@ Accuracy: 0.6728
 ### Anomaly Detection
 
 ```python
->>> from river_torch.anomaly import Autoencoder
+>>> from deep_river.anomaly import Autoencoder
 >>> from river import metrics
 >>> from river.datasets import CreditCard
 >>> from torch import nn
@@ -111,9 +111,9 @@ Accuracy: 0.6728
 >>> model = Pipeline(scaler, ae)
 
 >>> for x, y in dataset:
-...    score = model.score_one(x)
-...    model = model.learn_one(x=x)
-...    metric = metric.update(y, score)
+...     score = model.score_one(x)
+...     model = model.learn_one(x=x)
+...     metric = metric.update(y, score)
 ...
 >>> print(f"ROCAUC: {metric.get():.4f}")
 ROCAUC: 0.7447

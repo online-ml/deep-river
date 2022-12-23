@@ -4,9 +4,9 @@ import pandas as pd
 import torch
 from river.base.typing import RegTarget
 
-from river_torch.base import RollingDeepEstimator
-from river_torch.regression import Regressor
-from river_torch.utils.tensor_conversion import (
+from deep_river.base import RollingDeepEstimator
+from deep_river.regression import Regressor
+from deep_river.utils.tensor_conversion import (
     deque2rolling_tensor,
     float2tensor,
 )

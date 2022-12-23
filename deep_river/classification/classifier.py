@@ -10,9 +10,9 @@ from river.base.typing import ClfTarget
 from torch import nn
 from torch.utils.hooks import RemovableHandle
 
-from river_torch.base import DeepEstimator
-from river_torch.utils.hooks import ForwardOrderTracker, apply_hooks
-from river_torch.utils.tensor_conversion import (
+from deep_river.base import DeepEstimator
+from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
+from deep_river.utils.tensor_conversion import (
     df2tensor,
     dict2tensor,
     labels2onehot,
@@ -35,7 +35,7 @@ class _TestModule(torch.nn.Module):
         return X
 
 
-class Classifier(DeepEstimator, base.Classifier):
+class Classifier(DeepEstimator, base.MiniBatchClassifier):
     """
         Wrapper for PyTorch classification models that automatically handles
         increases in the number of classes by adding output neurons in case
@@ -83,7 +83,7 @@ class Classifier(DeepEstimator, base.Classifier):
         Examples
         --------
     >>> from river import metrics, preprocessing, compose, datasets
-    >>> from river_torch import classification
+    >>> from deep_river import classification
     >>> from torch import nn
     >>> from torch import manual_seed
 
@@ -258,7 +258,7 @@ class Classifier(DeepEstimator, base.Classifier):
             y_pred = self.module(x_t)
         return output2proba(
             y_pred, self.observed_classes, self.output_is_logit
-        )
+        )[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
@@ -286,7 +286,7 @@ class Classifier(DeepEstimator, base.Classifier):
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        return self._learn(x=X, y=y.tolist())
+        return self._learn(x=X, y=y)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -309,7 +309,7 @@ class Classifier(DeepEstimator, base.Classifier):
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(X_t)
-        return pd.Dataframe(output2proba(y_preds, self.observed_classes))
+        return pd.DataFrame(output2proba(y_preds, self.observed_classes))
 
     def _adapt_output_dim(self):
         out_features_target = (

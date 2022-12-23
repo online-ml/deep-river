@@ -5,8 +5,8 @@ import torch
 from river import base
 from river.base.typing import RegTarget
 
-from river_torch.base import DeepEstimator
-from river_torch.utils.tensor_conversion import (
+from deep_river.base import DeepEstimator
+from deep_river.utils.tensor_conversion import (
     df2tensor,
     dict2tensor,
     float2tensor,
@@ -32,7 +32,7 @@ class _TestModule(torch.nn.Module):
         return X
 
 
-class Regressor(DeepEstimator, base.Regressor):
+class Regressor(DeepEstimator, base.MiniBatchRegressor):
     """
     Wrapper for PyTorch regression models that enables
     compatibility with River.
@@ -181,7 +181,7 @@ class Regressor(DeepEstimator, base.Regressor):
             y_pred = self.module(x_t).item()
         return y_pred
 
-    def learn_many(self, X: pd.DataFrame, y: List) -> "Regressor":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Regressor":
         """
         Performs one step of training with a batch of examples.
 
@@ -201,7 +201,9 @@ class Regressor(DeepEstimator, base.Regressor):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X_t = df2tensor(X, device=self.device)
-        y_t = torch.tensor(y, device=self.device, dtype=torch.float32)
+        y_t = torch.tensor(
+            y, device=self.device, dtype=torch.float32
+        ).unsqueeze(1)
         self._learn(X_t, y_t)
         return self
 
@@ -224,7 +226,6 @@ class Regressor(DeepEstimator, base.Regressor):
             self.initialize_module(**self.kwargs)
 
         X = df2tensor(X, device=self.device)
-        self.module.eval()
         with torch.inference_mode():
-            y_preds = self.module(X).detach().tolist()
+            y_preds = self.module(X).detach().squeeze().tolist()
         return y_preds

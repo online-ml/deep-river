@@ -1,33 +1,33 @@
 # Getting started
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
-For further examples check out the <a href="https://online-ml.github.io/river-torch">Documentation</a>.
+For further examples check out the <a href="https://online-ml.github.io/deep-river">Documentation</a>.
 
 ##💈Installation
 
 River is meant to work with Python 3.8 and above. Installation can be done via `pip`:
 
 ```sh
-pip install river-torch
+pip install deep-river
 ```
 or
 ```sh
-pip install "river[torch]"
+pip install "river[deep]"
 ```
 
 You can install the latest development version from GitHub, as so:
 
 ```sh
-pip install git+https://github.com/online-ml/river-torch --upgrade
+pip install git+https://github.com/online-ml/deep-river --upgrade
 ```
 
 Or, through SSH:
 
 ```sh
-pip install git+ssh://git@github.com/online-ml/river-torch.git --upgrade
+pip install git+ssh://git@github.com/online-ml/deep-river.git --upgrade
 ```
 
-Feel welcome to [open an issue on GitHub](https://github.com/online-ml/river-torch/issues/new) if you are having any trouble.
+Feel welcome to [open an issue on GitHub](https://github.com/online-ml/deep-river/issues/new) if you are having any trouble.
 
 
 ## 💻 Usage
@@ -36,7 +36,7 @@ Feel welcome to [open an issue on GitHub](https://github.com/online-ml/river-tor
 
 ```python
 >>> from river import metrics, datasets, preprocessing, compose
->>> from river_torch import classification
+>>> from deep_river import classification
 >>> from torch import nn
 >>> from torch import optim
 >>> from torch import manual_seed
@@ -60,7 +60,7 @@ Feel welcome to [open an issue on GitHub](https://github.com/online-ml/river-tor
 >>> model_pipeline = compose.Pipeline(
 ...     preprocessing.StandardScaler(),
 ...     classification.Classifier(module=MyModule, loss_fn='binary_cross_entropy', optimizer_fn='adam')
-... )
+...     )
 
 >>> dataset = datasets.Phishing()
 >>> metric = metrics.Accuracy()
@@ -68,8 +68,8 @@ Feel welcome to [open an issue on GitHub](https://github.com/online-ml/river-tor
 >>> for x, y in dataset:
 ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
 ...     metric = metric.update(y, y_pred)  # update the metric
-...     model_pipeline = model_pipeline.learn_one(x,y)  # make the model learn
->>> print(f"Accuracy: {metric.get():.4f}")
+...     model_pipeline = model_pipeline.learn_one(x, y)  # make the model learn
+>>>     print(f"Accuracy: {metric.get():.4f}")
 Accuracy: 0.6728
 
 ```
@@ -78,7 +78,7 @@ Accuracy: 0.6728
 
 ```python
 >>> from river import metrics, compose, preprocessing, datasets
->>> from river_torch.regression import Regressor
+>>> from deep_river.regression import Regressor
 >>> from torch import nn
 >>> from pprint import pprint
 >>> from tqdm import tqdm
@@ -89,16 +89,17 @@ Accuracy: 0.6728
 >>> class MyModule(nn.Module):
 ...     def __init__(self, n_features):
 ...         super(MyModule, self).__init__()
-...         self.dense0 = nn.Linear(n_features,5)
+...         self.dense0 = nn.Linear(n_features, 5)
 ...         self.nonlin = nn.ReLU()
 ...         self.dense1 = nn.Linear(5, 1)
 ...         self.softmax = nn.Softmax(dim=-1)
-... 
+...
 ...     def forward(self, X, **kwargs):
 ...         X = self.nonlin(self.dense0(X))
 ...         X = self.nonlin(self.dense1(X))
 ...         X = self.softmax(X)
 ...         return X
+
 >>> model_pipeline = compose.Select('clouds', 'humidity', 'pressure', 'temperature', 'wind')
 >>> model_pipeline |= preprocessing.StandardScaler()
 >>> model_pipeline |= Regressor(module=MyModule, loss_fn="mse", optimizer_fn='sgd')
@@ -108,12 +109,13 @@ Accuracy: 0.6728
 ...     model_pipeline.learn_one(x=x, y=y)
 print(f'MAE: {metric.get():.2f}')
 MAE: 6.83
+
 ```
 
 ### Anomaly Detection
 
 ```python
->>> from river_torch.anomaly import Autoencoder
+>>> from deep_river.anomaly import Autoencoder
 >>> from river import metrics
 >>> from river.datasets import CreditCard
 >>> from torch import nn
@@ -125,6 +127,7 @@ MAE: 6.83
 >>> metric = metrics.ROCAUC(n_thresholds=50)
 
 >>> class MyAutoEncoder(nn.Module):
+
 ...     def __init__(self, n_features, latent_dim=3):
 ...         super(MyAutoEncoder, self).__init__()
 ...         self.linear1 = nn.Linear(n_features, latent_dim)
@@ -143,10 +146,12 @@ MAE: 6.83
 >>> model = Pipeline(scaler, ae)
 
 >>> for x, y in dataset:
-...    score = model.score_one(x)
-...    model = model.learn_one(x=x)
-...    metric = metric.update(y, score)
-...
+...     score = model.score_one(x)
+...     model = model.learn_one(x=x)
+...     metric = metric.update(y, score)
+... 
+
 >>> print(f"ROCAUC: {metric.get():.4f}")
 ROCAUC: 0.7447
+
 ```
