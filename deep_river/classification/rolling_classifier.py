@@ -333,7 +333,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             probas = [default_proba] * len(X)
         return pd.DataFrame(probas)
 
-    def _get_default_proba(self)-> List[Dict[ClfTarget, float]]:
+    def _get_default_proba(self) -> List[Dict[ClfTarget, float]]:
         if len(self.observed_classes) > 0:
             mean_proba = (
                 1 / len(self.observed_classes)
