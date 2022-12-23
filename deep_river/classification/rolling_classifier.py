@@ -266,7 +266,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         if self.append_predict:
             self._x_window.append(list(x.values()))
 
-        return proba
+        return proba[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
         """
@@ -333,7 +333,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             probas = [default_proba] * len(X)
         return pd.DataFrame(probas)
 
-    def _get_default_proba(self):
+    def _get_default_proba(self)-> List[Dict[ClfTarget, float]]:
         if len(self.observed_classes) > 0:
             mean_proba = (
                 1 / len(self.observed_classes)
@@ -343,7 +343,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             proba = {c: mean_proba for c in self.observed_classes}
         else:
             proba = {c: 1.0 for c in self.observed_classes}
-        return proba
+        return [proba] if isinstance(proba, dict) else proba
 
     def _adapt_output_dim(self):
         out_features_target = (

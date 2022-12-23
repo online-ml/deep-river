@@ -78,33 +78,34 @@ def test_labels2onehot():
 
 def test_output2proba():
     def assert_dicts_almost_equal(d1, d2):
-        for k in d1:
-            assert np.isclose(d1[k], d2[k])
+        for i in range(len(d1)):
+            for k in d1[i]:
+                assert np.isclose(d1[i][k], d2[i][k]), f"{d1[i][k]} != {d2[i][k]}"
 
     y = torch.tensor([[0.1, 0.2, 0.7]])
     classes = ["first class", "second class", "third class"]
     assert_dicts_almost_equal(
         output2proba(y, classes),
-        dict(zip(classes, np.array([0.1, 0.2, 0.7], dtype=np.float32))),
+        [dict(zip(classes, np.array([0.1, 0.2, 0.7], dtype=np.float32)))],
     )
     y = torch.tensor([[0.6]])
     classes = ["first class"]
     assert_dicts_almost_equal(
         output2proba(y, classes),
-        dict(
+        [dict(
             zip(
                 ["first class", "unobserved 0"],
                 np.array([0.6, 0.4], dtype=np.float32),
             )
-        ),
+        )],
     )
     y = torch.tensor([[0.6, 0.4, 0.0]])
     assert_dicts_almost_equal(
         output2proba(y, classes),
-        dict(
+        [dict(
             zip(
                 ["first class", "unobserved 0", "unobserved 1"],
                 np.array([0.6, 0.4, 0.0], dtype=np.float32),
             )
-        ),
+        )]
     )

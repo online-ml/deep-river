@@ -258,7 +258,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             y_pred = self.module(x_t)
         return output2proba(
             y_pred, self.observed_classes, self.output_is_logit
-        )
+        )[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
