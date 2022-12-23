@@ -1,5 +1,6 @@
 # Simple Fully Connected Autoencoder
 
+
 ```python
 from river import compose, preprocessing, metrics, datasets
 

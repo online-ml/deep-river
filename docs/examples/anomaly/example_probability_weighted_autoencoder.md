@@ -1,5 +1,6 @@
 # Probability weighted Autoencoder
 
+
 ```python
 from river import compose, preprocessing, metrics, datasets
 from deep_river.anomaly import ProbabilityWeightedAutoencoder

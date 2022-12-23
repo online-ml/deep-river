@@ -4,6 +4,7 @@ There is a multitude of successful architecture. In the following we demonstrate
 
 ## Models
 
+
 ```python
 from river import compose, preprocessing, metrics, datasets
 
