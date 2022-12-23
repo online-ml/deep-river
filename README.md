@@ -15,6 +15,9 @@
     It combines the <a href="https://www.riverml.xyz">river</a> API with the capabilities of designing neural networks based on <a href="https://pytorch.org">PyTorch</a>.
 </p>
 
+## 📚 [Documentation](https://online-ml.github.io/deep-river/)
+The [documentation](https://online-ml.github.io/deep-river/) contains an overview of all features of this repository as well as the repository's full features list. In each of these, the git repo reference is listed in a section that shows examples of the features and functionality.
+
 ## 💈 Installation
 
 ```shell
