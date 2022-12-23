@@ -111,9 +111,9 @@ Accuracy: 0.6728
 >>> model = Pipeline(scaler, ae)
 
 >>> for x, y in dataset:
-... score = model.score_one(x)
-... model = model.learn_one(x=x)
-... metric = metric.update(y, score)
+...     score = model.score_one(x)
+...     model = model.learn_one(x=x)
+...     metric = metric.update(y, score)
 ...
 >>> print(f"ROCAUC: {metric.get():.4f}")
 ROCAUC: 0.7447
