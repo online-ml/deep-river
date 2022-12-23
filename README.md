@@ -73,7 +73,7 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
 ...     metric = metric.update(y, y_pred)  # update the metric
 ...     model_pipeline = model_pipeline.learn_one(x, y)  # make the model learn
->>>     print(f"Accuracy: {metric.get():.4f}")
+>>> print(f"Accuracy: {metric.get():.4f}")
 Accuracy: 0.6728
 
 ```
@@ -93,18 +93,18 @@ Accuracy: 0.6728
 >>> metric = metrics.ROCAUC(n_thresholds=50)
 
 >>> class MyAutoEncoder(nn.Module):
-... def __init__(self, n_features, latent_dim=3):
-...     super(MyAutoEncoder, self).__init__()
-...     self.linear1 = nn.Linear(n_features, latent_dim)
-...     self.nonlin = nn.LeakyReLU()
-...     self.linear2 = nn.Linear(latent_dim, n_features)
-...     self.sigmoid = nn.Sigmoid()
+...     def __init__(self, n_features, latent_dim=3):
+...         super(MyAutoEncoder, self).__init__()
+...         self.linear1 = nn.Linear(n_features, latent_dim)
+...         self.nonlin = nn.LeakyReLU()
+...         self.linear2 = nn.Linear(latent_dim, n_features)
+...         self.sigmoid = nn.Sigmoid()
 ...
-... def forward(self, X, **kwargs):
-...     X = self.linear1(X)
-...     X = self.nonlin(X)
-...     X = self.linear2(X)
-...     return self.sigmoid(X)
+...     def forward(self, X, **kwargs):
+...         X = self.linear1(X)
+...         X = self.nonlin(X)
+...         X = self.linear2(X)
+...         return self.sigmoid(X)
 
 >>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
 >>> scaler = MinMaxScaler()
