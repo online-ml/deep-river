@@ -48,18 +48,18 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 >>> _ = manual_seed(42)
 
 >>> class MyModule(nn.Module):
-... def __init__(self, n_features):
-...     super(MyModule, self).__init__()
-...     self.dense0 = nn.Linear(n_features, 5)
-...     self.nonlin = nn.ReLU()
-...     self.dense1 = nn.Linear(5, 2)
-...     self.softmax = nn.Softmax(dim=-1)
+...     def __init__(self, n_features):
+...         super(MyModule, self).__init__()
+...         self.dense0 = nn.Linear(n_features, 5)
+...         self.nonlin = nn.ReLU()
+...         self.dense1 = nn.Linear(5, 2)
+...         self.softmax = nn.Softmax(dim=-1)
 ...
-... def forward(self, X, **kwargs):
-...     X = self.nonlin(self.dense0(X))
-...     X = self.nonlin(self.dense1(X))
-...     X = self.softmax(X)
-...     return X
+...     def forward(self, X, **kwargs):
+...         X = self.nonlin(self.dense0(X))
+...         X = self.nonlin(self.dense1(X))
+...         X = self.softmax(X)
+...         return X
 
 >>> model_pipeline = compose.Pipeline(
 ...     preprocessing.StandardScaler(),

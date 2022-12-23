@@ -35,7 +35,7 @@ class _TestModule(torch.nn.Module):
         return X
 
 
-class Classifier(DeepEstimator, base.Classifier):
+class Classifier(DeepEstimator, base.MiniBatchClassifier):
     """
         Wrapper for PyTorch classification models that automatically handles
         increases in the number of classes by adding output neurons in case
@@ -286,7 +286,7 @@ class Classifier(DeepEstimator, base.Classifier):
         if self.is_class_incremental:
             self._adapt_output_dim()
 
-        return self._learn(x=X, y=y.tolist())
+        return self._learn(x=X, y=y)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -309,7 +309,7 @@ class Classifier(DeepEstimator, base.Classifier):
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(X_t)
-        return pd.Dataframe(output2proba(y_preds, self.observed_classes))
+        return pd.DataFrame(output2proba(y_preds, self.observed_classes))
 
     def _adapt_output_dim(self):
         out_features_target = (

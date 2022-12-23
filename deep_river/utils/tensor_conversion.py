@@ -168,4 +168,7 @@ def output2proba(
         if preds_np.shape[0] == 1
         else [dict(zip(classes, pred)) for pred in preds_np]
     )
-    return dict(probas)
+    if preds.shape[0] == 1:
+        return dict(probas)
+    else:
+        return probas
