@@ -23,7 +23,7 @@ base_packages = [
     "torchviz~=0.0.2",
 ]
 
-dev_packages = base_packages + [
+dev_packages = [
     "graphviz>=0.10.1",
     "matplotlib>=3.0.2",
     "mypy>=0.990",
@@ -55,6 +55,11 @@ docs_packages = [
     "numpydoc>=1.2",
     "spacy>=3.2.2",
     "jinja2>=3.0.3",
+    "dominate",
+    "jupyter-client",
+    "mkdocs-charts-plugin",
+    "python-slugify",
+    "watermark==2.3.1",
 ]
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -82,9 +87,8 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=("tests",)),
     install_requires=base_packages,
     extras_require={
-        "dev": dev_packages,
-        "test": dev_packages,
-        "docs": docs_packages,
+        "dev": base_packages + dev_packages,
+        "docs": base_packages + docs_packages,
         "all": dev_packages + docs_packages,
         ":python_version == '3.6'": ["dataclasses"],
     },
