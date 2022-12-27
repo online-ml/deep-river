@@ -45,6 +45,7 @@ docs_packages = [
     "mkdocs>=1.2.3",
     "mkdocs-awesome-pages-plugin>=2.7.0",
     "mkdocs-gen-files>=0.3.5",
+    "mkdocs-charts-plugin>=0.2.1",
     "mkdocs-literate-nav>=0.4.1",
     "mkdocs-material>=8.1.11",
     "mkdocstrings[python]>=0.19.0",

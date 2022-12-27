@@ -8,14 +8,14 @@ from watermark import watermark
 import pandas as pd
 
 
-def render_df(df_path:Path)-> dict:
+def render_df(df_path: Path) -> dict:
     df = pd.read_csv(str(df_path))
 
     unique_datasets = list(df['dataset'].unique())
     measures = list(df.columns)[4:]
     res = {
         "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-        "data" : {
+        "data": {
             #"values": df.to_dict(orient="records")
             "url": f"benchmarks/{df_path.name}"
         },
@@ -27,7 +27,7 @@ def render_df(df_path:Path)-> dict:
             },
             {
                 "name": "Dataset",
-                "value" : unique_datasets[0],
+                "value": unique_datasets[0],
                 "bind": {"input": "select", "options": unique_datasets}
             },
             {
@@ -40,9 +40,9 @@ def render_df(df_path:Path)-> dict:
             {"filter": {"field": "dataset", "equal": {"expr": "Dataset"}}}
         ],
         "repeat": {"row": measures},
-        "spec" : {
+        "spec": {
             "width": "container",
-            #"height": "container",
+            # "height": "container",
             "mark": "line",
             "encoding": {
                 "x": {
@@ -79,18 +79,14 @@ def render_df(df_path:Path)-> dict:
     }
     return res
 
+
 if __name__ == '__main__':
 
     if Path('details.json').exists():
         if Path('../docs/benchmarks/details.json').exists():
             Path('../docs/benchmarks/details.json').unlink()
-        shutil.move('details.json','../docs/benchmarks/details.json')
+        shutil.move('details.json', '../docs/benchmarks/details.json')
     details = json.load(open('../docs/benchmarks/details.json'))
-    for track_name, track_details in details.items():
-        if Path(f'{track_name}.csv').exists():
-            if Path(f'../docs/benchmarks/{track_name}.csv').exists():
-                Path(f'../docs/benchmarks/{track_name}.csv').unlink()
-            shutil.move(f'{track_name}.csv','../docs/benchmarks/',)
 
     with open("../docs/benchmarks/index.md", "w", encoding='utf-8') as f:
         print_ = lambda x: print(x, file=f, end="\n\n")
@@ -106,16 +102,20 @@ hide:
 
         for track_name, track_details in details.items():
             print_(f'## {track_name}')
+            csv_name = track_name.replace(' ', '_').lower()
+            if Path(f'{csv_name}.csv').exists():
+                if Path(f'../docs/benchmarks/{csv_name}.csv').exists():
+                    Path(f'../docs/benchmarks/{csv_name}.csv').unlink()
+                shutil.move(f'{csv_name}.csv', '../docs/benchmarks/', )
 
-
-            #df = pd.read_csv(f'{track_name}.csv')
-            df_path = Path(f'../docs/benchmarks/{track_name}.csv')
+            df_path = Path(f'../docs/benchmarks/{csv_name}.csv')
             print_("```vegalite")
             print_(json.dumps(render_df(df_path), indent=2))
             print_("```")
 
             print_('### Datasets')
-            for dataset_name, dataset_details in track_details['Dataset'].items():
+            for dataset_name, dataset_details in track_details[
+                'Dataset'].items():
                 print_(f'<details>')
                 print_(f'<summary>{dataset_name}</summary>')
                 print_(pre(dataset_details))
