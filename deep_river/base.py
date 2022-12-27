@@ -149,6 +149,41 @@ class DeepEstimator(base.Estimator):
         )
         self.module_initialized = True
 
+    def clone(self, new_params: dict = {}, include_attributes=False):
+        """Clones the estimator.
+
+        Parameters
+        ----------
+        new_params
+            New parameters to be passed to the cloned estimator.
+        include_attributes
+            If True, the attributes of the estimator will be copied to the
+            cloned estimator. This is useful when the estimator is a
+            transformer and the attributes are the learned parameters.
+
+        Returns
+        -------
+        DeepEstimator
+            The cloned estimator.
+        """
+        new_params = new_params or {}
+        new_params.update(self.kwargs)
+        new_params.update(
+            {
+                "seed": self.seed,
+                "device": self.device,
+                "lr": self.lr,
+                "loss_fn": self.loss_fn,
+                "optimizer_fn": self.optimizer_fn,
+                "module": self.module_cls,
+            }
+        )
+
+        clone = self.__class__(**new_params)
+        if include_attributes:
+            clone.__dict__.update(self.__dict__)
+        return clone
+
 
 class RollingDeepEstimator(DeepEstimator):
     """
