@@ -61,6 +61,11 @@ markdown_extensions:
   - pymdownx.highlight:
         use_pygments: true
         pygments_lang_class: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: vegalite
+          class: vegalite
+          format: !!python/name:mkdocs_charts_plugin.fences.fence_vegalite
 
 plugins:
   - search
@@ -82,12 +87,16 @@ plugins:
             docstring_section_style: spacy
             show_source: False
             merge_init_into_class: True
-
+  - charts
 
 extra_javascript:
   - javascripts/config.js
   - https://polyfill.io/v3/polyfill.min.js?features=es6
   - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - https://cdn.jsdelivr.net/npm/vega@5
+  - https://cdn.jsdelivr.net/npm/vega-lite@5
+  - https://cdn.jsdelivr.net/npm/vega-embed@6
+
 extra_css:
   - stylesheets/extra.css
 
