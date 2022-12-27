@@ -30,7 +30,7 @@ MODELS = {
             | TorchClassifier(
                 module=TorchMLPClassifier,
                 loss_fn="binary_cross_entropy",
-                optimizer="adam",
+                optimizer_fn="adam",
                 is_class_incremental=True,
                 lr=LEARNING_RATE
             )

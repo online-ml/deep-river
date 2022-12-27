@@ -1,6 +1,6 @@
 import torch
 class TorchMLPClassifier(torch.nn.Module):
-    def __init__(self, n_features: int, n_classes: int, hidden_size: int = 5):
+    def __init__(self, n_features: int, hidden_size: int = 5):
         super().__init__()
         self.linear1 = torch.nn.Linear(n_features, hidden_size)
         self.nonlin = torch.nn.ReLU()
@@ -15,7 +15,7 @@ class TorchMLPClassifier(torch.nn.Module):
 
 class TorchMLPRegressor(torch.nn.Module):
 
-    def __init__(self, n_features: int, n_classes: int, hidden_size: int = 5):
+    def __init__(self, n_features: int, hidden_size: int = 5):
         super().__init__()
         self.linear1 = torch.nn.Linear(n_features, hidden_size)
         self.nonlin = torch.nn.ReLU()
