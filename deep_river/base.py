@@ -1,6 +1,5 @@
 import abc
 import collections
-import copy
 import inspect
 from typing import Any, Callable, Deque, Optional, Type, Union, cast
 
@@ -150,7 +149,7 @@ class DeepEstimator(base.Estimator):
         )
         self.module_initialized = True
 
-    def clone(self, new_params: dict = None, include_attributes=False):
+    def clone(self, new_params: dict = {}, include_attributes=False):
         """Clones the estimator.
 
         Parameters
@@ -169,12 +168,16 @@ class DeepEstimator(base.Estimator):
         """
         new_params = new_params or {}
         new_params.update(self.kwargs)
-        new_params.update({"seed": self.seed,
-                           "device": self.device,
-                           "lr": self.lr,
-                           "loss_fn": self.loss_fn,
-                           "optimizer_fn": self.optimizer_fn,
-                           "module": self.module_cls})
+        new_params.update(
+            {
+                "seed": self.seed,
+                "device": self.device,
+                "lr": self.lr,
+                "loss_fn": self.loss_fn,
+                "optimizer_fn": self.optimizer_fn,
+                "module": self.module_cls,
+            }
+        )
 
         clone = self.__class__(**new_params)
         if include_attributes:
