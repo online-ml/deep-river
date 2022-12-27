@@ -13,7 +13,7 @@ hide:
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "data": {
-    "url": "benchmarks/Binary classification.csv"
+    "url": "benchmarks/binary_classification.csv"
   },
   "params": [
     {
@@ -217,7 +217,7 @@ Features  2
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "data": {
-    "url": "benchmarks/Multiclass classification.csv"
+    "url": "benchmarks/multiclass_classification.csv"
   },
   "params": [
     {
@@ -441,7 +441,7 @@ Downloaded  True                                                          </pre>
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
   "data": {
-    "url": "benchmarks/Regression.csv"
+    "url": "benchmarks/regression.csv"
   },
   "params": [
     {

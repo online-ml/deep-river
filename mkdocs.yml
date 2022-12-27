@@ -58,9 +58,7 @@ markdown_extensions:
       generic: true
   - pymdownx.details
   - pymdownx.superfences
-  - pymdownx.highlight:
-        use_pygments: true
-        pygments_lang_class: true
+  - pymdownx.highlight
   - pymdownx.superfences:
       custom_fences:
         - name: vegalite
@@ -71,8 +69,9 @@ plugins:
   - search
   - awesome-pages
   - autorefs
+  - charts
   - mkdocs-jupyter:
-      execute: True
+      execute: False
       include: ["*.ipynb"]
   - gen-files:
       scripts:
@@ -87,7 +86,6 @@ plugins:
             docstring_section_style: spacy
             show_source: False
             merge_init_into_class: True
-  - charts
 
 extra_javascript:
   - javascripts/config.js
