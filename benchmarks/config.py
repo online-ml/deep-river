@@ -38,5 +38,9 @@ MODELS = {
         "[baseline] Last Class": dummy.NoChangeClassifier(),
     },
     "Regression": {
+        "Torch MLP": (
+            preprocessing.StandardScaler()
+            | linear_model.LinearRegression(optimizer=optim.SGD(LEARNING_RATE))
+        ),
     },
 }

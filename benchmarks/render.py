@@ -1,4 +1,5 @@
 import json
+import shutil
 from pathlib import Path
 from typing import List
 
@@ -80,7 +81,16 @@ def render_df(df_path:Path)-> dict:
 
 if __name__ == '__main__':
 
-    details = json.load(open('details.json'))
+    if Path('details.json').exists():
+        if Path('../docs/benchmarks/details.json').exists():
+            Path('../docs/benchmarks/details.json').unlink()
+        shutil.move('details.json','../docs/benchmarks/details.json')
+    details = json.load(open('../docs/benchmarks/details.json'))
+    for track_name, track_details in details.items():
+        if Path(f'{track_name}.csv').exists():
+            if Path(f'../docs/benchmarks/{track_name}.csv').exists():
+                Path(f'../docs/benchmarks/{track_name}.csv').unlink()
+            shutil.move(f'{track_name}.csv','../docs/benchmarks/',)
 
     with open("../docs/benchmarks/index.md", "w", encoding='utf-8') as f:
         print_ = lambda x: print(x, file=f, end="\n\n")

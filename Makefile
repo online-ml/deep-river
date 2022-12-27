@@ -10,6 +10,7 @@ render-notebooks:
 	jupyter nbconvert --to markdown docs/examples/*/*.ipynb
 
 doc: render-notebooks
+	(cd benchmarks && python render.py)
 	mkdocs build
 
 livedoc: doc
