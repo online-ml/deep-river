@@ -4,12 +4,36 @@ on:
     branches:
       - master 
 jobs:
-  deploy:
+  ubuntu:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+
+      - name: Install Ubuntu dependencies
+        run: sudo apt-get install graphviz pandoc
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
         with:
-          python-version: 3.x
-      - run: pip install .[docs]
-      - run: mkdocs gh-deploy --force
+          python-version: 3.9
+
+      - run: curl https://sh.rustup.rs -sSf | sh -s -- --default-toolchain=nightly --profile=minimal -y && rustup show
+        if: matrix.os == 'ubuntu-latest'
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install wheel
+          pip install -e ".[docs]"
+      - name: Build docs
+        run: make doc
+
+      - name: Deploy docs
+        run: mkdocs gh-deploy --force
