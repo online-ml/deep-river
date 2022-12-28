@@ -19,12 +19,13 @@ class TorchMLPRegressor(torch.nn.Module):
         super().__init__()
         self.linear1 = torch.nn.Linear(n_features, hidden_size)
         self.nonlin = torch.nn.ReLU()
+        self.hidden = torch.nn.Linear(hidden_size, hidden_size)
         self.linear2 = torch.nn.Linear(hidden_size, 1)
 
     def forward(self, x):
         x = self.nonlin(self.linear1(x))
-        x = self.nonlin(self.linear2(x))
-        return x
+        x = self.nonlin(self.hidden(x))
+        return self.linear2(x)
 
 class TorchLogisticRegression(torch.nn.Module):
     def __init__(self, n_features: int, n_classes: int = 2):

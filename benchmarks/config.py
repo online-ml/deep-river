@@ -30,7 +30,7 @@ MODELS = {
             | TorchClassifier(
                 module=TorchLogisticRegression,
                 loss_fn="binary_cross_entropy",
-                optimizer_fn="adam",
+                optimizer_fn="sgd",
                 is_class_incremental=True,
                 lr=LEARNING_RATE
             )
@@ -40,7 +40,7 @@ MODELS = {
             | TorchClassifier(
                 module=TorchMLPClassifier,
                 loss_fn="binary_cross_entropy",
-                optimizer_fn="adam",
+                optimizer_fn="sgd",
                 is_class_incremental=True,
                 lr=LEARNING_RATE
             )
@@ -50,7 +50,7 @@ MODELS = {
             | TorchRollingClassifier(
                 module=TorchLSTMClassifier,
                 loss_fn="binary_cross_entropy",
-                optimizer_fn="adam",
+                optimizer_fn="sgd",
                 is_class_incremental=True,
                 lr=LEARNING_RATE,
                 window_size=20,
@@ -65,7 +65,7 @@ MODELS = {
             | TorchRegressor(
                 module=TorchLinearRegression,
                 loss_fn="mse",
-                optimizer_fn="adam",
+                optimizer_fn="sgd",
                 lr=LEARNING_RATE,
             )
         ),
@@ -74,7 +74,7 @@ MODELS = {
             | TorchRegressor(
                 module=TorchMLPRegressor,
                 loss_fn="mse",
-                optimizer_fn="adam",
+                optimizer_fn="sgd",
                 lr=LEARNING_RATE,
             )
         ),
@@ -94,7 +94,7 @@ MODELS = {
             | TorchRollingRegressor(
                 module=TorchLSTMRegressor,
                 loss_fn="mse",
-                optimizer_fn="adam",
+                optimizer_fn="sgd",
                 lr=LEARNING_RATE,
                 window_size=20,
                 append_predict=False
