@@ -52,7 +52,8 @@ def run_track(models: List[str], no_track: int, n_workers: int = 50):
 
     for val in pool.starmap(run_dataset, runs):
         results.extend(val)
-    pd.DataFrame(results).to_csv(f"./{track.name}.csv", index=False)
+    csv_name = track.name.replace(" ", "_").lower()
+    pd.DataFrame(results).to_csv(f"./{csv_name}.csv", index=False)
 
 
 if __name__ == '__main__':

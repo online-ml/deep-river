@@ -6,7 +6,9 @@
     },
     "Model": {
       "Logistic regression": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  LogisticRegression (\n    optimizer=SGD (\n      lr=Constant (\n        learning_rate=0.005\n      )\n    )\n    loss=Log (\n      weight_pos=1.\n      weight_neg=1.\n    )\n    l2=0.\n    l1=0.\n    intercept_init=0.\n    intercept_lr=Constant (\n      learning_rate=0.01\n    )\n    clip_gradient=1e+12\n    initializer=Zeros ()\n  )\n)",
+      "Torch Logistic Regression": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  Classifier (\n    module=None\n    loss_fn=\"binary_cross_entropy\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    output_is_logit=True\n    is_class_incremental=True\n    device=\"cpu\"\n    seed=42\n  )\n)",
       "Torch MLP": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  Classifier (\n    module=None\n    loss_fn=\"binary_cross_entropy\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    output_is_logit=True\n    is_class_incremental=True\n    device=\"cpu\"\n    seed=42\n  )\n)",
+      "Torch LSTM": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  RollingClassifier (\n    module=None\n    loss_fn=\"binary_cross_entropy\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    output_is_logit=True\n    is_class_incremental=True\n    device=\"cpu\"\n    seed=42\n    window_size=20\n    append_predict=False\n  )\n)",
       "[baseline] Last Class": "NoChangeClassifier ()"
     }
   },
@@ -17,7 +19,9 @@
       "Keystroke": "CMU keystroke dataset.\n\nUsers are tasked to type in a password. The task is to determine which user is typing in the\npassword.\n\nThe only difference with the original dataset is that the \"sessionIndex\" and \"rep\" attributes\nhave been dropped.\n\n      Name  Keystroke                                                     \n      Task  Multi-class classification                                    \n   Samples  20,400                                                        \n  Features  31                                                            \n    Sparse  False                                                         \n      Path  /Users/kulbach/river_data/Keystroke/DSL-StrongPasswordData.csv\n       URL  http://www.cs.cmu.edu/~keystroke/DSL-StrongPasswordData.csv   \n      Size  4.45 MB                                                       \nDownloaded  True                                                          "
     },
     "Model": {
+      "Torch Logistic Regression": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  Classifier (\n    module=None\n    loss_fn=\"binary_cross_entropy\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    output_is_logit=True\n    is_class_incremental=True\n    device=\"cpu\"\n    seed=42\n  )\n)",
       "Torch MLP": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  Classifier (\n    module=None\n    loss_fn=\"binary_cross_entropy\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    output_is_logit=True\n    is_class_incremental=True\n    device=\"cpu\"\n    seed=42\n  )\n)",
+      "Torch LSTM": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  RollingClassifier (\n    module=None\n    loss_fn=\"binary_cross_entropy\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    output_is_logit=True\n    is_class_incremental=True\n    device=\"cpu\"\n    seed=42\n    window_size=20\n    append_predict=False\n  )\n)",
       "[baseline] Last Class": "NoChangeClassifier ()"
     }
   },
@@ -29,7 +33,11 @@
       "FriedmanGSG10k": "Sample from the FriedmanGSG generator.\n\nThis sample contains 10k instances sampled from the Friedman generator and presents\nglobal and slow gradual concept drifts that affect the data and happen after\n3.5k and 7k instances. The transition window between different concepts has a length of\n1k instances.\n\n    Name  FriedmanGSG10k\n    Task  Regression    \n Samples  10,000        \nFeatures  10            \n  Sparse  False         "
     },
     "Model": {
-      "Torch MLP": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  LinearRegression (\n    optimizer=SGD (\n      lr=Constant (\n        learning_rate=0.005\n      )\n    )\n    loss=Squared ()\n    l2=0.\n    l1=0.\n    intercept_init=0.\n    intercept_lr=Constant (\n      learning_rate=0.01\n    )\n    clip_gradient=1e+12\n    initializer=Zeros ()\n  )\n)"
+      "Torch Linear Regression": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  Regressor (\n    module=None\n    loss_fn=\"mse_loss\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    device=\"cpu\"\n    seed=42\n  )\n)",
+      "Torch MLP": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  Regressor (\n    module=None\n    loss_fn=\"mse_loss\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    device=\"cpu\"\n    seed=42\n  )\n)",
+      "River MLP": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  MLPRegressor (\n    hidden_dims=(5,)\n    activations=(<class 'river.neural_net.activations.ReLU'>, <class 'river.neural_net.activations.ReLU'>, <class 'river.neural_net.activations.Identity'>)\n    loss=Squared ()\n    optimizer=SGD (\n      lr=Constant (\n        learning_rate=0.001\n      )\n    )\n    seed=42\n  )\n)",
+      "Torch LSTM": "Pipeline (\n  StandardScaler (\n    with_std=True\n  ),\n  RollingRegressor (\n    module=None\n    loss_fn=\"mse_loss\"\n    optimizer_fn=<class 'torch.optim.adam.Adam'>\n    lr=0.005\n    window_size=20\n    append_predict=False\n    device=\"cpu\"\n    seed=42\n  )\n)",
+      "[baseline] Mean predictor": "StatisticRegressor (\n  statistic=Mean ()\n)"
     }
   }
 }
