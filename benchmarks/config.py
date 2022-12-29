@@ -54,7 +54,8 @@ MODELS = {
                 is_class_incremental=True,
                 lr=LEARNING_RATE,
                 window_size=20,
-                append_predict=False
+                append_predict=False,
+                hidden_size=10,
             )
         ),
         "[baseline] Last Class": dummy.NoChangeClassifier(),
@@ -97,7 +98,8 @@ MODELS = {
                 optimizer_fn="sgd",
                 lr=LEARNING_RATE,
                 window_size=20,
-                append_predict=False
+                append_predict=False,
+                hidden_size=10,
             )
         ),
         "[baseline] Mean predictor": dummy.StatisticRegressor(stats.Mean()),
