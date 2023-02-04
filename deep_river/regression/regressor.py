@@ -226,6 +226,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self.initialize_module(**self.kwargs)
 
         X = df2tensor(X, device=self.device)
+        self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(X).detach().squeeze().tolist()
         return y_preds

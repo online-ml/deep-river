@@ -192,6 +192,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             self.initialize_module(**self.kwargs)
 
         if len(self._x_window) == self.window_size:
+            self.module.eval()
             with torch.inference_mode():
                 x_win = self._x_window.copy()
                 x_win.append(list(x.values()))
@@ -212,6 +213,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         x_win = self._x_window.copy()
         x_win.extend(X.values.tolist())
         if len(x_win) == self.window_size:
+            self.module.eval()
             with torch.inference_mode():
                 x_t = deque2rolling_tensor(x_win, device=self.device)
                 res = self.module(x_t).detach().tolist()
