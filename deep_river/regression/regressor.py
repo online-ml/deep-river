@@ -146,8 +146,8 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, self.device)
-        y = float2tensor(y, device=self.device)
-        self._learn(x_t, y)
+        y_t = float2tensor(y, device=self.device)
+        self._learn(x_t, y_t)
         return self
 
     def _learn(self, x: torch.Tensor, y: torch.Tensor):

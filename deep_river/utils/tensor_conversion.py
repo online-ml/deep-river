@@ -31,7 +31,7 @@ def dict2tensor(
 
 
 def float2tensor(
-    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+    y: Union[float, int, RegTarget, dict], device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     """
     Convert a float to a tensor.
@@ -49,7 +49,10 @@ def float2tensor(
     -------
         torch.Tensor
     """
-    return torch.tensor([[y]], device=device, dtype=dtype)
+    if isinstance(y, dict):
+        return torch.tensor([list(y.values())], device=device, dtype=dtype)
+    else:
+        return torch.tensor([[y]], device=device, dtype=dtype)
 
 
 def deque2rolling_tensor(
