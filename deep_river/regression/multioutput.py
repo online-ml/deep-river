@@ -12,7 +12,70 @@ from deep_river.utils import dict2tensor, float2tensor
 
 
 class MultiTargetRegressor(Regressor, MultiTargetRegressor):
+    """A Regressor that supports multiple targets.
 
+    Parameters
+    ----------
+    module
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the
+        returned model's input shape can be determined based on the number
+        of features in the initial training example.
+    loss_fn
+        Loss function to be used for training the wrapped model.
+        Can be a loss function provided by `torch.nn.functional` or one of
+        the following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "gpu".
+    seed
+        Random seed for the wrapped model.
+    **kwargs
+        Parameters to be passed to the `Module` or the `optimizer`.
+
+    Examples
+    --------
+    >>> from river import evaluate, compose
+    >>> from river import metrics
+    >>> from river import preprocessing
+    >>> from river import stream
+    >>> from sklearn import datasets
+    >>> from torch import nn
+    >>> from deep_river.regression.multioutput import MultiTargetRegressor
+
+    >>> class MyModule(nn.Module):
+    ...     def __init__(self, n_features):
+    ...         super(MyModule, self).__init__()
+    ...         self.dense0 = nn.Linear(n_features, 3)
+    ...
+    ...     def forward(self, X, **kwargs):
+    ...         X = self.dense0(X)
+    ...         return X
+
+    >>> dataset = stream.iter_sklearn_dataset(
+    ...         dataset=datasets.load_linnerud(),
+    ...         shuffle=True,
+    ...         seed=42
+    ...     )
+    >>> model = compose.Pipeline(
+    ...     preprocessing.StandardScaler(),
+    ...     MultiTargetRegressor(
+    ...         module=MyModule,
+    ...         loss_fn='mse',
+    ...         lr=0.3,
+    ...         optimizer_fn='sgd',
+    ...     ))
+    >>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
+    >>> evaluate.progressive_val_score(dataset, model, metric)
+    MicroAverage(MAE): 87.154403
+
+    """
     def __init__(
         self,
         module: Type[torch.nn.Module],
