@@ -6,7 +6,7 @@
     <a href="https://codecov.io/gh/online-ml/deep-river" > 
         <img src="https://codecov.io/gh/online-ml/deep-river/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
     </a>
-    <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dw/deep-river">
+    <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/deep-river">
     <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/deep-river">
 </p>
 <p align="center">
