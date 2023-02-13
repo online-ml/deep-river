@@ -3,14 +3,14 @@ from typing import Callable, Type, Union
 
 import torch
 from ordered_set import OrderedSet
-from river.base import MultiTargetRegressor
+from river.base import MultiTargetRegressor as RiverMultiTargetRegressor
 from river.base.typing import FeatureName, RegTarget
 
 from deep_river.regression import Regressor
 from deep_river.utils import dict2tensor, float2tensor
 
 
-class DeepMultiTargetRegressor(MultiTargetRegressor, Regressor):
+class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
     """A Regressor that supports multiple targets.
 
     Parameters
@@ -46,7 +46,7 @@ class DeepMultiTargetRegressor(MultiTargetRegressor, Regressor):
     >>> from river import stream
     >>> from sklearn import datasets
     >>> from torch import nn
-    >>> from deep_river.regression.multioutput import DeepMultiTargetRegressor
+    >>> from deep_river.regression.multioutput import MultiTargetRegressor
 
     >>> class MyModule(nn.Module):
     ...     def __init__(self, n_features):
@@ -64,7 +64,7 @@ class DeepMultiTargetRegressor(MultiTargetRegressor, Regressor):
     ...     )
     >>> model = compose.Pipeline(
     ...     preprocessing.StandardScaler(),
-    ...     DeepMultiTargetRegressor(
+    ...     MultiTargetRegressor(
     ...         module=MyModule,
     ...         loss_fn='mse',
     ...         lr=0.3,
@@ -99,7 +99,7 @@ class DeepMultiTargetRegressor(MultiTargetRegressor, Regressor):
 
     def learn_one(
         self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs
-    ) -> "DeepMultiTargetRegressor":
+    ) -> "MultiTargetRegressor":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
