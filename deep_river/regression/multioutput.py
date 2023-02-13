@@ -73,7 +73,7 @@ class MultiTargetRegressor(Regressor, MultiTargetRegressor):
     ...     ))
     >>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
     >>> evaluate.progressive_val_score(dataset, model, metric)
-    MicroAverage(MAE): 87.154403
+    MicroAverage(MAE): 28.360872
 
     """
     def __init__(
