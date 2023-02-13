@@ -11,8 +11,9 @@ from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 
 class _TestLSTMAutoencoder(nn.Module):
-    def __init__(self, n_features, hidden_size=30, n_layers=1,
-                 batch_first=False):
+    def __init__(
+        self, n_features, hidden_size=30, n_layers=1, batch_first=False
+    ):
         super().__init__()
         self.n_features = n_features
         self.hidden_size = hidden_size
