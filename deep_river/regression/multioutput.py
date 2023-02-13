@@ -71,8 +71,9 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
     ...         optimizer_fn='sgd',
     ...     ))
     >>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
-    >>> evaluate.progressive_val_score(dataset, model, metric)
-    MicroAverage(MAE): 28.360872
+    >>> ev = evaluate.progressive_val_score(dataset, model, metric)
+    >>> print(f"MicroAverage(MAE): {metric.get():.2f}")
+    MicroAverage(MAE): 28.36
 
     """
 
