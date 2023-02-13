@@ -10,7 +10,7 @@ from deep_river.regression import Regressor
 from deep_river.utils import dict2tensor, float2tensor
 
 
-class MultiTargetRegressor(MultiTargetRegressor, Regressor):
+class DeepMultiTargetRegressor(MultiTargetRegressor, Regressor):
     """A Regressor that supports multiple targets.
 
     Parameters
@@ -46,7 +46,7 @@ class MultiTargetRegressor(MultiTargetRegressor, Regressor):
     >>> from river import stream
     >>> from sklearn import datasets
     >>> from torch import nn
-    >>> from deep_river.regression.multioutput import MultiTargetRegressor
+    >>> from deep_river.regression.multioutput import DeepMultiTargetRegressor
 
     >>> class MyModule(nn.Module):
     ...     def __init__(self, n_features):
@@ -64,7 +64,7 @@ class MultiTargetRegressor(MultiTargetRegressor, Regressor):
     ...     )
     >>> model = compose.Pipeline(
     ...     preprocessing.StandardScaler(),
-    ...     MultiTargetRegressor(
+    ...     DeepMultiTargetRegressor(
     ...         module=MyModule,
     ...         loss_fn='mse',
     ...         lr=0.3,
@@ -99,7 +99,7 @@ class MultiTargetRegressor(MultiTargetRegressor, Regressor):
 
     def learn_one(
         self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs
-    ) -> "MultiTargetRegressor":
+    ) -> "DeepMultiTargetRegressor":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
