@@ -12,7 +12,7 @@ from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 class _TestLSTMAutoencoder(nn.Module):
     def __init__(
-        self, n_features, hidden_size=10, n_layers=1, batch_first=False
+        self, n_features, hidden_size=30, n_layers=1, batch_first=False
     ):
         super().__init__()
         self.n_features = n_features
@@ -39,9 +39,7 @@ class _TestLSTMAutoencoder(nn.Module):
         x_flipped = torch.flip(x[1:], dims=[self.time_axis])
         input = torch.cat((h, x_flipped), dim=self.time_axis)
         x_hat, _ = self.decoder(input)
-        x_hat = torch.flip(x_hat, dims=[self.time_axis])
-
-        return x_hat
+        return torch.flip(x_hat, dims=[self.time_axis])
 
 
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
