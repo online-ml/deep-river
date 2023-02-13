@@ -126,7 +126,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, y: RegTarget) -> "RollingRegressor":
+    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "RollingRegressor":
         """
         Performs one step of training with the sliding
         window of the most recent examples.

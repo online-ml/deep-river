@@ -3,7 +3,6 @@ from collections import OrderedDict
 from typing import Callable, Type, Union
 
 import torch
-from ordered_set import OrderedSet
 from river.base import MultiTargetRegressor as RiverMultiTargetRegressor
 from river.base.typing import FeatureName, RegTarget
 

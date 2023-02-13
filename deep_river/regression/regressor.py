@@ -126,7 +126,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, y: RegTarget) -> "Regressor":
+    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "Regressor":
         """
         Performs one step of training with a single example.
 
