@@ -10,7 +10,7 @@ from deep_river.regression import Regressor
 from deep_river.utils import dict2tensor, float2tensor
 
 
-class MultiTargetRegressor(Regressor, MultiTargetRegressor):
+class MultiTargetRegressor(MultiTargetRegressor, Regressor):
     """A Regressor that supports multiple targets.
 
     Parameters
