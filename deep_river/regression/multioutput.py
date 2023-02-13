@@ -95,11 +95,13 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             seed=seed,
             **kwargs,
         )
-        self.observed_targets: OrderedDict[FeatureName,RegTarget] = OrderedDict()
+        self.observed_targets: OrderedDict[
+            FeatureName, RegTarget
+        ] = OrderedDict()
 
     def learn_one(
         self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs
-    ) -> "MultiTargetRegressor": # type: ignore[override]
+    ) -> "MultiTargetRegressor":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
