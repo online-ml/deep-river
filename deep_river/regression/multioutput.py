@@ -1,13 +1,12 @@
 import typing
-from typing import Type, Union, Callable
+from typing import Callable, Type, Union
 
 import torch
 from ordered_set import OrderedSet
-from river.base.typing import RegTarget, FeatureName
+from river.base import MultiTargetRegressor
+from river.base.typing import FeatureName, RegTarget
 
 from deep_river.regression import Regressor
-from river.base import MultiTargetRegressor
-
 from deep_river.utils import dict2tensor, float2tensor
 
 
@@ -76,6 +75,7 @@ class MultiTargetRegressor(Regressor, MultiTargetRegressor):
     MicroAverage(MAE): 28.360872
 
     """
+
     def __init__(
         self,
         module: Type[torch.nn.Module],
@@ -97,7 +97,9 @@ class MultiTargetRegressor(Regressor, MultiTargetRegressor):
         )
         self.observed_targets: OrderedSet[RegTarget] = OrderedSet()
 
-    def learn_one(self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs) -> "MultiTargetRegressor":
+    def learn_one(
+        self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs
+    ) -> "MultiTargetRegressor":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
@@ -109,18 +111,18 @@ class MultiTargetRegressor(Regressor, MultiTargetRegressor):
 
     def predict_one(self, x: dict) -> typing.Dict[FeatureName, RegTarget]:
         """
-                Predicts the target value for a single example.
+        Predicts the target value for a single example.
 
-                Parameters
-                ----------
-                x
-                    Input example.
+        Parameters
+        ----------
+        x
+            Input example.
 
-                Returns
-                -------
-                RegTarget
-                    Predicted target value.
-                """
+        Returns
+        -------
+        RegTarget
+            Predicted target value.
+        """
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
@@ -128,5 +130,7 @@ class MultiTargetRegressor(Regressor, MultiTargetRegressor):
         self.module.eval()
         with torch.inference_mode():
             y_pred_t = self.module(x_t).squeeze().tolist()
-            y_pred = {t: y_pred_t[i] for i, t in enumerate(self.observed_targets)}
+            y_pred = {
+                t: y_pred_t[i] for i, t in enumerate(self.observed_targets)
+            }
         return y_pred
