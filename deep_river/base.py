@@ -72,7 +72,7 @@ class DeepEstimator(base.Estimator):
 
     @abc.abstractmethod
     def learn_one(
-        self, x: dict, y: Optional[Union[Any, Dict[Any, Any]]]
+        self, x: dict, y: Optional[Union[Any, Dict[Any, Any]]], **kwargs
     ) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
