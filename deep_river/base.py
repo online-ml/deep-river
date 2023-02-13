@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Any, Callable, Deque, Optional, Type, Union, cast, Dict
+from typing import Any, Callable, Deque, Dict, Optional, Type, Union, cast
 
 import torch
 from river import base
@@ -71,7 +71,9 @@ class DeepEstimator(base.Estimator):
         torch.manual_seed(seed)
 
     @abc.abstractmethod
-    def learn_one(self, x: dict, y: Optional[Any, Dict[Any,Any]]) -> "DeepEstimator":
+    def learn_one(
+        self, x: dict, y: Optional[Union[Any, Dict[Any, Any]]]
+    ) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
 

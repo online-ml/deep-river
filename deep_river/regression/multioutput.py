@@ -1,4 +1,5 @@
 import typing
+from collections import OrderedDict
 from typing import Callable, Type, Union
 
 import torch
@@ -95,7 +96,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             seed=seed,
             **kwargs,
         )
-        self.observed_targets: OrderedSet[RegTarget] = OrderedSet()
+        self.observed_targets: OrderedDict[RegTarget] = OrderedDict()
 
     def learn_one(
         self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs
