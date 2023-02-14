@@ -1,25 +1,23 @@
-from typing import Type, Union, Callable
+from typing import Callable, Type, Union
 
 from torch import nn
 
 from deep_river.classification import Classifier
 
 
-
 class LogisticRegression(Classifier):
-    """
-
-    """
+    """ """
 
     class LRModule(nn.Module):
         def __init__(self, n_features):
-            super(LogisticRegression.LRModule, self).__init__()
+            super().__init__()
             self.dense0 = nn.Linear(n_features, 1)
             self.softmax = nn.Softmax(dim=-1)
 
         def forward(self, X, **kwargs):
             X = self.dense0(X)
             return self.softmax(X)
+
     def __init__(
         self,
         loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
@@ -61,14 +59,13 @@ class LogisticRegression(Classifier):
             "optimizer_fn": "sgd",
         }
 
-class MultiLayerPerceptron(Classifier):
-    """
 
-    """
+class MultiLayerPerceptron(Classifier):
+    """ """
 
     class MLPModule(nn.Module):
         def __init__(self, n_width, n_depth, n_features):
-            super(MultiLayerPerceptron.MLPModule, self).__init__()
+            super().__init__()
             self.dense0 = nn.Linear(n_features, n_width)
             self.block = [nn.Linear(n_width, n_width) for _ in range(n_depth)]
             self.denselast = nn.Linear(n_width, 1)
@@ -96,8 +93,8 @@ class MultiLayerPerceptron(Classifier):
     ):
         self.n_width = n_width
         self.n_depth = n_depth
-        kwargs['n_width'] = n_width
-        kwargs['n_depth'] = n_depth
+        kwargs["n_width"] = n_width
+        kwargs["n_depth"] = n_depth
         super().__init__(
             module=MultiLayerPerceptron.MLPModule,
             loss_fn=loss_fn,
