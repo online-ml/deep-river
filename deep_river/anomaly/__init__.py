@@ -6,7 +6,9 @@ from .scaler import (
     AnomalyMinMaxScaler,
     AnomalyStandardScaler,
 )
-
+"""
+This module contains the anomaly detection algorithms for the deep_river package.
+"""
 __all__ = [
     "Autoencoder",
     "RollingAutoencoder",
