@@ -9,5 +9,5 @@ __all__ = [
     "Classifier",
     "RollingClassifier",
     "MultiLayerPerceptron",
-    "LogisticRegression"
+    "LogisticRegression",
 ]

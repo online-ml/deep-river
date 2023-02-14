@@ -31,7 +31,6 @@ class LogisticRegression(Classifier):
         seed: int = 42,
         **kwargs,
     ):
-        print(kwargs)
         super().__init__(
             module=LogisticRegression.LRModule,
             loss_fn=loss_fn,

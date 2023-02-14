@@ -136,9 +136,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         **kwargs,
     ):
         super().__init__(
+            module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            module=module,
             device=device,
             lr=lr,
             seed=seed,

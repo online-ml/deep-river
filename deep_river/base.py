@@ -170,16 +170,7 @@ class DeepEstimator(base.Estimator):
         """
         new_params = new_params or {}
         new_params.update(self.kwargs)
-        new_params.update(
-            {
-                "seed": self.seed,
-                "device": self.device,
-                "lr": self.lr,
-                "loss_fn": self.loss_fn,
-                "optimizer_fn": self.optimizer_fn,
-                "module": self.module_cls,
-            }
-        )
+        new_params.update(self._get_params())
 
         clone = self.__class__(**new_params)
         if include_attributes:
