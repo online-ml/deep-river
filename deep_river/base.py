@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Any, Callable, Deque, Dict, Optional, Type, Union, cast
+from typing import Any, Callable, Deque, Optional, Type, Union, cast
 
 import torch
 from river import base
@@ -72,7 +72,7 @@ class DeepEstimator(base.Estimator):
 
     @abc.abstractmethod
     def learn_one(
-        self, x: dict, y: Optional[Union[Any, Dict[Any, Any]]], **kwargs
+        self, x: dict, y: Optional[Any], **kwargs
     ) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
@@ -170,16 +170,7 @@ class DeepEstimator(base.Estimator):
         """
         new_params = new_params or {}
         new_params.update(self.kwargs)
-        new_params.update(
-            {
-                "seed": self.seed,
-                "device": self.device,
-                "lr": self.lr,
-                "loss_fn": self.loss_fn,
-                "optimizer_fn": self.optimizer_fn,
-                "module": self.module_cls,
-            }
-        )
+        new_params.update(self._get_params())
 
         clone = self.__class__(**new_params)
         if include_attributes:
