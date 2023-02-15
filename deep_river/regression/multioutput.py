@@ -9,6 +9,7 @@ from river.base.typing import FeatureName, RegTarget
 from deep_river.regression import Regressor
 from deep_river.utils import dict2tensor, float2tensor
 
+
 class _TestModule(torch.nn.Module):
     def __init__(self, n_features, n_outputs):
         super().__init__()
@@ -16,6 +17,7 @@ class _TestModule(torch.nn.Module):
 
     def forward(self, X, **kwargs):
         return self.dense0(X)
+
 
 class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
     """A Regressor that supports multiple targets.
@@ -145,8 +147,9 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             "check_predict_proba_one",
             "check_predict_proba_one_binary",
             "check_learn_one",
-            "check_pickling"
+            "check_pickling",
         }
+
     def learn_one(
         self,
         x: dict,
