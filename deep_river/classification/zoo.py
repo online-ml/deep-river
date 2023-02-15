@@ -188,10 +188,10 @@ class MultiLayerPerceptron(Classifier):
     """
 
     class MLPModule(nn.Module):
-        def __init__(self, n_width, n_depth, n_features):
+        def __init__(self, n_width, n_layers, n_features):
             super().__init__()
             self.dense0 = nn.Linear(n_features, n_width)
-            self.block = [nn.Linear(n_width, n_width) for _ in range(n_depth)]
+            self.block = [nn.Linear(n_width, n_width) for _ in range(n_layers)]
             self.denselast = nn.Linear(n_width, 1)
             self.softmax = nn.Softmax(dim=-1)
 
@@ -217,8 +217,6 @@ class MultiLayerPerceptron(Classifier):
     ):
         self.n_width = n_width
         self.n_layers = n_layers
-        kwargs["n_width"] = n_width
-        kwargs["n_depth"] = n_layers
         super().__init__(
             module=MultiLayerPerceptron.MLPModule,
             loss_fn=loss_fn,
