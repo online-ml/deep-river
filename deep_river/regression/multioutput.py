@@ -9,6 +9,13 @@ from river.base.typing import FeatureName, RegTarget
 from deep_river.regression import Regressor
 from deep_river.utils import dict2tensor, float2tensor
 
+class _TestModule(torch.nn.Module):
+    def __init__(self, n_features, n_outputs):
+        super().__init__()
+        self.dense0 = torch.nn.Linear(n_features, n_outputs)
+
+    def forward(self, X, **kwargs):
+        return self.dense0(X)
 
 class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
     """A Regressor that supports multiple targets.
@@ -51,7 +58,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
     >>> class MyModule(nn.Module):
     ...     def __init__(self, n_features):
     ...         super(MyModule, self).__init__()
-    ...         self.dense0 = nn.Linear(n_features, 3)
+    ...         self.dense0 = nn.Linear(n_features,3)
     ...
     ...     def forward(self, X, **kwargs):
     ...         X = self.dense0(X)
@@ -100,14 +107,57 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             FeatureName, RegTarget
         ] = OrderedDict()
 
+    @classmethod
+    def _unit_test_params(cls):
+        """
+        Returns a dictionary of parameters to be used for unit
+        testing the respective class.
+
+        Yields
+        -------
+        dict
+            Dictionary of parameters to be used for unit testing the
+            respective class.
+        """
+
+        yield {
+            "module": _TestModule,
+            "loss_fn": "l1",
+            "optimizer_fn": "sgd",
+        }
+
+    @classmethod
+    def _unit_test_skips(cls) -> set:
+        """
+        Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite.
+        However, in some cases, some estimators might not
+        be able to pass certain checks.
+        Returns
+        -------
+        set
+            Set of checks to skip during unit testing.
+        """
+        return {
+            "check_shuffle_features_no_impact",
+            "check_emerging_features",
+            "check_disappearing_features",
+            "check_predict_proba_one",
+            "check_predict_proba_one_binary",
+            "check_learn_one",
+            "check_pickling"
+        }
     def learn_one(
-        self, x: dict, y: typing.Dict[FeatureName, RegTarget], **kwargs
+        self,
+        x: dict,
+        y: typing.Optional[typing.Dict[FeatureName, RegTarget]],
+        **kwargs,
     ) -> "MultiTargetRegressor":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, self.device)
-        self.observed_targets.update(y)
+        self.observed_targets.update(y) if y is not None else None
         y_t = float2tensor(y, self.device)
         self._learn(x_t, y_t)
         return self

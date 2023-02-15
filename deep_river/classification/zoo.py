@@ -1,4 +1,4 @@
-from typing import Callable, Type, Union
+from typing import Callable, Union
 
 from torch import nn
 
@@ -6,7 +6,67 @@ from deep_river.classification import Classifier
 
 
 class LogisticRegression(Classifier):
-    """ """
+    """
+    This class implements a logistic regression model in PyTorch.
+
+    Parameters
+    ----------
+    loss_fn
+            Loss function to be used for training the wrapped model. Can be a
+            loss function provided by `torch.nn.functional` or one of the
+            following: 'mse', 'l1', 'cross_entropy',
+            'binary_cross_entropy_with_logits', 'binary_crossentropy',
+            'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    output_is_logit
+        Whether the module produces logits as output. If true, either
+        softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental
+        Whether the classifier should adapt to the appearance of
+        previously unobserved classes by adding an unit to the output
+        layer of the network. This works only if the last trainable
+        layer is an nn.Linear layer. Note also, that output activation
+        functions can not be adapted, meaning that a binary classifier
+        with a sigmoid output can not be altered to perform multi-class
+        predictions.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Parameters to be passed to the `build_fn` function aside from
+        `n_features`.
+
+    Examples
+    --------
+    >>> from deep_river.classification import LogisticRegression
+    >>> from river import metrics, preprocessing, compose, datasets
+    >>> from torch import nn, manual_seed
+
+    >>> _ = manual_seed(42)
+
+    >>> model_pipeline = compose.Pipeline(
+    ...     preprocessing.StandardScaler(),
+    ...     LogisticRegression()
+    ... )
+
+    >>> dataset = datasets.Phishing()
+    >>> metric = metrics.Accuracy()
+
+    >>> for x, y in dataset:
+    ...     y_pred = model_pipeline.predict_one(x) # make a prediction
+    ...     metric = metric.update(y, y_pred) # update the metric
+    ...     model_pipeline = model_pipeline.learn_one(x, y) # update the model
+
+    >>> print(f"Accuracy: {metric:.2f}")
+    Accuracy: 0.44
+
+    """
 
     class LRModule(nn.Module):
         def __init__(self, n_features):

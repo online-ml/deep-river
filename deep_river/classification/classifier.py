@@ -76,7 +76,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             Device to run the wrapped model on. Can be "cpu" or "cuda".
         seed
             Random seed to be used for training the wrapped model.
-        **net_params
+        **kwargs
             Parameters to be passed to the `build_fn` function aside from
             `n_features`.
 

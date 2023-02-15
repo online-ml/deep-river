@@ -1,7 +1,7 @@
 import abc
 import collections
 import inspect
-from typing import Any, Callable, Deque, Dict, Optional, Type, Union, cast
+from typing import Any, Callable, Deque, Optional, Type, Union, cast
 
 import torch
 from river import base
@@ -72,7 +72,7 @@ class DeepEstimator(base.Estimator):
 
     @abc.abstractmethod
     def learn_one(
-        self, x: dict, y: Optional[Union[Any, Dict[Any, Any]]], **kwargs
+        self, x: dict, y: Optional[Any], **kwargs
     ) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
