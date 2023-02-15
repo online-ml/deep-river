@@ -63,7 +63,7 @@ class LogisticRegression(Classifier):
     ...     metric = metric.update(y, y_pred) # update the metric
     ...     model_pipeline = model_pipeline.learn_one(x, y) # update the model
 
-    >>> print(f"Accuracy: {metric:.2f}")
+    >>> print(f"Accuracy: {metric.get():.2f}")
     Accuracy: 0.44
 
     """
