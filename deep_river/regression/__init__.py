@@ -13,5 +13,5 @@ __all__ = [
     "RollingRegressor",
     "MultiTargetRegressor",
     "LinearRegression",
-    "MultiLayerPerceptron"
+    "MultiLayerPerceptron",
 ]

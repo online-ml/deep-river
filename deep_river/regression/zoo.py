@@ -1,5 +1,7 @@
-from typing import Union, Callable
+from typing import Callable, Union
+
 from torch import nn
+
 from deep_river.regression import Regressor
 
 
@@ -22,13 +24,13 @@ class LinearRegression(Regressor):
             return X
 
     def __init__(
-            self,
-            loss_fn: Union[str, Callable] = "mse",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs,
+        self,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
     ):
         super().__init__(
             module=LinearRegression.LRModule,
@@ -57,6 +59,7 @@ class LinearRegression(Regressor):
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
         }
+
 
 class MultiLayerPerceptron(Regressor):
     """
