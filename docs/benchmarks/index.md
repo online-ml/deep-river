@@ -23414,15 +23414,15 @@ Features  10
 Python version       : 3.9.16
 IPython version      : 8.7.0
 
-river       : 0.14.0
-numpy       : 1.24.0
+river       : 0.15.0
+numpy       : 1.24.2
 scikit-learn: 1.0.2
 pandas      : 1.3.5
 scipy       : 1.9.3
 
 Compiler    : Clang 14.0.0 (clang-1400.0.29.202)
 OS          : Darwin
-Release     : 22.2.0
+Release     : 22.3.0
 Machine     : x86_64
 Processor   : i386
 CPU cores   : 16
