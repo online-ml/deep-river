@@ -19,7 +19,6 @@ __all__ = [
     "dict2tensor",
     "labels2onehot",
     "deque2rolling_tensor",
-    "df2rolling_tensor",
     "df2tensor",
     "float2tensor",
     "output2proba",
