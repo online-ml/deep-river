@@ -226,6 +226,8 @@ class MultiLayerPerceptron(Classifier):
             device=device,
             lr=lr,
             seed=seed,
+            n_width=n_width,
+            n_layers=n_layers,
             **kwargs,
         )
 
