@@ -89,6 +89,8 @@ class LogisticRegression(Classifier):
         seed: int = 42,
         **kwargs,
     ):
+        if "module" in kwargs:
+            del kwargs["module"]
         super().__init__(
             module=LogisticRegression.LRModule,
             loss_fn=loss_fn,
@@ -217,6 +219,8 @@ class MultiLayerPerceptron(Classifier):
     ):
         self.n_width = n_width
         self.n_layers = n_layers
+        if "module" in kwargs:
+            del kwargs["module"]
         super().__init__(
             module=MultiLayerPerceptron.MLPModule,
             loss_fn=loss_fn,

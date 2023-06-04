@@ -9,9 +9,6 @@ class LinearRegression(Regressor):
     """
     This class implements a linear regression model in PyTorch.
 
-    Parameters
-    ----------
-
     """
 
     class LRModule(nn.Module):
@@ -32,6 +29,8 @@ class LinearRegression(Regressor):
         seed: int = 42,
         **kwargs,
     ):
+        if "module" in kwargs:
+            del kwargs["module"]
         super().__init__(
             module=LinearRegression.LRModule,
             loss_fn=loss_fn,
@@ -130,6 +129,8 @@ class MultiLayerPerceptron(Regressor):
     ):
         self.n_width = n_width
         self.n_layers = n_layers
+        if "module" in kwargs:
+            del kwargs["module"]
         super().__init__(
             module=MultiLayerPerceptron.MLPModule,
             loss_fn=loss_fn,
