@@ -372,7 +372,6 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         )
 
     def find_output_layer(self, n_features: int):
-
         handles: List[RemovableHandle] = []
         tracker = ForwardOrderTracker()
         apply_hooks(module=self.module, hook=tracker, handles=handles)
