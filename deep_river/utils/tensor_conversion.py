@@ -156,7 +156,7 @@ def output2proba(
         else:
             preds = torch.sigmoid(preds)
 
-    preds_np = preds.detach().numpy()
+    preds_np = preds.numpy(force=True)
     if preds_np.shape[1] == 1:
         preds_np = np.hstack((preds_np, 1 - preds_np))
     n_unobserved_classes = preds_np.shape[1] - len(classes)
