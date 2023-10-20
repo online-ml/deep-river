@@ -6,7 +6,7 @@
     <a href="https://codecov.io/gh/online-ml/deep-river" > 
         <img src="https://codecov.io/gh/online-ml/deep-river/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
     </a>
-    <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dw/deep-river">
+    <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/deep-river">
     <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/deep-river">
 </p>
 <p align="center">
@@ -78,6 +78,44 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 ...     model_pipeline = model_pipeline.learn_one(x, y)  # make the model learn
 >>> print(f"Accuracy: {metric.get():.4f}")
 Accuracy: 0.6728
+
+```
+### Multi Target Regression 
+```python
+>>> from river import evaluate, compose
+>>> from river import metrics
+>>> from river import preprocessing
+>>> from river import stream
+>>> from sklearn import datasets
+>>> from torch import nn
+>>> from deep_river.regression.multioutput import MultiTargetRegressor
+
+>>> class MyModule(nn.Module):
+...     def __init__(self, n_features):
+...         super(MyModule, self).__init__()
+...         self.dense0 = nn.Linear(n_features, 3)
+...
+...     def forward(self, X, **kwargs):
+...         X = self.dense0(X)
+...         return X
+
+>>> dataset = stream.iter_sklearn_dataset(
+...         dataset=datasets.load_linnerud(),
+...         shuffle=True,
+...         seed=42
+...     )
+>>> model = compose.Pipeline(
+...     preprocessing.StandardScaler(),
+...     MultiTargetRegressor(
+...         module=MyModule,
+...         loss_fn='mse',
+...         lr=0.3,
+...         optimizer_fn='sgd',
+...     ))
+>>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
+>>> ev = evaluate.progressive_val_score(dataset, model, metric)
+>>> print(f"MicroAverage(MAE): {metric.get():.2f}")
+MicroAverage(MAE): 28.36
 
 ```
 

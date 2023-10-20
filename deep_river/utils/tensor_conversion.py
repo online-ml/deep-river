@@ -31,7 +31,7 @@ def dict2tensor(
 
 
 def float2tensor(
-    y: Union[float, int, RegTarget], device="cpu", dtype=torch.float32
+    y: Union[float, int, RegTarget, dict], device="cpu", dtype=torch.float32
 ) -> torch.Tensor:
     """
     Convert a float to a tensor.
@@ -49,7 +49,10 @@ def float2tensor(
     -------
         torch.Tensor
     """
-    return torch.tensor([[y]], device=device, dtype=dtype)
+    if isinstance(y, dict):
+        return torch.tensor([list(y.values())], device=device, dtype=dtype)
+    else:
+        return torch.tensor([[y]], device=device, dtype=dtype)
 
 
 def deque2rolling_tensor(
@@ -153,7 +156,7 @@ def output2proba(
         else:
             preds = torch.sigmoid(preds)
 
-    preds_np = preds.detach().numpy()
+    preds_np = preds.numpy(force=True)
     if preds_np.shape[1] == 1:
         preds_np = np.hstack((preds_np, 1 - preds_np))
     n_unobserved_classes = preds_np.shape[1] - len(classes)

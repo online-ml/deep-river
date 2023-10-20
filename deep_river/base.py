@@ -71,7 +71,9 @@ class DeepEstimator(base.Estimator):
         torch.manual_seed(seed)
 
     @abc.abstractmethod
-    def learn_one(self, x: dict, y: Optional[Any]) -> "DeepEstimator":
+    def learn_one(
+        self, x: dict, y: Optional[Any], **kwargs
+    ) -> "DeepEstimator":
         """
         Performs one step of training with a single example.
 
@@ -168,16 +170,8 @@ class DeepEstimator(base.Estimator):
         """
         new_params = new_params or {}
         new_params.update(self.kwargs)
-        new_params.update(
-            {
-                "seed": self.seed,
-                "device": self.device,
-                "lr": self.lr,
-                "loss_fn": self.loss_fn,
-                "optimizer_fn": self.optimizer_fn,
-                "module": self.module_cls,
-            }
-        )
+        new_params.update(self._get_params())
+        new_params.update({"module": self.module_cls})
 
         clone = self.__class__(**new_params)
         if include_attributes:

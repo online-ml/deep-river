@@ -37,51 +37,51 @@ class _TestModule(torch.nn.Module):
 
 class Classifier(DeepEstimator, base.MiniBatchClassifier):
     """
-        Wrapper for PyTorch classification models that automatically handles
-        increases in the number of classes by adding output neurons in case
-        the number of observed classes exceeds the current
-        number of output neurons.
+    Wrapper for PyTorch classification models that automatically handles
+    increases in the number of classes by adding output neurons in case
+    the number of observed classes exceeds the current
+    number of output neurons.
 
-        Parameters
-        ----------
-        module
-            Torch Module that builds the autoencoder to be wrapped.
-            The Module should accept parameter `n_features` so that the
-            returned model's input shape can be determined based on the number
-            of features in the initial training example.
-        loss_fn
-            Loss function to be used for training the wrapped model. Can be a
-            loss function provided by `torch.nn.functional` or one of the
-            following: 'mse', 'l1', 'cross_entropy',
-            'binary_cross_entropy_with_logits', 'binary_crossentropy',
-            'smooth_l1', 'kl_div'.
-        optimizer_fn
-            Optimizer to be used for training the wrapped model.
-            Can be an optimizer class provided by `torch.optim` or one of the
-            following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
-        lr
-            Learning rate of the optimizer.
-        output_is_logit
-            Whether the module produces logits as output. If true, either
-            softmax or sigmoid is applied to the outputs when predicting.
-        is_class_incremental
-            Whether the classifier should adapt to the appearance of
-            previously unobserved classes by adding an unit to the output
-            layer of the network. This works only if the last trainable
-            layer is an nn.Linear layer. Note also, that output activation
-            functions can not be adapted, meaning that a binary classifier
-            with a sigmoid output can not be altered to perform multi-class
-            predictions.
-        device
-            Device to run the wrapped model on. Can be "cpu" or "cuda".
-        seed
-            Random seed to be used for training the wrapped model.
-        **net_params
-            Parameters to be passed to the `build_fn` function aside from
-            `n_features`.
+    Parameters
+    ----------
+    module
+        Torch Module that builds the autoencoder to be wrapped.
+        The Module should accept parameter `n_features` so that the
+        returned model's input shape can be determined based on the number
+        of features in the initial training example.
+    loss_fn
+        Loss function to be used for training the wrapped model. Can be a
+        loss function provided by `torch.nn.functional` or one of the
+        following: 'mse', 'l1', 'cross_entropy',
+        'binary_cross_entropy_with_logits', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    output_is_logit
+        Whether the module produces logits as output. If true, either
+        softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental
+        Whether the classifier should adapt to the appearance of
+        previously unobserved classes by adding an unit to the output
+        layer of the network. This works only if the last trainable
+        layer is an nn.Linear layer. Note also, that output activation
+        functions can not be adapted, meaning that a binary classifier
+        with a sigmoid output can not be altered to perform multi-class
+        predictions.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Parameters to be passed to the `build_fn` function aside from
+        `n_features`.
 
-        Examples
-        --------
+    Examples
+    --------
     >>> from river import metrics, preprocessing, compose, datasets
     >>> from deep_river import classification
     >>> from torch import nn
@@ -136,9 +136,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         **kwargs,
     ):
         super().__init__(
+            module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            module=module,
             device=device,
             lr=lr,
             seed=seed,
@@ -372,7 +372,6 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         )
 
     def find_output_layer(self, n_features: int):
-
         handles: List[RemovableHandle] = []
         tracker = ForwardOrderTracker()
         apply_hooks(module=self.module, hook=tracker, handles=handles)
