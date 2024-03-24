@@ -105,9 +105,9 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             seed=seed,
             **kwargs,
         )
-        self.observed_targets: OrderedDict[
-            FeatureName, RegTarget
-        ] = OrderedDict()
+        self.observed_targets: OrderedDict[FeatureName, RegTarget] = (
+            OrderedDict()
+        )
 
     @classmethod
     def _unit_test_params(cls):
