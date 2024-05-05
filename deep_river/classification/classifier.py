@@ -116,11 +116,11 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
     >>> for x, y in dataset:
     ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
-    ...     metric = metric.update(y, y_pred)  # update the metric
-    ...     model_pipeline = model_pipeline.learn_one(x,y)
+    ...     metric.update(y, y_pred)  # update the metric
+    ...     model_pipeline.learn_one(x,y)
 
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.6728
+    Accuracy: 0.6736
     """
 
     def __init__(

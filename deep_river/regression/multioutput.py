@@ -82,7 +82,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
     >>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
     >>> ev = evaluate.progressive_val_score(dataset, model, metric)
     >>> print(f"MicroAverage(MAE): {metric.get():.2f}")
-    MicroAverage(MAE): 28.36
+    MicroAverage(MAE): 34.31
 
     """
 

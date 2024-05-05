@@ -60,8 +60,8 @@ class LogisticRegression(Classifier):
 
     >>> for x, y in dataset:
     ...     y_pred = model_pipeline.predict_one(x) # make a prediction
-    ...     metric = metric.update(y, y_pred) # update the metric
-    ...     model_pipeline = model_pipeline.learn_one(x, y) # update the model
+    ...     metric.update(y, y_pred) # update the metric
+    ...     model_pipeline.learn_one(x, y) # update the model
 
     >>> print(f"Accuracy: {metric.get():.2f}")
     Accuracy: 0.44
@@ -181,8 +181,8 @@ class MultiLayerPerceptron(Classifier):
 
     >>> for x, y in dataset:
     ...     y_pred = model_pipeline.predict_one(x) # make a prediction
-    ...     metric = metric.update(y, y_pred) # update the metric
-    ...     model_pipeline = model_pipeline.learn_one(x, y) # update the model
+    ...     metric.update(y, y_pred) # update the metric
+    ...     model_pipeline.learn_one(x, y) # update the model
 
     >>> print(f"Accuracy: {metric.get():.2f}")
     Accuracy: 0.44

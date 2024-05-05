@@ -89,11 +89,11 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
     >>> for x, y in dataset:
     ...    score = model.score_one(x)
-    ...    model = model.learn_one(x=x)
-    ...    metric = metric.update(y, score)
+    ...    model.learn_one(x=x)
+    ...    metric.update(y, score)
     ...
     >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.7447
+    ROCAUC: 0.9017
     """
 
     def __init__(
