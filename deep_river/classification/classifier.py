@@ -194,13 +194,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-        y = labels2onehot(
+        y_onehot = labels2onehot(
             y=y,
             classes=self.observed_classes,
             n_classes=n_classes,
             device=self.device,
         )
-        loss = self.loss_fn(y_pred, y)
+        loss = self.loss_fn(y_pred, y_onehot)
         loss.backward()
         self.optimizer.step()
         return self

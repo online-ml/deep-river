@@ -6,7 +6,7 @@ import torch
 from river.base import MultiTargetRegressor as RiverMultiTargetRegressor
 from river.base.typing import FeatureName, RegTarget
 
-from deep_river.regression import Regressor
+from deep_river.base import DeepEstimator
 from deep_river.utils import dict2tensor, float2tensor
 
 
@@ -19,7 +19,7 @@ class _TestModule(torch.nn.Module):
         return self.dense0(X)
 
 
-class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
+class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
     """A Regressor that supports multiple targets.
 
     Parameters
@@ -105,9 +105,9 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             seed=seed,
             **kwargs,
         )
-        self.observed_targets: OrderedDict[
-            FeatureName, RegTarget
-        ] = OrderedDict()
+        self.observed_targets: OrderedDict[FeatureName, RegTarget] = (
+            OrderedDict()
+        )
 
     @classmethod
     def _unit_test_params(cls):
@@ -150,10 +150,18 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, Regressor):
             "check_pickling",
         }
 
+    def _learn(self, x: torch.Tensor, y: torch.Tensor):
+        self.module.train()
+        self.optimizer.zero_grad()
+        y_pred = self.module(x)
+        loss = self.loss_fn(y_pred, y)
+        loss.backward()
+        self.optimizer.step()
+
     def learn_one(
         self,
         x: dict,
-        y: typing.Optional[typing.Dict[FeatureName, RegTarget]],
+        y: dict[FeatureName, RegTarget],
         **kwargs,
     ) -> "MultiTargetRegressor":
         if not self.module_initialized:

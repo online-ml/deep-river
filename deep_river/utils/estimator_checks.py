@@ -1,4 +1,5 @@
 """Utilities for unit testing and sanity checking estimators."""
+
 import copy
 
 __all__ = ["check_estimator"]

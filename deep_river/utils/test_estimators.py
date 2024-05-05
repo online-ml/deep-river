@@ -1,4 +1,5 @@
 """General tests that all estimators need to pass."""
+
 import copy
 import importlib
 import inspect

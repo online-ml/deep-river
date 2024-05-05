@@ -1,7 +1,6 @@
-import abc
 import collections
 import inspect
-from typing import Any, Callable, Deque, Optional, Type, Union, cast
+from typing import Any, Callable, Deque, Type, Union, cast
 
 import torch
 from river import base
@@ -70,27 +69,6 @@ class DeepEstimator(base.Estimator):
         self.module_initialized = False
         torch.manual_seed(seed)
 
-    @abc.abstractmethod
-    def learn_one(
-        self, x: dict, y: Optional[Any], **kwargs
-    ) -> "DeepEstimator":
-        """
-        Performs one step of training with a single example.
-
-        Parameters
-        ----------
-        x
-            Input example.
-        y
-            Target value.
-
-        Returns
-        -------
-        DeepEstimator
-            The estimator itself.
-        """
-        raise NotImplementedError
-
     def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.
 
@@ -151,7 +129,11 @@ class DeepEstimator(base.Estimator):
         )
         self.module_initialized = True
 
-    def clone(self, new_params: dict = {}, include_attributes=False):
+    def clone(
+        self,
+        new_params: dict[Any, Any] | None = None,
+        include_attributes=False,
+    ):
         """Clones the estimator.
 
         Parameters
