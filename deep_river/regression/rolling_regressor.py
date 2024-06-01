@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Type, Union
+from typing import Callable, List, Type, Union
 
 import pandas as pd
 import torch
@@ -126,7 +126,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "RollingRegressor":
+    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "Regressor":
         """
         Performs one step of training with the sliding
         window of the most recent examples.
@@ -156,9 +156,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
 
         return self
 
-    def learn_many(
-        self, X: pd.DataFrame, y: List[Any]
-    ) -> "RollingDeepEstimator":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Regressor":
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
@@ -171,7 +169,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
 
         return self
 
-    def predict_one(self, x: dict) -> RegTarget:
+    def predict_one(self, x: dict):
         """
         Predicts the target value for the current sliding
         window of most recent examples.

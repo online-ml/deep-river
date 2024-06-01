@@ -116,11 +116,11 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
     >>> for x, y in dataset:
     ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
-    ...     metric = metric.update(y, y_pred)  # update the metric
-    ...     model_pipeline = model_pipeline.learn_one(x,y)
+    ...     metric.update(y, y_pred)  # update the metric
+    ...     model_pipeline.learn_one(x,y)
 
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.6728
+    Accuracy: 0.6736
     """
 
     def __init__(
@@ -194,13 +194,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-        y = labels2onehot(
+        y_onehot = labels2onehot(
             y=y,
             classes=self.observed_classes,
             n_classes=n_classes,
             device=self.device,
         )
-        loss = self.loss_fn(y_pred, y)
+        loss = self.loss_fn(y_pred, y_onehot)
         loss.backward()
         self.optimizer.step()
         return self

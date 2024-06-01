@@ -119,10 +119,10 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
     >>> for x, y in dataset.take(5000):
     ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
-    ...     metric = metric.update(y, y_pred)  # update the metric
-    ...     model = model_pipeline.learn_one(x, y)  # make the model learn
+    ...     metric.update(y, y_pred)  # update the metric
+    ...     model_pipeline.learn_one(x, y)  # make the model learn
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.4552
+    Accuracy: 0.4548
     """
 
     def __init__(

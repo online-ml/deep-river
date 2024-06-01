@@ -74,10 +74,10 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 
 >>> for x, y in dataset:
 ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
-...     metric = metric.update(y, y_pred)  # update the metric
-...     model_pipeline = model_pipeline.learn_one(x, y)  # make the model learn
+...     metric.update(y, y_pred)  # update the metric
+...     model_pipeline.learn_one(x, y)  # make the model learn
 >>> print(f"Accuracy: {metric.get():.4f}")
-Accuracy: 0.6728
+Accuracy: 0.6736
 
 ```
 ### Multi Target Regression 
@@ -115,7 +115,7 @@ Accuracy: 0.6728
 >>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
 >>> ev = evaluate.progressive_val_score(dataset, model, metric)
 >>> print(f"MicroAverage(MAE): {metric.get():.2f}")
-MicroAverage(MAE): 28.36
+MicroAverage(MAE): 34.31
 
 ```
 
@@ -153,11 +153,11 @@ MicroAverage(MAE): 28.36
 
 >>> for x, y in dataset:
 ...     score = model.score_one(x)
-...     model = model.learn_one(x=x)
-...     metric = metric.update(y, score)
+...     model.learn_one(x=x)
+...     metric.update(y, score)
 ...
 >>> print(f"ROCAUC: {metric.get():.4f}")
-ROCAUC: 0.7447
+ROCAUC: 0.9017
 
 ```
 
