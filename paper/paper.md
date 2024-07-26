@@ -17,7 +17,7 @@ authors:
     orcid: 0000-0003-1464-4520
     affiliation: "2"
   - name: Saulo Martiello Mastelini
-    orcid: 0000-0003-1464-4520
+    orcid: 0000-0002-0092-3572
   - affiliation: "3"
 affiliations:
  - name: FZI Research Center for Information Technology, Karlsruhe, Germany
