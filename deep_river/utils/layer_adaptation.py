@@ -33,7 +33,7 @@ def get_lstm_param_shapes(lstm: nn.LSTM):
     return param_shapes
 
 
-KNOWN_PARAM_SHAPES = {
+PARAM_SHAPES = {
     nn.Linear: {
         "weight": "(o,i)",
         "bias": "(o)",
@@ -42,6 +42,8 @@ KNOWN_PARAM_SHAPES = {
     },
     nn.LSTM: get_lstm_param_shapes,
 }
+
+SUPPORTED_LAYERS = tuple(PARAM_SHAPES.keys())
 
 
 def check_shape_str(shape_str):
@@ -224,7 +226,7 @@ class LayerExpander:
 
     def load_instructions(self):
         if not self.param_shapes:
-            self.param_shapes = KNOWN_PARAM_SHAPES[type(self.layer)]
+            self.param_shapes = PARAM_SHAPES[type(self.layer)]
         if isinstance(self.param_shapes, Callable):
             self.param_shapes = self.param_shapes(self.layer)
         self.instructions = get_expansion_instructions(self.param_shapes)

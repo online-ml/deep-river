@@ -1,19 +1,21 @@
 import collections
+import warnings
+from torch.utils.hooks import RemovableHandle
 import inspect
-from typing import Any, Callable, Deque, Type, Union, cast
+from typing import Any, Callable, Deque, List, Type, Union, cast
 
 import torch
 from river import base
 
 from deep_river.utils import get_loss_fn, get_optim_fn
+from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
+from deep_river.utils.layer_adaptation import SUPPORTED_LAYERS, LayerExpander
 
 try:
     from graphviz import Digraph
     from torchviz import make_dot
 except ImportError as e:
-    raise ValueError(
-        "You have to install graphviz to use the draw method"
-    ) from e
+    raise ValueError("You have to install graphviz to use the draw method") from e
 
 
 class DeepEstimator(base.Estimator):
@@ -66,6 +68,9 @@ class DeepEstimator(base.Estimator):
         self.device = device
         self.kwargs = kwargs
         self.seed = seed
+        self.input_layer = None
+        self.output_layer = None
+        self.layer_expander = None
         self.module_initialized = False
         torch.manual_seed(seed)
 
@@ -99,9 +104,7 @@ class DeepEstimator(base.Estimator):
         first_parameter = next(self.module.parameters())
         input_shape = first_parameter.size()
         y_pred = self.module(torch.rand(input_shape))
-        return make_dot(
-            y_pred.mean(), params=dict(self.module.named_parameters())
-        )
+        return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
 
     def initialize_module(self, **kwargs):
         """
@@ -124,9 +127,7 @@ class DeepEstimator(base.Estimator):
             )
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(
-            self.module.parameters(), lr=self.lr
-        )
+        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
         self.module_initialized = True
 
     def clone(
@@ -159,6 +160,44 @@ class DeepEstimator(base.Estimator):
         if include_attributes:
             clone.__dict__.update(self.__dict__)
         return clone
+
+    def _get_input_output_layers(self, n_features: int):
+        handles: List[RemovableHandle] = []
+        tracker = ForwardOrderTracker()
+        apply_hooks(module=self.module, hook=tracker, handles=handles)
+
+        x_dummy = torch.empty((1, n_features), device=self.device)
+        self.module(x_dummy)
+
+        for h in handles:
+            h.remove()
+
+        if tracker.ordered_modules and isinstance(
+            tracker.ordered_modules[-1], SUPPORTED_LAYERS
+        ):
+            self.output_layer = tracker.ordered_modules[-1]
+        else:
+            warnings.warn(
+                "The model will not be able to adapt its output to new "
+                "classes since no linear layer output layer was found."
+            )
+            self.is_class_incremental = False
+
+        if tracker.ordered_modules and isinstance(
+            tracker.ordered_modules[0], SUPPORTED_LAYERS
+        ):
+            self.input_layer = tracker.ordered_modules[0]
+            self.layer_expander = LayerExpander(self.input_layer)
+        else:
+            warnings.warn(
+                "The model will not be able to adapt its input layer to new "
+                "features since no supported input layer was found."
+            )
+            self.is_feature_incremental = False
+
+    def initialize_module(self, **kwargs):
+        super().initialize_module(**kwargs)
+        self._get_input_output_layers(n_features=kwargs["n_features"])
 
 
 class RollingDeepEstimator(DeepEstimator):

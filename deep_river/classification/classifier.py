@@ -131,6 +131,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         lr: float = 1e-3,
         output_is_logit: bool = True,
         is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -148,6 +149,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.output_layer: nn.Module
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
+        self.is_feature_incremental = is_feature_incremental
         self._supported_output_layers: List[Type[nn.Module]] = [nn.Linear]
 
     @classmethod
@@ -371,28 +373,3 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             self.module.parameters(), lr=self.lr
         )
 
-    def find_output_layer(self, n_features: int):
-        handles: List[RemovableHandle] = []
-        tracker = ForwardOrderTracker()
-        apply_hooks(module=self.module, hook=tracker, handles=handles)
-
-        x_dummy = torch.empty((1, n_features), device=self.device)
-        self.module(x_dummy)
-
-        for h in handles:
-            h.remove()
-
-        if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], tuple(self._supported_output_layers)
-        ):
-            self.output_layer = tracker.ordered_modules[-1]
-        else:
-            warnings.warn(
-                "The model will not be able to adapt its output to new "
-                "classes since no linear layer output layer was found."
-            )
-            self.is_class_incremental = False
-
-    def initialize_module(self, **kwargs):
-        super().initialize_module(**kwargs)
-        self.find_output_layer(n_features=kwargs["n_features"])
