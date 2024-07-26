@@ -15,12 +15,17 @@ authors:
     affiliation: "2"
   - name: Max Halford
     orcid: 0000-0003-1464-4520
-  - affiliation: "2"
+    affiliation: "2"
+  - name: Saulo Martiello Mastelini
+    orcid: 0000-0003-1464-4520
+  - affiliation: "3"
 affiliations:
  - name: FZI Research Center for Information Technology, Karlsruhe, Germany
    index: 1
- - name: Paris Telecom Tech
+ - name: Paris Telecom Tech, France
    index: 2
+ - name: University of Sao Paulo, Brazil
+   index: 3
 date: 20.10.2023
 bibliography: paper.bib
 
