@@ -26,20 +26,11 @@ class _TestLSTMAutoencoder(nn.Module):
             num_layers=n_layers,
             batch_first=batch_first,
         )
-        self.decoder = nn.LSTM(
-            input_size=hidden_size,
-            hidden_size=n_features,
-            num_layers=n_layers,
-            batch_first=batch_first,
-        )
+   
 
     def forward(self, x):
-        _, (h, _) = self.encoder(x)
-        h = h[-1].view(1, 1, -1)
-        x_flipped = torch.flip(x[1:], dims=[self.time_axis])
-        input = torch.cat((h, x_flipped), dim=self.time_axis)
-        x_hat, _ = self.decoder(input)
-        return torch.flip(x_hat, dims=[self.time_axis])
+        output, (h, c) = self.encoder(x)
+        return output
 
 
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
