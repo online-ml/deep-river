@@ -32,32 +32,33 @@ However, as data evolves over time, it becomes crucial to adapt machine learning
 This adaptation is achieved through online learning or continuous ML technologies. 
 Although deep learning technologies have demonstrated outstanding performance on predefined datasets, their application to online, streaming, and continuous learning scenarios has been limited.
 
-[`Deep-River`](https://github.com/online-ml/deep-river) is a Python package designed for deep learning on data streams. 
+[`Deep-River`](https://github.com/online-ml/deep-river) is a Python package for deep learning on data streams. 
 Built on top of [`river`](https://riverml.xyz/latest/) and [`PyTorch`](https://pytorch.org), it offers a unified API for both supervised and unsupervised learning. 
 Additionally, it provides a suite of tools for preprocessing data streams and evaluating deep learning models.
 
 # Statement of need
 
 In today's rapidly evolving landscape, machine learning (ML) algorithms play a pivotal role in shaping decision-making processes based on available data. 
-The acceleration facilitated by these algorithms necessitates constant adaptation to evolving data structures, as what is valid at one moment may no longer hold true in the future. 
-To address this imperative, the adoption of online learning and continuous ML technologies becomes paramount.
+The acceleration facilitated by these algorithms necessitates constant adaptation to evolving data structures, as what is valid at one moment may no longer hold in the future. 
+To address this imperative, adopting online learning and continuous ML technologies becomes paramount.
 While deep learning technologies have demonstrated exceptional performance on static, predefined datasets, their application to dynamic and continuously evolving data streams remains underexplored. 
-The absence of widespread integration of deep learning into online, streaming, and continuous learning scenarios hampers the full potential of these advanced algorithms in real-time decision-making.
+The absence of widespread integration of deep learning into online, streaming, and continuous learning scenarios hampers the full potential of these advanced algorithms in real-time decision-making [@kulbach2024retrospectivetutorialopportunitieschallenges].
 The emergence of the [`Deep-River`](https://github.com/online-ml/deep-river) Python package fills a critical void in the field of deep learning on data streams. 
 Leveraging the capabilities of [`river`](https://riverml.xyz/latest/)[@montiel2021river] and [`PyTorch`](https://pytorch.org), `Deep-River` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams. 
-Moreover, the package equips practitioners with essential tools for data stream preprocessing and the evaluation of deep learning models in dynamic, real-time environments.
+Moreover, the package equips practitioners with essential tools for data stream preprocessing and the evaluation of deep learning models in dynamic, real-time environments. 
+This was already made use of in the context of Streaming Anomaly Detection [@cazzonelli2022detecting].
 As the demand for effective and efficient adaptation of machine learning systems to evolving data structures continues to grow, the integration of `Deep-River` into the landscape becomes crucial. 
 This package stands as a valuable asset, unlocking the potential for deep learning technologies to excel in online, streaming, and continuous learning scenarios. 
 The need for such advancements is evident in the quest to harness the full power of machine learning in dynamically changing environments, ensuring our decision-making processes remain accurate, relevant, and agile in the face of evolving data landscapes.
 
 # Features
-
 [`Deep-River`](https://github.com/online-ml/deep-river) enables the usage of deep learning models for data streams. 
-This means that deep leanring models need to adapt to changes within the evolving data stream i.ex. the number of classes might change over time.
+This means that deep learning models need to adapt to changes within the evolving data stream i.ex. the number of classes might change over time.
+In addition to the integration of [`PyTorch`](https://pytorch.org) into the [`river`](https://riverml.xyz/latest/)[@montiel2021river] this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
 
 ## Compatibility
-[`Deep-River`](https://github.com/online-ml/deep-river) is build on the unified application programming interface (API) of [`river`](https://riverml.xyz/latest/)[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
-Further, it integrates the huge functionality of [`PyTorch`](https://pytorch.org) for deep learning such using GPU acceleration and the broad range of architectures.
+[`Deep-River`](https://github.com/online-ml/deep-river) is built on the unified application programming interface (API) of [`river`](https://riverml.xyz/latest/)[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
+Further, it integrates the huge functionality of [`PyTorch`](https://pytorch.org) for deep learning such as using GPU acceleration and a broad range of architectures.
 This unified approach simplifies the development process and facilitates a cohesive workflow for practitioners working with dynamic data streams.
 Leveraging the capabilities of the well-established [`river`](https://riverml.xyz/latest/)[@montiel2021river] library and the powerful [`PyTorch`](https://pytorch.org) framework, `Deep-River` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams. 
 This foundation ensures reliability, scalability, and compatibility with state-of-the-art machine learning methodologies.
@@ -65,8 +66,8 @@ It provides comprehensive [documentation](https://online-ml.github.io/deep-river
 
 ## Adaptivity
 [`Deep-River`](https://github.com/online-ml/deep-river) is specifically designed to cater to the requirements of online learning scenarios. 
-It enables continuous adaptation to evolving data by supporting incremental updates and learning from new observations in real-time, a critical feature for applications where data arrives sequentially.
-Further, for classification tasks it enables the model to adapt to changes in the number of classes over time.
+It enables continuous adaptation to evolving data by supporting incremental updates and learning from new observations in real time, a critical feature for applications where data arrives sequentially.
+Further, it enables the model to adapt to changes in the number of classes over time for classification tasks.
 It equips practitioners with tools for evaluating the performance of deep learning models on data streams. This feature is crucial for ensuring the reliability and effectiveness of models in real-time applications, enabling users to monitor and fine-tune their models as the data evolves.
 
 # Architecture
@@ -85,7 +86,7 @@ Specific regression classes like `LinearRegression` and `MultiLayerPerceptron` i
 The `MultiTargetRegressor` also inherits from `DeepEstimator`. 
 The `RollingRegressor` class inherits from both `RollingDeepEstimator` and `Regressor`.
 
-![Architecture of Deep-River\label{fig:Architecture}](classes.jpg){width=70%}
+![Architecture of Deep-River\label{fig:Architecture}](classes.png){width=100%}
 
 Overall, the library is organized to provide a flexible and hierarchical framework for different types of machine learning tasks, with a clear inheritance structure connecting more specific implementations to their base classes.
 
