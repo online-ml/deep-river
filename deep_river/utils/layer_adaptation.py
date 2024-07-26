@@ -1,7 +1,8 @@
-from torch import nn
 import re
-import torch
 from typing import Callable
+
+import torch
+from torch import nn
 
 
 def get_lstm_param_shapes(lstm: nn.LSTM):
@@ -18,12 +19,12 @@ def get_lstm_param_shapes(lstm: nn.LSTM):
 
     for d in direction_suffixes:
         for k in range(lstm.num_layers):
-            param_shapes[
-                f"weight_ih_l{k}{d}"
-            ] = f"(4o,{num_directions}{'o' if lstm.proj_size == 0 else 'e'})"
-            param_shapes[
-                f"weight_hh_l{k}{d}"
-            ] = f"(4o,{'o' if lstm.proj_size == 0 else 'e'})"
+            param_shapes[f"weight_ih_l{k}{d}"] = (
+                f"(4o,{num_directions}{'o' if lstm.proj_size == 0 else 'e'})"
+            )
+            param_shapes[f"weight_hh_l{k}{d}"] = (
+                f"(4o,{'o' if lstm.proj_size == 0 else 'e'})"
+            )
             param_shapes[f"bias_ih_l{k}{d}"] = "(4o)"
             param_shapes[f"bias_hh_l{k}{d}"] = "(4o)"
             if lstm.proj_size > 0:
@@ -54,14 +55,6 @@ def get_in_out_axes(shape_str: str):
         Returns a dictionary containing information on how a
         specific parameter's axis sizes correspond to the input
         and output dimensionality given its shape string.
-
-        Examples
-        --------
-    >>> get_in_out_axes("(4o,i)")
-    {
-        "input": [{"axis": 1, "n_subparams": 1}],
-        "output": [{"axis": 0, "n_subparams": 4}],
-    }
 
         Parameters
         ----------
@@ -99,27 +92,6 @@ def get_expansion_instructions(param_shapes: dict):
         each parameter of a layer contained in param_shapes
         corresponds to the input and output dimensionality
         given its shape string.
-
-        Examples
-        --------
-    >>> get_expansion_instructions({
-            "weight": "(o,i)",
-            "bias": "(o)",
-            "in_features": "I",
-            "out_features": "O",
-        })
-    {
-        "weight": {
-            "input": [{"axis": 1, "n_subparams": 1}],
-            "output": [{"axis": 0, "n_subparams": 1}],
-        },
-        "bias": {
-            "input": [],
-            "output": [{"axis": 0, "n_subparams": 1}],
-        },
-        "in_features": "input_attribute",
-        "out_features": "output_attribute",
-    }
 
         Parameters
         ----------
@@ -162,22 +134,6 @@ def expand_weights(
         original weights into its subparams and appending new weights
         to them.
 
-        Examples
-        --------
-    >>> t = torch.ones(4, 2)
-    >>> expand_weights(
-            t, axis=0, n_dims_to_add=1, init_fn=nn.init.zeros_, n_subparams=4
-        ).tolist()
-    [
-        [1, 1], [0, 0],
-        [1, 1], [0, 0],
-        [1, 1], [0, 0],
-        [1, 1], [0, 0],
-    ]
-
-
-
-
         Parameters
         ----------
         weights
@@ -211,7 +167,11 @@ def expand_weights(
 
 
 def expand_layer(
-    layer: nn.Module, output: bool, size: int, instructions: dict, init_fn: Callable
+    layer: nn.Module,
+    output: bool,
+    size: int,
+    instructions: dict,
+    init_fn: Callable,
 ):
     target_str = "output" if output else "input"
     for param_name, instruction in instructions.items():

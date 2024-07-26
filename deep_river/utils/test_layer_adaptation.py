@@ -1,13 +1,14 @@
-from torch import nn
-import torch
 import numpy as np
+import torch
+from torch import nn
+
 from deep_river.utils.layer_adaptation import (
+    LayerExpander,
     expand_layer,
-    get_lstm_param_shapes,
-    get_in_out_axes,
     expand_weights,
     get_expansion_instructions,
-    LayerExpander,
+    get_in_out_axes,
+    get_lstm_param_shapes,
 )
 
 
@@ -55,7 +56,10 @@ def test_get_lstm_param_shapes():
 def test_get_in_out_axes():
     expected = {
         "input": [],
-        "output": [{"axis": 0, "n_subparams": 4}, {"axis": 1, "n_subparams": 1}],
+        "output": [
+            {"axis": 0, "n_subparams": 4},
+            {"axis": 1, "n_subparams": 1},
+        ],
     }
     result = get_in_out_axes("(4o,o)")
     assert result == expected
@@ -128,7 +132,10 @@ def test_expand_layer():
         },
         "weight_hh_l0": {
             "input": [],
-            "output": [{"axis": 0, "n_subparams": 4}, {"axis": 1, "n_subparams": 1}],
+            "output": [
+                {"axis": 0, "n_subparams": 4},
+                {"axis": 1, "n_subparams": 1},
+            ],
         },
         "bias_ih_l0": {"input": [], "output": [{"axis": 0, "n_subparams": 4}]},
         "bias_hh_l0": {"input": [], "output": [{"axis": 0, "n_subparams": 4}]},
@@ -136,7 +143,11 @@ def test_expand_layer():
     layer = nn.LSTM(4, 3)
     x = torch.zeros(2, 4)
     expand_layer(
-        layer, output=True, size=2, instructions=instructions, init_fn=nn.init.normal_
+        layer,
+        output=True,
+        size=2,
+        instructions=instructions,
+        init_fn=nn.init.normal_,
     )
     out, _ = layer(x)
     assert out.shape == (2, 5)
@@ -152,7 +163,10 @@ def test_load_instructions():
         },
         "weight_hh_l0": {
             "input": [],
-            "output": [{"axis": 0, "n_subparams": 4}, {"axis": 1, "n_subparams": 1}],
+            "output": [
+                {"axis": 0, "n_subparams": 4},
+                {"axis": 1, "n_subparams": 1},
+            ],
         },
         "bias_ih_l0": {"input": [], "output": [{"axis": 0, "n_subparams": 4}]},
         "bias_hh_l0": {"input": [], "output": [{"axis": 0, "n_subparams": 4}]},
