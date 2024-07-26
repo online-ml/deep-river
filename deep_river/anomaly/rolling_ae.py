@@ -27,7 +27,6 @@ class _TestLSTMAutoencoder(nn.Module):
             batch_first=batch_first,
         )
 
-
     def forward(self, x):
         output, (h, c) = self.encoder(x)
         return output
