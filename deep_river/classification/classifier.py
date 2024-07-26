@@ -169,6 +169,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             "module": _TestModule,
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
         }
 
     @classmethod
@@ -185,8 +186,8 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         """
         return {
             "check_shuffle_features_no_impact",
-            "check_emerging_features",
             "check_disappearing_features",
+            "check_emerging_features",
             "check_predict_proba_one",
             "check_predict_proba_one_binary",
         }
@@ -234,6 +235,8 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.observed_classes.add(y)
         if self.is_class_incremental:
             self._adapt_output_dim()
+        if self.is_feature_incremental:
+            self._adapt_input_dim(x_t)
 
         return self._learn(x=x_t, y=y)
 
@@ -255,12 +258,12 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, device=self.device)
+        if self.is_feature_incremental:
+            self._adapt_input_dim(x_t)
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t)
-        return output2proba(
-            y_pred, self.observed_classes, self.output_is_logit
-        )[0]
+        return output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
@@ -282,13 +285,15 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         if not self.module_initialized:
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
+        X_t = df2tensor(X, device=self.device)
 
         self.observed_classes.update(y)
         if self.is_class_incremental:
             self._adapt_output_dim()
+        if self.is_feature_incremental:
+            self._adapt_input_dim(X_t)
 
-        return self._learn(x=X, y=y)
+        return self._learn(x=X_t, y=y)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """
@@ -308,6 +313,8 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X_t = df2tensor(X, device=self.device)
+        if self.is_feature_incremental:
+            self._adapt_input_dim(X_t)
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(X_t)
@@ -338,9 +345,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         )
         if n_classes_to_add > 1:
             new_weights = (
-                new_weights.unsqueeze(1)
-                .T.repeat(1, n_classes_to_add, 1)
-                .squeeze()
+                new_weights.unsqueeze(1).T.repeat(1, n_classes_to_add, 1).squeeze()
             )
         self.output_layer.weight = nn.parameter.Parameter(
             torch.cat(
@@ -354,9 +359,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
         if self.output_layer.bias is not None:
             new_bias = torch.empty(n_classes_to_add)
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(
-                self.output_layer.weight
-            )
+            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
             bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
             nn.init.uniform_(new_bias, -bound, bound)
             self.output_layer.bias = nn.parameter.Parameter(
@@ -369,7 +372,4 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
                 )
             )
         self.output_layer.out_features += torch.Tensor([n_classes_to_add])
-        self.optimizer = self.optimizer_fn(
-            self.module.parameters(), lr=self.lr
-        )
-
+        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)

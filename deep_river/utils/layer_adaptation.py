@@ -54,22 +54,22 @@ def check_shape_str(shape_str):
 
 def get_in_out_axes(shape_str: str):
     """
-        Returns a dictionary containing information on how a
-        specific parameter's axis sizes correspond to the input
-        and output dimensionality given its shape string.
+    Returns a dictionary containing information on how a
+    specific parameter's axis sizes correspond to the input
+    and output dimensionality given its shape string.
 
-        Parameters
-        ----------
-        shape_str
-            String specifying the shape of a parameter.
+    Parameters
+    ----------
+    shape_str
+        String specifying the shape of a parameter.
 
-        Returns
-        -------
-        axes
-            Dictionary specifying which axes have to be
-            altered to modify the input- or output
-            dimensionality as well as the number of
-            sub-parameters contained in the axes.
+    Returns
+    -------
+    axes
+        Dictionary specifying which axes have to be
+        altered to modify the input- or output
+        dimensionality as well as the number of
+        sub-parameters contained in the axes.
 
     """
     check_shape_str(shape_str)
@@ -90,24 +90,24 @@ def get_in_out_axes(shape_str: str):
 
 def get_expansion_instructions(param_shapes: dict):
     """
-        Returns a dictionary containing information on how
-        each parameter of a layer contained in param_shapes
-        corresponds to the input and output dimensionality
-        given its shape string.
+    Returns a dictionary containing information on how
+    each parameter of a layer contained in param_shapes
+    corresponds to the input and output dimensionality
+    given its shape string.
 
-        Parameters
-        ----------
-        param_shapes
-            Dictionary containing all parameters of a layer
-            as keys and their corresponding shape strings as values.
+    Parameters
+    ----------
+    param_shapes
+        Dictionary containing all parameters of a layer
+        as keys and their corresponding shape strings as values.
 
-        Returns
-        -------
-        instructions
-            Dictionary specifying which axes of each parameter
-            have to be altered to modify the input- or output
-            dimensionality as well as the number of
-            sub-parameters contained in the axes.
+    Returns
+    -------
+    instructions
+        Dictionary specifying which axes of each parameter
+        have to be altered to modify the input- or output
+        dimensionality as well as the number of
+        sub-parameters contained in the axes.
 
     """
 
@@ -131,28 +131,28 @@ def expand_weights(
     n_subparams: int = 1,
 ):
     """
-        Expands `weights` along the given axis by `n_dims_to_add`.
-        The expanded weights are created by evenly splitting the
-        original weights into its subparams and appending new weights
-        to them.
+    Expands `weights` along the given axis by `n_dims_to_add`.
+    The expanded weights are created by evenly splitting the
+    original weights into its subparams and appending new weights
+    to them.
 
-        Parameters
-        ----------
-        weights
-            Parameter to be expanded.
-        axis
-            Axis along which to expand the parameter.
-        n_dims_to_add
-            Number of dims to add to each sub-parameter within the parameter.
-        init_fn
-            Function to initiate the new weights with.
-        n_subparams
-            Number of sub-parameters contained in the parameter.
+    Parameters
+    ----------
+    weights
+        Parameter to be expanded.
+    axis
+        Axis along which to expand the parameter.
+    n_dims_to_add
+        Number of dims to add to each sub-parameter within the parameter.
+    init_fn
+        Function to initiate the new weights with.
+    n_subparams
+        Number of sub-parameters contained in the parameter.
 
-        Returns
-        -------
-        weights_expanded
-            The expanded weights as a pytorch parameter.
+    Returns
+    -------
+    weights_expanded
+        The expanded weights as a pytorch parameter.
 
     """
     shape_new_weights = list(weights.shape)
@@ -221,6 +221,8 @@ class LayerExpander:
     ) -> None:
         self.layer = layer
         self.instructions = None
+        self.input_dim_key = None
+        self.output_dim_key = None
         self.param_shapes = param_shapes
         self.init_fn = init_fn
 
@@ -230,6 +232,24 @@ class LayerExpander:
         if isinstance(self.param_shapes, Callable):
             self.param_shapes = self.param_shapes(self.layer)
         self.instructions = get_expansion_instructions(self.param_shapes)
+
+    def get_input_dim(self):
+        if self.instructions is None:
+            self.load_instructions()
+        if self.input_dim_key is None:
+            keys = list(self.instructions.keys())
+            values = list(self.instructions.values())
+            self.input_dim_key = keys[values.index("input_attribute")]
+
+        return getattr(self.layer, self.input_dim_key)
+
+    def get_output_dim(self):
+        if self.output_dim_key is None:
+            keys = list(self.instructions.keys())
+            values = list(self.instructions.values())
+            self.output_dim_key = keys[values.index("O")]
+
+        return getattr(self.layer, self.output_dim_key)
 
     def expand_input(self, size: int):
         if self.instructions is None:

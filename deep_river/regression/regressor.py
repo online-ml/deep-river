@@ -73,6 +73,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -83,6 +84,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             device=device,
             optimizer_fn=optimizer_fn,
             lr=lr,
+            is_feature_incremental=is_feature_incremental,
             seed=seed,
             **kwargs,
         )
@@ -104,6 +106,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             "module": _TestModule,
             "loss_fn": "l1",
             "optimizer_fn": "sgd",
+            'is_feature_incremental': True
         }
 
     @classmethod
@@ -120,8 +123,8 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         """
         return {
             "check_shuffle_features_no_impact",
-            "check_emerging_features",
             "check_disappearing_features",
+            "check_emerging_features",
             "check_predict_proba_one",
             "check_predict_proba_one_binary",
         }
@@ -147,6 +150,10 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, self.device)
         y_t = float2tensor(y, device=self.device)
+
+        if self.is_feature_incremental:
+            self._adapt_input_dim(x_t)
+
         self._learn(x_t, y_t)
         return self
 
@@ -176,6 +183,9 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self.kwargs["n_features"] = len(x)
             self.initialize_module(**self.kwargs)
         x_t = dict2tensor(x, self.device)
+
+        if self.is_feature_incremental:
+            self._adapt_input_dim(x_t)
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t).item()
@@ -201,9 +211,10 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self.kwargs["n_features"] = len(X.columns)
             self.initialize_module(**self.kwargs)
         X_t = df2tensor(X, device=self.device)
-        y_t = torch.tensor(
-            y, device=self.device, dtype=torch.float32
-        ).unsqueeze(1)
+        y_t = torch.tensor(y, device=self.device, dtype=torch.float32).unsqueeze(1)
+
+        if self.is_class_incremental:
+            self._adapt_input_dim(X_t)
         self._learn(X_t, y_t)
         return self
 
@@ -226,6 +237,8 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self.initialize_module(**self.kwargs)
 
         X = df2tensor(X, device=self.device)
+        if self.is_class_incremental:
+            self._adapt_input_dim(X_t)
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(X).detach().squeeze().tolist()

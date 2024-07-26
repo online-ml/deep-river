@@ -55,6 +55,7 @@ class DeepEstimator(base.Estimator):
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -64,6 +65,7 @@ class DeepEstimator(base.Estimator):
         self.module: torch.nn.Module = cast(torch.nn.Module, None)  # cleaner
         self.loss_fn = get_loss_fn(loss_fn)
         self.optimizer_fn = get_optim_fn(optimizer_fn)
+        self.is_feature_incremental = is_feature_incremental
         self.lr = lr
         self.device = device
         self.kwargs = kwargs
@@ -129,6 +131,7 @@ class DeepEstimator(base.Estimator):
         self.module.to(self.device)
         self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
         self.module_initialized = True
+        self._get_input_output_layers(n_features=kwargs["n_features"])
 
     def clone(
         self,
@@ -160,6 +163,12 @@ class DeepEstimator(base.Estimator):
         if include_attributes:
             clone.__dict__.update(self.__dict__)
         return clone
+
+    def _adapt_input_dim(self, x: torch.Tensor):
+        in_features_target = x.shape[-1]
+        n_features_to_add = in_features_target - self.layer_expander.get_input_dim()
+        if n_features_to_add > 0:
+            self.layer_expander.expand_input(n_features_to_add)
 
     def _get_input_output_layers(self, n_features: int):
         handles: List[RemovableHandle] = []
@@ -194,10 +203,6 @@ class DeepEstimator(base.Estimator):
                 "features since no supported input layer was found."
             )
             self.is_feature_incremental = False
-
-    def initialize_module(self, **kwargs):
-        super().initialize_module(**kwargs)
-        self._get_input_output_layers(n_features=kwargs["n_features"])
 
 
 class RollingDeepEstimator(DeepEstimator):
