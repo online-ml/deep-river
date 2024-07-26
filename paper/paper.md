@@ -33,7 +33,7 @@ This adaptation is achieved through online learning or continuous ML technologie
 Although deep learning technologies have demonstrated outstanding performance on predefined datasets, their application to online, streaming, and continuous learning scenarios has been limited.
 
 [`Deep-River`](https://github.com/online-ml/deep-river) is a Python package for deep learning on data streams. 
-Built on top of [`river`](https://riverml.xyz/latest/) and [`PyTorch`](https://pytorch.org), it offers a unified API for both supervised and unsupervised learning. 
+Built on top of [`river`](https://riverml.xyz/latest/) and [`PyTorch`](https://pytorch.org)[@paszke2017automatic], it offers a unified API for both supervised and unsupervised learning. 
 Additionally, it provides a suite of tools for preprocessing data streams and evaluating deep learning models.
 
 # Statement of need
@@ -44,7 +44,7 @@ To address this imperative, adopting online learning and continuous ML technolog
 While deep learning technologies have demonstrated exceptional performance on static, predefined datasets, their application to dynamic and continuously evolving data streams remains underexplored. 
 The absence of widespread integration of deep learning into online, streaming, and continuous learning scenarios hampers the full potential of these advanced algorithms in real-time decision-making [@kulbach2024retrospectivetutorialopportunitieschallenges].
 The emergence of the [`Deep-River`](https://github.com/online-ml/deep-river) Python package fills a critical void in the field of deep learning on data streams. 
-Leveraging the capabilities of [`river`](https://riverml.xyz/latest/)[@montiel2021river] and [`PyTorch`](https://pytorch.org), `Deep-River` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams. 
+Leveraging the capabilities of [`river`](https://riverml.xyz/latest/)[@montiel2021river] and [`PyTorch`](https://pytorch.org)[@paszke2017automatic], `Deep-River` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams. 
 Moreover, the package equips practitioners with essential tools for data stream preprocessing and the evaluation of deep learning models in dynamic, real-time environments. 
 This was already made use of in the context of Streaming Anomaly Detection [@cazzonelli2022detecting].
 As the demand for effective and efficient adaptation of machine learning systems to evolving data structures continues to grow, the integration of `Deep-River` into the landscape becomes crucial. 
@@ -54,13 +54,13 @@ The need for such advancements is evident in the quest to harness the full power
 # Features
 [`Deep-River`](https://github.com/online-ml/deep-river) enables the usage of deep learning models for data streams. 
 This means that deep learning models need to adapt to changes within the evolving data stream i.ex. the number of classes might change over time.
-In addition to the integration of [`PyTorch`](https://pytorch.org) into the [`river`](https://riverml.xyz/latest/)[@montiel2021river] this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
+In addition to the integration of [`PyTorch`](https://pytorch.org)[@paszke2017automatic] into the [`river`](https://riverml.xyz/latest/)[@montiel2021river] this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
 
 ## Compatibility
 [`Deep-River`](https://github.com/online-ml/deep-river) is built on the unified application programming interface (API) of [`river`](https://riverml.xyz/latest/)[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
-Further, it integrates the huge functionality of [`PyTorch`](https://pytorch.org) for deep learning such as using GPU acceleration and a broad range of architectures.
+Further, it integrates the huge functionality of [`PyTorch`](https://pytorch.org)[@paszke2017automatic] for deep learning such as using GPU acceleration and a broad range of architectures.
 This unified approach simplifies the development process and facilitates a cohesive workflow for practitioners working with dynamic data streams.
-Leveraging the capabilities of the well-established [`river`](https://riverml.xyz/latest/)[@montiel2021river] library and the powerful [`PyTorch`](https://pytorch.org) framework, `Deep-River` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams. 
+Leveraging the capabilities of the well-established [`river`](https://riverml.xyz/latest/)[@montiel2021river] library and the powerful [`PyTorch`](https://pytorch.org)[@paszke2017automatic] framework, `Deep-River` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams. 
 This foundation ensures reliability, scalability, and compatibility with state-of-the-art machine learning methodologies.
 It provides comprehensive [documentation](https://online-ml.github.io/deep-river/) to guide users through the installation, implementation, and customization processes. Additionally, a supportive community ensures that users have access to resources, discussions, and assistance, fostering a collaborative environment for continuous improvement and knowledge sharing.
 
