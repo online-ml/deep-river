@@ -59,7 +59,7 @@ The need for such advancements is evident in the quest to harness the full power
 # Features
 [`Deep-River`](https://github.com/online-ml/deep-river) enables the usage of deep learning models for data streams. 
 This means that deep learning models need to adapt to changes within the evolving data stream i.ex. the number of classes might change over time.
-In addition to the integration of [`PyTorch`](https://pytorch.org)[@paszke2017automatic] into the [`river`](https://riverml.xyz/latest/)[@montiel2021river] this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
+In addition to the integration of [`PyTorch`](https://pytorch.org)[@paszke2017automatic] into [`river`](https://riverml.xyz/latest/)[@montiel2021river], this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
 
 ## Compatibility
 [`Deep-River`](https://github.com/online-ml/deep-river) is built on the unified application programming interface (API) of [`river`](https://riverml.xyz/latest/)[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
@@ -76,7 +76,7 @@ Further, it enables the model to adapt to changes in the number of classes over 
 It equips practitioners with tools for evaluating the performance of deep learning models on data streams. This feature is crucial for ensuring the reliability and effectiveness of models in real-time applications, enabling users to monitor and fine-tune their models as the data evolves.
 
 # Architecture
-The `deep_river` library is structured around various types of estimators for anomaly detection, classification, and regression. 
+The `Deep-River` library is structured around various types of estimators for anomaly detection, classification, and regression. 
 Each category contains several specialized classes that inherit from more general base classes, forming a hierarchical structure.
 In anomaly detection, the base class `AnomalyScaler` has derived classes `AnomalyMeanScaler`, `AnomalyMinMaxScaler`, and `AnomalyStandardScaler`. 
 Additionally, the `Autoencoder` class, which inherits from `DeepEstimator`, has a specialized subclass called `ProbabilityWeightedAutoencoder`. 
