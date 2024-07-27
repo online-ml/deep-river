@@ -59,7 +59,7 @@ The need for such advancements is evident in the quest to harness the full power
 # Features
 
 [`DeepRiver`](https://github.com/online-ml/deep-river) enables the usage of deep learning models for data streams.
-This means that deep learning models need to adapt to changes within the evolving data stream i.ex. the number of classes might change over time.
+This means that deep learning models need to adapt to changes within the evolving data stream [@bayram2022concept][@lu2018learning] i.ex. the number of classes might change over time.
 In addition to the integration of [`PyTorch`](https://pytorch.org)[@paszke2017automatic] into [`River`](https://riverml.xyz/latest/)[@montiel2021river], this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
 
 ## Compatibility
