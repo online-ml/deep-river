@@ -10,7 +10,7 @@ authors:
   - name: Lucas Cazzonelli
     orcid: 0000-0003-2886-1219
     affiliation: "1"
-  - name: Hoang-Ahn Ngo
+  - name: Hoang-Anh Ngo
     orcid: 0000-0002-7583-753X
     affiliation: "2"
   - name: Max Halford
@@ -22,7 +22,7 @@ authors:
 affiliations:
  - name: FZI Research Center for Information Technology, Karlsruhe, Germany
    index: 1
- - name: Paris Telecom Tech, France
+ - name: AI Institute, University of Waikato, Hamilton, New Zealand
    index: 2
  - name: University of Sao Paulo, Brazil
    index: 3
