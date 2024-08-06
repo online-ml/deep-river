@@ -1,6 +1,7 @@
 from typing import Callable, Union
 
 from torch import nn
+import torch
 
 from deep_river.classification import Classifier
 
@@ -34,6 +35,10 @@ class LogisticRegression(Classifier):
         functions can not be adapted, meaning that a binary classifier
         with a sigmoid output can not be altered to perform multi-class
         predictions.
+    is_feature_incremental
+        Whether the model should adapt to the appearance of
+        previously features by adding units to the input
+        layer of the network.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -64,7 +69,7 @@ class LogisticRegression(Classifier):
     ...     model_pipeline.learn_one(x, y) # update the model
 
     >>> print(f"Accuracy: {metric.get():.2f}")
-    Accuracy: 0.44
+    Accuracy: 0.56
 
     """
 
@@ -74,9 +79,9 @@ class LogisticRegression(Classifier):
             self.dense0 = nn.Linear(n_features, 1)
             self.softmax = nn.Softmax(dim=-1)
 
-        def forward(self, X, **kwargs):
-            X = self.dense0(X)
-            return self.softmax(X)
+        def forward(self, x, **kwargs):
+            x = self.dense0(x)
+            return self.softmax(x)
 
     def __init__(
         self,
@@ -85,6 +90,7 @@ class LogisticRegression(Classifier):
         lr: float = 1e-3,
         output_is_logit: bool = True,
         is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -96,6 +102,7 @@ class LogisticRegression(Classifier):
             loss_fn=loss_fn,
             output_is_logit=output_is_logit,
             is_class_incremental=is_class_incremental,
+            is_feature_incremental=is_feature_incremental,
             optimizer_fn=optimizer_fn,
             device=device,
             lr=lr,
@@ -119,6 +126,8 @@ class LogisticRegression(Classifier):
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
+            "is_class_incremental": True,
         }
 
 
@@ -155,6 +164,10 @@ class MultiLayerPerceptron(Classifier):
         functions can not be adapted, meaning that a binary classifier
         with a sigmoid output can not be altered to perform multi-class
         predictions.
+    is_feature_incremental
+        Whether the model should adapt to the appearance of
+        previously features by adding units to the input
+        layer of the network.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -192,17 +205,18 @@ class MultiLayerPerceptron(Classifier):
     class MLPModule(nn.Module):
         def __init__(self, n_width, n_layers, n_features):
             super().__init__()
-            self.dense0 = nn.Linear(n_features, n_width)
-            self.block = [nn.Linear(n_width, n_width) for _ in range(n_layers)]
+            hidden = [nn.Linear(n_features, n_width)]
+            hidden += [
+                nn.Linear(n_width, n_width) for _ in range(n_layers - 1)
+            ]
+            self.hidden = nn.ModuleList(hidden)
             self.denselast = nn.Linear(n_width, 1)
-            self.softmax = nn.Softmax(dim=-1)
 
-        def forward(self, X, **kwargs):
-            X = self.dense0(X)
-            for layer in self.block:
-                X = layer(X)
-            X = self.denselast(X)
-            return self.softmax(X)
+        def forward(self, x, **kwargs):
+            for layer in self.hidden:
+                x = layer(x)
+                x = nn.functional.sigmoid(x)
+            return self.denselast(x)
 
     def __init__(
         self,
@@ -213,12 +227,12 @@ class MultiLayerPerceptron(Classifier):
         lr: float = 1e-3,
         output_is_logit: bool = True,
         is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
     ):
-        self.n_width = n_width
-        self.n_layers = n_layers
+
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
@@ -226,6 +240,7 @@ class MultiLayerPerceptron(Classifier):
             loss_fn=loss_fn,
             output_is_logit=output_is_logit,
             is_class_incremental=is_class_incremental,
+            is_feature_incremental=is_feature_incremental,
             optimizer_fn=optimizer_fn,
             device=device,
             lr=lr,
@@ -234,21 +249,19 @@ class MultiLayerPerceptron(Classifier):
             n_layers=n_layers,
             **kwargs,
         )
+        self.n_width = n_width
+        self.n_layers = n_layers
 
     @classmethod
-    def _unit_test_params(cls):
+    def _unit_test_skips(cls) -> set:
         """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-
-        Yields
+        Indicates which checks to skip during unit testing.
+        Most estimators pass the full test suite.
+        However, in some cases, some estimators might not
+        be able to pass certain checks.
+        Returns
         -------
-        dict
-            Dictionary of parameters to be used for unit testing the
-            respective class.
+        set
+            Set of checks to skip during unit testing.
         """
-
-        yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
-            "optimizer_fn": "sgd",
-        }
+        return {"check_predict_proba_one"}

@@ -1,17 +1,12 @@
-import math
-import warnings
-from typing import Callable, Dict, List, Type, Union, cast
-
+from typing import Callable, Dict, List, Type, Union
+import pdb
 import pandas as pd
 import torch
 from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
-from torch import nn
-from torch.utils.hooks import RemovableHandle
 
 from deep_river.base import DeepEstimator
-from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 from deep_river.utils.tensor_conversion import (
     df2tensor,
     dict2tensor,
@@ -25,13 +20,11 @@ class _TestModule(torch.nn.Module):
         super().__init__()
         self.dense0 = torch.nn.Linear(n_features, 5)
         self.nonlin = torch.nn.ReLU()
-        self.dense1 = torch.nn.Linear(5, 2)
-        self.softmax = torch.nn.Softmax(dim=-1)
+        self.dense1 = torch.nn.Linear(5, 1)
 
     def forward(self, X, **kwargs):
         X = self.nonlin(self.dense0(X))
         X = self.nonlin(self.dense1(X))
-        X = self.softmax(X)
         return X
 
 
@@ -72,6 +65,10 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         functions can not be adapted, meaning that a binary classifier
         with a sigmoid output can not be altered to perform multi-class
         predictions.
+    is_feature_incremental
+        Whether the model should adapt to the appearance of
+        previously features by adding units to the input
+        layer of the network.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -120,7 +117,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
     ...     model_pipeline.learn_one(x,y)
 
     >>> print(f'Accuracy: {metric.get()}')
-    Accuracy: 0.6736
+    Accuracy: 0.7264
     """
 
     def __init__(
@@ -142,15 +139,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             optimizer_fn=optimizer_fn,
             device=device,
             lr=lr,
+            is_feature_incremental=is_feature_incremental,
             seed=seed,
             **kwargs,
         )
-        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet()
-        self.output_layer: nn.Module
+        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet([])
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
-        self.is_feature_incremental = is_feature_incremental
-        self._supported_output_layers: List[Type[nn.Module]] = [nn.Linear]
 
     @classmethod
     def _unit_test_params(cls):
@@ -170,6 +165,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": True,
+            "is_class_incremental": True,
         }
 
     @classmethod
@@ -184,15 +180,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         set
             Set of checks to skip during unit testing.
         """
-        return {
-            "check_shuffle_features_no_impact",
-            "check_disappearing_features",
-            "check_emerging_features",
-            "check_predict_proba_one",
-            "check_predict_proba_one_binary",
-        }
+        return set()
 
-    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, List[ClfTarget]]):
+    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, pd.Series]):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
@@ -203,7 +193,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             n_classes=n_classes,
             device=self.device,
         )
-        loss = self.loss_fn(y_pred, y_onehot)
+        loss = self.loss_func(y_pred, y_onehot)
         loss.backward()
         self.optimizer.step()
         return self
@@ -227,16 +217,17 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
         # check if model is initialized
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, device=self.device)
+            self._update_observed_features(x)
+            self._update_observed_classes(y)
+            self.initialize_module(x=x, **self.kwargs)
 
         # check last layer
-        self.observed_classes.add(y)
-        if self.is_class_incremental:
-            self._adapt_output_dim()
-        if self.is_feature_incremental:
-            self._adapt_input_dim(x_t)
+        self._adapt_input_dim(x)
+        self._adapt_output_dim(y)
+
+        x_t = dict2tensor(
+            x, features=self.observed_features, device=self.device
+        )
 
         return self._learn(x=x_t, y=y)
 
@@ -254,16 +245,23 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         Dict[ClfTarget, float]
             Dictionary of probabilities for each label.
         """
+
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, device=self.device)
-        if self.is_feature_incremental:
-            self._adapt_input_dim(x_t)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+
+        self._adapt_input_dim(x)
+
+        x_t = dict2tensor(
+            x, features=self.observed_features, device=self.device
+        )
+
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t)
-        return output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
+        return output2proba(
+            y_pred, self.observed_classes, self.output_is_logit
+        )[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
@@ -282,16 +280,16 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             The classifier itself.
         """
         # check if model is initialized
-        if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
-        X_t = df2tensor(X, device=self.device)
 
-        self.observed_classes.update(y)
-        if self.is_class_incremental:
-            self._adapt_output_dim()
-        if self.is_feature_incremental:
-            self._adapt_input_dim(X_t)
+        if not self.module_initialized:
+            self._update_observed_features(X)
+            self._update_observed_classes(y)
+            self.initialize_module(x=X, **self.kwargs)
+
+        self._adapt_input_dim(X)
+        self._adapt_output_dim(y)
+
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
 
         return self._learn(x=X_t, y=y)
 
@@ -310,66 +308,14 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             DataFrame of probabilities for each label.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
-        X_t = df2tensor(X, device=self.device)
-        if self.is_feature_incremental:
-            self._adapt_input_dim(X_t)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
+
+        self._adapt_input_dim(X)
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(X_t)
-        return pd.DataFrame(output2proba(y_preds, self.observed_classes))
-
-    def _adapt_output_dim(self):
-        out_features_target = (
-            len(self.observed_classes) if len(self.observed_classes) > 2 else 1
+        return pd.DataFrame(
+            output2proba(y_preds, self.observed_classes, self.output_is_logit)
         )
-        n_classes_to_add = out_features_target - self.output_layer.out_features
-        if n_classes_to_add > 0:
-            self._add_output_features(n_classes_to_add)
-
-    def _add_output_features(self, n_classes_to_add: int) -> None:
-        """
-        Adds output dimensions to the model by adding new rows of weights to
-        the existing weights of the last layer.
-
-        Parameters
-        ----------
-        n_classes_to_add
-            Number of output dimensions to add.
-        """
-        new_weights = (
-            torch.mean(cast(torch.Tensor, self.output_layer.weight), dim=0)
-            .unsqueeze(1)
-            .T
-        )
-        if n_classes_to_add > 1:
-            new_weights = (
-                new_weights.unsqueeze(1).T.repeat(1, n_classes_to_add, 1).squeeze()
-            )
-        self.output_layer.weight = nn.parameter.Parameter(
-            torch.cat(
-                [
-                    cast(torch.Tensor, self.output_layer.weight),
-                    cast(torch.Tensor, new_weights),
-                ],
-                dim=0,
-            )
-        )
-
-        if self.output_layer.bias is not None:
-            new_bias = torch.empty(n_classes_to_add)
-            fan_in, _ = nn.init._calculate_fan_in_and_fan_out(self.output_layer.weight)
-            bound = 1 / math.sqrt(fan_in) if fan_in > 0 else 0
-            nn.init.uniform_(new_bias, -bound, bound)
-            self.output_layer.bias = nn.parameter.Parameter(
-                torch.cat(
-                    [
-                        cast(torch.Tensor, self.output_layer.bias),
-                        cast(torch.Tensor, new_bias),
-                    ],
-                    dim=0,
-                )
-            )
-        self.output_layer.out_features += torch.Tensor([n_classes_to_add])
-        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)

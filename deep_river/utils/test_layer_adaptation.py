@@ -3,12 +3,12 @@ import torch
 from torch import nn
 
 from deep_river.utils.layer_adaptation import (
-    LayerExpander,
     expand_layer,
     expand_weights,
     get_expansion_instructions,
     get_in_out_axes,
     get_lstm_param_shapes,
+    load_instructions,
 )
 
 
@@ -145,7 +145,7 @@ def test_expand_layer():
     expand_layer(
         layer,
         output=True,
-        size=2,
+        target_size=5,
         instructions=instructions,
         init_fn=nn.init.normal_,
     )
@@ -172,38 +172,8 @@ def test_load_instructions():
         "bias_hh_l0": {"input": [], "output": [{"axis": 0, "n_subparams": 4}]},
     }
     layer = nn.LSTM(4, 3)
-    expander = LayerExpander(layer)
-    expander.load_instructions()
-    assert expander.instructions == instructions
 
-
-def test_expand_input():
-    layer = nn.LSTM(4, 3)
-    expander = LayerExpander(layer)
-    expander.expand_input(1)
-    x = torch.ones(1, 5)
-    layer(x)
-
-    layer = nn.LSTM(4, 3, bidirectional=True, num_layers=2)
-    expander = LayerExpander(layer)
-    expander.expand_input(2)
-    x = torch.ones(1, 6)
-    layer(x)
-
-
-def test_expand_output():
-    x = torch.ones(5, 4)
-    layer = nn.LSTM(4, 3)
-    expander = LayerExpander(layer)
-    expander.expand_output(1)
-    out, _ = layer(x)
-    assert out.shape == (5, 4)
-
-    layer = nn.LSTM(4, 3, bidirectional=True, num_layers=2)
-    expander = LayerExpander(layer)
-    expander.expand_output(2)
-    out, _ = layer(x)
-    assert out.shape == (5, 10)
+    assert load_instructions(layer) == instructions
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 import re
-from typing import Callable
+from typing import Callable, Dict
 
 import torch
 from torch import nn
@@ -46,7 +46,7 @@ PARAM_SHAPES = {
 SUPPORTED_LAYERS = tuple(PARAM_SHAPES.keys())
 
 
-def check_shape_str(shape_str):
+def check_shape_str(shape_str: str):
     blueprint = ""  # TODO: Write blueprint as regex
     if not re.match(blueprint, shape_str):
         raise ValueError("Invalid shape string for parameter.")
@@ -170,105 +170,62 @@ def expand_weights(
 
 def expand_layer(
     layer: nn.Module,
-    output: bool,
-    size: int,
     instructions: dict,
-    init_fn: Callable,
+    target_size: int = 1,
+    output: bool = True,
+    init_fn: Callable = nn.init.normal_,
 ):
+
     target_str = "output" if output else "input"
+    param_names = list(instructions.keys())
+    param_instructions = list(instructions.values())
+    pos = param_instructions.index(f"{target_str}_attribute")
+    current_size = getattr(layer, param_names[pos])
+    dims_to_add = target_size - current_size
+
     for param_name, instruction in instructions.items():
         param = getattr(layer, param_name)
         if instruction == f"{target_str}_attribute":
-            setattr(layer, param_name, param + size)
+            setattr(layer, param_name, param + dims_to_add)
         elif isinstance(instruction, dict):
             axes = instruction[target_str]
 
             for axis in axes:
                 param = expand_weights(
-                    param, axis["axis"], size, init_fn, axis["n_subparams"]
+                    param,
+                    axis["axis"],
+                    dims_to_add,
+                    init_fn,
+                    axis["n_subparams"],
                 )
             setattr(layer, param_name, param)
 
 
-class LayerExpander:
-    """Utility class for expanding the input or output dimensionality of a layer. Currently, nn.Linear and nn.LSTM layers are explicitly supported. For any other layers, a dictionary that contains the names of all parameters as well as their respective shapes, expressed as functions of the input- and output dimensions, must be provided.
-    These shapes are expected to resemble tuple, where each entry can contain an "o" referring to the output shape of the layer, an "i" referring to the input shape, or an "e" for axes that depend on neither in- or output. For the hidden-hidden weights of an LSTM, whose shape is given by (4*hidden_size, hidden_size), the correct string would be "(4o, o)", while for the hidden-hidden bias the correct string would be "(4o)". The dict must also contain the names of any integer attributes specifying input and output sizes as keys, and values of "O" for output related attributes or "I" for input related attributes.
-    As an example, complete shape specification for a basic, single layer LSTM, would be
-    {
-        "hidden_size": "O",
-        "input_size": "I",
-        "weight_ih_l0": "(4o,i)",
-        "weight_hh_l0": "(4o,o)",
-        "bias_ih_l0": "(4o)",
-        "bias_hh_l0": "(4o)"
-    }
+def load_instructions(
+    layer: nn.Module, param_shapes: Dict | Callable | None = None
+):
+    if not param_shapes:
+        param_shapes = PARAM_SHAPES[type(layer)]
+    if isinstance(param_shapes, Callable):
+        param_shapes = param_shapes(layer)
+    return get_expansion_instructions(param_shapes)
 
-    Parameters
-    ----------
-    layer
-        The layer to be expanded.
-    param_shapes
-        The shapes of all parameters of the layer, specified in the form described above.
-    init_fn
-        Function that will be used to initialize the new weights. The function must take a tensor as an input and modify it in-place.
-    """
 
-    def __init__(
-        self,
-        layer: nn.Module,
-        param_shapes: dict = None,
-        init_fn: Callable = nn.init.normal_,
-    ) -> None:
-        self.layer = layer
-        self.instructions = None
-        self.input_dim_key = None
-        self.output_dim_key = None
-        self.param_shapes = param_shapes
-        self.init_fn = init_fn
+def get_input_dim(
+    layer: nn.Module, instructions: Dict, input_dim_key: str | None = None
+):
+    if input_dim_key is None:
+        keys = list(instructions.keys())
+        values = list(instructions.values())
+        input_dim_key = keys[values.index("input_attribute")]
+    return getattr(layer, input_dim_key)
 
-    def load_instructions(self):
-        if not self.param_shapes:
-            self.param_shapes = PARAM_SHAPES[type(self.layer)]
-        if isinstance(self.param_shapes, Callable):
-            self.param_shapes = self.param_shapes(self.layer)
-        self.instructions = get_expansion_instructions(self.param_shapes)
 
-    def get_input_dim(self):
-        if self.instructions is None:
-            self.load_instructions()
-        if self.input_dim_key is None:
-            keys = list(self.instructions.keys())
-            values = list(self.instructions.values())
-            self.input_dim_key = keys[values.index("input_attribute")]
-
-        return getattr(self.layer, self.input_dim_key)
-
-    def get_output_dim(self):
-        if self.output_dim_key is None:
-            keys = list(self.instructions.keys())
-            values = list(self.instructions.values())
-            self.output_dim_key = keys[values.index("O")]
-
-        return getattr(self.layer, self.output_dim_key)
-
-    def expand_input(self, size: int):
-        if self.instructions is None:
-            self.load_instructions()
-        expand_layer(
-            self.layer,
-            output=False,
-            size=size,
-            instructions=self.instructions,
-            init_fn=self.init_fn,
-        )
-
-    def expand_output(self, size: int):
-        if self.instructions is None:
-            self.load_instructions()
-        expand_layer(
-            self.layer,
-            output=True,
-            size=size,
-            instructions=self.instructions,
-            init_fn=self.init_fn,
-        )
+def get_output_dim(
+    layer: nn.Module, instructions: Dict, output_dim_key: str | None = None
+):
+    if output_dim_key is None:
+        keys = list(instructions.keys())
+        values = list(instructions.values())
+        output_dim_key = keys[values.index("O")]
+    return getattr(layer, output_dim_key)

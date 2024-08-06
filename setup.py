@@ -35,7 +35,7 @@ dev_packages = [
     "flake8>=5.0.4",
     "isort>=5.10.1",
     "jupyter>=1.0.0",
-    "pyupgrade==3.2.0"
+    "pyupgrade==3.2.0",
 ]
 
 docs_packages = [

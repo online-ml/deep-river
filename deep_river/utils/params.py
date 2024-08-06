@@ -60,22 +60,15 @@ def get_init_fn(init_fn):
     """
     init_fn_ = INIT_FNS.get(init_fn, "xavier_uniform")
     if init_fn.startswith("xavier"):
-
         def result(weight, activation_fn):
             return init_fn_(weight, gain=nn.init.calculate_gain(activation_fn))
-
     elif init_fn.startswith("kaiming"):
-
         def result(weight, activation_fn):
             return init_fn_(weight, nonlinearity=activation_fn)
-
     elif init_fn == "uniform":
-
         def result(weight, activation_fn):
             return 0
-
     else:
-
         def result(weight, activation_fn):
             return init_fn_(weight)
 
@@ -113,7 +106,7 @@ def get_activation_fn(activation_fn: Union[str, Callable]) -> Callable:
     return activation_fn
 
 
-def get_optim_fn(optim_fn: Union[str, Callable]):
+def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
     """Returns the requested optimizer as a nn.Module class.
 
     Parameters
@@ -133,13 +126,14 @@ def get_optim_fn(optim_fn: Union[str, Callable]):
     if isinstance(optim_fn, str):
         try:
             optim_fn = OPTIMIZER_FNS[optim_fn]
+            return optim_fn
         except KeyError:
             raise err
+
     elif not isinstance(
         optim_fn(params=[torch.empty(1)], lr=1e-3), torch.optim.Optimizer
     ):
         raise err
-    return optim_fn
 
 
 def get_loss_fn(loss_fn: Union[str, Callable]):

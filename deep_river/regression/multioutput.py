@@ -2,6 +2,7 @@ import typing
 from collections import OrderedDict
 from typing import Callable, Type, Union
 
+from ordered_set import OrderedSet
 import torch
 from river.base import MultiTargetRegressor as RiverMultiTargetRegressor
 from river.base.typing import FeatureName, RegTarget
@@ -154,7 +155,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
-        loss = self.loss_fn(y_pred, y)
+        loss = self.loss_func(y_pred, y)
         loss.backward()
         self.optimizer.step()
 
@@ -165,9 +166,9 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         **kwargs,
     ) -> "MultiTargetRegressor":
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, self.device)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+        x_t = dict2tensor(x, OrderedSet(x.keys()), device=self.device)
         self.observed_targets.update(y) if y is not None else None
         y_t = float2tensor(y, self.device)
         self._learn(x_t, y_t)
@@ -188,9 +189,9 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
             Predicted target value.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, self.device)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+        x_t = dict2tensor(x, OrderedSet(x.keys()), device=self.device)
         self.module.eval()
         with torch.inference_mode():
             y_pred_t = self.module(x_t).squeeze().tolist()

@@ -1,21 +1,31 @@
 import collections
+import numpy as np
+from river.base.typing import ClfTarget
 import warnings
+from ordered_set import OrderedSet
+import pandas as pd
 from torch.utils.hooks import RemovableHandle
 import inspect
-from typing import Any, Callable, Deque, List, Type, Union, cast
+from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
 
 import torch
 from river import base
 
 from deep_river.utils import get_loss_fn, get_optim_fn
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
-from deep_river.utils.layer_adaptation import SUPPORTED_LAYERS, LayerExpander
+from deep_river.utils.layer_adaptation import (
+    SUPPORTED_LAYERS,
+    expand_layer,
+    load_instructions,
+)
 
 try:
     from graphviz import Digraph
     from torchviz import make_dot
 except ImportError as e:
-    raise ValueError("You have to install graphviz to use the draw method") from e
+    raise ValueError(
+        "You have to install graphviz to use the draw method"
+    ) from e
 
 
 class DeepEstimator(base.Estimator):
@@ -62,17 +72,22 @@ class DeepEstimator(base.Estimator):
     ):
         super().__init__()
         self.module_cls = module
-        self.module: torch.nn.Module = cast(torch.nn.Module, None)  # cleaner
-        self.loss_fn = get_loss_fn(loss_fn)
-        self.optimizer_fn = get_optim_fn(optimizer_fn)
+        self.module: torch.nn.Module = cast(torch.nn.Module, None)
+        self.loss_func = get_loss_fn(loss_fn)
+        self.loss_fn = loss_fn
+        self.optimizer_func = get_optim_fn(optimizer_fn)
+        self.optimizer_fn = optimizer_fn
         self.is_feature_incremental = is_feature_incremental
+        self.is_class_incremental: bool = False
+        self.observed_features: OrderedSet[str] = OrderedSet([])
         self.lr = lr
         self.device = device
         self.kwargs = kwargs
         self.seed = seed
-        self.input_layer = None
-        self.output_layer = None
-        self.layer_expander = None
+        self.input_layer = cast(torch.nn.Module, None)
+        self.input_expansion_instructions = cast(Dict, None)
+        self.output_layer = cast(torch.nn.Module, None)
+        self.output_expansion_instructions = cast(Dict, None)
         self.module_initialized = False
         torch.manual_seed(seed)
 
@@ -106,9 +121,11 @@ class DeepEstimator(base.Estimator):
         first_parameter = next(self.module.parameters())
         input_shape = first_parameter.size()
         y_pred = self.module(torch.rand(input_shape))
-        return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
+        return make_dot(
+            y_pred.mean(), params=dict(self.module.named_parameters())
+        )
 
-    def initialize_module(self, **kwargs):
+    def initialize_module(self, x: dict | pd.DataFrame, **kwargs):
         """
         Parameters
         ----------
@@ -123,15 +140,25 @@ class DeepEstimator(base.Estimator):
         instance
           The initialized component.
         """
+        torch.manual_seed(self.seed)
+        if isinstance(x, Dict):
+            n_features = len(x)
+        elif isinstance(x, pd.DataFrame):
+            n_features = len(x.columns)
+
         if not isinstance(self.module_cls, torch.nn.Module):
             self.module = self.module_cls(
-                **self._filter_kwargs(self.module_cls, kwargs)
+                n_features=n_features,
+                **self._filter_kwargs(self.module_cls, kwargs),
             )
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(self.module.parameters(), lr=self.lr)
+        self.optimizer = self.optimizer_func(
+            self.module.parameters(), lr=self.lr
+        )
         self.module_initialized = True
-        self._get_input_output_layers(n_features=kwargs["n_features"])
+
+        self._get_input_output_layers(n_features=n_features)
 
     def clone(
         self,
@@ -164,11 +191,56 @@ class DeepEstimator(base.Estimator):
             clone.__dict__.update(self.__dict__)
         return clone
 
-    def _adapt_input_dim(self, x: torch.Tensor):
-        in_features_target = x.shape[-1]
-        n_features_to_add = in_features_target - self.layer_expander.get_input_dim()
-        if n_features_to_add > 0:
-            self.layer_expander.expand_input(n_features_to_add)
+    def _adapt_output_dim(self, y: ClfTarget | pd.Series):
+        has_new_class = self._update_observed_classes(y)
+        if (
+            has_new_class
+            and len(self.observed_classes) > 2
+            and self.is_class_incremental
+        ):
+            expand_layer(
+                self.output_layer,
+                self.output_expansion_instructions,
+                len(self.observed_classes),
+                output=True,
+            )
+
+    def _update_observed_classes(self, y):
+        n_existing_classes = len(self.observed_classes)
+        if isinstance(y, (ClfTarget, np.bool_)):
+            self.observed_classes.add(y)
+        else:
+            self.observed_classes |= y
+
+        if len(self.observed_classes) > n_existing_classes:
+            self.observed_classes = OrderedSet(sorted(self.observed_classes))
+            return True
+        else:
+            return False
+
+    def _adapt_input_dim(self, x: Dict | pd.DataFrame):
+        has_new_feature = self._update_observed_features(x)
+
+        if has_new_feature and self.is_feature_incremental:
+            expand_layer(
+                self.input_layer,
+                self.input_expansion_instructions,
+                len(self.observed_features),
+                output=False,
+            )
+
+    def _update_observed_features(self, x):
+        n_existing_features = len(self.observed_features)
+        if isinstance(x, Dict):
+            self.observed_features |= x.keys()
+        else:
+            self.observed_features |= x.columns
+
+        if len(self.observed_features) > n_existing_features:
+            self.observed_features = OrderedSet(sorted(self.observed_features))
+            return True
+        else:
+            return False
 
     def _get_input_output_layers(self, n_features: int):
         handles: List[RemovableHandle] = []
@@ -181,28 +253,36 @@ class DeepEstimator(base.Estimator):
         for h in handles:
             h.remove()
 
-        if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[-1], SUPPORTED_LAYERS
-        ):
-            self.output_layer = tracker.ordered_modules[-1]
-        else:
-            warnings.warn(
-                "The model will not be able to adapt its output to new "
-                "classes since no linear layer output layer was found."
-            )
-            self.is_class_incremental = False
+        if self.is_class_incremental:
+            if tracker.ordered_modules and isinstance(
+                tracker.ordered_modules[-1], SUPPORTED_LAYERS
+            ):
 
-        if tracker.ordered_modules and isinstance(
-            tracker.ordered_modules[0], SUPPORTED_LAYERS
-        ):
-            self.input_layer = tracker.ordered_modules[0]
-            self.layer_expander = LayerExpander(self.input_layer)
-        else:
-            warnings.warn(
-                "The model will not be able to adapt its input layer to new "
-                "features since no supported input layer was found."
-            )
-            self.is_feature_incremental = False
+                self.output_layer = tracker.ordered_modules[-1]
+                self.output_expansion_instructions = load_instructions(
+                    self.output_layer
+                )
+            else:
+                warnings.warn(
+                    "The model will not be able to adapt its output to new "
+                    "classes since no supported output layer was found."
+                )
+                self.is_class_incremental = False
+
+        if self.is_feature_incremental:
+            if tracker.ordered_modules and isinstance(
+                tracker.ordered_modules[0], SUPPORTED_LAYERS
+            ):
+                self.input_layer = tracker.ordered_modules[0]
+                self.input_expansion_instructions = load_instructions(
+                    self.input_layer
+                )
+            else:
+                warnings.warn(
+                    "The model will not be able to adapt its input layer to new "
+                    "features since no supported input layer was found."
+                )
+                self.is_feature_incremental = False
 
 
 class RollingDeepEstimator(DeepEstimator):

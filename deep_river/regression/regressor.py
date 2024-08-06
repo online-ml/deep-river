@@ -106,7 +106,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             "module": _TestModule,
             "loss_fn": "l1",
             "optimizer_fn": "sgd",
-            'is_feature_incremental': True
+            "is_feature_incremental": True,
         }
 
     @classmethod
@@ -121,13 +121,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         set
             Set of checks to skip during unit testing.
         """
-        return {
-            "check_shuffle_features_no_impact",
-            "check_disappearing_features",
-            "check_emerging_features",
-            "check_predict_proba_one",
-            "check_predict_proba_one_binary",
-        }
+        return set()
 
     def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "Regressor":
         """
@@ -146,13 +140,13 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             The regressor itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, self.device)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+        self._adapt_input_dim(x)
+        x_t = dict2tensor(
+            x, features=self.observed_features, device=self.device
+        )
         y_t = float2tensor(y, device=self.device)
-
-        if self.is_feature_incremental:
-            self._adapt_input_dim(x_t)
 
         self._learn(x_t, y_t)
         return self
@@ -161,7 +155,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
-        loss = self.loss_fn(y_pred, y)
+        loss = self.loss_func(y_pred, y)
         loss.backward()
         self.optimizer.step()
 
@@ -180,12 +174,13 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             Predicted target value.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, self.device)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+        self._adapt_input_dim(x)
+        x_t = dict2tensor(
+            x, features=self.observed_features, device=self.device
+        )
 
-        if self.is_feature_incremental:
-            self._adapt_input_dim(x_t)
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t).item()
@@ -208,13 +203,16 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             The regressor itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
-        X_t = df2tensor(X, device=self.device)
-        y_t = torch.tensor(y, device=self.device, dtype=torch.float32).unsqueeze(1)
 
-        if self.is_class_incremental:
-            self._adapt_input_dim(X_t)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
+
+        self._adapt_input_dim(X)
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
+        y_t = torch.tensor(
+            y, device=self.device, dtype=torch.float32
+        ).unsqueeze(1)
+
         self._learn(X_t, y_t)
         return self
 
@@ -233,13 +231,13 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             Predicted target values.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
 
-        X = df2tensor(X, device=self.device)
-        if self.is_class_incremental:
-            self._adapt_input_dim(X_t)
+        self._adapt_input_dim(X)
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
+
         self.module.eval()
         with torch.inference_mode():
-            y_preds = self.module(X).detach().squeeze().tolist()
+            y_preds = self.module(X_t).detach().squeeze().tolist()
         return y_preds
