@@ -279,8 +279,8 @@ class DeepEstimator(base.Estimator):
                 )
             else:
                 warnings.warn(
-                    "The model will not be able to adapt its input layer to new "
-                    "features since no supported input layer was found."
+                    "The model will not be able to adapt its input layer to "
+                    "new features since no supported input layer was found."
                 )
                 self.is_feature_incremental = False
 

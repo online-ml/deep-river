@@ -75,7 +75,7 @@ def get_in_out_axes(shape_str: str):
     check_shape_str(shape_str)
     shape_str = shape_str.strip("()")
     axis_strs = shape_str.split(",")
-    axes = {"input": [], "output": []}
+    axes: Dict = {"input": [], "output": []}
     for idx, axis_str in enumerate(axis_strs):
         input_output = re.findall(r"o|i", axis_str)
 

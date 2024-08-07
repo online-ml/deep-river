@@ -145,7 +145,8 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             Set of checks to skip during unit testing.
         """
         return {
-            # Test fails since `sum(y_pred)` call in test produces large floating point error.
+            # Test fails since `sum(y_pred)` call in test produces large
+            # floating point error.
             "check_predict_proba_one",
         }
 

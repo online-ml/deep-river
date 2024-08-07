@@ -13,8 +13,8 @@ from deep_river.utils.layer_adaptation import (
 
 
 def test_get_lstm_param_shapes():
-    l = nn.LSTM(4, 3, num_layers=2)
-    assert get_lstm_param_shapes(l) == {
+    lstm0 = nn.LSTM(4, 3, num_layers=2)
+    assert get_lstm_param_shapes(lstm0) == {
         "hidden_size": "O",
         "input_size": "I",
         "weight_ih_l0": "(4o,i)",
@@ -26,8 +26,8 @@ def test_get_lstm_param_shapes():
         "bias_ih_l1": "(4o)",
         "bias_hh_l1": "(4o)",
     }
-    l = nn.LSTM(4, 3, bidirectional=True, num_layers=2, proj_size=2)
-    assert get_lstm_param_shapes(l) == {
+    lstm1 = nn.LSTM(4, 3, bidirectional=True, num_layers=2, proj_size=2)
+    assert get_lstm_param_shapes(lstm1) == {
         "hidden_size": "O",
         "input_size": "I",
         "weight_ih_l0": "(4o,i)",
@@ -80,7 +80,6 @@ def test_get_expansion_instructions():
         "in_features": "I",
         "out_features": "O",
     }
-    lin = nn.Linear(2, 1)
     result = get_expansion_instructions(shapes_lin)
     assert result == {
         "weight": {
