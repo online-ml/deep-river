@@ -1,15 +1,15 @@
 import collections
-import numpy as np
-from river.base.typing import ClfTarget
-import warnings
-from ordered_set import OrderedSet
-import pandas as pd
-from torch.utils.hooks import RemovableHandle
 import inspect
+import warnings
 from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
 
+import numpy as np
+import pandas as pd
 import torch
+from ordered_set import OrderedSet
 from river import base
+from river.base.typing import ClfTarget
+from torch.utils.hooks import RemovableHandle
 
 from deep_river.utils import get_loss_fn, get_optim_fn
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks

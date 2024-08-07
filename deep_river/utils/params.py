@@ -60,15 +60,22 @@ def get_init_fn(init_fn):
     """
     init_fn_ = INIT_FNS.get(init_fn, "xavier_uniform")
     if init_fn.startswith("xavier"):
+
         def result(weight, activation_fn):
             return init_fn_(weight, gain=nn.init.calculate_gain(activation_fn))
+
     elif init_fn.startswith("kaiming"):
+
         def result(weight, activation_fn):
             return init_fn_(weight, nonlinearity=activation_fn)
+
     elif init_fn == "uniform":
+
         def result(weight, activation_fn):
             return 0
+
     else:
+
         def result(weight, activation_fn):
             return init_fn_(weight)
 
