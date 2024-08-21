@@ -39,7 +39,7 @@ dev_packages = [
 ]
 
 docs_packages = [
-    "flask>=2.0.2",
+    "flask>=3.0.2",
     "ipykernel>=6.9.0",
     "mike>=0.5.3",
     "mkdocs>=1.2.3",
