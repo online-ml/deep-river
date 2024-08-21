@@ -265,9 +265,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             y_pred, self.observed_classes, self.output_is_logit
         )[0]
 
-    def _update_observed_classes(self, y):
+    def _update_observed_classes(self, y) -> bool:
         n_existing_classes = len(self.observed_classes)
-        if isinstance(y, (ClfTarget, np.bool_)):
+        if isinstance(y, Union[ClfTarget, np.bool_]):  # type: ignore[arg-type]
             self.observed_classes.add(y)
         else:
             self.observed_classes |= y

@@ -13,7 +13,7 @@ REQUIRES_PYTHON = ">=3.6.0"
 
 # Package requirements.
 base_packages = [
-    "scikit-learn~=1.4.2",
+    "scikit-learn~=1.5.0",
     "torch~=2.2.2",
     "pandas~=2.2.2",
     "numpy~=1.26.4",
