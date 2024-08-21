@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Generic, Type, Union
+from typing import Callable, Dict, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -21,13 +21,13 @@ class _TestModule(torch.nn.Module):
     def __init__(self, n_features):
         super().__init__()
         self.dense0 = torch.nn.Linear(n_features, 5)
-        self.nonlin = torch.nn.ReLU()
+        self.nonlinear = torch.nn.ReLU()
         self.dense1 = torch.nn.Linear(5, 1)
 
-    def forward(self, X, **kwargs):
-        X = self.nonlin(self.dense0(X))
-        X = self.nonlin(self.dense1(X))
-        return X
+    def forward(self, x):
+        x = self.nonlinear(self.dense0(x))
+        x = self.nonlinear(self.dense1(x))
+        return x
 
 
 class Classifier(DeepEstimator, base.MiniBatchClassifier):
@@ -61,9 +61,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         softmax or sigmoid is applied to the outputs when predicting.
     is_class_incremental
         Whether the classifier should adapt to the appearance of
-        previously unobserved classes by adding an unit to the output
+        previously unobserved classes by adding a unit to the output
         layer of the network. This works only if the last trainable
-        layer is an nn.Linear layer. Note also, that output activation
+        layer is a nn.Linear layer. Note also, that output activation
         functions can not be adapted, meaning that a binary classifier
         with a sigmoid output can not be altered to perform multi-class
         predictions.
@@ -72,7 +72,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         previously features by adding units to the input
         layer of the network.
     device
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
+        to run the wrapped model on. Can be "cpu" or "cuda".
     seed
         Random seed to be used for training the wrapped model.
     **kwargs
@@ -92,15 +92,15 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
     ...     def __init__(self, n_features):
     ...         super(MyModule, self).__init__()
     ...         self.dense0 = nn.Linear(n_features,5)
-    ...         self.nonlin = nn.ReLU()
+    ...         self.nlin = nn.ReLU()
     ...         self.dense1 = nn.Linear(5, 2)
     ...         self.softmax = nn.Softmax(dim=-1)
     ...
-    ...     def forward(self, X, **kwargs):
-    ...         X = self.nonlin(self.dense0(X))
-    ...         X = self.nonlin(self.dense1(X))
-    ...         X = self.softmax(X)
-    ...         return X
+    ...     def forward(self, x, **kwargs):
+    ...         x = self.nlin(self.dense0(x))
+    ...         x = self.nlin(self.dense1(x))
+    ...         x = self.softmax(x)
+    ...         return x
 
     >>> model_pipeline = compose.Pipeline(
     ...     preprocessing.StandardScaler,
@@ -180,7 +180,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         Returns
         -------
         set
-            Set of checks to skip during unit testing.
+            of checks to skip during unit testing.
         """
         return set()
 
@@ -292,13 +292,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
                 output=True,
             )
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
+    def learn_many(self, x: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
         Performs one step of training with a batch of examples.
 
         Parameters
         ----------
-        X
+        x
             Input examples.
         y
             Target values.
@@ -311,40 +311,40 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         # check if model is initialized
 
         if not self.module_initialized:
-            self._update_observed_features(X)
+            self._update_observed_features(x)
             self._update_observed_classes(y)
-            self.initialize_module(x=X, **self.kwargs)
+            self.initialize_module(x=x, **self.kwargs)
 
-        self._adapt_input_dim(X)
+        self._adapt_input_dim(x)
         self._adapt_output_dim(y)
 
-        X_t = df2tensor(X, features=self.observed_features, device=self.device)
+        x_t = df2tensor(x, features=self.observed_features, device=self.device)
 
-        return self._learn(x=X_t, y=y)
+        return self._learn(x=x_t, y=y)
 
-    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict_proba_many(self, x: pd.DataFrame) -> pd.DataFrame:
         """
         Predict the probability of each label given the input.
 
         Parameters
         ----------
-        X
+        x
             Input examples.
 
         Returns
         -------
         pd.DataFrame
-            DataFrame of probabilities for each label.
+            of probabilities for each label.
         """
         if not self.module_initialized:
-            self._update_observed_features(X)
-            self.initialize_module(x=X, **self.kwargs)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
-        self._adapt_input_dim(X)
-        X_t = df2tensor(X, features=self.observed_features, device=self.device)
+        self._adapt_input_dim(x)
+        x_t = df2tensor(x, features=self.observed_features, device=self.device)
         self.module.eval()
         with torch.inference_mode():
-            y_preds = self.module(X_t)
+            y_preds = self.module(x_t)
         return pd.DataFrame(
             output2proba(y_preds, self.observed_classes, self.output_is_logit)
         )

@@ -223,14 +223,14 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
         return proba[0]
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
+    def learn_many(self, x: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
 
         Parameters
         ----------
-        X
+        x
             Input examples.
         y
             Target values.
@@ -243,13 +243,13 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         # check if model is initialized
         if not self.module_initialized:
             self._update_observed_classes(y)
-            self._update_observed_features(X)
-            self.initialize_module(x=X, **self.kwargs)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
-        self._adapt_input_dim(X)
+        self._adapt_input_dim(x)
         self._adapt_output_dim(y)
-        X = X[list(self.observed_features)]
-        self._x_window.extend(X.values.tolist())
+        x = x[list(self.observed_features)]
+        self._x_window.extend(x.values.tolist())
 
         if self.is_class_incremental:
             self._adapt_output_dim(y)
@@ -259,13 +259,13 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             self._learn(x=X_t, y=y)
         return self
 
-    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict_proba_many(self, x: pd.DataFrame) -> pd.DataFrame:
         """
         Predict the probability of each label given the most recent examples
 
         Parameters
         ----------
-        X
+        x
 
         Returns
         -------
@@ -274,13 +274,13 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         """
         if not self.module_initialized:
 
-            self._update_observed_features(X)
-            self.initialize_module(x=X, **self.kwargs)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
-        self._adapt_input_dim(X)
-        X = X[list(self.observed_features)]
+        self._adapt_input_dim(x)
+        x = x[list(self.observed_features)]
         x_win = self._x_window.copy()
-        x_win.extend(X.values.tolist())
+        x_win.extend(x.values.tolist())
         if self.append_predict:
             self._x_window = x_win
 
