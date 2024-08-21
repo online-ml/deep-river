@@ -1,5 +1,6 @@
-from typing import Callable, Dict, Type, Union
+from typing import Callable, Dict, Generic, Type, Union
 
+import numpy as np
 import pandas as pd
 import torch
 from ordered_set import OrderedSet
@@ -7,6 +8,7 @@ from river import base
 from river.base.typing import ClfTarget
 
 from deep_river.base import DeepEstimator
+from deep_river.utils.layer_adaptation import expand_layer
 from deep_river.utils.tensor_conversion import (
     df2tensor,
     dict2tensor,
@@ -262,6 +264,33 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         return output2proba(
             y_pred, self.observed_classes, self.output_is_logit
         )[0]
+
+    def _update_observed_classes(self, y):
+        n_existing_classes = len(self.observed_classes)
+        if isinstance(y, (ClfTarget, np.bool_)):
+            self.observed_classes.add(y)
+        else:
+            self.observed_classes |= y
+
+        if len(self.observed_classes) > n_existing_classes:
+            self.observed_classes = OrderedSet(sorted(self.observed_classes))
+            return True
+        else:
+            return False
+
+    def _adapt_output_dim(self, y: ClfTarget | pd.Series):
+        has_new_class = self._update_observed_classes(y)
+        if (
+            has_new_class
+            and len(self.observed_classes) > 2
+            and self.is_class_incremental
+        ):
+            expand_layer(
+                self.output_layer,
+                self.output_expansion_instructions,
+                len(self.observed_classes),
+                output=True,
+            )
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """

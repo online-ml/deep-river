@@ -3,12 +3,10 @@ import inspect
 import warnings
 from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
 
-import numpy as np
 import pandas as pd
 import torch
 from ordered_set import OrderedSet
 from river import base
-from river.base.typing import ClfTarget
 from torch.utils.hooks import RemovableHandle
 
 from deep_river.utils import get_loss_fn, get_optim_fn
@@ -190,33 +188,6 @@ class DeepEstimator(base.Estimator):
         if include_attributes:
             clone.__dict__.update(self.__dict__)
         return clone
-
-    def _adapt_output_dim(self, y: ClfTarget | pd.Series):
-        has_new_class = self._update_observed_classes(y)
-        if (
-            has_new_class
-            and len(self.observed_classes) > 2
-            and self.is_class_incremental
-        ):
-            expand_layer(
-                self.output_layer,
-                self.output_expansion_instructions,
-                len(self.observed_classes),
-                output=True,
-            )
-
-    def _update_observed_classes(self, y):
-        n_existing_classes = len(self.observed_classes)
-        if isinstance(y, (ClfTarget, np.bool_)):
-            self.observed_classes.add(y)
-        else:
-            self.observed_classes |= y
-
-        if len(self.observed_classes) > n_existing_classes:
-            self.observed_classes = OrderedSet(sorted(self.observed_classes))
-            return True
-        else:
-            return False
 
     def _adapt_input_dim(self, x: Dict | pd.DataFrame):
         has_new_feature = self._update_observed_features(x)

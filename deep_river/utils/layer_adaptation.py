@@ -1,5 +1,6 @@
 import re
-from typing import Callable, Dict
+from collections.abc import Callable
+from typing import Any, Dict, Union
 
 import torch
 from torch import nn
@@ -33,7 +34,7 @@ def get_lstm_param_shapes(lstm: nn.LSTM):
     return param_shapes
 
 
-PARAM_SHAPES = {
+PARAM_SHAPES: Dict[type, Union[Dict[Any, Any], Callable[..., Any]]] = {
     nn.Linear: {
         "weight": "(o,i)",
         "bias": "(o)",
@@ -88,7 +89,9 @@ def get_in_out_axes(shape_str: str):
     return axes
 
 
-def get_expansion_instructions(param_shapes: dict):
+def get_expansion_instructions(
+    param_shapes: Dict,
+) -> Dict:
     """
     Returns a dictionary containing information on how
     each parameter of a layer contained in param_shapes
@@ -202,13 +205,18 @@ def expand_layer(
 
 
 def load_instructions(
-    layer: nn.Module, param_shapes: Dict | Callable | None = None
-):
-    if not param_shapes:
+    layer: nn.Module,
+    param_shapes: Dict[Any, Any] | Callable[..., Any] | None = None,
+) -> Dict:
+
+    if param_shapes is None:
         param_shapes = PARAM_SHAPES[type(layer)]
-    if isinstance(param_shapes, Callable):
+    if callable(param_shapes):
         param_shapes = param_shapes(layer)
-    return get_expansion_instructions(param_shapes)
+    if isinstance(param_shapes, dict):
+        return get_expansion_instructions(param_shapes=param_shapes)
+    else:
+        raise TypeError("param_shapes must be a dictionary")
 
 
 def get_input_dim(

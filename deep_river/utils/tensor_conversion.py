@@ -186,11 +186,11 @@ def output2proba(
         all_classes = OrderedSet([True, False])
     # Add opposite class if first label seems to be binary
     elif classes == [True] or classes == [False]:
-        all_classes = classes | ([not classes[0]])
+        all_classes = classes.union([not classes[0]])
     # Add `unobserved` classes if pred shape is greater than number of
     # observed classes
     else:
-        all_classes = classes | (
+        all_classes = classes.union(
             [f"Unobserved{i}" for i in range(preds_np.shape[1] - len(classes))]
         )
 
