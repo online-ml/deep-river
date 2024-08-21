@@ -26,20 +26,10 @@ class _TestLSTMAutoencoder(nn.Module):
             num_layers=n_layers,
             batch_first=batch_first,
         )
-        self.decoder = nn.LSTM(
-            input_size=hidden_size,
-            hidden_size=n_features,
-            num_layers=n_layers,
-            batch_first=batch_first,
-        )
 
     def forward(self, x):
-        _, (h, _) = self.encoder(x)
-        h = h[-1].view(1, 1, -1)
-        x_flipped = torch.flip(x[1:], dims=[self.time_axis])
-        input = torch.cat((h, x_flipped), dim=self.time_axis)
-        x_hat, _ = self.decoder(input)
-        return torch.flip(x_hat, dims=[self.time_axis])
+        output, (h, c) = self.encoder(x)
+        return output
 
 
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
@@ -146,7 +136,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     def _learn(self, x: torch.Tensor):
         self.module.train()
         x_pred = self.module(x)
-        loss = self.loss_fn(x_pred, x)
+        loss = self.loss_func(x_pred, x)
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -169,8 +159,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             The estimator itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
         self._x_window.append(list(x.values()))
 
@@ -197,8 +187,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             The estimator itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
 
         self._x_window.append(X.values.tolist())
         if len(self._x_window) == self.window_size:
@@ -209,8 +199,10 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     def score_one(self, x: dict) -> float:
         res = 0.0
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
+
+            self._update_observed_features(x)
+
+            self.initialize_module(x=x, **self.kwargs)
 
         if len(self._x_window) == self.window_size:
             x_win = self._x_window.copy()
@@ -219,7 +211,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             self.module.eval()
             with torch.inference_mode():
                 x_pred = self.module(x_t)
-            loss = self.loss_fn(x_pred, x_t)
+            loss = self.loss_func(x_pred, x_t)
             res = loss.item()
 
         if self.append_predict:
@@ -228,8 +220,9 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 
     def score_many(self, X: pd.DataFrame) -> List[Any]:
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
+
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
 
         x_win = self._x_window.copy()
         x_win.append(X.values.tolist())
@@ -242,7 +235,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             with torch.inference_mode():
                 x_pred = self.module(X_t)
             loss = torch.mean(
-                self.loss_fn(x_pred, x_pred, reduction="none"),
+                self.loss_func(x_pred, x_pred, reduction="none"),
                 dim=list(range(1, x_pred.dim())),
             )
             losses = loss.detach().numpy()

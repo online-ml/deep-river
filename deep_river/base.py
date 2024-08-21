@@ -1,11 +1,21 @@
 import collections
 import inspect
-from typing import Any, Callable, Deque, Type, Union, cast
+import warnings
+from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
 
+import pandas as pd
 import torch
+from ordered_set import OrderedSet
 from river import base
+from torch.utils.hooks import RemovableHandle
 
 from deep_river.utils import get_loss_fn, get_optim_fn
+from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
+from deep_river.utils.layer_adaptation import (
+    SUPPORTED_LAYERS,
+    expand_layer,
+    load_instructions,
+)
 
 try:
     from graphviz import Digraph
@@ -53,19 +63,29 @@ class DeepEstimator(base.Estimator):
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
     ):
         super().__init__()
         self.module_cls = module
-        self.module: torch.nn.Module = cast(torch.nn.Module, None)  # cleaner
-        self.loss_fn = get_loss_fn(loss_fn)
-        self.optimizer_fn = get_optim_fn(optimizer_fn)
+        self.module: torch.nn.Module = cast(torch.nn.Module, None)
+        self.loss_func = get_loss_fn(loss_fn)
+        self.loss_fn = loss_fn
+        self.optimizer_func = get_optim_fn(optimizer_fn)
+        self.optimizer_fn = optimizer_fn
+        self.is_feature_incremental = is_feature_incremental
+        self.is_class_incremental: bool = False
+        self.observed_features: OrderedSet[str] = OrderedSet([])
         self.lr = lr
         self.device = device
         self.kwargs = kwargs
         self.seed = seed
+        self.input_layer = cast(torch.nn.Module, None)
+        self.input_expansion_instructions = cast(Dict, None)
+        self.output_layer = cast(torch.nn.Module, None)
+        self.output_expansion_instructions = cast(Dict, None)
         self.module_initialized = False
         torch.manual_seed(seed)
 
@@ -103,7 +123,7 @@ class DeepEstimator(base.Estimator):
             y_pred.mean(), params=dict(self.module.named_parameters())
         )
 
-    def initialize_module(self, **kwargs):
+    def initialize_module(self, x: dict | pd.DataFrame, **kwargs):
         """
         Parameters
         ----------
@@ -118,16 +138,25 @@ class DeepEstimator(base.Estimator):
         instance
           The initialized component.
         """
+        torch.manual_seed(self.seed)
+        if isinstance(x, Dict):
+            n_features = len(x)
+        elif isinstance(x, pd.DataFrame):
+            n_features = len(x.columns)
+
         if not isinstance(self.module_cls, torch.nn.Module):
             self.module = self.module_cls(
-                **self._filter_kwargs(self.module_cls, kwargs)
+                n_features=n_features,
+                **self._filter_kwargs(self.module_cls, kwargs),
             )
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_fn(
+        self.optimizer = self.optimizer_func(
             self.module.parameters(), lr=self.lr
         )
         self.module_initialized = True
+
+        self._get_input_output_layers(n_features=n_features)
 
     def clone(
         self,
@@ -159,6 +188,72 @@ class DeepEstimator(base.Estimator):
         if include_attributes:
             clone.__dict__.update(self.__dict__)
         return clone
+
+    def _adapt_input_dim(self, x: Dict | pd.DataFrame):
+        has_new_feature = self._update_observed_features(x)
+
+        if has_new_feature and self.is_feature_incremental:
+            expand_layer(
+                self.input_layer,
+                self.input_expansion_instructions,
+                len(self.observed_features),
+                output=False,
+            )
+
+    def _update_observed_features(self, x):
+        n_existing_features = len(self.observed_features)
+        if isinstance(x, Dict):
+            self.observed_features |= x.keys()
+        else:
+            self.observed_features |= x.columns
+
+        if len(self.observed_features) > n_existing_features:
+            self.observed_features = OrderedSet(sorted(self.observed_features))
+            return True
+        else:
+            return False
+
+    def _get_input_output_layers(self, n_features: int):
+        handles: List[RemovableHandle] = []
+        tracker = ForwardOrderTracker()
+        apply_hooks(module=self.module, hook=tracker, handles=handles)
+
+        x_dummy = torch.empty((1, n_features), device=self.device)
+        self.module(x_dummy)
+
+        for h in handles:
+            h.remove()
+
+        if self.is_class_incremental:
+            if tracker.ordered_modules and isinstance(
+                tracker.ordered_modules[-1], SUPPORTED_LAYERS
+            ):
+
+                self.output_layer = tracker.ordered_modules[-1]
+                self.output_expansion_instructions = load_instructions(
+                    self.output_layer
+                )
+            else:
+                warnings.warn(
+                    "The model will not be able to adapt its output to new "
+                    "classes since no supported output layer was found."
+                )
+                self.is_class_incremental = False
+
+        if self.is_feature_incremental:
+            if tracker.ordered_modules and isinstance(
+                tracker.ordered_modules[0], SUPPORTED_LAYERS
+            ):
+                self.input_layer = tracker.ordered_modules[0]
+                self.input_expansion_instructions = load_instructions(
+                    self.input_layer
+                )
+            else:
+                warnings.warn(
+                    "The model will not be able to adapt its input layer to "
+                    "new features since no supported input layer was found."
+                )
+                self.is_feature_incremental = False
 
 
 class RollingDeepEstimator(DeepEstimator):

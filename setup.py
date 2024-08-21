@@ -13,29 +13,29 @@ REQUIRES_PYTHON = ">=3.6.0"
 
 # Package requirements.
 base_packages = [
-    "scikit-learn~=1.4.2",
+    "scikit-learn~=1.5.0",
     "torch~=2.2.2",
     "pandas~=2.2.2",
     "numpy~=1.26.4",
-    "river~=0.21.1",
-    "tqdm~=4.66.4",
+    "river~=0.21.2",
+    "scipy~=1.13.0",
+    "tqdm~=4.66.5",
     "ordered-set~=4.1.0",
     "torchviz~=0.0.2",
 ]
 
 dev_packages = [
-    "graphviz>=0.10.1",
-    "matplotlib>=3.0.2",
-    "mypy>=0.990",
-    "pre-commit>=2.20.0",
-    "pytest>=7.2.0",
-    "pytest-cov>=4.0.0",
-    "scikit-learn>=0.22.1",
-    "black>=22.10.0",
-    "flake8>=5.0.4",
-    "isort>=5.10.1",
+    "graphviz>=0.20.3",
+    "matplotlib>=3.9.2",
+    "mypy>=1.11.1",
+    "pre-commit>=3.8.0",
+    "pytest>=8.3.2",
+    "pytest-cov>=5.0.0",
+    "black>=24.8.0",
+    "flake8>=7.1.1",
+    "isort>=5.13.2",
     "jupyter>=1.0.0",
-    "pyupgrade==3.2.0"
+    "pyupgrade==3.17.0",
 ]
 
 docs_packages = [

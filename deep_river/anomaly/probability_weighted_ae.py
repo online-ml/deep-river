@@ -8,6 +8,7 @@ from scipy.special import ndtr
 
 from deep_river.anomaly import ae
 from deep_river.utils import dict2tensor
+from deep_river.utils.tensor_conversion import df2tensor
 
 
 class ProbabilityWeightedAutoencoder(ae.Autoencoder):
@@ -87,7 +88,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     ...    metric.update(y, score)
     ...
     >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.8599
+    ROCAUC: 0.7572
     """
 
     def __init__(
@@ -138,13 +139,15 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
             The autoencoder itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        x_t = dict2tensor(x, device=self.device)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+
+        self._adapt_input_dim(x)
+        x_t = dict2tensor(x, self.observed_features, device=self.device)
 
         self.module.train()
         x_pred = self.module(x_t)
-        loss = self.loss_fn(x_pred, x_t)
+        loss = self.loss_func(x_pred, x_t)
         self._apply_loss(loss)
         return self
 
@@ -173,15 +176,16 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
     def learn_many(self, X: pd.DataFrame) -> "ProbabilityWeightedAutoencoder":
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
-        X = dict2tensor(X.to_dict(), device=self.device)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
+        self._adapt_input_dim(X)
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
 
         self.module.train()
         x_pred = self.module(X)
         loss = torch.mean(
-            self.loss_fn(x_pred, X, reduction="none"),
-            dim=list(range(1, X.dim())),
+            self.loss_func(x_pred, X_t, reduction="none"),
+            dim=list(range(1, X_t.dim())),
         )
         self._apply_loss(loss)
         return self

@@ -78,7 +78,7 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 ...     metric.update(y, y_pred)  # update the metric
 ...     model_pipeline.learn_one(x, y)  # make the model learn
 >>> print(f"Accuracy: {metric.get():.4f}")
-Accuracy: 0.6736
+Accuracy: 0.7264
 
 ```
 ### Multi Target Regression 
@@ -158,7 +158,7 @@ MicroAverage(MAE): 34.31
 ...     metric.update(y, score)
 ...
 >>> print(f"ROCAUC: {metric.get():.4f}")
-ROCAUC: 0.9017
+ROCAUC: 0.7812
 
 ```
 

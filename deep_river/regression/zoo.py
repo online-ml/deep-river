@@ -16,9 +16,9 @@ class LinearRegression(Regressor):
             super().__init__()
             self.dense0 = nn.Linear(n_features, 1)
 
-        def forward(self, X, **kwargs):
-            X = self.dense0(X)
-            return X
+        def forward(self, x, **kwargs):
+            x = self.dense0(x)
+            return x
 
     def __init__(
         self,
@@ -27,6 +27,7 @@ class LinearRegression(Regressor):
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
+        is_feature_incremental: bool = False,
         **kwargs,
     ):
         if "module" in kwargs:
@@ -38,6 +39,7 @@ class LinearRegression(Regressor):
             lr=lr,
             device=device,
             seed=seed,
+            is_feature_incremental=is_feature_incremental,
             **kwargs,
         )
 
@@ -55,8 +57,10 @@ class LinearRegression(Regressor):
         """
 
         yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
+            "loss_fn": "l1",
+            "lr": 1e-4,
             "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
         }
 
 
@@ -85,14 +89,10 @@ class MultiLayerPerceptron(Regressor):
     output_is_logit
         Whether the module produces logits as output. If true, either
         softmax or sigmoid is applied to the outputs when predicting.
-    is_class_incremental
-        Whether the classifier should adapt to the appearance of
-        previously unobserved classes by adding an unit to the output
-        layer of the network. This works only if the last trainable
-        layer is an nn.Linear layer. Note also, that output activation
-        functions can not be adapted, meaning that a binary classifier
-        with a sigmoid output can not be altered to perform multi-class
-        predictions.
+    is_feature_incremental
+        Whether the model should adapt to the appearance of
+        previously features by adding units to the input
+        layer of the network.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -106,15 +106,18 @@ class MultiLayerPerceptron(Regressor):
     class MLPModule(nn.Module):
         def __init__(self, n_width, n_layers, n_features):
             super().__init__()
-            self.dense0 = nn.Linear(n_features, n_width)
-            self.block = [nn.Linear(n_width, n_width) for _ in range(n_layers)]
+            hidden = [nn.Linear(n_features, n_width)]
+            hidden += [
+                nn.Linear(n_width, n_width) for _ in range(n_layers - 1)
+            ]
+            self.hidden = nn.ModuleList(hidden)
             self.denselast = nn.Linear(n_width, 1)
 
-        def forward(self, X, **kwargs):
-            X = self.dense0(X)
-            for layer in self.block:
-                X = layer(X)
-            return self.denselast(X)
+        def forward(self, x, **kwargs):
+            for layer in self.hidden:
+                x = layer(x)
+                x = nn.functional.sigmoid(x)
+            return self.denselast(x)
 
     def __init__(
         self,
@@ -123,6 +126,7 @@ class MultiLayerPerceptron(Regressor):
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        is_feature_incremental: bool = True,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -140,6 +144,7 @@ class MultiLayerPerceptron(Regressor):
             seed=seed,
             n_width=n_width,
             n_layers=n_layers,
+            is_feature_incremental=is_feature_incremental,
             **kwargs,
         )
 
@@ -157,6 +162,8 @@ class MultiLayerPerceptron(Regressor):
         """
 
         yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
+            "loss_fn": "mse",
             "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
+            "n_layers": 1,
         }
