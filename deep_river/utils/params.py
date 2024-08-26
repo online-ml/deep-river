@@ -1,10 +1,10 @@
-from typing import Callable, Union
+from typing import Callable, Dict, Union
 
 import torch
 import torch.nn.functional as F
 from torch import nn, optim
 
-ACTIVATION_FNS = {
+ACTIVATION_FNS: Dict[str, Callable] = {
     "selu": nn.SELU,
     "relu": nn.ReLU,
     "leaky_relu": nn.LeakyReLU,
@@ -15,7 +15,7 @@ ACTIVATION_FNS = {
     "linear": nn.Identity,
 }
 
-LOSS_FNS = {
+LOSS_FNS: Dict[str, Callable] = {
     "mse": F.mse_loss,
     "l1": F.l1_loss,
     "smooth_l1": F.smooth_l1_loss,
@@ -26,7 +26,7 @@ LOSS_FNS = {
     "binary_cross_entropy_with_logits": F.binary_cross_entropy_with_logits,
 }
 
-OPTIMIZER_FNS = {
+OPTIMIZER_FNS: Dict[str, Callable] = {
     "adam": optim.Adam,
     "adam_w": optim.AdamW,
     "sgd": optim.SGD,
@@ -113,7 +113,7 @@ def get_activation_fn(activation_fn: Union[str, Callable]) -> Callable:
     return activation_fn
 
 
-def get_optim_fn(optim_fn: Union[str, Callable]):
+def get_optim_fn(optim_fn: Union[str, Callable]) -> Callable:
     """Returns the requested optimizer as a nn.Module class.
 
     Parameters
@@ -135,6 +135,7 @@ def get_optim_fn(optim_fn: Union[str, Callable]):
             optim_fn = OPTIMIZER_FNS[optim_fn]
         except KeyError:
             raise err
+
     elif not isinstance(
         optim_fn(params=[torch.empty(1)], lr=1e-3), torch.optim.Optimizer
     ):
@@ -142,7 +143,7 @@ def get_optim_fn(optim_fn: Union[str, Callable]):
     return optim_fn
 
 
-def get_loss_fn(loss_fn: Union[str, Callable]):
+def get_loss_fn(loss_fn: Union[str, Callable]) -> Callable:
     """Returns the requested loss function as a function.
 
     Parameters
@@ -160,7 +161,7 @@ def get_loss_fn(loss_fn: Union[str, Callable]):
     )
     if isinstance(loss_fn, str):
         try:
-            return LOSS_FNS[loss_fn]
+            loss_fn = LOSS_FNS[loss_fn]
         except KeyError:
             raise err
     elif not callable(loss_fn):

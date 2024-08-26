@@ -1,4 +1,4 @@
-from typing import Any, Callable, Type, Union
+from typing import Any, Callable, Dict, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -8,6 +8,7 @@ from torch import nn
 
 from deep_river.base import DeepEstimator
 from deep_river.utils import dict2tensor
+from deep_river.utils.layer_adaptation import expand_layer
 from deep_river.utils.tensor_conversion import df2tensor
 
 
@@ -93,7 +94,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
     ...    metric.update(y, score)
     ...
     >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.9017
+    ROCAUC: 0.7812
     """
 
     def __init__(
@@ -102,6 +103,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
         **kwargs,
@@ -111,10 +113,12 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             lr=lr,
+            is_feature_incremental=is_feature_incremental,
             device=device,
             seed=seed,
             **kwargs,
         )
+        self.is_class_incremental = is_feature_incremental
 
     @classmethod
     def _unit_test_params(cls):
@@ -133,6 +137,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             "module": _TestAutoencoder,
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
         }
 
     @classmethod
@@ -148,13 +153,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         set
             Set of checks to skip during unit testing.
         """
-        return {
-            "check_shuffle_features_no_impact",
-            "check_emerging_features",
-            "check_disappearing_features",
-            "check_predict_proba_one",
-            "check_predict_proba_one_binary",
-        }
+        return set()
 
     def learn_one(self, x: dict, y: Any = None, **kwargs) -> "Autoencoder":
         """
@@ -173,14 +172,17 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             The model itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
-        return self._learn(dict2tensor(x, device=self.device))
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
+        self._adapt_input_dim(x)
+        return self._learn(
+            dict2tensor(x, features=self.observed_features, device=self.device)
+        )
 
     def _learn(self, x: torch.Tensor) -> "Autoencoder":
         self.module.train()
         x_pred = self.module(x)
-        loss = self.loss_fn(x_pred, x)
+        loss = self.loss_func(x_pred, x)
         loss.backward()
         self.optimizer.step()
         self.optimizer.zero_grad()
@@ -205,14 +207,18 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         """
 
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
-        x_t = dict2tensor(x, device=self.device)
+        self._adapt_input_dim(x)
+
+        x_t = dict2tensor(
+            x, features=self.observed_features, device=self.device
+        )
         self.module.eval()
         with torch.inference_mode():
             x_pred = self.module(x_t)
-        loss = self.loss_fn(x_pred, x_t).item()
+        loss = self.loss_func(x_pred, x_t).item()
         return loss
 
     def learn_many(self, X: pd.DataFrame) -> "Autoencoder":
@@ -231,10 +237,13 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
-        return self._learn(X)
+
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
+
+        self._adapt_input_dim(X)
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
+        return self._learn(X_t)
 
     def score_many(self, X: pd.DataFrame) -> np.ndarray:
         """
@@ -253,16 +262,35 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             indicate more anomalous examples.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
-        X = df2tensor(X, device=self.device)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
+
+        self._adapt_input_dim(X)
+        X_t = df2tensor(X, features=self.observed_features, device=self.device)
 
         self.module.eval()
         with torch.inference_mode():
-            X_pred = self.module(X)
+            X_pred = self.module(X_t)
         loss = torch.mean(
-            self.loss_fn(X_pred, X, reduction="none"),
-            dim=list(range(1, X.dim())),
+            self.loss_func(X_pred, X_t, reduction="none"),
+            dim=list(range(1, X_t.dim())),
         )
         score = loss.cpu().detach().numpy()
         return score
+
+    def _adapt_input_dim(self, x: Dict | pd.DataFrame):
+        has_new_feature = self._update_observed_features(x)
+
+        if has_new_feature and self.is_feature_incremental:
+            expand_layer(
+                self.input_layer,
+                self.input_expansion_instructions,
+                len(self.observed_features),
+                output=False,
+            )
+            expand_layer(
+                self.output_layer,
+                self.output_expansion_instructions,
+                len(self.observed_features),
+                output=True,
+            )

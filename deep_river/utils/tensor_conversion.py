@@ -9,7 +9,11 @@ from river.base.typing import ClfTarget, RegTarget
 
 
 def dict2tensor(
-    x: dict, device: str = "cpu", dtype: torch.dtype = torch.float32
+    x: dict,
+    features: OrderedSet,
+    default_value: float = 0,
+    device: str = "cpu",
+    dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
     """
     Convert a dictionary to a tensor.
@@ -18,6 +22,10 @@ def dict2tensor(
     ----------
     x
         Dictionary.
+    features:
+        Set of possible features.
+    default_value:
+        Value to use for features not present in x.
     device
         Device.
     dtype
@@ -27,7 +35,11 @@ def dict2tensor(
     -------
         torch.Tensor
     """
-    return torch.tensor([list(x.values())], device=device, dtype=dtype)
+    return torch.tensor(
+        [[x.get(feature, default_value) for feature in features]],
+        device=device,
+        dtype=dtype,
+    )
 
 
 def float2tensor(
@@ -65,8 +77,6 @@ def deque2rolling_tensor(
 
     Parameters
     ----------
-    x
-        Dictionary.
     window
         Rolling window.
     device
@@ -83,7 +93,11 @@ def deque2rolling_tensor(
 
 
 def df2tensor(
-    X: pd.DataFrame, device="cpu", dtype=torch.float32
+    X: pd.DataFrame,
+    features: OrderedSet,
+    default_value: float = 0,
+    device="cpu",
+    dtype=torch.float32,
 ) -> torch.Tensor:
     """
     Convert a dataframe to a tensor.
@@ -91,6 +105,10 @@ def df2tensor(
     ----------
     X
         Dataframe.
+    features:
+        Set of possible features.
+    default_value:
+        Value to use for features not present in x.
     device
         Device.
     dtype
@@ -100,7 +118,10 @@ def df2tensor(
     -------
         torch.Tensor
     """
-    return torch.tensor(X.values, device=device, dtype=dtype)
+    for feature in features:
+        if feature not in X.columns:
+            X[feature] = default_value
+    return torch.tensor(X[list(features)].values, device=device, dtype=dtype)
 
 
 def labels2onehot(
@@ -148,27 +169,29 @@ def labels2onehot(
 
 
 def output2proba(
-    preds: torch.Tensor, classes: OrderedSet, with_logits=False
+    preds: torch.Tensor, classes: OrderedSet, output_is_logit=True
 ) -> List[Dict[ClfTarget, float]]:
-    if with_logits:
-        if preds.shape[-1] >= 1:
+    if output_is_logit:
+        if preds.shape[-1] > 1:
             preds = torch.softmax(preds, dim=-1)
         else:
             preds = torch.sigmoid(preds)
 
     preds_np = preds.numpy(force=True)
-    if preds_np.shape[1] == 1:
+    if preds_np.shape[-1] == 1:
         preds_np = np.hstack((preds_np, 1 - preds_np))
-    n_unobserved_classes = preds_np.shape[1] - len(classes)
-    if n_unobserved_classes > 0:
-        classes = classes.copy()
-        [
-            classes.append(f"unobserved {i}")
-            for i in range(n_unobserved_classes)
-        ]
-    probas = (
-        dict(zip(classes, preds_np[0]))
-        if preds_np.shape[0] == 1
-        else [dict(zip(classes, pred)) for pred in preds_np]
-    )
-    return [probas] if isinstance(probas, dict) else list(probas)
+
+    # Assume a binary problem if no classes are known yet
+    if len(classes) == 0:
+        all_classes = OrderedSet([True, False])
+    # Add opposite class if first label seems to be binary
+    elif classes == [True] or classes == [False]:
+        all_classes = classes.union([not classes[0]])
+    # Add `unobserved` classes if pred shape is greater than number of
+    # observed classes
+    else:
+        all_classes = classes.union(
+            [f"Unobserved{i}" for i in range(preds_np.shape[1] - len(classes))]
+        )
+
+    return [dict(zip(all_classes, pred)) for pred in preds_np]

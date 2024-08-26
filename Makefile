@@ -3,8 +3,11 @@ COMMIT_HASH := $(shell eval git rev-parse HEAD)
 format:
 	pre-commit run --all-files
 
+test:
+	pytest
+
 execute-notebooks:
-	jupyter nbconvert --execute --to notebook --inplace docs/*/*.ipynb --ExecutePreprocessor.timeout=-1
+	jupyter nbconvert --execute --to notebook --inplace docs/*/*/*.ipynb --ExecutePreprocessor.timeout=-1
 
 doc:
 	(cd benchmarks && python render.py)

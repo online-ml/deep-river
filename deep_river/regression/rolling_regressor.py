@@ -50,6 +50,10 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
     lr
         Learning rate of the optimizer.
+    is_feature_incremental
+        Whether the model should adapt to the appearance of
+        previously features by adding units to the input
+        layer of the network.
     device
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed
@@ -68,6 +72,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
+        is_feature_incremental: bool = False,
         window_size: int = 10,
         append_predict: bool = False,
         device: str = "cpu",
@@ -80,6 +85,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             device=device,
             optimizer_fn=optimizer_fn,
             lr=lr,
+            is_feature_incremental=is_feature_incremental,
             window_size=window_size,
             append_predict=append_predict,
             seed=seed,
@@ -104,6 +110,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
             "lr": 1e-3,
+            "is_feature_incremental": True,
         }
 
     @classmethod
@@ -118,13 +125,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         set
             Set of checks to skip during unit testing.
         """
-        return {
-            "check_shuffle_features_no_impact",
-            "check_emerging_features",
-            "check_disappearing_features",
-            "check_predict_proba_one",
-            "check_predict_proba_one_binary",
-        }
+        return set()
 
     def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "Regressor":
         """
@@ -144,10 +145,13 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             The regressor itself.
         """
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
-        self._x_window.append(list(x.values()))
+        self._adapt_input_dim(x)
+        self._x_window.append(
+            [x.get(feature, 0) for feature in self.observed_features]
+        )
 
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
@@ -158,9 +162,10 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Regressor":
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
 
+        self._adapt_input_dim(X)
         self._x_window.extend(X.values.tolist())
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
@@ -186,37 +191,37 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         """
         res = 0.0
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(x)
-            self.initialize_module(**self.kwargs)
 
-        if len(self._x_window) == self.window_size:
-            self.module.eval()
-            with torch.inference_mode():
-                x_win = self._x_window.copy()
-                x_win.append(list(x.values()))
-                x_t = deque2rolling_tensor(x_win, device=self.device)
-                res = self.module(x_t).detach().numpy().item()
+            self._update_observed_features(x)
+            self.initialize_module(x=x, **self.kwargs)
 
+        self._adapt_input_dim(x)
+        x_win = self._x_window.copy()
+        x_win.append([x.get(feature, 0) for feature in self.observed_features])
         if self.append_predict:
-            self._x_window.append(list(x.values()))
+            self._x_window = x_win
+
+        self.module.eval()
+        with torch.inference_mode():
+            x_t = deque2rolling_tensor(x_win, device=self.device)
+            res = self.module(x_t).numpy(force=True).item()
+
         return res
 
     def predict_many(self, X: pd.DataFrame) -> List:
-        res = [0.0] * len(X)
-
         if not self.module_initialized:
-            self.kwargs["n_features"] = len(X.columns)
-            self.initialize_module(**self.kwargs)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
 
+        self._adapt_input_dim(X)
+        X = X[list(self.observed_features)]
         x_win = self._x_window.copy()
         x_win.extend(X.values.tolist())
-        if len(x_win) == self.window_size:
-            self.module.eval()
-            with torch.inference_mode():
-                x_t = deque2rolling_tensor(x_win, device=self.device)
-                res = self.module(x_t).detach().tolist()
-
         if self.append_predict:
-            self._x_window.extend(X.values.tolist())
+            self._x_window = x_win
+        self.module.eval()
+        with torch.inference_mode():
+            x_t = deque2rolling_tensor(x_win, device=self.device)
+            res = self.module(x_t).detach().tolist()
 
         return res
