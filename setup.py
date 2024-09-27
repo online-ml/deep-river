@@ -22,6 +22,7 @@ base_packages = [
     "tqdm~=4.66.5",
     "ordered-set~=4.1.0",
     "torchviz~=0.0.2",
+    "transformers~=4.45.1"
 ]
 
 dev_packages = [
