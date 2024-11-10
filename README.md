@@ -18,7 +18,9 @@
 </p>
 
 ## 📚 [Documentation](https://online-ml.github.io/deep-river/)
-The [documentation](https://online-ml.github.io/deep-river/) contains an overview of all features of this repository as well as the repository's full features list. In each of these, the git repo reference is listed in a section that shows examples of the features and functionality.
+The [documentation](https://online-ml.github.io/deep-river/) contains an overview of all features of this repository as well as the repository's full features list. 
+In each of these, the git repo reference is listed in a section that shows [examples](https://github.com/online-ml/deep-river/blob/master/docs/examples) of the features and functionality.
+As we are always looking for further use cases and examples, feel free to contribute to the documentation or the repository itself via a pull request
 
 ## 💈 Installation
 
