@@ -21,8 +21,7 @@ base_packages = [
     "scipy~=1.13.0",
     "tqdm~=4.66.5",
     "ordered-set~=4.1.0",
-    "torchviz~=0.0.2",
-    "transformers~=4.45.1"
+    "torchviz~=0.0.2"
 ]
 
 dev_packages = [
@@ -35,7 +34,8 @@ dev_packages = [
     "black>=24.8.0",
     "flake8>=7.1.1",
     "isort>=5.13.2",
-    "jupyter>=1.0.0",
+    "jupyterlab>=4.2.5",
+    "notebook>=6.4.0",
     "pyupgrade==3.17.0",
 ]
 
@@ -105,6 +105,8 @@ setuptools.setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: Implementation :: CPython",
         "Programming Language :: Python :: Implementation :: PyPy",
     ],
