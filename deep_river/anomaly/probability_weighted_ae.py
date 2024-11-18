@@ -87,8 +87,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     ...    model.learn_one(x=x)
     ...    metric.update(y, score)
     ...
-    >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.7572
+    >>> print(f"Rolling ROCAUC: {metric.get():.4f}")
+    Rolling ROCAUC: 0.8530
     """
 
     def __init__(
