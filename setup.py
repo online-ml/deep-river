@@ -13,12 +13,10 @@ REQUIRES_PYTHON = ">=3.6.0"
 
 # Package requirements.
 base_packages = [
-    "scikit-learn~=1.5.0",
+    "scikit-learn~=1.5.2",
     "torch~=2.2.2",
-    "pandas~=2.2.2",
-    "numpy~=1.26.4",
+    "pandas~=2.2.3",
     "river~=0.21.2",
-    "scipy~=1.13.0",
     "tqdm~=4.66.5",
     "ordered-set~=4.1.0",
     "torchviz~=0.0.2",
@@ -34,13 +32,12 @@ dev_packages = [
     "black>=24.8.0",
     "flake8>=7.1.1",
     "isort>=5.13.2",
-    "jupyter>=1.0.0",
     "pyupgrade==3.17.0",
 ]
 
 docs_packages = [
+    "jupyter",
     "flask>=3.0.2",
-    "ipykernel>=6.9.0",
     "mike>=0.5.3",
     "mkdocs>=1.2.3",
     "mkdocs-awesome-pages-plugin>=2.7.0",
@@ -50,14 +47,10 @@ docs_packages = [
     "mkdocs-material>=8.1.11",
     "mkdocstrings[python]>=0.19.0",
     "pytkdocs[numpy-style]>=0.5.0",
-    "ipython_genutils>=0.1.0",
     "mkdocs-jupyter>=0.20.0",
-    "nbconvert>=6.4.2",
     "numpydoc>=1.2",
     "spacy>=3.2.2",
     "jinja2>=3.0.3",
-    "dominate",
-    "jupyter-client",
     "mkdocs-charts-plugin",
     "python-slugify",
     "watermark==2.3.1",

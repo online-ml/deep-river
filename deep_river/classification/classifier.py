@@ -292,13 +292,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
                 output=True,
             )
 
-    def learn_many(self, x: pd.DataFrame, y: pd.Series) -> "Classifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
         """
         Performs one step of training with a batch of examples.
 
         Parameters
         ----------
-        x
+        X
             Input examples.
         y
             Target values.
@@ -311,14 +311,14 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         # check if model is initialized
 
         if not self.module_initialized:
-            self._update_observed_features(x)
+            self._update_observed_features(X)
             self._update_observed_classes(y)
-            self.initialize_module(x=x, **self.kwargs)
+            self.initialize_module(x=X, **self.kwargs)
 
-        self._adapt_input_dim(x)
+        self._adapt_input_dim(X)
         self._adapt_output_dim(y)
 
-        x_t = df2tensor(x, features=self.observed_features, device=self.device)
+        x_t = df2tensor(X, features=self.observed_features, device=self.device)
 
         return self._learn(x=x_t, y=y)
 
