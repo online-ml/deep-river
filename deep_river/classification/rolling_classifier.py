@@ -223,14 +223,14 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
         return proba[0]
 
-    def learn_many(self, x: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
 
         Parameters
         ----------
-        x
+        X
             Input examples.
         y
             Target values.
@@ -243,13 +243,13 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         # check if model is initialized
         if not self.module_initialized:
             self._update_observed_classes(y)
-            self._update_observed_features(x)
-            self.initialize_module(x=x, **self.kwargs)
+            self._update_observed_features(X)
+            self.initialize_module(x=X, **self.kwargs)
 
-        self._adapt_input_dim(x)
+        self._adapt_input_dim(X)
         self._adapt_output_dim(y)
-        x = x[list(self.observed_features)]
-        self._x_window.extend(x.values.tolist())
+        X = X[list(self.observed_features)]
+        self._x_window.extend(X.values.tolist())
 
         if self.is_class_incremental:
             self._adapt_output_dim(y)
