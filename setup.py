@@ -23,6 +23,7 @@ base_packages = [
 ]
 
 dev_packages = [
+    "jupyter",
     "graphviz>=0.20.3",
     "matplotlib>=3.9.2",
     "mypy>=1.11.1",
