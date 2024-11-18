@@ -68,7 +68,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
     >>> from river.preprocessing import MinMaxScaler
 
     >>> dataset = CreditCard().take(5000)
-    >>> metric = metrics.ROCAUC(n_thresholds=50)
+    >>> metric = metrics.RollingROCAUC(window_size=5000)
 
     >>> class MyAutoEncoder(torch.nn.Module):
     ...     def __init__(self, n_features, latent_dim=3):
@@ -93,8 +93,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
     ...    model.learn_one(x=x)
     ...    metric.update(y, score)
     ...
-    >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.7812
+    >>> print(f"Rolling ROCAUC: {metric.get():.4f}")
+    Rolling ROCAUC: 0.8901
     """
 
     def __init__(
