@@ -8,11 +8,7 @@ version = "2.7.0"  # Make sure to match your version from __version__.py
 description = "Online Deep Learning for river"
 readme = "README.md"
 authors = [
-    { name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com" },
-    { name = "Lucas Cazzonelli" },
-    { name = "Hoang-Anh Ngo"},
-    { name = "Max Halford" },
-    { name = "Saulo Martiello Mastelini" }
+    { name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com" }
 ]
 license = { text = "BSD-3-Clause" }
 keywords = ["online-learning", "deep-learning", "data-streams"]
