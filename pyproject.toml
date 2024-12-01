@@ -9,10 +9,10 @@ description = "Online Deep Learning for river"
 readme = "README.md"
 authors = [
     { name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com" },
-    { name = "Lucas Cazzonelli", email = "" },
-    { name = "Hoang-Anh Ngo", email ="" },
-    { name = "Max Halford", email = "" },
-    { name = "Saulo Martiello Mastelini", email = "" }
+    { name = "Lucas Cazzonelli" },
+    { name = "Hoang-Anh Ngo"},
+    { name = "Max Halford" },
+    { name = "Saulo Martiello Mastelini" }
 ]
 license = { text = "BSD-3-Clause" }
 keywords = ["online-learning", "deep-learning", "data-streams"]
