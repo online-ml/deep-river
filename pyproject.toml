@@ -40,7 +40,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = { find = { where = ["deep_river"] }, exclude = ["paper"] }
+packages = { find = { where = ["deep_river"], exclude = ["paper"] } }
 
 [project.urls]
 Documentation = "https://github.com/online-ml/deep-river"
