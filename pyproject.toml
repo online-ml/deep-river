@@ -8,11 +8,7 @@ version = "2.7.0"  # Make sure to match your version from __version__.py
 description = "Online Deep Learning for river"
 readme = "README.md"
 authors = [
-    { name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com" },
-    { name = "Lucas Cazzonelli", email = "" },
-    { name = "Hoang-Anh Ngo", email ="" },
-    { name = "Max Halford", email = "" },
-    { name = "Saulo Martiello Mastelini", email = "" }
+    { name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com" }
 ]
 license = { text = "BSD-3-Clause" }
 keywords = ["online-learning", "deep-learning", "data-streams"]
@@ -44,7 +40,7 @@ dependencies = [
 ]
 
 [tool.setuptools]
-packages = { find = { where = ["deep_river"] }, exclude = ["paper"] }
+packages = { find = { where = ["deep_river"], exclude = ["paper"] } }
 
 [project.urls]
 Documentation = "https://github.com/online-ml/deep-river"
