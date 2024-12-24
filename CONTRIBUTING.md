@@ -149,7 +149,7 @@ make execute-notebooks
 1. Checkout `main`
 2. Run `make execute-notebooks` just to be safe
 3. Run the [benchmarks](benchmarks)
-4. Bump the version in `river/__version__.py`
+4. Bump the version in `deep_river/__version__.py`
 5. Bump the version in `pyproject.toml`
 6. Tag and date the `docs/releases/unreleased.md` file
 7. Commit and push
@@ -157,26 +157,13 @@ make execute-notebooks
 9. Push the tag:
 
 ```sh
-RIVER_VERSION=$(python -c "import river; print(river.__version__)")
-echo $RIVER_VERSION
+DEEP_RIVER_VERSION=$(python -c "import river; print(river.__version__)")
+echo $DEEP_RIVER_VERSION
 ```
 
 ```sh
-git tag $RIVER_VERSION
-git push origin $RIVER_VERSION
+git tag $DEEP_RIVER_VERSION
+git push origin $DEEP_RIVER_VERSION
 ```
 
 9. Wait for CI to [ship to PyPI](https://github.com/online-ml/river/actions/workflows/pypi.yml) and [publish the new docs](https://github.com/online-ml/river/actions/workflows/release-docs.yml)
-10. Create a [release](https://github.com/online-ml/river/releases):
-
-```sh
-RELEASE_NOTES=$(cat <<-END
-- https://riverml.xyz/${RIVER_VERSION}/releases/${RIVER_VERSION}/
-- https://pypi.org/project/river/${RIVER_VERSION}/
-END
-)
-brew update && brew install gh
-gh release create $RIVER_VERSION --notes $RELEASE_NOTES
-```
-
-11. Pyodide needs to be told there is a new release. This can done by updating [`packages/river`](https://github.com/online-ml/pyodide/tree/main/packages/river) in [online-ml/pyodide](https://github.com/online-ml/pyodide)

@@ -64,6 +64,7 @@ mkdocs-material = ">=8.1.11"
 ipython_genutils = ">=0.1.0"
 mkdocs-jupyter = ">=0.20.0"
 nbconvert = ">=6.4.2"
+jupyter_contrib_nbextensions = "0.7.0"
 numpydoc = ">=1.2"
 spacy = ">=3.2.2"
 jinja2 = ">=3.0.3"
@@ -71,65 +72,3 @@ dominate = "*"
 jupyter-client = "*"
 python-slugify = "*"
 watermark = "==2.3.1"
-
-[tool.poetry.extras]
-docs = [
-    "mkdocs",
-    "mkdocs-awesome-pages-plugin",
-    "mkdocs-gen-files",
-    "mkdocs-charts-plugin",
-    "mkdocs-literate-nav",
-    "mkdocs-material",
-    "mkdocs-jupyter",
-    "nbconvert",
-    "numpydoc",
-    "spacy",
-    "jinja2",
-    "dominate",
-    "jupyter-client",
-    "python-slugify",
-    "watermark",
-]
-dev = [
-    "graphviz",
-    "matplotlib",
-    "mypy",
-    "pre-commit",
-    "pytest",
-    "pytest-cov",
-    "black",
-    "flake8",
-    "isort",
-    "jupyter",
-    "pandas-stubs",
-    "pyupgrade",
-]
-all = [
-    "graphviz",
-    "matplotlib",
-    "mypy",
-    "pre-commit",
-    "pytest",
-    "pytest-cov",
-    "black",
-    "flake8",
-    "isort",
-    "jupyter",
-    "pandas-stubs",
-    "pyupgrade",
-    "mkdocs",
-    "mkdocs-awesome-pages-plugin",
-    "mkdocs-gen-files",
-    "mkdocs-charts-plugin",
-    "mkdocs-literate-nav",
-    "mkdocs-material",
-    "mkdocs-jupyter",
-    "nbconvert",
-    "numpydoc",
-    "spacy",
-    "jinja2",
-    "dominate",
-    "jupyter-client",
-    "python-slugify",
-    "watermark",
-]
