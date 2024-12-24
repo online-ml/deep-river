@@ -60,6 +60,7 @@ dev = [
     "flake8>=7.1.1",
     "isort>=5.13.2",
     "jupyter>=1.0.0",
+    "pandas-stubs>=2.2.3",
     "pyupgrade==3.17.0"
 ]
 docs = [
