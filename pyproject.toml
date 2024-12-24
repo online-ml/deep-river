@@ -44,6 +44,7 @@ pytkdocs = { version = ">=0.5.0", extras = ["numpy-style"] }
 graphviz = ">=0.20.3"
 matplotlib = ">=3.9.2"
 mypy = ">=1.11.1"
+codecov = ">=2.1.13"
 pre-commit = ">=3.8.0"
 pytest = ">=8.3.2"
 pytest-cov = ">=5.0.0"
