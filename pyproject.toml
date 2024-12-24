@@ -4,9 +4,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "deep_river"
-version = "2.7.0"  # Match with your versioning system
+version = "2.8.0"  # Match with your versioning system
 description = "Online Deep Learning for river"
-authors = ["Cedric Kulbach <cedric.kulbach@googlemail.com>"]
+authors = ["Cedric Kulbach <cedric.kulbach@googlemail.com>",
+
+]
 license = "BSD-3-Clause"
 readme = "README.md"
 homepage = "https://github.com/online-ml/deep-river"
