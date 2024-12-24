@@ -1,7 +1,6 @@
 import json
 import shutil
 from pathlib import Path
-from typing import List
 
 import pandas as pd
 from dominate.tags import pre

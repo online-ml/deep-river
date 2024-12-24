@@ -23412,7 +23412,7 @@ Features  10
 
 <pre>Python implementation: CPython
 Python version       : 3.12.8
-IPython version      : 8.31.0
+IPython version      : 8.18.1
 
 river       : 0.21.2
 numpy       : 1.26.4
