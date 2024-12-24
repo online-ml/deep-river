@@ -9,8 +9,12 @@ from river.base.typing import ClfTarget
 
 from deep_river.base import DeepEstimator
 from deep_river.utils.layer_adaptation import expand_layer
-from deep_river.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                labels2onehot, output2proba)
+from deep_river.utils.tensor_conversion import (
+    df2tensor,
+    dict2tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 class _TestModule(torch.nn.Module):

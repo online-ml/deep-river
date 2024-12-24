@@ -6,8 +6,7 @@ from river.base.typing import ClfTarget
 
 from deep_river.base import RollingDeepEstimator
 from deep_river.classification import Classifier
-from deep_river.utils.tensor_conversion import (deque2rolling_tensor,
-                                                output2proba)
+from deep_river.utils.tensor_conversion import deque2rolling_tensor, output2proba
 
 
 class _TestLSTM(torch.nn.Module):

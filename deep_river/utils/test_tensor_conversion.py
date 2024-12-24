@@ -5,8 +5,14 @@ import pandas as pd
 import torch
 from ordered_set import OrderedSet
 
-from deep_river.utils import (deque2rolling_tensor, df2tensor, dict2tensor,
-                              float2tensor, labels2onehot, output2proba)
+from deep_river.utils import (
+    deque2rolling_tensor,
+    df2tensor,
+    dict2tensor,
+    float2tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 def test_dict2tensor():

@@ -11,8 +11,11 @@ from torch.utils.hooks import RemovableHandle
 
 from deep_river.utils import get_loss_fn, get_optim_fn
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
-from deep_river.utils.layer_adaptation import (SUPPORTED_LAYERS, expand_layer,
-                                               load_instructions)
+from deep_river.utils.layer_adaptation import (
+    SUPPORTED_LAYERS,
+    expand_layer,
+    load_instructions,
+)
 
 try:
     from graphviz import Digraph

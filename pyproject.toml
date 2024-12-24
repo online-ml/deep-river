@@ -130,3 +130,6 @@ all = [
 [[tool.mypy.overrides]]
 module = ["untyped_package.*"]
 follow_untyped_imports = true
+
+[tool.isort]
+profile = "black"

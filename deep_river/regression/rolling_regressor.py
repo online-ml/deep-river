@@ -1,14 +1,12 @@
-from typing import Any, Callable, Type, Union
+from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
-from pandas import Series
 from river.base.typing import RegTarget
 
 from deep_river.base import RollingDeepEstimator
 from deep_river.regression import Regressor
-from deep_river.utils.tensor_conversion import (deque2rolling_tensor,
-                                                float2tensor)
+from deep_river.utils.tensor_conversion import deque2rolling_tensor, float2tensor
 
 
 class _TestLSTM(torch.nn.Module):
@@ -205,7 +203,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
 
         return res
 
-    def predict_many(self, X: pd.DataFrame) -> Series[Any]:
+    def predict_many(self, X: pd.DataFrame) -> pd.Series:
         if not self.module_initialized:
             self._update_observed_features(X)
             self.initialize_module(x=X, **self.kwargs)

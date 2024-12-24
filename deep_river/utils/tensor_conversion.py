@@ -155,7 +155,7 @@ def labels2onehot(
         n_classes = len(classes)
     if isinstance(y, pd.Series):
         onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
-        pos_idcs: OrderedSet[float] = [classes.index(y_i) for y_i in y]
+        pos_idcs = [classes.index(y_i) for y_i in y]
         for i, pos_idx in enumerate(pos_idcs):
             if isinstance(pos_idx, int) and pos_idx < n_classes:
                 onehot[i, pos_idx] = 1

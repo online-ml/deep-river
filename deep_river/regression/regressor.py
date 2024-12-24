@@ -1,14 +1,12 @@
-from typing import Any, Callable, Type, Union
+from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
-from pandas import Series
 from river import base
 from river.base.typing import RegTarget
 
 from deep_river.base import DeepEstimator
-from deep_river.utils.tensor_conversion import (df2tensor, dict2tensor,
-                                                float2tensor)
+from deep_river.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
 
 
 class _TestModule(torch.nn.Module):
@@ -208,7 +206,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         self._learn(X_t, y_t)
         return self
 
-    def predict_many(self, X: pd.DataFrame) -> Series[Any]:
+    def predict_many(self, X: pd.DataFrame) -> pd.Series:
         """
         Predicts the target value for a batch of examples.
 
