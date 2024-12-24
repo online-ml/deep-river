@@ -74,3 +74,9 @@ dominate = "*"
 jupyter-client = "*"
 python-slugify = "*"
 watermark = "==2.3.1"
+
+[tool.mypy]
+ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
