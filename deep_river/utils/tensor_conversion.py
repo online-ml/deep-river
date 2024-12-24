@@ -151,11 +151,23 @@ def labels2onehot(
     -------
         torch.Tensor
     """
+
+    def get_class_index(label):
+        """Retrieve class index with type checking and conversion."""
+        if isinstance(label, float):  # Handle float case
+            if label.is_integer():  # Convert to int if it's an integer-like float
+                label = int(label)
+            else:
+                raise ValueError(
+                    f"Label {label} is a float and cannot be mapped to a class index."
+                )
+        return classes.index(label)
+
     if n_classes is None:
         n_classes = len(classes)
     if isinstance(y, pd.Series):
         onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
-        pos_idcs = [classes.index(y_i) for y_i in y]
+        pos_idcs = [get_class_index(y_i) for y_i in y]
         for i, pos_idx in enumerate(pos_idcs):
             if isinstance(pos_idx, int) and pos_idx < n_classes:
                 onehot[i, pos_idx] = 1
