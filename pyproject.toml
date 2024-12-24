@@ -1,19 +1,18 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
 
-[project]
+[tool.poetry]
 name = "deep_river"
-version = "2.7.0"  # Make sure to match your version from __version__.py
+version = "2.7.0"  # Match with your versioning system
 description = "Online Deep Learning for river"
+authors = ["Cedric Kulbach <cedric.kulbach@googlemail.com>"]
+license = "BSD-3-Clause"
 readme = "README.md"
-authors = [
-    { name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com" }
-]
-license = { text = "BSD-3-Clause" }
+homepage = "https://github.com/online-ml/deep-river"
+repository = "https://github.com/online-ml/deep-river"
+documentation = "https://github.com/online-ml/deep-river"
 keywords = ["online-learning", "deep-learning", "data-streams"]
-requires-python = ">=3.6.0"
-
 classifiers = [
     "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
@@ -26,110 +25,111 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+[tool.poetry.dependencies]
+python = ">=3.8"
+scikit-learn = "~1.5.0"
+torch = "~2.2.2"
+pandas = "~2.2.2"
+numpy = "~1.26.4"
+river = "~0.21.2"
+scipy = "~1.13.0"
+tqdm = "~4.66.5"
+ordered-set = "~4.1.0"
+torchviz = "~0.0.2"
+mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
+pytkdocs = { version = ">=0.5.0", extras = ["numpy-style"] }
 
-dependencies = [
-    "scikit-learn~=1.5.0",
-    "torch~=2.2.2",
-    "pandas~=2.2.2",
-    "numpy~=1.26.4",
-    "river~=0.21.2",
-    "scipy~=1.13.0",
-    "tqdm~=4.66.5",
-    "ordered-set~=4.1.0",
-    "torchviz~=0.0.2"
-]
+[tool.poetry.dev-dependencies]
+graphviz = ">=0.20.3"
+matplotlib = ">=3.9.2"
+mypy = ">=1.11.1"
+pre-commit = ">=3.8.0"
+pytest = ">=8.3.2"
+pytest-cov = ">=5.0.0"
+black = ">=24.8.0"
+flake8 = ">=7.1.1"
+isort = ">=5.13.2"
+jupyter = ">=1.0.0"
+pandas-stubs = ">=2.2.3"
+pyupgrade = "==3.17.0"
+flask = ">=3.0.2"
+ipykernel = ">=6.9.0"
+mike = ">=0.5.3"
+mkdocs = ">=1.2.3"
+mkdocs-awesome-pages-plugin = ">=2.7.0"
+mkdocs-gen-files = ">=0.3.5"
+mkdocs-charts-plugin = ">=0.0.8"
+mkdocs-literate-nav = ">=0.4.1"
+mkdocs-material = ">=8.1.11"
+ipython_genutils = ">=0.1.0"
+mkdocs-jupyter = ">=0.20.0"
+nbconvert = ">=6.4.2"
+numpydoc = ">=1.2"
+spacy = ">=3.2.2"
+jinja2 = ">=3.0.3"
+dominate = "*"
+jupyter-client = "*"
+python-slugify = "*"
+watermark = "==2.3.1"
 
-[tool.setuptools]
-packages = { find = { where = ["deep_river"], exclude = ["paper"] } }
-
-[project.urls]
-Documentation = "https://github.com/online-ml/deep-river"
-Source = "hhttps://github.com/online-ml/deep-river"
-Tracker = "https://github.com/online-ml/deep-river/issues"
-
-
-[project.optional-dependencies]
-dev = [
-    "graphviz>=0.20.3",
-    "matplotlib>=3.9.2",
-    "mypy>=1.11.1",
-    "pre-commit>=3.8.0",
-    "pytest>=8.3.2",
-    "pytest-cov>=5.0.0",
-    "black>=24.8.0",
-    "flake8>=7.1.1",
-    "isort>=5.13.2",
-    "jupyter>=1.0.0",
-    "pandas-stubs>=2.2.3",
-    "pyupgrade==3.17.0"
-]
+[tool.poetry.extras]
 docs = [
-    "flask>=3.0.2",
-    "ipykernel>=6.9.0",
-    "mike>=0.5.3",
-    "mkdocs>=1.2.3",
-    "mkdocs-awesome-pages-plugin>=2.7.0",
-    "mkdocs-gen-files>=0.3.5",
-    "mkdocs-charts-plugin>=0.0.8",
-    "mkdocs-literate-nav>=0.4.1",
-    "mkdocs-material>=8.1.11",
-    "mkdocstrings[python]>=0.19.0",
-    "pytkdocs[numpy-style]>=0.5.0",
-    "ipython_genutils>=0.1.0",
-    "mkdocs-jupyter>=0.20.0",
-    "nbconvert>=6.4.2",
-    "numpydoc>=1.2",
-    "spacy>=3.2.2",
-    "jinja2>=3.0.3",
+    "mkdocs",
+    "mkdocs-awesome-pages-plugin",
+    "mkdocs-gen-files",
+    "mkdocs-charts-plugin",
+    "mkdocs-literate-nav",
+    "mkdocs-material",
+    "mkdocs-jupyter",
+    "nbconvert",
+    "numpydoc",
+    "spacy",
+    "jinja2",
     "dominate",
     "jupyter-client",
-    "mkdocs-charts-plugin",
     "python-slugify",
-    "watermark==2.3.1"
+    "watermark",
+]
+dev = [
+    "graphviz",
+    "matplotlib",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "isort",
+    "jupyter",
+    "pandas-stubs",
+    "pyupgrade",
 ]
 all = [
-    "graphviz>=0.20.3",
-    "matplotlib>=3.9.2",
-    "mypy>=1.11.1",
-    "pre-commit>=3.8.0",
-    "pytest>=8.3.2",
-    "pytest-cov>=5.0.0",
-    "black>=24.8.0",
-    "flake8>=7.1.1",
-    "isort>=5.13.2",
-    "jupyter>=1.0.0",
-    "pyupgrade==3.17.0",
-    "flask>=3.0.2",
-    "ipykernel>=6.9.0",
-    "mike>=0.5.3",
-    "mkdocs>=1.2.3",
-    "mkdocs-awesome-pages-plugin>=2.7.0",
-    "mkdocs-gen-files>=0.3.5",
-    "mkdocs-charts-plugin>=0.0.8",
-    "mkdocs-literate-nav>=0.4.1",
-    "mkdocs-material>=8.1.11",
-    "mkdocstrings[python]>=0.19.0",
-    "pytkdocs[numpy-style]>=0.5.0",
-    "ipython_genutils>=0.1.0",
-    "mkdocs-jupyter>=0.20.0",
-    "nbconvert>=6.4.2",
-    "numpydoc>=1.2",
-    "spacy>=3.2.2",
-    "jinja2>=3.0.3",
+    "graphviz",
+    "matplotlib",
+    "mypy",
+    "pre-commit",
+    "pytest",
+    "pytest-cov",
+    "black",
+    "flake8",
+    "isort",
+    "jupyter",
+    "pandas-stubs",
+    "pyupgrade",
+    "mkdocs",
+    "mkdocs-awesome-pages-plugin",
+    "mkdocs-gen-files",
+    "mkdocs-charts-plugin",
+    "mkdocs-literate-nav",
+    "mkdocs-material",
+    "mkdocs-jupyter",
+    "nbconvert",
+    "numpydoc",
+    "spacy",
+    "jinja2",
     "dominate",
     "jupyter-client",
-    "mkdocs-charts-plugin",
     "python-slugify",
-    "watermark==2.3.1"
+    "watermark",
 ]
-
-[project.scripts]
-# Add any console scripts if applicable
-# deep-river-cli = "deep_river.cli:main"
-
-[tool.mypy]
-ignore_missing_imports = true
-
-[tool.isort]
-profile = "black"
-
