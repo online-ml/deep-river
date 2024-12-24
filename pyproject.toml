@@ -127,6 +127,6 @@ all = [
 # Add any console scripts if applicable
 # deep-river-cli = "deep_river.cli:main"
 
-[tool.mypy.overrides]
+[[tool.mypy.overrides]]
 module = ["untyped_package.*"]
 follow_untyped_imports = true

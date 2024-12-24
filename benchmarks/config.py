@@ -1,19 +1,14 @@
+from model_zoo.torch import (TorchLinearRegression, TorchLogisticRegression,
+                             TorchLSTMClassifier, TorchLSTMRegressor,
+                             TorchMLPClassifier, TorchMLPRegressor)
+from river import (dummy, evaluate, linear_model, neural_net, optim,
+                   preprocessing, stats)
+
 from deep_river.classification import Classifier as TorchClassifier
-from deep_river.classification import (
-    RollingClassifier as TorchRollingClassifier,
-)
+from deep_river.classification import \
+    RollingClassifier as TorchRollingClassifier
 from deep_river.regression import Regressor as TorchRegressor
 from deep_river.regression import RollingRegressor as TorchRollingRegressor
-from model_zoo.torch import (
-    TorchMLPClassifier,
-    TorchMLPRegressor,
-    TorchLogisticRegression,
-    TorchLinearRegression,
-    TorchLSTMClassifier,
-    TorchLSTMRegressor,
-)
-from river import preprocessing, linear_model, neural_net, dummy
-from river import optim, evaluate, stats
 
 N_CHECKPOINTS = 50
 
