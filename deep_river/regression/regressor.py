@@ -1,16 +1,14 @@
-from typing import Callable, List, Type, Union
+from typing import Any, Callable, Type, Union
 
 import pandas as pd
 import torch
+from pandas import Series
 from river import base
 from river.base.typing import RegTarget
 
 from deep_river.base import DeepEstimator
-from deep_river.utils.tensor_conversion import (
-    df2tensor,
-    dict2tensor,
-    float2tensor,
-)
+from deep_river.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                float2tensor)
 
 
 class _TestModule(torch.nn.Module):
@@ -143,9 +141,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self._update_observed_features(x)
             self.initialize_module(x=x, **self.kwargs)
         self._adapt_input_dim(x)
-        x_t = dict2tensor(
-            x, features=self.observed_features, device=self.device
-        )
+        x_t = dict2tensor(x, features=self.observed_features, device=self.device)
         y_t = float2tensor(y, device=self.device)
 
         self._learn(x_t, y_t)
@@ -177,9 +173,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             self._update_observed_features(x)
             self.initialize_module(x=x, **self.kwargs)
         self._adapt_input_dim(x)
-        x_t = dict2tensor(
-            x, features=self.observed_features, device=self.device
-        )
+        x_t = dict2tensor(x, features=self.observed_features, device=self.device)
 
         self.module.eval()
         with torch.inference_mode():
@@ -209,14 +203,12 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
 
         self._adapt_input_dim(X)
         X_t = df2tensor(X, features=self.observed_features, device=self.device)
-        y_t = torch.tensor(
-            y, device=self.device, dtype=torch.float32
-        ).unsqueeze(1)
+        y_t = torch.tensor(y, device=self.device, dtype=torch.float32).unsqueeze(1)
 
         self._learn(X_t, y_t)
         return self
 
-    def predict_many(self, X: pd.DataFrame) -> List:
+    def predict_many(self, X: pd.DataFrame) -> Series[Any]:
         """
         Predicts the target value for a batch of examples.
 

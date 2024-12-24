@@ -107,9 +107,7 @@ class MultiLayerPerceptron(Regressor):
         def __init__(self, n_width, n_layers, n_features):
             super().__init__()
             hidden = [nn.Linear(n_features, n_width)]
-            hidden += [
-                nn.Linear(n_width, n_width) for _ in range(n_layers - 1)
-            ]
+            hidden += [nn.Linear(n_width, n_width) for _ in range(n_layers - 1)]
             self.hidden = nn.ModuleList(hidden)
             self.denselast = nn.Linear(n_width, 1)
 

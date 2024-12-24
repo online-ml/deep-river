@@ -11,9 +11,7 @@ from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 
 class _TestLSTMAutoencoder(nn.Module):
-    def __init__(
-        self, n_features, hidden_size=30, n_layers=1, batch_first=False
-    ):
+    def __init__(self, n_features, hidden_size=30, n_layers=1, batch_first=False):
         super().__init__()
         self.n_features = n_features
         self.hidden_size = hidden_size
@@ -142,9 +140,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         loss.backward()
         self.optimizer.step()
 
-    def learn_one(
-        self, x: dict, y: Any = None, **kwargs
-    ) -> "RollingAutoencoder":
+    def learn_one(self, x: dict, y: Any = None, **kwargs) -> "RollingAutoencoder":
         """
         Performs one step of training with a single example.
 

@@ -11,19 +11,14 @@ from torch.utils.hooks import RemovableHandle
 
 from deep_river.utils import get_loss_fn, get_optim_fn
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
-from deep_river.utils.layer_adaptation import (
-    SUPPORTED_LAYERS,
-    expand_layer,
-    load_instructions,
-)
+from deep_river.utils.layer_adaptation import (SUPPORTED_LAYERS, expand_layer,
+                                               load_instructions)
 
 try:
     from graphviz import Digraph
     from torchviz import make_dot
 except ImportError as e:
-    raise ValueError(
-        "You have to install graphviz to use the draw method"
-    ) from e
+    raise ValueError("You have to install graphviz to use the draw method") from e
 
 
 class DeepEstimator(base.Estimator):
@@ -119,9 +114,7 @@ class DeepEstimator(base.Estimator):
         first_parameter = next(self.module.parameters())
         input_shape = first_parameter.size()
         y_pred = self.module(torch.rand(input_shape))
-        return make_dot(
-            y_pred.mean(), params=dict(self.module.named_parameters())
-        )
+        return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
 
     def initialize_module(self, x: dict | pd.DataFrame, **kwargs):
         """
@@ -151,9 +144,7 @@ class DeepEstimator(base.Estimator):
             )
 
         self.module.to(self.device)
-        self.optimizer = self.optimizer_func(
-            self.module.parameters(), lr=self.lr
-        )
+        self.optimizer = self.optimizer_func(self.module.parameters(), lr=self.lr)
         self.module_initialized = True
 
         self._get_input_output_layers(n_features=n_features)
@@ -245,9 +236,7 @@ class DeepEstimator(base.Estimator):
                 tracker.ordered_modules[0], SUPPORTED_LAYERS
             ):
                 self.input_layer = tracker.ordered_modules[0]
-                self.input_expansion_instructions = load_instructions(
-                    self.input_layer
-                )
+                self.input_expansion_instructions = load_instructions(self.input_layer)
             else:
                 warnings.warn(
                     "The model will not be able to adapt its input layer to "

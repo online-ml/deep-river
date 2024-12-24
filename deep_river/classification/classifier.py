@@ -9,12 +9,8 @@ from river.base.typing import ClfTarget
 
 from deep_river.base import DeepEstimator
 from deep_river.utils.layer_adaptation import expand_layer
-from deep_river.utils.tensor_conversion import (
-    df2tensor,
-    dict2tensor,
-    labels2onehot,
-    output2proba,
-)
+from deep_river.utils.tensor_conversion import (df2tensor, dict2tensor,
+                                                labels2onehot, output2proba)
 
 
 class _TestModule(torch.nn.Module):
@@ -227,9 +223,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self._adapt_input_dim(x)
         self._adapt_output_dim(y)
 
-        x_t = dict2tensor(
-            x, features=self.observed_features, device=self.device
-        )
+        x_t = dict2tensor(x, features=self.observed_features, device=self.device)
 
         return self._learn(x=x_t, y=y)
 
@@ -254,16 +248,12 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
         self._adapt_input_dim(x)
 
-        x_t = dict2tensor(
-            x, features=self.observed_features, device=self.device
-        )
+        x_t = dict2tensor(x, features=self.observed_features, device=self.device)
 
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t)
-        return output2proba(
-            y_pred, self.observed_classes, self.output_is_logit
-        )[0]
+        return output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
 
     def _update_observed_classes(self, y) -> bool:
         n_existing_classes = len(self.observed_classes)

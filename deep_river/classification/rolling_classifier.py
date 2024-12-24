@@ -6,10 +6,8 @@ from river.base.typing import ClfTarget
 
 from deep_river.base import RollingDeepEstimator
 from deep_river.classification import Classifier
-from deep_river.utils.tensor_conversion import (
-    deque2rolling_tensor,
-    output2proba,
-)
+from deep_river.utils.tensor_conversion import (deque2rolling_tensor,
+                                                output2proba)
 
 
 class _TestLSTM(torch.nn.Module):
@@ -150,9 +148,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             "check_predict_proba_one",
         }
 
-    def learn_one(
-        self, x: dict, y: ClfTarget, **kwargs
-    ) -> "RollingClassifier":
+    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "RollingClassifier":
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
@@ -177,9 +173,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
         self._adapt_input_dim(x)
         self._adapt_output_dim(y)
-        self._x_window.append(
-            [x.get(feature, 0) for feature in self.observed_features]
-        )
+        self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
         # training process
         if len(self._x_window) == self.window_size:
@@ -217,9 +211,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         with torch.inference_mode():
             x_t = deque2rolling_tensor(x_win, device=self.device)
             y_pred = self.module(x_t)
-            proba = output2proba(
-                y_pred, self.observed_classes, self.output_is_logit
-            )
+            proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
 
         return proba[0]
 

@@ -212,9 +212,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
         self._adapt_input_dim(x)
 
-        x_t = dict2tensor(
-            x, features=self.observed_features, device=self.device
-        )
+        x_t = dict2tensor(x, features=self.observed_features, device=self.device)
         self.module.eval()
         with torch.inference_mode():
             x_pred = self.module(x_t)

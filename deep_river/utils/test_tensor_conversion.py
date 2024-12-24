@@ -5,31 +5,19 @@ import pandas as pd
 import torch
 from ordered_set import OrderedSet
 
-from deep_river.utils import (
-    deque2rolling_tensor,
-    df2tensor,
-    dict2tensor,
-    float2tensor,
-    labels2onehot,
-    output2proba,
-)
+from deep_river.utils import (deque2rolling_tensor, df2tensor, dict2tensor,
+                              float2tensor, labels2onehot, output2proba)
 
 
 def test_dict2tensor():
     x = {"a": 1, "b": 2, "c": 3}
-    assert dict2tensor(x, features=OrderedSet(x.keys())).tolist() == [
-        [1, 2, 3]
-    ]
+    assert dict2tensor(x, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
     # Test dissapearing features
     x2 = {"b": 2, "c": 3}
-    assert dict2tensor(x2, features=OrderedSet(x.keys())).tolist() == [
-        [0, 2, 3]
-    ]
+    assert dict2tensor(x2, features=OrderedSet(x.keys())).tolist() == [[0, 2, 3]]
     # Test shuffled features
     x3 = {"b": 2, "a": 1, "c": 3}
-    assert dict2tensor(x3, features=OrderedSet(x.keys())).tolist() == [
-        [1, 2, 3]
-    ]
+    assert dict2tensor(x3, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
 
 
 def test_float2tensor():

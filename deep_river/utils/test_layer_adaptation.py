@@ -2,14 +2,11 @@ import numpy as np
 import torch
 from torch import nn
 
-from deep_river.utils.layer_adaptation import (
-    expand_layer,
-    expand_weights,
-    get_expansion_instructions,
-    get_in_out_axes,
-    get_lstm_param_shapes,
-    load_instructions,
-)
+from deep_river.utils.layer_adaptation import (expand_layer, expand_weights,
+                                               get_expansion_instructions,
+                                               get_in_out_axes,
+                                               get_lstm_param_shapes,
+                                               load_instructions)
 
 
 def test_get_lstm_param_shapes():
