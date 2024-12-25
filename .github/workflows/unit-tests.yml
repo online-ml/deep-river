@@ -14,9 +14,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.10', '3.11', '3.12']  # Start testing with Python >=3.10
+        python: ['3.9', '3.10', '3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
-        river: ['0.21.2' , '0.22.0']
+        river: ['0.21.1', '0.22.0']
 
     steps:
       - uses: actions/checkout@v4
@@ -34,22 +34,14 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Install Poetry (Windows fallback)
-        if: runner.os == 'Windows'
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-        shell: powershell
-
-      - name: Configure Poetry for Windows
-        if: runner.os == 'Windows'
-        run: poetry config virtualenvs.in-project true
-        shell: powershell
-
       - name: Check compatibility
         run: |
-          if [[ "${{ matrix.python }}" == "3.10" && "${{ matrix.river }}" == "0.21.1" ]]; then
-            echo "Skipping incompatible combination: Python ${{ matrix.python }} and river ${{ matrix.river }}"
+          if [[ "${{ matrix.python }}" == "3.9" && "${{ matrix.river }}" == "0.22.0" ]]; then
+            echo "Skipping incompatible configuration: Python ${{ matrix.python }} and river ${{ matrix.river }}"
+            exit 0
+          fi
+          if [[ "${{ matrix.python }}" == "3.11" && "${{ matrix.river }}" == "0.21.1" ]]; then
+            echo "Skipping incompatible configuration: Python ${{ matrix.python }} and river ${{ matrix.river }}"
             exit 0
           fi
 
@@ -60,24 +52,14 @@ jobs:
           path: .venv
           key: venv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/poetry.lock') }}
 
-      - name: Install dependencies
-        if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --no-root
-
-      - name: Install river ${{ matrix.river }}
+      - name: Install dependencies with river ${{ matrix.river }}
         run: |
-          if [ "${{ matrix.river }}" = "latest" ]; then
-            poetry add river@latest
-          else
-            poetry add river==${{ matrix.river }}
-          fi
+          poetry add river==${{ matrix.river }}
+          poetry install --no-interaction
         shell: bash
 
       - name: Debug Poetry Environment
         run: poetry show --tree
-
-      - name: Install project
-        run: poetry install --no-interaction
 
       - name: Verify installed packages
         run: poetry run pip list
