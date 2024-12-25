@@ -34,6 +34,12 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
+      - name: Add Poetry to PATH on Windows (If using Windows)
+        if: runner.os == 'Windows'
+        run: |
+          $env:Path = "$env:HOME\.poetry\bin;$env:Path"
+          echo "Poetry added to PATH"
+
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v3
