@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [3.10', '3.11', '3.12']
+        python: ['3.10', '3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
         river: ['0.21.1', '0.22.0']
 
@@ -46,15 +46,6 @@ jobs:
           poetry add river==${{ matrix.river }}
           poetry install --no-interaction
         shell: bash
-
-      - name: Debug Poetry Environment
-        run: poetry show --tree
-
-      - name: Verify installed packages
-        run: poetry run pip list
-
-      - name: Show virtual environment path
-        run: poetry env info --path
 
       - name: Download datasets
         run: poetry run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
