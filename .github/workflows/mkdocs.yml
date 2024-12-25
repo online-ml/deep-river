@@ -35,6 +35,8 @@ jobs:
           cd benchmarks
           poetry run python render.py
           poetry run mkdocs build
+          cd ..
 
       - name: Deploy docs
-        run: poetry run mkdocs gh-deploy --force
+        run: |
+          poetry run mkdocs gh-deploy --force
