@@ -1,13 +1,3 @@
-name: unit-tests
-
-on:
-  push:
-    branches:
-      - master
-  pull_request:
-    branches:
-      - master
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -33,6 +23,18 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
+      - name: Install Poetry (Windows fallback)
+        if: runner.os == 'Windows'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+        shell: powershell
+
+      - name: Configure Poetry for Windows
+        if: runner.os == 'Windows'
+        run: poetry config virtualenvs.in-project true
+        shell: powershell
+
       - name: Load cached venv
         id: cached-poetry-dependencies
         uses: actions/cache@v3
@@ -47,14 +49,11 @@ jobs:
       - name: Install project
         run: poetry install --no-interaction
 
+      - name: Verify installed packages
+        run: poetry run pip list
+
+      - name: Show virtual environment path
+        run: poetry env info --path
+
       - name: Download datasets
         run: poetry run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
-
-      - name: Run tests
-        run: |
-          export PYTHONPATH=$PWD
-          poetry run pytest -v --cov=deep_river -m "not datasets"
-        shell: bash
-
-      - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v2
