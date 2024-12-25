@@ -36,14 +36,14 @@ jobs:
 
       - name: Check compatibility
         run: |
-          if [[ "${{ matrix.python }}" == "3.9" && "${{ matrix.river }}" == "0.22.0" ]]; then
-            echo "Skipping incompatible configuration: Python ${{ matrix.python }} and river ${{ matrix.river }}"
+          if [ "${{ matrix.python }}" == "3.9" ] && [ "${{ matrix.river }}" == "0.22.0" ]; then
+            echo "Skipping: Python ${{ matrix.python }} and river ${{ matrix.river }} are incompatible"
+            exit 0
+          elif [ "${{ matrix.python }}" == "3.11" ] && [ "${{ matrix.river }}" == "0.21.1" ]; then
+            echo "Skipping: Python ${{ matrix.python }} and river ${{ matrix.river }} are incompatible"
             exit 0
           fi
-          if [[ "${{ matrix.python }}" == "3.11" && "${{ matrix.river }}" == "0.21.1" ]]; then
-            echo "Skipping incompatible configuration: Python ${{ matrix.python }} and river ${{ matrix.river }}"
-            exit 0
-          fi
+        shell: bash
 
       - name: Load cached venv
         id: cached-poetry-dependencies
