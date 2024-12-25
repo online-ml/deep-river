@@ -18,7 +18,7 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python }}
         uses: actions/setup-python@v2
@@ -53,6 +53,9 @@ jobs:
 
       - name: Download datasets
         run: python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
 
       # run test suite
       - name: Run tests
