@@ -34,8 +34,8 @@ jobs:
         run: |
           cd benchmarks
           poetry run python render.py
-          poetry run mkdocs build
           cd ..
+          poetry run mkdocs build
 
       - name: Deploy docs
         run: |
