@@ -34,11 +34,16 @@ jobs:
           virtualenvs-in-project: true
           installer-parallel: true
 
-      - name: Add Poetry to PATH (for Windows)
+      - name: Install Poetry (Windows fallback)
         if: runner.os == 'Windows'
         run: |
-          $env:Path = "$env:USERPROFILE\.poetry\bin;$env:Path"
-          echo "Poetry added to PATH"
+          python -m pip install --upgrade pip
+          python -m pip install poetry
+        shell: powershell
+
+      - name: Configure Poetry for Windows
+        if: runner.os == 'Windows'
+        run: poetry config virtualenvs.in-project true
         shell: powershell
 
       - name: Load cached venv
