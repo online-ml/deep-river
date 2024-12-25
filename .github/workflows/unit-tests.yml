@@ -16,6 +16,7 @@ jobs:
       matrix:
         python: ['3.9', '3.10', '3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
+        river: ['0.21.1', '0.21.2', 'latest']  # Add multiple river versions
 
     steps:
       - uses: actions/checkout@v4
@@ -50,11 +51,20 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/poetry.lock') }}
 
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --no-interaction --no-root
+
+      - name: Install river ${{ matrix.river }}
+        run: |
+          if [ "${{ matrix.river }}" = "latest" ]; then
+            poetry add river@latest
+          else
+            poetry add river==${{ matrix.river }}
+          fi
+        shell: bash
 
       - name: Install project
         run: poetry install --no-interaction
@@ -67,3 +77,12 @@ jobs:
 
       - name: Download datasets
         run: poetry run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+
+      - name: Run tests
+        run: |
+          export PYTHONPATH=$PWD
+          poetry run pytest -v --cov=deep_river -m "not datasets"
+        shell: bash
+
+      - name: Upload coverage reports to Codecov with GitHub Action
+        uses: codecov/codecov-action@v2
