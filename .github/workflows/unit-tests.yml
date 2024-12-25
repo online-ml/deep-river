@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.9', '3.10', '3.11', '3.12']
+        python: [3.10', '3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
         river: ['0.21.1', '0.22.0']
 
@@ -33,17 +33,6 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true
           installer-parallel: true
-
-      - name: Check compatibility
-        run: |
-          if [ "${{ matrix.python }}" == "3.9" ] && [ "${{ matrix.river }}" == "0.22.0" ]; then
-            echo "Skipping: Python ${{ matrix.python }} and river ${{ matrix.river }} are incompatible"
-            exit 0
-          elif [ "${{ matrix.python }}" == "3.11" ] && [ "${{ matrix.river }}" == "0.21.1" ]; then
-            echo "Skipping: Python ${{ matrix.python }} and river ${{ matrix.river }} are incompatible"
-            exit 0
-          fi
-        shell: bash
 
       - name: Load cached venv
         id: cached-poetry-dependencies
