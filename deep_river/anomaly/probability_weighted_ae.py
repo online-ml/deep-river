@@ -62,7 +62,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
     >>> _ = manual_seed(42)
     >>> dataset = CreditCard().take(5000)
-    >>> metric = metrics.ROCAUC(n_thresholds=50)
+    >>> metric = metrics.RollingROCAUC(window_size=5000)
 
     >>> class MyAutoEncoder(torch.nn.Module):
     ...     def __init__(self, n_features, latent_dim=3):
@@ -87,8 +87,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
     ...    model.learn_one(x=x)
     ...    metric.update(y, score)
     ...
-    >>> print(f"ROCAUC: {metric.get():.4f}")
-    ROCAUC: 0.7572
+    >>> print(f"Rolling ROCAUC: {metric.get():.4f}")
+    Rolling ROCAUC: 0.8530
     """
 
     def __init__(
@@ -114,9 +114,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         )
         self.window_size = window_size
         self.skip_threshold = skip_threshold
-        self.rolling_mean = utils.Rolling(
-            stats.Mean(), window_size=window_size
-        )
+        self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
         self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
     def learn_one(
@@ -165,10 +163,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
         loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
-        loss = (
-            torch.tensor((self.skip_threshold - prob) / self.skip_threshold)
-            * loss
-        )
+        loss = torch.tensor((self.skip_threshold - prob) / self.skip_threshold) * loss
 
         self.optimizer.zero_grad()
         loss.backward()

@@ -17,19 +17,13 @@ from deep_river.utils import (
 
 def test_dict2tensor():
     x = {"a": 1, "b": 2, "c": 3}
-    assert dict2tensor(x, features=OrderedSet(x.keys())).tolist() == [
-        [1, 2, 3]
-    ]
+    assert dict2tensor(x, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
     # Test dissapearing features
     x2 = {"b": 2, "c": 3}
-    assert dict2tensor(x2, features=OrderedSet(x.keys())).tolist() == [
-        [0, 2, 3]
-    ]
+    assert dict2tensor(x2, features=OrderedSet(x.keys())).tolist() == [[0, 2, 3]]
     # Test shuffled features
     x3 = {"b": 2, "a": 1, "c": 3}
-    assert dict2tensor(x3, features=OrderedSet(x.keys())).tolist() == [
-        [1, 2, 3]
-    ]
+    assert dict2tensor(x3, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
 
 
 def test_float2tensor():

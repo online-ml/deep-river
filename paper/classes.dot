@@ -1,0 +1,33 @@
+digraph "classes" {
+rankdir=BT
+charset="utf-8"
+"deep_river.anomaly.ae.Autoencoder" [color="black", fontcolor="black", label=<Autoencoder>, shape="record", style="solid"];
+"deep_river.classification.classifier.Classifier" [color="black", fontcolor="black", label=<Classifier>, shape="record", style="solid"];
+"deep_river.base.DeepEstimator" [color="black", fontcolor="black", label=<DeepEstimator>, shape="record", style="solid"];
+"deep_river.regression.zoo.LinearRegression" [color="black", fontcolor="black", label=<LinearRegression>, shape="record", style="solid"];
+"deep_river.classification.zoo.LogisticRegression" [color="black", fontcolor="black", label=<LogisticRegression>, shape="record", style="solid"];
+"deep_river.classification.zoo.MultiLayerPerceptron" [color="black", fontcolor="black", label=<MultiLayerPerceptron>, shape="record", style="solid"];
+"deep_river.regression.zoo.MultiLayerPerceptron" [color="black", fontcolor="black", label=<MultiLayerPerceptron>, shape="record", style="solid"];
+"deep_river.regression.multioutput.MultiTargetRegressor" [color="black", fontcolor="black", label=<MultiTargetRegressor>, shape="record", style="solid"];
+"deep_river.anomaly.probability_weighted_ae.ProbabilityWeightedAutoencoder" [color="black", fontcolor="black", label=<ProbabilityWeightedAutoencoder>, shape="record", style="solid"];
+"deep_river.regression.regressor.Regressor" [color="black", fontcolor="black", label=<Regressor>, shape="record", style="solid"];
+"deep_river.anomaly.rolling_ae.RollingAutoencoder" [color="black", fontcolor="black", label=<RollingAutoencoder>, shape="record", style="solid"];
+"deep_river.classification.rolling_classifier.RollingClassifier" [color="black", fontcolor="black", label=<RollingClassifier>, shape="record", style="solid"];
+"deep_river.base.RollingDeepEstimator" [color="black", fontcolor="black", label=<RollingDeepEstimator>, shape="record", style="solid"];
+"deep_river.regression.rolling_regressor.RollingRegressor" [color="black", fontcolor="black", label=<RollingRegressor>, shape="record", style="solid"];
+"deep_river.anomaly.ae.Autoencoder" -> "deep_river.base.DeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.anomaly.probability_weighted_ae.ProbabilityWeightedAutoencoder" -> "deep_river.anomaly.ae.Autoencoder" [arrowhead="empty", arrowtail="none"];
+"deep_river.anomaly.rolling_ae.RollingAutoencoder" -> "deep_river.base.RollingDeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.base.RollingDeepEstimator" -> "deep_river.base.DeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.classification.classifier.Classifier" -> "deep_river.base.DeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.classification.rolling_classifier.RollingClassifier" -> "deep_river.base.RollingDeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.classification.rolling_classifier.RollingClassifier" -> "deep_river.classification.classifier.Classifier" [arrowhead="empty", arrowtail="none"];
+"deep_river.classification.zoo.LogisticRegression" -> "deep_river.classification.classifier.Classifier" [arrowhead="empty", arrowtail="none"];
+"deep_river.classification.zoo.MultiLayerPerceptron" -> "deep_river.classification.classifier.Classifier" [arrowhead="empty", arrowtail="none"];
+"deep_river.regression.multioutput.MultiTargetRegressor" -> "deep_river.base.DeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.regression.regressor.Regressor" -> "deep_river.base.DeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.regression.rolling_regressor.RollingRegressor" -> "deep_river.base.RollingDeepEstimator" [arrowhead="empty", arrowtail="none"];
+"deep_river.regression.rolling_regressor.RollingRegressor" -> "deep_river.regression.regressor.Regressor" [arrowhead="empty", arrowtail="none"];
+"deep_river.regression.zoo.LinearRegression" -> "deep_river.regression.regressor.Regressor" [arrowhead="empty", arrowtail="none"];
+"deep_river.regression.zoo.MultiLayerPerceptron" -> "deep_river.regression.regressor.Regressor" [arrowhead="empty", arrowtail="none"];
+}

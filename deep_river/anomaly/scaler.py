@@ -145,9 +145,7 @@ class AnomalyStandardScaler(AnomalyScaler):
         super().__init__(anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
-        self.mean = (
-            utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
-        )
+        self.mean = utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
         self.sq_mean = (
             utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
         )
@@ -208,9 +206,7 @@ class AnomalyMeanScaler(AnomalyScaler):
         super().__init__(anomaly_detector=anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
-        self.mean = (
-            utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
-        )
+        self.mean = utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
 
     def score_one(self, *args):
         """

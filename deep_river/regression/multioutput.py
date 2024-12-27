@@ -106,9 +106,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
             seed=seed,
             **kwargs,
         )
-        self.observed_targets: OrderedDict[FeatureName, RegTarget] = (
-            OrderedDict()
-        )
+        self.observed_targets: OrderedDict[FeatureName, RegTarget] = OrderedDict()
 
     @classmethod
     def _unit_test_params(cls):
@@ -195,7 +193,5 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         self.module.eval()
         with torch.inference_mode():
             y_pred_t = self.module(x_t).squeeze().tolist()
-            y_pred = {
-                t: y_pred_t[i] for i, t in enumerate(self.observed_targets)
-            }
+            y_pred = {t: y_pred_t[i] for i, t in enumerate(self.observed_targets)}
         return y_pred

@@ -1,15 +1,14 @@
 import copy
 import itertools
 import json
+import logging
 import multiprocessing
 from datetime import timedelta
 from typing import List
 
 import pandas as pd
-
-from config import MODELS, TRACKS, N_CHECKPOINTS
+from config import MODELS, N_CHECKPOINTS, TRACKS
 from river import metrics
-import logging
 
 logging.basicConfig(level=logging.WARN)
 logger = logging.getLogger(__name__)

@@ -6,6 +6,7 @@
     <a href="https://codecov.io/gh/online-ml/deep-river" > 
         <img src="https://codecov.io/gh/online-ml/deep-river/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
     </a>
+    <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/deep-river">
     <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/deep-river">
     <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/deep-river">
     <a href="https://joss.theoj.org/papers/6a76784f55e8b041d71a7fa776eb386a"><img src="https://joss.theoj.org/papers/6a76784f55e8b041d71a7fa776eb386a/status.svg"></a>
@@ -17,7 +18,9 @@
 </p>
 
 ## 📚 [Documentation](https://online-ml.github.io/deep-river/)
-The [documentation](https://online-ml.github.io/deep-river/) contains an overview of all features of this repository as well as the repository's full features list. In each of these, the git repo reference is listed in a section that shows examples of the features and functionality.
+The [documentation](https://online-ml.github.io/deep-river/) contains an overview of all features of this repository as well as the repository's full features list. 
+In each of these, the git repo reference is listed in a section that shows [examples](https://github.com/online-ml/deep-river/blob/master/docs/examples) of the features and functionality.
+As we are always looking for further use cases and examples, feel free to contribute to the documentation or the repository itself via a pull request
 
 ## 💈 Installation
 
@@ -132,7 +135,7 @@ MicroAverage(MAE): 34.31
 >>> from river.preprocessing import MinMaxScaler
 
 >>> dataset = CreditCard().take(5000)
->>> metric = metrics.ROCAUC(n_thresholds=50)
+>>> metric = metrics.RollingROCAUC(window_size=5000)
 
 >>> class MyAutoEncoder(nn.Module):
 ...     def __init__(self, n_features, latent_dim=3):
@@ -157,8 +160,8 @@ MicroAverage(MAE): 34.31
 ...     model.learn_one(x=x)
 ...     metric.update(y, score)
 ...
->>> print(f"ROCAUC: {metric.get():.4f}")
-ROCAUC: 0.7812
+>>> print(f"Rolling ROCAUC: {metric.get():.4f}")
+Rolling ROCAUC: 0.8901
 
 ```
 

@@ -23411,18 +23411,18 @@ Features  10
 # Environment
 
 <pre>Python implementation: CPython
-Python version       : 3.9.16
-IPython version      : 8.7.0
+Python version       : 3.12.8
+IPython version      : 8.18.1
 
-river       : 0.15.0
-numpy       : 1.24.2
-scikit-learn: 1.0.2
-pandas      : 1.3.5
-scipy       : 1.9.3
+river       : 0.21.2
+numpy       : 1.26.4
+scikit-learn: 1.5.2
+pandas      : 2.2.3
+scipy       : 1.13.1
 
-Compiler    : Clang 14.0.0 (clang-1400.0.29.202)
+Compiler    : Clang 16.0.0 (clang-1600.0.26.4)
 OS          : Darwin
-Release     : 22.3.0
+Release     : 24.3.0
 Machine     : x86_64
 Processor   : i386
 CPU cores   : 16
