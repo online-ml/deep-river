@@ -2,19 +2,19 @@
 
 ## What to work on?
 
-We have a [public roadmap](https://github.com/orgs/online-ml/projects/3) that lists what has been done, what we're currently doing, and what needs doing. There's also an icebox with high level ideas that need framing. You're welcome to pick anything that takes your fancy and that you deem important. Feel free to [open a discussion](https://github.com/online-ml/river/discussions/new) if you want to clarify a topic and/or want to be formally assigned a task in the board.
+As a project within the `online-ml` community, we have a [public roadmap](https://github.com/orgs/online-ml/projects/3) that lists what has been done, what we're currently doing, and what needs doing. There's also an icebox with high level ideas that need framing. You're welcome to pick anything that takes your fancy and that you deem important. Feel free to [open a discussion](https://github.com/online-ml/deep-river/discussions/new) if you want to clarify a topic and/or want to be formally assigned a task in the board.
 
-Of course, you're welcome to propose and contribute new ideas. We encourage you to [open a discussion](https://github.com/online-ml/river/discussions/new) so that we can align on the work to be done. It's generally a good idea to have a quick discussion before opening a pull request that is potentially out-of-scope.
+Of course, you're welcome to propose and contribute new ideas. In this case, we also encourage you to [open a discussion](https://github.com/online-ml/deep-river/discussions/new) so that we can align on the work to be done. It's generally a good idea to have a quick discussion before opening a pull request that is potentially out-of-scope.
 
 ## Fork/clone/pull
 
 The typical workflow for contributing to River is:
 
-1. Fork the `main` branch from the [GitHub repository](https://github.com/online-ml/deep-river/).
+1. Fork the `master` branch from the [GitHub repository](https://github.com/online-ml/deep-river/).
 2. Clone your fork locally.
 3. Commit changes.
 4. Push the changes to your fork.
-5. Send a pull request from your fork back to the original `main` branch.
+5. Send a pull request from your fork back to the original `master` branch.
 
 ## Local setup
 
@@ -66,17 +66,26 @@ You're now ready to make some changes. We strongly recommend that you to check o
 ```
 
 - The previous code will automatically reimport River for you whenever you make changes.
-- For instance, if a change is made to `linear_model.LinearRegression`, then rerunning the following code doesn't require rebooting the notebook:
+- For instance, if a change is made to `regression.Regressor`, then rerunning the following code doesn't require rebooting the notebook:
 
 ```py
-from river import linear_model
+from deep_river.regression import Regressor
+from torch import nn
 
-model = linear_model.LinearRegression()
+class MyModule(nn.Module):
+    def __init__(self, n_features):
+        super(MyModule, self).__init__()
+
+    def forward(self, X, **kwargs):
+        # your transformation here
+        return X
+
+model = Regressor(module=MyModule)
 ```
 
 ## Creating a new estimator
 
-1. Pick a base class from the `base` module.
+1. Pick a base class from the `base.py` file, which can either be `DeepEstimator` or `RollingDeepEstimator`.
 2. Check if any of the mixin classes from the `base` module apply to your implementation.
 3. Make you've implemented the required methods, with the following exceptions:
    1. Stateless transformers do not require a `learn_one` method.
@@ -99,10 +108,6 @@ pip install git+https://github.com/MaxHalford/yamp
 ```
 
 From the root of the repository, you can then run the `make livedoc` command to take a look at the documentation in your browser. This will run a custom script which parses all the docstrings and generate MarkDown files that [MkDocs](https://www.mkdocs.org/) can render.
-
-## Adding a release note
-
-All classes and function are automatically picked up and added to the documentation. The only thing you have to do is to add an entry to the relevant file in the [`docs/releases` directory](docs/releases).
 
 ## Build Cython and Rust extensions
 
@@ -146,18 +151,18 @@ make execute-notebooks
 
 ## Making a new release
 
-1. Checkout `main`
+1. Checkout `master`
 2. Run `make execute-notebooks` just to be safe
 3. Run the [benchmarks](benchmarks)
 4. Bump the version in `deep_river/__version__.py`
 5. Bump the version in `pyproject.toml`
 6. Tag and date the `docs/releases/unreleased.md` file
 7. Commit and push
-8. Wait for CI to [run the unit tests](https://github.com/online-ml/river/actions/workflows/ci.yml)
+8. Wait for CI to [run the unit tests](https://github.com/online-ml/deep-river/actions/workflows/ci.yml)
 9. Push the tag:
 
 ```sh
-DEEP_RIVER_VERSION=$(python -c "import river; print(river.__version__)")
+DEEP_RIVER_VERSION=$(python -c "import deep_river; print(deep_river.__version__)")
 echo $DEEP_RIVER_VERSION
 ```
 
@@ -166,4 +171,4 @@ git tag $DEEP_RIVER_VERSION
 git push origin $DEEP_RIVER_VERSION
 ```
 
-9. Wait for CI to [ship to PyPI](https://github.com/online-ml/river/actions/workflows/pypi.yml) and [publish the new docs](https://github.com/online-ml/river/actions/workflows/release-docs.yml)
+9. Wait for CI to [ship to PyPI](https://github.com/online-ml/deep-river/actions/workflows/pypi.yml) and [publish the new docs](https://github.com/online-ml/deep-river/actions/workflows/release-docs.yml)
