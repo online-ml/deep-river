@@ -1,105 +1,134 @@
+from collections import defaultdict
+from typing import Callable, Dict, Type, Union
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from river import base
-from torchtext.vocab import build_vocab_from_iterator
-from collections import defaultdict
+from torchtext.data import get_tokenizer
+
+from deep_river.base import DeepEstimator
 
 
-class EmbeddingTransformer(base.Transformer):
-    def __init__(self, vocab_size, embedding_dim, tokenizer, learning_rate=0.01):
+class EmbeddingTransformer(DeepEstimator, base.transformer.BaseTransformer):
+    def __init__(
+        self,
+        module: Type[torch.nn.Module],
+        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        tokenizer=None,
+        language: str = "en",
+        lr=0.01,
+        device: str = "cpu",
+        seed=42,
+        **kwargs,
+    ):
+
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            lr=lr,
+            device=device,
+            seed=seed,
+            **kwargs,
+        )
+        self.tokenizer = get_tokenizer(tokenizer, language=language)
+
+        # Vocabulary with an <UNK> token
+        self.vocab = defaultdict(lambda: self.vocab["<UNK>"])
+        self.vocab["<UNK>"] = 0  # Reserve index 0 for <UNK>
+
+    def learn_one(self, x: dict) -> None:
         """
-        Transformer that generates word embeddings and transforms variable-length input into a
-        fixed-size vector using mean pooling. The input is a dictionary of sentences/words,
-        which are tokenized and transformed into fixed-size vectors.
-
-        Parameters
-        ----------
-        vocab_size : int
-            Size of the vocabulary.
-        embedding_dim : int
-            Dimensionality of the word embeddings.
-        tokenizer : callable
-            Function that tokenizes a sentence/word into tokens.
-        learning_rate : float
-            Learning rate for the optimizer.
-        """
-        self.vocab_size = vocab_size
-        self.embedding_dim = embedding_dim
-        self.tokenizer = tokenizer  # Tokenizer that converts sentences/words into tokens
-        self.learning_rate = learning_rate
-
-        # PyTorch model
-        self.model = WordEmbeddingModel(vocab_size, embedding_dim)
-        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
-        self.criterion = nn.CrossEntropyLoss()
-
-        # Call the PyTorch model's train mode
-        self.model.train()
-
-    def learn_one(self, x):
-        """
-        Update the model with a single instance (x).
+        Learn from a single instance by updating the module parameters.
 
         Parameters
         ----------
         x : dict
-            Dictionary where the keys are words/sentences and values are text (strings).
+            Dictionary of text data to be processed.
 
         Returns
         -------
-        self
+        None
         """
-        # Tokenize and concatenate token lists from the dictionary
+
         token_list = []
         for text in x.values():
-            token_list.extend(self.tokenizer(text))  # Tokenize each sentence/word
+            token_list.extend(self.tokenizer(text))
+            
+        if not self.module_initialized:
+            self.initialize_module(x=x, n_features=len(self.vocab), **self.kwargs)
 
-        input_tensor = torch.tensor([token_list], dtype=torch.long)
+        # Map tokens to indices, adding new tokens to the vocabulary
+        token_indices = [self.vocab[token] for token in token_list]
+
+        if not token_indices:
+            raise ValueError("Input text contains no valid tokens.")
+
+        input_tensor = torch.tensor([token_indices], dtype=torch.long)
 
         # Forward pass
-        embedding = self.model(input_tensor)
+        embedding = self.module(input_tensor)
 
-        # Loss computation and backward pass
-        loss = self.criterion(embedding, input_tensor)  # Target and input should be aligned for the loss
+        # Generate a "target" embedding by shifting the input
+        shifted_tensor = input_tensor.roll(shifts=1, dims=1)
+
+        # Forward pass for the target embedding
+        target_embedding = self.module(shifted_tensor)
+
+        # Compute cosine similarity loss
+        loss = 1 - nn.functional.cosine_similarity(embedding, target_embedding).mean()
+
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
-        return self
-
-    def transform_one(self, x):
+    def transform_one(self, x: dict) -> dict:
         """
-        Transform a single instance (x) into a fixed-length embedding.
+        Transform a single instance (x) into embeddings for each key.
 
         Parameters
         ----------
         x : dict
-            Dictionary where the keys are words/sentences and values are text (strings).
+            Dictionary where the keys are labels (e.g., field names) and values are text (strings).
 
         Returns
         -------
-        torch.Tensor
-            A fixed-length vector representing the input text.
+        dict
+            A dictionary where keys are the input keys and values are their embeddings.
         """
-        self.model.eval()  # Switch to eval mode
+        if not self.module_initialized:
+            self.initialize_module(x=x, n_features=len(self.vocab), **self.kwargs)
+        self.module.eval()
 
-        # Tokenize and concatenate token lists from the dictionary
-        token_list = []
-        for text in x.values():
-            token_list.extend(self.tokenizer(text))  # Tokenize each sentence/word
+        embeddings = {}
+        for key, text in x.items():
+            token_list = self.tokenizer(text)
 
-        input_tensor = torch.tensor([token_list], dtype=torch.long)
+            # Map tokens to indices, using <UNK> for unknown tokens
+            token_indices = [self.vocab[token] for token in token_list]
 
-        # Forward pass to get embeddings
-        with torch.no_grad():
-            embedding = self.model(input_tensor).squeeze(0)
+            if not token_indices:
+                raise ValueError(
+                    f"Input text for key '{key}' contains no valid tokens."
+                )
 
-        # Mean Pooling: Average over the word embeddings to get a fixed-size vector
-        pooled_embedding = embedding.mean(dim=0)
+            input_tensor = torch.tensor([token_indices], dtype=torch.long)
 
-        self.model.train()  # Switch back to train mode
-        return pooled_embedding.numpy()
+            # Compute embeddings
+            with torch.no_grad():
+                embedding = self.module(input_tensor).squeeze(0)
+
+            # Mean Pooling: Average over the word embeddings to get a fixed-size vector
+            pooled_embedding = embedding.mean(dim=0)
+
+            # Add to the output dictionary
+            print(pooled_embedding)
+            embeddings[key] = float(pooled_embedding.numpy())
+
+        self.module.train()
+        return embeddings
 
 
 class WordEmbeddingModel(nn.Module):
@@ -114,7 +143,7 @@ class WordEmbeddingModel(nn.Module):
         embedding_dim : int
             Dimensionality of the word embeddings.
         """
-        super(WordEmbeddingModel, self).__init__()
+        super().__init__()
         self.embedding = nn.Embedding(vocab_size, embedding_dim)
 
     def forward(self, x):
@@ -133,13 +162,3 @@ class WordEmbeddingModel(nn.Module):
         """
         return self.embedding(x)
 
-# Example Tokenizer Function
-def simple_tokenizer(text):
-    """
-    Example tokenizer function that splits text by spaces and maps tokens to arbitrary IDs.
-    Replace this with a real tokenizer as needed.
-    """
-    tokens = text.lower().split()  # Basic split by space
-    token_to_id = defaultdict(lambda: len(token_to_id))
-    token_ids = [token_to_id[token] for token in tokens]
-    return token_ids
