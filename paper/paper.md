@@ -85,10 +85,10 @@ In 2020, creme merged with scikit-multiflow to create River, combining the stren
       * Strong focus on concept drift adaptation, making it robust in non-stationary environments. 
   * capyMOA[@capymoaCapyMOAx2024]
     * Python Interface for MOA: capyMOA serves as a bridge between the Java-based MOA framework and Python, allowing users to leverage MOA's powerful streaming algorithms within Python workflows. 
-      * Key Features:
-        * Enables access to MOA's core functionalities (e.g., Hoeffding Trees, Adaptive Random Forest) from Python. 
-        * Facilitates hybrid workflows by integrating MOA's Java algorithms with Python's machine learning libraries. 
-        * Useful for Python developers looking to use MOA's advanced stream mining capabilities without switching ecosystems.
+    * Key Features:
+      * Enables access to MOA's core functionalities (e.g., Hoeffding Trees, Adaptive Random Forest) from Python. 
+      * Facilitates hybrid workflows by integrating MOA's Java algorithms with Python's machine learning libraries. 
+      * Useful for Python developers looking to use MOA's advanced stream mining capabilities without switching ecosystems.
 
 scikit-multiflow and creme (River) focus on efficient online learning in Python, mainly for traditional machine learning algorithms.
 MOA offers extensive tools for stream mining but lacks deep learning support and Python compatibility. 
