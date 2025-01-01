@@ -40,7 +40,7 @@ This adaptation is achieved through online learning or continuous ML technologie
 Although deep learning technologies have demonstrated outstanding performance on predefined datasets, their application to online, streaming, and continuous learning scenarios has been limited.
 
 `DeepRiver`[@githubGitHubOnlinemldeepriver] is a Python package for deep learning on data streams.
-Built on top of River[@montiel2021river] and PyTorch[@paszke2017automatic], it offers a unified API for both supervised and unsupervised learning.
+Built on top of `River`[@montiel2021river] and PyTorch[@paszke2017automatic], it offers a unified API for both supervised and unsupervised learning.
 Additionally, it provides a suite of tools for preprocessing data streams and evaluating deep learning models.
 
 # Statement of need
@@ -51,7 +51,7 @@ To address this imperative, adopting online learning and continuous ML technolog
 While deep learning technologies have demonstrated exceptional performance on static, predefined datasets, their application to dynamic and continuously evolving data streams remains underexplored.
 The absence of widespread integration of deep learning into online, streaming, and continuous learning scenarios hampers the full potential of these advanced algorithms in real-time decision-making [@kulbach2024retrospectivetutorialopportunitieschallenges].
 The emergence of the `DeepRiver`[@githubGitHubOnlinemldeepriver] Python package fills a critical void in the field of deep learning on data streams.
-Leveraging the capabilities of River[@montiel2021river] and PyTorch[@paszke2017automatic], `DeepRiver` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams.
+Leveraging the capabilities of `River`[@montiel2021river] and PyTorch[@paszke2017automatic], `DeepRiver` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams.
 Moreover, the package equips practitioners with essential tools for data stream preprocessing and the evaluation of deep learning models in dynamic, real-time environments.
 This was already made use of in the context of Streaming Anomaly Detection [@cazzonelli2022detecting].
 As the demand for effective and efficient adaptation of machine learning systems to evolving data structures continues to grow, the integration of `DeepRiver` into the landscape becomes crucial.
@@ -63,34 +63,34 @@ The need for such advancements is evident in the quest to harness the full power
 Online machine learning involves updating models incrementally as new data arrives, rather than retraining models from scratch. 
 Several frameworks and libraries have been developed to support this paradigm:
 
-* scikit-multiflow [@JMLR:v19:18-251]
+* `scikit-multiflow` [@JMLR:v19:18-251]
     * Python-based Library: Inspired by the Java-based MOA framework, designed for streaming data and online learning in Python. 
     * Key Features:
       * Supports algorithms like Hoeffding Trees, online bagging, and boosting. 
       * Includes concept drift detection (e.g., ADWIN, Page-Hinkley) to adapt to changing data distributions. 
       * Stream generators and evaluators for real-time data simulation and model assessment. 
     * Limitations: Focuses mainly on traditional machine learning methods, with limited support for deep learning architectures.
-* creme [@creme]
+* `creme` [@creme]
   * Lightweight Online Learning: Specialized in incremental learning where models are updated per instance, leading to efficient, low-latency model training.
   * Provides a unified API with a broad range of online learning algorithms, making it the go-to library for streaming data analysis in Python.
-  Limitations: Primarily supports feature-based models with limited capabilities for deep neural networks.
+  * Limitations: Primarily supports feature-based models with limited capabilities for deep neural networks.
 
-In 2020, creme merged with scikit-multiflow to create River, combining the strengths of both frameworks.
+In 2020, `creme` merged with `scikit-multiflow` to create `River`, combining the strengths of both frameworks.
 
   * Massive Online Analysis (MOA) [@JMLR:v11:bifet10a]
     * Java-based Pioneer: One of the earliest frameworks dedicated to stream mining and online learning, widely used in academic research. 
     * Key Features:
-      * Introduced foundational algorithms like Hoeffding Trees, Adaptive Random Forest (ARF), and several drift detection techniques (e.g., DDM, EDDM). 
+      * Introduces foundational algorithms like Hoeffding Trees, Adaptive Random Forest (ARF), and several drift detection techniques (e.g., DDM, EDDM). 
       * Excellent scalability for handling high-throughput data streams in real-time. 
       * Strong focus on concept drift adaptation, making it robust in non-stationary environments. 
-  * capyMOA[@capymoaCapyMOAx2024]
+  * capyMOA [@capymoaCapyMOAx2024]
     * Python Interface for MOA: capyMOA serves as a bridge between the Java-based MOA framework and Python, allowing users to leverage MOA's powerful streaming algorithms within Python workflows. 
-      * Key Features:
-        * Enables access to MOA's core functionalities (e.g., Hoeffding Trees, Adaptive Random Forest) from Python. 
-        * Facilitates hybrid workflows by integrating MOA's Java algorithms with Python's machine learning libraries. 
-        * Useful for Python developers looking to use MOA's advanced stream mining capabilities without switching ecosystems.
+    * Key Features:
+      * Enables access to MOA's core functionalities (e.g., Hoeffding Trees, Adaptive Random Forest) from Python. 
+      * Facilitates hybrid workflows by integrating MOA's Java algorithms with Python's machine learning libraries. 
+      * Useful for Python developers looking to use MOA's advanced stream mining capabilities without switching ecosystems.
 
-scikit-multiflow and creme (River) focus on efficient online learning in Python, mainly for traditional machine learning algorithms.
+`scikit-multiflow` and `creme` (`River`) focus on efficient online learning in Python, mainly for traditional machine learning algorithms.
 MOA offers extensive tools for stream mining but lacks deep learning support and Python compatibility. 
 While capyMOA provides Python accessibility to MOA, capyMOA is limited by the underlying Java infrastructure and lacks a natural integration with PyTorch’s deep learning ecosystem.  
 
@@ -101,14 +101,14 @@ This addresses a critical gap left by existing frameworks, which are predominant
 
 `DeepRiver`[@githubGitHubOnlinemldeepriver] enables the usage of deep learning models for data streams.
 This means that deep learning models need to adapt to changes within the evolving data stream [@bayram2022concept;@lu2018learning] i.ex. the number of classes might change over time.
-In addition to the integration of PyTorch[@paszke2017automatic] into River[@montiel2021river], this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
+In addition to the integration of PyTorch[@paszke2017automatic] into `River`[@montiel2021river], this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
 
 ## Compatibility
 
-`DeepRiver`[@githubGitHubOnlinemldeepriver] is built on the unified application programming interface (API) of River[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
+`DeepRiver`[@githubGitHubOnlinemldeepriver] is built on the unified application programming interface (API) of `River`[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
 Further, it integrates the huge functionality of PyTorch[@paszke2017automatic] for deep learning such as using GPU acceleration and a broad range of architectures.
 This unified approach simplifies the development process and facilitates a cohesive workflow for practitioners working with dynamic data streams.
-Leveraging the capabilities of the well-established River[@montiel2021river] library and the powerful PyTorch[@paszke2017automatic] framework, `DeepRiver` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams.
+Leveraging the capabilities of the well-established `River`[@montiel2021river] library and the powerful PyTorch[@paszke2017automatic] framework, `DeepRiver` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams.
 This foundation ensures reliability, scalability, and compatibility with state-of-the-art machine learning methodologies.
 It provides comprehensive [documentation](https://online-ml.github.io/deep-river/) to guide users through the installation, implementation, and customization processes. Additionally, a supportive community ensures that users have access to resources, discussions, and assistance, fostering a collaborative environment for continuous improvement and knowledge sharing.
 
