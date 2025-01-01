@@ -15,17 +15,19 @@ authors:
     affiliation: "2"
   - name: Max Halford
     orcid: 0000-0003-1464-4520
-    affiliation: "2"
+    affiliation: "3"
   - name: Saulo Martiello Mastelini
     orcid: 0000-0002-0092-3572
-    affiliation: "3"
+    affiliation: "4"
 affiliations:
   - name: FZI Research Center for Information Technology, Karlsruhe, Germany
     index: 1
   - name: AI Institute, University of Waikato, Hamilton, New Zealand
     index: 2
-  - name: University of Sao Paulo, Brazil
+  - name: Carbonfact, Paris, France
     index: 3
+  - name: Institute of Mathematics and Computer Science, University of São Paulo, São Carlos, Brazil
+    index: 4
 date: 20.10.2023
 bibliography: paper.bib
 ---
