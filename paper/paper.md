@@ -73,14 +73,14 @@ Several frameworks and libraries have been developed to support this paradigm:
 * `creme` [@creme]
   * Lightweight Online Learning: Specialized in incremental learning where models are updated per instance, leading to efficient, low-latency model training.
   * Provides a unified API with a broad range of online learning algorithms, making it the go-to library for streaming data analysis in Python.
-  Limitations: Primarily supports feature-based models with limited capabilities for deep neural networks.
+  * Limitations: Primarily supports feature-based models with limited capabilities for deep neural networks.
 
 In 2020, `creme` merged with `scikit-multiflow` to create `River`, combining the strengths of both frameworks.
 
   * Massive Online Analysis (MOA) [@JMLR:v11:bifet10a]
     * Java-based Pioneer: One of the earliest frameworks dedicated to stream mining and online learning, widely used in academic research. 
     * Key Features:
-      * Introduced foundational algorithms like Hoeffding Trees, Adaptive Random Forest (ARF), and several drift detection techniques (e.g., DDM, EDDM). 
+      * Introduces foundational algorithms like Hoeffding Trees, Adaptive Random Forest (ARF), and several drift detection techniques (e.g., DDM, EDDM). 
       * Excellent scalability for handling high-throughput data streams in real-time. 
       * Strong focus on concept drift adaptation, making it robust in non-stationary environments. 
   * capyMOA [@capymoaCapyMOAx2024]
