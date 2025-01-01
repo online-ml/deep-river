@@ -61,7 +61,7 @@ The need for such advancements is evident in the quest to harness the full power
 Online machine learning involves updating models incrementally as new data arrives, rather than retraining models from scratch. 
 Several frameworks and libraries have been developed to support this paradigm:
 
-* scikit-multiflow [@10.5555/3291125.3309634]
+* scikit-multiflow [@JMLR:v19:18-251]
     * Python-based Library: Inspired by the Java-based MOA framework, designed for streaming data and online learning in Python. 
     * Key Features:
       * Supports algorithms like Hoeffding Trees, online bagging, and boosting. 
@@ -75,7 +75,7 @@ Several frameworks and libraries have been developed to support this paradigm:
 
 In 2020, creme merged with scikit-multiflow to create River, combining the strengths of both frameworks.
 
-  * Massive Online Analysis (MOA) [@10.5555/1756006.1859903]
+  * Massive Online Analysis (MOA) [@JMLR:v11:bifet10a]
     * Java-based Pioneer: One of the earliest frameworks dedicated to stream mining and online learning, widely used in academic research. 
     * Key Features:
       * Introduced foundational algorithms like Hoeffding Trees, Adaptive Random Forest (ARF), and several drift detection techniques (e.g., DDM, EDDM). 
