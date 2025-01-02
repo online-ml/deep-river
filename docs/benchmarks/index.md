@@ -23412,13 +23412,13 @@ Features  10
 
 <pre>Python implementation: CPython
 Python version       : 3.12.8
-IPython version      : 8.18.1
+IPython version      : 8.31.0
 
-river       : 0.21.2
+river       : 0.22.0
 numpy       : 1.26.4
 scikit-learn: 1.5.2
 pandas      : 2.2.3
-scipy       : 1.13.1
+scipy       : 1.14.1
 
 Compiler    : Clang 16.0.0 (clang-1600.0.26.4)
 OS          : Darwin

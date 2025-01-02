@@ -119,7 +119,7 @@ class DeepEstimator(base.Estimator):
         y_pred = self.module(torch.rand(input_shape))
         return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
 
-    def initialize_module(self, x: dict | pd.DataFrame, **kwargs):
+    def initialize_module(self, x: dict | pd.DataFrame, n_features = None, **kwargs):
         """
         Parameters
         ----------
@@ -135,10 +135,11 @@ class DeepEstimator(base.Estimator):
           The initialized component.
         """
         torch.manual_seed(self.seed)
-        if isinstance(x, Dict):
-            n_features = len(x)
-        elif isinstance(x, pd.DataFrame):
-            n_features = len(x.columns)
+        if n_features is None:
+            if isinstance(x, Dict):
+                n_features = len(x)
+            elif isinstance(x, pd.DataFrame):
+                n_features = len(x.columns)
 
         if not isinstance(self.module_cls, torch.nn.Module):
             self.module = self.module_cls(
