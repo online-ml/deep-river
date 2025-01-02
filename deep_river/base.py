@@ -61,7 +61,9 @@ class DeepEstimator(base.Estimator):
     ):
         super().__init__()
         if not isinstance(module, torch.nn.Module):
-            raise ValueError("The `module` parameter must be an initialized PyTorch module.")
+            raise ValueError(
+                "The `module` parameter must be an initialized PyTorch module."
+            )
 
         self.module = module.to(device)
         self.loss_fn = get_loss_fn(loss_fn)

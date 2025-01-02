@@ -23,15 +23,16 @@ class _TestLSTM(torch.nn.Module):
         output, (hn, cn) = self.lstm(X)
         hn = hn.view(-1, self.output_size)
         return hn
-from typing import Callable, Dict, Type, Union
-import torch
-import pandas as pd
-from river.base.typing import ClfTarget
+
+
 from collections import deque
-from deep_river.utils.tensor_conversion import (
-    deque2rolling_tensor,
-    output2proba,
-)
+from typing import Callable, Dict, Type, Union
+
+import pandas as pd
+import torch
+from river.base.typing import ClfTarget
+
+from deep_river.utils.tensor_conversion import deque2rolling_tensor, output2proba
 
 
 class RollingClassifier(Classifier, RollingDeepEstimator):

@@ -1,5 +1,7 @@
 from typing import Callable, Union
+
 from torch import nn
+
 from deep_river.classification import Classifier
 
 

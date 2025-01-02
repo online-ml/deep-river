@@ -29,6 +29,7 @@ class _TestLSTMAutoencoder(nn.Module):
         output, (h, c) = self.encoder(x)
         return output
 
+
 class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     """
     Wrapper for PyTorch autoencoder models that uses the network's reconstruction
@@ -304,5 +305,3 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             dim=list(range(1, X_t.dim())),
         )
         return loss.detach().cpu().numpy().tolist()
-
-

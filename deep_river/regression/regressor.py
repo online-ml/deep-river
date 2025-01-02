@@ -191,7 +191,6 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             The regressor itself.
         """
 
-
         self._update_observed_features(X)
         self._adapt_input_dim(X)
         X_t = df2tensor(X, features=self.observed_features, device=self.device)

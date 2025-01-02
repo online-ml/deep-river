@@ -117,21 +117,22 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
     """
 
     def __init__(
-            self,
-            module: torch.nn.Module,
-            loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
-            optimizer: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            output_is_logit: bool = True,
-            is_class_incremental: bool = False,
-            is_feature_incremental: bool = False,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs,
+        self,
+        module: torch.nn.Module,
+        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        optimizer: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        output_is_logit: bool = True,
+        is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
     ):
         if not isinstance(module, torch.nn.Module):
             raise ValueError(
-                "The 'module' parameter must be an initialized PyTorch model.")
+                "The 'module' parameter must be an initialized PyTorch model."
+            )
 
         super().__init__(
             module=module,

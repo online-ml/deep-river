@@ -104,7 +104,9 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
         self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> "ProbabilityWeightedAutoencoder":
+    def learn_one(
+        self, x: dict, y: Any = None, **kwargs
+    ) -> "ProbabilityWeightedAutoencoder":
         """
         Trains the model with a single example, adjusting the learning rate based on the outlier probability.
 
@@ -119,7 +121,6 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
             The updated model.
         """
         self._update_observed_features(x)
-
 
         self._adapt_input_dim(x)
         x_t = dict2tensor(x, self.observed_features, device=self.device)
@@ -192,4 +193,3 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         self.optimizer.zero_grad()
         adjusted_loss.backward()
         self.optimizer.step()
-

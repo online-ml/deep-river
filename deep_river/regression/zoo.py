@@ -134,7 +134,7 @@ class MultiLayerPerceptron(Regressor):
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
-            module=MultiLayerPerceptron.MLPModule(n_width,n_layers),
+            module=MultiLayerPerceptron.MLPModule(n_width, n_layers),
             loss_fn=loss_fn,
             optimizer=optimizer,
             lr=lr,

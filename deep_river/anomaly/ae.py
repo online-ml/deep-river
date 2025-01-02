@@ -270,4 +270,3 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
                 len(self.observed_features),
                 output=True,
             )
-
