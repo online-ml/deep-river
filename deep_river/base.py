@@ -119,7 +119,7 @@ class DeepEstimator(base.Estimator):
         y_pred = self.module(torch.rand(input_shape))
         return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
 
-    def initialize_module(self, x: dict | pd.DataFrame, n_features = None, **kwargs):
+    def initialize_module(self, x: dict | pd.DataFrame, n_features=None, **kwargs):
         """
         Parameters
         ----------

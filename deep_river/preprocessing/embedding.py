@@ -56,7 +56,7 @@ class EmbeddingTransformer(DeepEstimator, base.transformer.BaseTransformer):
         token_list = []
         for text in x.values():
             token_list.extend(self.tokenizer(text))
-            
+
         if not self.module_initialized:
             self.initialize_module(x=x, n_features=len(self.vocab), **self.kwargs)
 
@@ -161,4 +161,3 @@ class WordEmbeddingModel(nn.Module):
             Embedded word vectors.
         """
         return self.embedding(x)
-
