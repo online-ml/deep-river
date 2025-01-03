@@ -6,12 +6,15 @@ authors:
   - name: Cedric Kulbach
     orcid: 0000-0002-9363-4728
     corresponding: true
+    equal-contrib: true
     affiliation: "1" # (Multiple affiliations must be quoted)
   - name: Lucas Cazzonelli
     orcid: 0000-0003-2886-1219
+    equal-contrib: true
     affiliation: "1"
   - name: Hoang-Anh Ngo
     orcid: 0000-0002-7583-753X
+    equal-contrib: true
     affiliation: "2"
   - name: Max Halford
     orcid: 0000-0003-1464-4520
