@@ -14,6 +14,7 @@ authors:
     affiliation: "1"
   - name: Hoang-Anh Ngo
     orcid: 0000-0002-7583-753X
+    corresponding: true
     equal-contrib: true
     affiliation: "2"
   - name: Max Halford
