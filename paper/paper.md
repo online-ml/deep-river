@@ -110,7 +110,7 @@ In addition to the integration of PyTorch[@paszke2017automatic] into `River`[@mo
 ## Compatibility
 
 `DeepRiver` is built on the unified application programming interface (API) of `River`[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
-Further, it integrates the huge functionality of PyTorch[@paszke2017automatic] for deep learning such as using GPU acceleration and a broad range of architectures.
+Additionally, it incorporates PyTorch's [@paszke2017automatic] extensive functionality for deep learning such as using GPU acceleration and a broad range of architectures.
 This unified approach simplifies the development process and facilitates a cohesive workflow for practitioners working with dynamic data streams.
 Leveraging the capabilities of the well-established `River`[@montiel2021river] library and the powerful PyTorch[@paszke2017automatic] framework, `DeepRiver` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams.
 This foundation ensures reliability, scalability, and compatibility with state-of-the-art machine learning methodologies.
