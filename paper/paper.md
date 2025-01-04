@@ -126,7 +126,6 @@ It equips practitioners with tools for evaluating the performance of deep learni
 # Architecture
 
 The `DeepRiver` library is structured around various types of estimators for anomaly detection, classification, and regression.
-Each category contains several specialized classes that inherit from more general base classes, forming a hierarchical structure.
 In anomaly detection, the base class `AnomalyScaler` has derived classes `AnomalyMeanScaler`, `AnomalyMinMaxScaler`, and `AnomalyStandardScaler`.
 Additionally, the `Autoencoder` class, which inherits from `DeepEstimator`, has a specialized subclass called `ProbabilityWeightedAutoencoder`.
 The `RollingAutoencoder` class inherits from `RollingDeepEstimator`.
