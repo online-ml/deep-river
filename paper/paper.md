@@ -120,7 +120,7 @@ It provides comprehensive [documentation](https://online-ml.github.io/deep-river
 
 `DeepRiver` is specifically designed to cater to the requirements of online learning scenarios.
 It enables continuous adaptation to evolving data by supporting incremental updates and learning from new observations in real time, a critical feature for applications where data arrives sequentially.
-Further, it enables the model to adapt to changes in the number of classes over time for classification tasks.
+Moreover, it allows the model to dynamically adjust to changes in the number of classes over time for classification tasks.
 It equips practitioners with tools for evaluating the performance of deep learning models on data streams. This feature is crucial for ensuring the reliability and effectiveness of models in real-time applications, enabling users to monitor and fine-tune their models as the data evolves.
 
 # Architecture
