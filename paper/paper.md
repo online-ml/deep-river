@@ -146,6 +146,6 @@ Overall, the library is organized to provide a flexible and hierarchical framewo
 
 # Acknowledgements
 
-This work was carried out with the support of the Research Center for Information Technology in Karlsruhe, Germany.
+Hoang-Anh Ngo received an External Study Awards from the AI Institute, University of Waikato, Hamilton, New Zealand for research on online machine learning under the supervision of Prof. Albert Bifet.
 
 # References
