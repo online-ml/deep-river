@@ -38,7 +38,7 @@ bibliography: paper.bib
 
 ## Summary
 
-Machine learning algorithms enhance and expedite decision-making processes based on available data.
+Machine learning algorithms enhance decision-making efficiency by leveraging available data.
 However, as data evolves over time, it becomes crucial to adapt machine learning (ML) systems incrementally to accommodate new data patterns.
 This adaptation is achieved through online learning or continuous ML technologies.
 Although deep learning technologies have demonstrated outstanding performance on predefined datasets, their application to online, streaming, and continuous learning scenarios has been limited.
