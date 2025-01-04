@@ -43,7 +43,7 @@ However, as data evolves over time, it becomes crucial to adapt machine learning
 This adaptation is achieved through online learning or continuous ML technologies.
 Although deep learning technologies have demonstrated outstanding performance on predefined datasets, their application to online, streaming, and continuous learning scenarios has been limited.
 
-`DeepRiver`[@githubGitHubOnlinemldeepriver] is a Python package for deep learning on data streams.
+`DeepRiver` is a Python package for deep learning on data streams.
 Built on top of `River`[@montiel2021river] and PyTorch[@paszke2017automatic], it offers a unified API for both supervised and unsupervised learning.
 Additionally, it provides a suite of tools for preprocessing data streams and evaluating deep learning models.
 
@@ -54,7 +54,7 @@ The acceleration facilitated by these algorithms necessitates constant adaptatio
 To address this imperative, adopting online learning and continuous ML technologies becomes paramount.
 While deep learning technologies have demonstrated exceptional performance on static, predefined datasets, their application to dynamic and continuously evolving data streams remains underexplored.
 The absence of widespread integration of deep learning into online, streaming, and continuous learning scenarios hampers the full potential of these advanced algorithms in real-time decision-making [@kulbach2024retrospectivetutorialopportunitieschallenges].
-The emergence of the `DeepRiver`[@githubGitHubOnlinemldeepriver] Python package fills a critical void in the field of deep learning on data streams.
+The emergence of the `DeepRiver` Python package fills a critical void in the field of deep learning on data streams.
 Leveraging the capabilities of `River`[@montiel2021river] and PyTorch[@paszke2017automatic], `DeepRiver` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams.
 Moreover, the package equips practitioners with essential tools for data stream preprocessing and the evaluation of deep learning models in dynamic, real-time environments.
 This was already made use of in the context of Streaming Anomaly Detection [@cazzonelli2022detecting].
@@ -98,18 +98,18 @@ In 2020, `creme` merged with `scikit-multiflow` to create `River`, combining the
 MOA offers extensive tools for stream mining but lacks deep learning support and Python compatibility. 
 While capyMOA provides Python accessibility to MOA, capyMOA is limited by the underlying Java infrastructure and lacks a natural integration with PyTorch’s deep learning ecosystem.  
 
-`DeepRiver`[@githubGitHubOnlinemldeepriver] differentiates itself by integrating deep learning capabilities directly into streaming data workflows, enabling continuous learning for neural network models. 
+`DeepRiver` differentiates itself by integrating deep learning capabilities directly into streaming data workflows, enabling continuous learning for neural network models. 
 This addresses a critical gap left by existing frameworks, which are predominantly focused on non-deep learning models.
 
 # Features
 
-`DeepRiver`[@githubGitHubOnlinemldeepriver] enables the usage of deep learning models for data streams.
+`DeepRiver` enables the usage of deep learning models for data streams.
 This means that deep learning models need to adapt to changes within the evolving data stream [@bayram2022concept;@lu2018learning] i.ex. the number of classes might change over time.
 In addition to the integration of PyTorch[@paszke2017automatic] into `River`[@montiel2021river], this package offers additional data stream specific functionalities such as class incremental learning or specific optimizers for data streams.
 
 ## Compatibility
 
-`DeepRiver`[@githubGitHubOnlinemldeepriver] is built on the unified application programming interface (API) of `River`[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
+`DeepRiver` is built on the unified application programming interface (API) of `River`[@montiel2021river] that seamlessly integrates both supervised and unsupervised learning techniques.
 Further, it integrates the huge functionality of PyTorch[@paszke2017automatic] for deep learning such as using GPU acceleration and a broad range of architectures.
 This unified approach simplifies the development process and facilitates a cohesive workflow for practitioners working with dynamic data streams.
 Leveraging the capabilities of the well-established `River`[@montiel2021river] library and the powerful PyTorch[@paszke2017automatic] framework, `DeepRiver` combines the strengths of these technologies to deliver a robust and flexible platform for deep learning on data streams.
@@ -118,7 +118,7 @@ It provides comprehensive [documentation](https://online-ml.github.io/deep-river
 
 ## Adaptivity
 
-`DeepRiver`[@githubGitHubOnlinemldeepriver] is specifically designed to cater to the requirements of online learning scenarios.
+`DeepRiver` is specifically designed to cater to the requirements of online learning scenarios.
 It enables continuous adaptation to evolving data by supporting incremental updates and learning from new observations in real time, a critical feature for applications where data arrives sequentially.
 Further, it enables the model to adapt to changes in the number of classes over time for classification tasks.
 It equips practitioners with tools for evaluating the performance of deep learning models on data streams. This feature is crucial for ensuring the reliability and effectiveness of models in real-time applications, enabling users to monitor and fine-tune their models as the data evolves.
