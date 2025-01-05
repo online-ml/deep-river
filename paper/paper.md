@@ -50,7 +50,7 @@ Additionally, it provides a suite of tools for preprocessing data streams and ev
 # Statement of need
 
 In today's rapidly evolving landscape, machine learning (ML) algorithms play a pivotal role in shaping decision-making processes based on available data.
-These algorithms, while accelerating analysis, require continuous adaptation to dynamic data structures, as patters may evolve rapidly.
+These algorithms, while accelerating analysis, require continuous adaptation to dynamic data structures, as patterns may evolve rapidly.
 To address this imperative, adopting online learning and continuous ML technologies becomes paramount.
 While deep learning technologies have demonstrated exceptional performance on static, predefined datasets, their application to dynamic and continuously evolving data streams remains underexplored.
 The absence of widespread integration of deep learning into online, streaming, and continuous learning scenarios hampers the full potential of these advanced algorithms in real-time decision-making [@kulbach2024retrospectivetutorialopportunitieschallenges].
