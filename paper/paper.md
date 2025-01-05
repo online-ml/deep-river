@@ -57,7 +57,7 @@ The absence of widespread integration of deep learning into online, streaming, a
 The emergence of the `DeepRiver` Python package fills a critical void in the field of deep learning on data streams.
 Leveraging the capabilities of `River`[@montiel2021river] and PyTorch[@paszke2017automatic], `DeepRiver` offers a unified API for both supervised and unsupervised learning, providing a seamless bridge between cutting-edge deep learning techniques and the challenges posed by dynamic data streams.
 Moreover, the package equips practitioners with essential tools for data stream preprocessing and the evaluation of deep learning models in dynamic, real-time environments.
-This was already made use of in the context of Streaming Anomaly Detection [@cazzonelli2022detecting].
+Such functionality has been applied to Streaming Anomaly Detection [@cazzonelli2022detecting].
 As the demand for effective and efficient adaptation of machine learning systems to evolving data structures continues to grow, the integration of `DeepRiver` into the landscape becomes crucial.
 This package stands as a valuable asset, unlocking the potential for deep learning technologies to excel in online, streaming, and continuous learning scenarios.
 The need for such advancements is evident in the quest to harness the full power of machine learning in dynamically changing environments, ensuring our decision-making processes remain accurate, relevant, and agile in the face of evolving data landscapes.
