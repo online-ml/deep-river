@@ -10,6 +10,7 @@
     <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/deep-river">
     <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/deep-river">
     <a href="https://joss.theoj.org/papers/6a76784f55e8b041d71a7fa776eb386a"><img src="https://joss.theoj.org/papers/6a76784f55e8b041d71a7fa776eb386a/status.svg"></a>
+    <a href="https://doi.org/10.5281/zenodo.14601980"><img src="https://zenodo.org/badge/DOI/10.5281/zenodo.14601980.svg" alt="DOI"></a>
 </p>
 <p align="center">
     deep-river is a Python library for online deep learning.
