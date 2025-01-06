@@ -1,0 +1,57 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Kulbach
+  given-names: Cedric
+  orcid: "https://orcid.org/0000-0002-9363-4728"
+- family-names: Cazzonelli
+  given-names: Lucas
+  orcid: "https://orcid.org/0000-0003-2886-1219"
+- family-names: Ngo
+  given-names: Hoang-Anh
+  orcid: "https://orcid.org/0000-0002-7583-753X"
+- family-names: Halford
+  given-names: Max
+  orcid: "https://orcid.org/0000-0003-1464-4520"
+- family-names: Mastelini
+  given-names: Saulo Martiello
+  orcid: "https://orcid.org/0000-0002-0092-3572"
+contact:
+- family-names: Kulbach
+  given-names: Cedric
+  orcid: "https://orcid.org/0000-0002-9363-4728"
+- family-names: Ngo
+  given-names: Hoang-Anh
+  orcid: "https://orcid.org/0000-0002-7583-753X"
+doi: 10.5281/zenodo.14601979
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Kulbach
+    given-names: Cedric
+    orcid: "https://orcid.org/0000-0002-9363-4728"
+  - family-names: Cazzonelli
+    given-names: Lucas
+    orcid: "https://orcid.org/0000-0003-2886-1219"
+  - family-names: Ngo
+    given-names: Hoang-Anh
+    orcid: "https://orcid.org/0000-0002-7583-753X"
+  - family-names: Halford
+    given-names: Max
+    orcid: "https://orcid.org/0000-0003-1464-4520"
+  - family-names: Mastelini
+    given-names: Saulo Martiello
+    orcid: "https://orcid.org/0000-0002-0092-3572"
+  date-published: 2025-01-06
+  doi: 10.21105/joss.07226
+  issn: 2475-9066
+  issue: 105
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 7226
+  title: "DeepRiver: A Deep Learning Library for Data Streams"
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.07226"
+  volume: 10
+title: "DeepRiver: A Deep Learning Library for Data Streams"
