@@ -166,6 +166,26 @@ Rolling ROCAUC: 0.8901
 
 ```
 
+## 💬 Citation
+
+To acknowledge the use of the `DeepRiver` library in your research, please refer to our [paper](https://joss.theoj.org/papers/10.21105/joss.07226) published on Journal of Open Source Software (JOSS):
+
+```bibtex
+@article{Kulbach2025, 
+    doi = {10.21105/joss.07226}, 
+    url = {https://doi.org/10.21105/joss.07226}, 
+    year = {2025}, 
+    publisher = {The Open Journal}, 
+    volume = {10}, 
+    number = {105}, 
+    pages = {7226}, 
+    author = {Cedric Kulbach and Lucas Cazzonelli and Hoang-Anh Ngo and Max Halford and Saulo Martiello Mastelini}, 
+    title = {DeepRiver: A Deep Learning Library for Data Streams}, 
+    journal = {Journal of Open Source Software} 
+}
+```
+
+
 ## 🏫 Affiliations
 
 <p align="center">
