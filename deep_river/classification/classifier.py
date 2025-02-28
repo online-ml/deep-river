@@ -1,13 +1,19 @@
-from typing import Callable, Dict, Type, Union
+import copy
+from typing import Callable, Dict, Type, Union, Any, cast, Optional
 
 import numpy as np
 import pandas as pd
+
+import torch.nn as nn
+import torch.optim as optim
 import torch
 from ordered_set import OrderedSet
+from pyexpat import features
 from river import base
 from river.base.typing import ClfTarget
 
-from deep_river.base import DeepEstimator
+from deep_river.base import DeepEstimator, DeepEstimatorInitialized
+from deep_river.utils import get_optim_fn, get_loss_fn
 from deep_river.utils.layer_adaptation import expand_layer
 from deep_river.utils.tensor_conversion import (
     df2tensor,
@@ -342,3 +348,143 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         return pd.DataFrame(
             output2proba(y_preds, self.observed_classes, self.output_is_logit)
         )
+
+
+class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
+    """
+    Wrapper for PyTorch classification models that supports feature and class incremental learning.
+
+    Parameters
+    ----------
+    module : torch.nn.Module
+        A PyTorch model. Can be pre-initialized or uninitialized.
+    loss_fn : Union[str, Callable]
+        Loss function for training. Can be a string ('mse', 'cross_entropy', etc.) or a PyTorch function.
+    optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
+        Optimizer for training (e.g., "adam", "sgd", or a PyTorch optimizer class).
+    lr : float, default=0.001
+        Learning rate of the optimizer.
+    output_is_logit : bool, default=True
+        If True, applies softmax/sigmoid during inference.
+    is_class_incremental : bool, default=False
+        If True, adds neurons when new classes appear.
+    is_feature_incremental : bool, default=False
+        If True, adds neurons when new features appear.
+    device : str, default="cpu"
+        Whether to use "cpu" or "cuda".
+    seed : Optional[int], default=None
+        Random seed for reproducibility.
+    **kwargs
+        Additional parameters for model initialization.
+
+    """
+
+    def __init__(
+        self,
+        module: nn.Module,
+        loss_fn: Union[str, Callable],
+        optimizer_fn: Union[str, Type[optim.Optimizer]],
+        lr: float = 0.001,
+        output_is_logit: bool = True,
+        is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
+        device: str = "cpu",
+        seed: Optional[int] = 42,
+        **kwargs
+    ):
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            device=device,
+            lr=lr,
+            is_feature_incremental=is_feature_incremental,
+            seed=seed,
+            **kwargs,
+        )
+        self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
+        self.is_feature_incremental = is_feature_incremental
+
+        self.observed_classes: OrderedSet = OrderedSet()
+        self.observed_features: OrderedSet = OrderedSet()
+
+        # Check if the module is already initialized (i.e., has parameters)
+        self.module_initialized = any(p.numel() > 0 for p in self.module.parameters())
+
+    def _learn(self, x: torch.Tensor, y: Union[int, pd.Series]):
+        """Performs a single training step."""
+        self.module.train()
+        self.optimizer.zero_grad()
+        y_pred = self.module(x)
+        n_classes = y_pred.shape[-1]
+
+        y_onehot = labels2onehot(y, self.observed_classes, n_classes, self.device)
+        loss = self.loss_func(y_pred, y_onehot)
+        loss.backward()
+        self.optimizer.step()
+        return self
+
+    def learn_one(self, x: dict, y: int, **kwargs) -> "ClassifierInitialized":
+        """Learns from a single example."""
+        self._update_observed_features(x)
+        self._update_observed_classes(y)
+
+        x_t = self._dict2tensor(x)
+        return self._learn(x_t, y)
+
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "ClassifierInitialized":
+        """Learns from a batch of examples."""
+        self._update_observed_features(X)
+        self._update_observed_classes(y)
+        x_t = df2tensor(X, features=self.observed_features, device=self.device)
+        return self._learn(x_t, y)
+
+    def predict_proba_one(self, x: dict) -> Dict[int, float]:
+        """Predicts probabilities for a single example."""
+        self._update_observed_features(x)
+        x_t = self._dict2tensor(x)
+
+        self.module.eval()
+        with torch.inference_mode():
+            y_pred = self.module(x_t)
+
+        return output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
+
+    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Predicts probabilities for multiple examples."""
+        self._update_observed_features(X)
+
+        x_t = df2tensor(X, features=self.observed_features, device=self.device)
+
+        self.module.eval()
+        with torch.inference_mode():
+            y_preds = self.module(x_t)
+
+        return pd.DataFrame(output2proba(y_preds, self.observed_classes, self.output_is_logit))
+
+    def _update_observed_classes(self, y) -> bool:
+        """Tracks new observed classes dynamically."""
+        n_existing_classes = len(self.observed_classes)
+        self.observed_classes.add(y) if isinstance(y, (int, np.bool_)) else self.observed_classes.update(y)
+
+        if len(self.observed_classes) > n_existing_classes:
+            self.observed_classes = OrderedSet(sorted(self.observed_classes))
+            return True
+        return False
+
+    @classmethod
+    def _unit_test_params(cls):
+        """Provides default parameters for unit testing."""
+        yield {
+            "module": _TestModule(n_features=10),
+            "loss_fn": "binary_cross_entropy_with_logits",
+            "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
+            "is_class_incremental": True,
+        }
+
+    @classmethod
+    def _unit_test_skips(cls) -> set:
+        """Defines unit tests to skip."""
+        return set()

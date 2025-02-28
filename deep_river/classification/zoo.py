@@ -2,7 +2,10 @@ from typing import Callable, Union
 
 from torch import nn
 
-from deep_river.classification import Classifier
+from deep_river.classification import Classifier, ClassifierInitialized
+import torch
+
+
 
 
 class LogisticRegression(Classifier):
@@ -262,3 +265,94 @@ class MultiLayerPerceptron(Classifier):
             Set of checks to skip during unit testing.
         """
         return {"check_predict_proba_one"}
+
+
+class LogisticRegressionInitialized(ClassifierInitialized):
+    """
+    Logistic Regression model for classification.
+
+    Parameters
+    ----------
+    loss_fn : str or Callable
+        Loss function to be used for training the wrapped model.
+    optimizer_fn : str or Callable
+        Optimizer to be used for training the wrapped model.
+    lr : float
+        Learning rate of the optimizer.
+    output_is_logit : bool
+        Whether the module produces logits as output. If true, either
+        softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental : bool
+        Whether the classifier should adapt to the appearance of previously unobserved classes by adding an unit to the output
+        layer of the network.
+    is_feature_incremental : bool
+        Whether the model should adapt to the appearance of previously features by adding units to the input
+        layer of the network.
+    device : str
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed : int
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    """
+
+    class LRModule(nn.Module):
+        def __init__(self, n_features):
+            super().__init__()
+            self.dense0 = nn.Linear(n_features, 1)
+
+        def forward(self, x, **kwargs):
+            x = self.dense0(x)
+            return x  # Logits output without activation
+
+    def __init__(
+            self,
+            loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            output_is_logit: bool = True,
+            is_class_incremental: bool = False,
+            is_feature_incremental: bool = False,
+            device: str = "cpu",
+            seed: int = 42,
+            **kwargs,
+    ):
+
+        module = LogisticRegression.LRModule(
+            n_features=kwargs.get('n_features', 10))  # default n_features=5
+
+        # Initialize the parent class with the passed module
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            output_is_logit=output_is_logit,
+            is_class_incremental=is_class_incremental,
+            is_feature_incremental=is_feature_incremental,
+            device=device,
+            lr=lr,
+            seed=seed,
+            **kwargs,
+        )
+
+    def _apply_activation(self, logits):
+        """Apply the appropriate activation based on output_is_logit."""
+        if self.output_is_logit:
+            # For binary classification, use sigmoid; for multi-class, use softmax
+            return torch.sigmoid(logits) if logits.size(
+                1) == 1 else torch.softmax(logits, dim=1)
+        return logits
+
+    @classmethod
+    def _unit_test_params(cls):
+        """
+        Returns a dictionary of parameters to be used for unit testing the
+        respective class.
+        """
+
+        yield {
+            "loss_fn": "binary_cross_entropy_with_logits",
+            "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
+            "is_class_incremental": True,
+        }

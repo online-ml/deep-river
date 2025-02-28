@@ -1,4 +1,5 @@
 import collections
+import copy
 import inspect
 import warnings
 from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
@@ -9,13 +10,14 @@ from ordered_set import OrderedSet
 from river import base
 from torch.utils.hooks import RemovableHandle
 
-from deep_river.utils import get_loss_fn, get_optim_fn
+from deep_river.utils import get_loss_fn, get_optim_fn, dict2tensor
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 from deep_river.utils.layer_adaptation import (
     SUPPORTED_LAYERS,
     expand_layer,
     load_instructions,
 )
+import torch
 
 try:
     from graphviz import Digraph
@@ -310,3 +312,104 @@ class RollingDeepEstimator(DeepEstimator):
         self.append_predict = append_predict
         self._x_window: Deque = collections.deque(maxlen=window_size)
         self._batch_i = 0
+
+
+class DeepEstimatorInitialized(base.Estimator):
+
+    """
+    A DeepEstimator that allows passing an already initialized module.
+
+    Parameters
+    ----------
+    module
+        A pre-initialized Torch Module (e.g., an instance of a neural network).
+    loss_fn
+        Loss function to be used for training the wrapped model.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model.
+    lr
+        Learning rate of the optimizer.
+    seed
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Additional parameters for module initialization and optimizer configuration.
+    """
+
+    def __init__(
+        self,
+        module: torch.nn.Module,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
+    ):
+        super().__init__()
+
+        self.module = module  # Pre-initialized model is directly assigned
+        self.loss_func = get_loss_fn(loss_fn)
+        self.loss_fn = loss_fn
+        self.optimizer_func = get_optim_fn(optimizer_fn)
+        self.optimizer_fn = optimizer_fn
+        self.lr = lr
+        self.device = device
+        self.kwargs = kwargs
+        self.seed = seed
+
+        layers = list(self.module.children())
+
+        self.input_layer = layers[0]
+        self.output_layer = layers[-1]
+
+        self.observed_features: OrderedSet = OrderedSet()
+
+        self.module.to(self.device)  # Move the model to the correct device
+        self.optimizer = self.optimizer_func(self.module.parameters(), lr=self.lr)
+        torch.manual_seed(seed)
+
+    def clone(self, new_params: dict = None, include_attributes=False):
+        """
+        Clone the current model while preserving all relevant parameters.
+        """
+        new_params = new_params or {}
+        new_params.update(self.kwargs)
+        new_params.update(self._get_params())
+        new_params.update({"module": self.module})
+
+        clone = self.__class__(**new_params)
+        if include_attributes:
+            clone.__dict__.update(self.__dict__)
+        return clone
+
+    def _update_observed_features(self, x):
+        n_existing_features = len(self.observed_features)
+        if isinstance(x, Dict):
+            self.observed_features |= x.keys()
+        else:
+            self.observed_features |= x.columns
+
+        if len(self.observed_features) > n_existing_features:
+            self.observed_features = OrderedSet(sorted(self.observed_features))
+            return True
+        else:
+            return False
+
+    def _dict2tensor(self, x:dict):
+        default_value = 0.0
+        tensor_data = dict2tensor(
+            x,
+            self.observed_features,
+            default_value=default_value,
+            device=self.device,
+            dtype=torch.float32,
+        )
+        len_current_features = len(self.observed_features)
+        if isinstance(self.input_layer, torch.nn.Linear):  # Find first Linear layer
+            len_module_input =  self.input_layer.in_features
+            if len_current_features < len_module_input:
+                # Pad with default_value if fewer features than required
+                padding = torch.full((1, len_module_input - len_current_features),
+                                     default_value, device=self.device, dtype=torch.float32)
+                tensor_data = torch.cat([tensor_data, padding], dim=1)
+        return tensor_data
