@@ -1,11 +1,9 @@
 from typing import Callable, Union
 
+import torch
 from torch import nn
 
 from deep_river.classification import Classifier, ClassifierInitialized
-import torch
-
-
 
 
 class LogisticRegression(Classifier):
@@ -297,31 +295,31 @@ class LogisticRegressionInitialized(ClassifierInitialized):
     """
 
     class LRModule(nn.Module):
-        def __init__(self, n_features):
+        def __init__(self):
             super().__init__()
-            self.dense0 = nn.Linear(n_features, 1)
+            self.dense0 = nn.Linear(10, 1)
+            self.softmax = nn.Softmax(dim=-1)
 
         def forward(self, x, **kwargs):
             x = self.dense0(x)
-            return x  # Logits output without activation
+            return self.softmax(x)
 
     def __init__(
-            self,
-            loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
-            optimizer_fn: Union[str, Callable] = "sgd",
-            lr: float = 1e-3,
-            output_is_logit: bool = True,
-            is_class_incremental: bool = False,
-            is_feature_incremental: bool = False,
-            device: str = "cpu",
-            seed: int = 42,
-            **kwargs,
+        self,
+        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        output_is_logit: bool = True,
+        is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
     ):
-
-        module = LogisticRegression.LRModule(
-            n_features=kwargs.get('n_features', 10))  # default n_features=5
-
         # Initialize the parent class with the passed module
+        module = LogisticRegressionInitialized.LRModule()
+        if "module" in kwargs:
+            del kwargs["module"]
         super().__init__(
             module=module,
             loss_fn=loss_fn,
@@ -334,14 +332,6 @@ class LogisticRegressionInitialized(ClassifierInitialized):
             seed=seed,
             **kwargs,
         )
-
-    def _apply_activation(self, logits):
-        """Apply the appropriate activation based on output_is_logit."""
-        if self.output_is_logit:
-            # For binary classification, use sigmoid; for multi-class, use softmax
-            return torch.sigmoid(logits) if logits.size(
-                1) == 1 else torch.softmax(logits, dim=1)
-        return logits
 
     @classmethod
     def _unit_test_params(cls):

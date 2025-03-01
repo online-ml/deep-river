@@ -10,14 +10,13 @@ from ordered_set import OrderedSet
 from river import base
 from torch.utils.hooks import RemovableHandle
 
-from deep_river.utils import get_loss_fn, get_optim_fn, dict2tensor
+from deep_river.utils import dict2tensor, get_loss_fn, get_optim_fn
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 from deep_river.utils.layer_adaptation import (
     SUPPORTED_LAYERS,
     expand_layer,
     load_instructions,
 )
-import torch
 
 try:
     from graphviz import Digraph
@@ -315,7 +314,6 @@ class RollingDeepEstimator(DeepEstimator):
 
 
 class DeepEstimatorInitialized(base.Estimator):
-
     """
     A DeepEstimator that allows passing an already initialized module.
 
@@ -347,7 +345,7 @@ class DeepEstimatorInitialized(base.Estimator):
     ):
         super().__init__()
 
-        self.module = module  # Pre-initialized model is directly assigned
+        self.module = module
         self.loss_func = get_loss_fn(loss_fn)
         self.loss_fn = loss_fn
         self.optimizer_func = get_optim_fn(optimizer_fn)
@@ -395,7 +393,7 @@ class DeepEstimatorInitialized(base.Estimator):
         else:
             return False
 
-    def _dict2tensor(self, x:dict):
+    def _dict2tensor(self, x: dict):
         default_value = 0.0
         tensor_data = dict2tensor(
             x,
@@ -406,10 +404,14 @@ class DeepEstimatorInitialized(base.Estimator):
         )
         len_current_features = len(self.observed_features)
         if isinstance(self.input_layer, torch.nn.Linear):  # Find first Linear layer
-            len_module_input =  self.input_layer.in_features
+            len_module_input = self.input_layer.in_features
             if len_current_features < len_module_input:
                 # Pad with default_value if fewer features than required
-                padding = torch.full((1, len_module_input - len_current_features),
-                                     default_value, device=self.device, dtype=torch.float32)
+                padding = torch.full(
+                    (1, len_module_input - len_current_features),
+                    default_value,
+                    device=self.device,
+                    dtype=torch.float32,
+                )
                 tensor_data = torch.cat([tensor_data, padding], dim=1)
         return tensor_data

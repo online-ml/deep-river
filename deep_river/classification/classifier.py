@@ -1,19 +1,18 @@
 import copy
-from typing import Callable, Dict, Type, Union, Any, cast, Optional
+from typing import Any, Callable, Dict, Optional, Type, Union, cast
 
 import numpy as np
 import pandas as pd
-
+import torch
 import torch.nn as nn
 import torch.optim as optim
-import torch
 from ordered_set import OrderedSet
 from pyexpat import features
 from river import base
 from river.base.typing import ClfTarget
 
 from deep_river.base import DeepEstimator, DeepEstimatorInitialized
-from deep_river.utils import get_optim_fn, get_loss_fn
+from deep_river.utils import get_loss_fn, get_optim_fn
 from deep_river.utils.layer_adaptation import expand_layer
 from deep_river.utils.tensor_conversion import (
     df2tensor,
@@ -24,8 +23,10 @@ from deep_river.utils.tensor_conversion import (
 
 
 class _TestModule(torch.nn.Module):
+
     def __init__(self, n_features):
         super().__init__()
+        self.n_features = n_features
         self.dense0 = torch.nn.Linear(n_features, 5)
         self.nonlinear = torch.nn.ReLU()
         self.dense1 = torch.nn.Linear(5, 1)
@@ -390,7 +391,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: Optional[int] = 42,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(
             module=module,
@@ -461,12 +462,18 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         with torch.inference_mode():
             y_preds = self.module(x_t)
 
-        return pd.DataFrame(output2proba(y_preds, self.observed_classes, self.output_is_logit))
+        return pd.DataFrame(
+            output2proba(y_preds, self.observed_classes, self.output_is_logit)
+        )
 
     def _update_observed_classes(self, y) -> bool:
         """Tracks new observed classes dynamically."""
         n_existing_classes = len(self.observed_classes)
-        self.observed_classes.add(y) if isinstance(y, (int, np.bool_)) else self.observed_classes.update(y)
+        (
+            self.observed_classes.add(y)
+            if isinstance(y, (int, np.bool_))
+            else self.observed_classes.update(y)
+        )
 
         if len(self.observed_classes) > n_existing_classes:
             self.observed_classes = OrderedSet(sorted(self.observed_classes))
@@ -477,11 +484,9 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def _unit_test_params(cls):
         """Provides default parameters for unit testing."""
         yield {
-            "module": _TestModule(n_features=10),
+            "module": _TestModule(10),
             "loss_fn": "binary_cross_entropy_with_logits",
-            "optimizer_fn": "sgd",
-            "is_feature_incremental": True,
-            "is_class_incremental": True,
+            "optimizer_fn": "sgd"
         }
 
     @classmethod
