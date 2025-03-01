@@ -207,7 +207,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.optimizer.step()
         return self
 
-    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "Classifier":
+    def learn_one(self, x: dict, y: ClfTarget) -> None:
         """
         Performs one step of training with a single example.
 
@@ -236,7 +236,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
         x_t = dict2tensor(x, features=self.observed_features, device=self.device)
 
-        return self._learn(x=x_t, y=y)
+        self._learn(x=x_t, y=y)
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """
@@ -293,7 +293,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
                 output=True,
             )
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Classifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
         Performs one step of training with a batch of examples.
 
@@ -321,7 +321,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
         x_t = df2tensor(X, features=self.observed_features, device=self.device)
 
-        return self._learn(x=x_t, y=y)
+        self._learn(x=x_t, y=y)
 
     def predict_proba_many(self, x: pd.DataFrame) -> pd.DataFrame:
         """
@@ -426,20 +426,20 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         self.optimizer.step()
         return self
 
-    def learn_one(self, x: dict, y: int, **kwargs) -> "ClassifierInitialized":
+    def learn_one(self, x: dict, y: int, **kwargs) -> None:
         """Learns from a single example."""
         self._update_observed_features(x)
         self._update_observed_classes(y)
 
         x_t = self._dict2tensor(x)
-        return self._learn(x_t, y)
+        self._learn(x_t, y)
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "ClassifierInitialized":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """Learns from a batch of examples."""
         self._update_observed_features(X)
         self._update_observed_classes(y)
         x_t = df2tensor(X, features=self.observed_features, device=self.device)
-        return self._learn(x_t, y)
+        self._learn(x_t, y)
 
     def predict_proba_one(self, x: dict) -> Dict[int, float]:
         """Predicts probabilities for a single example."""
@@ -486,7 +486,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         yield {
             "module": _TestModule(10),
             "loss_fn": "binary_cross_entropy_with_logits",
-            "optimizer_fn": "sgd"
+            "optimizer_fn": "sgd",
         }
 
     @classmethod
