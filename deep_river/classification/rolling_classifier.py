@@ -147,7 +147,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             "check_predict_proba_one",
         }
 
-    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> "RollingClassifier":
+    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> None:
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
@@ -178,7 +178,6 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
             return self._learn(x=x_t, y=y)
-        return self
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """
@@ -214,7 +213,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
         return proba[0]
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "RollingClassifier":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
@@ -248,7 +247,6 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         if len(self._x_window) == self.window_size:
             X_t = deque2rolling_tensor(self._x_window, device=self.device)
             self._learn(x=X_t, y=y)
-        return self
 
     def predict_proba_many(self, x: pd.DataFrame) -> pd.DataFrame:
         """

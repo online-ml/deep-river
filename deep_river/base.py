@@ -1,5 +1,4 @@
 import collections
-import copy
 import inspect
 import warnings
 from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
@@ -366,7 +365,7 @@ class DeepEstimatorInitialized(base.Estimator):
         self.optimizer = self.optimizer_func(self.module.parameters(), lr=self.lr)
         torch.manual_seed(seed)
 
-    def clone(self, new_params: dict = None, include_attributes=False):
+    def clone(self, new_params: dict[Any, Any] | None = None, include_attributes=False):
         """
         Clone the current model while preserving all relevant parameters.
         """

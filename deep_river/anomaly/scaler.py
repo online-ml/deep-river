@@ -79,7 +79,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         more anomalous examples.
         """
 
-    def learn_one(self, *args) -> "AnomalyScaler":
+    def learn_one(self, *args) -> None:
         """
         Update the scaler and the underlying anomaly scaler.
 
@@ -96,7 +96,6 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         """
 
         self.anomaly_detector.learn_one(*args)
-        return self
 
     @abc.abstractmethod
     def score_many(self, *args) -> np.ndarray:

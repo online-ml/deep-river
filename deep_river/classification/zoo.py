@@ -1,7 +1,6 @@
-from typing import Callable, Union
+from typing import Callable, Type, Union
 
-import torch
-from torch import nn
+from torch import nn, optim
 
 from deep_river.classification import Classifier, ClassifierInitialized
 
@@ -281,11 +280,11 @@ class LogisticRegressionInitialized(ClassifierInitialized):
         Whether the module produces logits as output. If true, either
         softmax or sigmoid is applied to the outputs when predicting.
     is_class_incremental : bool
-        Whether the classifier should adapt to the appearance of previously unobserved classes by adding an unit to the output
-        layer of the network.
+        Whether the classifier should adapt to the appearance of previously unobserved classes
+        by adding an unit to the output layer of the network.
     is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by adding units to the input
-        layer of the network.
+        Whether the model should adapt to the appearance of previously features by
+        adding units to the input layer of the network.
     device : str
         Device to run the wrapped model on. Can be "cpu" or "cuda".
     seed : int
@@ -307,7 +306,7 @@ class LogisticRegressionInitialized(ClassifierInitialized):
     def __init__(
         self,
         loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
-        optimizer_fn: Union[str, Callable] = "sgd",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
         output_is_logit: bool = True,
         is_class_incremental: bool = False,

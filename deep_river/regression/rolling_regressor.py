@@ -124,7 +124,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         """
         return set()
 
-    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "Regressor":
+    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> None:
         """
         Performs one step of training with the sliding
         window of the most recent examples.
@@ -153,9 +153,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             y_t = float2tensor(y, device=self.device)
             self._learn(x_t, y_t)
 
-        return self
-
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Regressor":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         if not self.module_initialized:
             self._update_observed_features(X)
             self.initialize_module(x=X, **self.kwargs)
@@ -166,8 +164,6 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
             y_t = torch.unsqueeze(torch.tensor(y, device=self.device), 1)
             self._learn(x_t, y_t)
-
-        return self
 
     def predict_one(self, x: dict):
         """

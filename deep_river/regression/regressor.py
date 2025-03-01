@@ -119,7 +119,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         """
         return set()
 
-    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> "Regressor":
+    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> None:
         """
         Performs one step of training with a single example.
 
@@ -143,7 +143,6 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         y_t = float2tensor(y, device=self.device)
 
         self._learn(x_t, y_t)
-        return self
 
     def _learn(self, x: torch.Tensor, y: torch.Tensor):
         self.module.train()
@@ -178,7 +177,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             y_pred = self.module(x_t).item()
         return y_pred
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> "Regressor":
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
         Performs one step of training with a batch of examples.
 
@@ -204,7 +203,6 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         y_t = torch.tensor(y, device=self.device, dtype=torch.float32).unsqueeze(1)
 
         self._learn(X_t, y_t)
-        return self
 
     def predict_many(self, X: pd.DataFrame) -> pd.Series:
         """

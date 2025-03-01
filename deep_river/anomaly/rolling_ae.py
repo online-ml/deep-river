@@ -140,7 +140,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         loss.backward()
         self.optimizer.step()
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> "RollingAutoencoder":
+    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
         """
         Performs one step of training with a single example.
 
@@ -163,9 +163,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
             self._learn(x=x_t)
-        return self
 
-    def learn_many(self, X: pd.DataFrame, y=None) -> "RollingAutoencoder":
+    def learn_many(self, X: pd.DataFrame, y=None) -> None:
         """
         Performs one step of training with a batch of examples.
 
@@ -190,7 +189,6 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         if len(self._x_window) == self.window_size:
             X_t = deque2rolling_tensor(self._x_window, device=self.device)
             self._learn(x=X_t)
-        return self
 
     def score_one(self, x: dict) -> float:
         res = 0.0

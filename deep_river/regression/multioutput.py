@@ -162,7 +162,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         x: dict,
         y: dict[FeatureName, RegTarget],
         **kwargs,
-    ) -> "MultiTargetRegressor":
+    ) -> None:
         if not self.module_initialized:
             self._update_observed_features(x)
             self.initialize_module(x=x, **self.kwargs)
@@ -170,7 +170,6 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         self.observed_targets.update(y) if y is not None else None
         y_t = float2tensor(y, self.device)
         self._learn(x_t, y_t)
-        return self
 
     def predict_one(self, x: dict) -> typing.Dict[FeatureName, RegTarget]:
         """

@@ -117,9 +117,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
         self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
-    def learn_one(
-        self, x: dict, y: Any = None, **kwargs
-    ) -> "ProbabilityWeightedAutoencoder":
+    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
         """
         Performs one step of training with a single example,
         scaling the employed learning rate based on the outlier
@@ -147,7 +145,6 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         x_pred = self.module(x_t)
         loss = self.loss_func(x_pred, x_t)
         self._apply_loss(loss)
-        return self
 
     def _apply_loss(self, loss):
         losses_numpy = loss.detach().numpy()
@@ -169,7 +166,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         loss.backward()
         self.optimizer.step()
 
-    def learn_many(self, X: pd.DataFrame) -> "ProbabilityWeightedAutoencoder":
+    def learn_many(self, X: pd.DataFrame) -> None:
         if not self.module_initialized:
             self._update_observed_features(X)
             self.initialize_module(x=X, **self.kwargs)
@@ -183,4 +180,3 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
             dim=list(range(1, X_t.dim())),
         )
         self._apply_loss(loss)
-        return self

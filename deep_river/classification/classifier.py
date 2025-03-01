@@ -1,5 +1,4 @@
-import copy
-from typing import Any, Callable, Dict, Optional, Type, Union, cast
+from typing import Callable, Dict, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -7,12 +6,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from ordered_set import OrderedSet
-from pyexpat import features
 from river import base
 from river.base.typing import ClfTarget
 
 from deep_river.base import DeepEstimator, DeepEstimatorInitialized
-from deep_river.utils import get_loss_fn, get_optim_fn
 from deep_river.utils.layer_adaptation import expand_layer
 from deep_river.utils.tensor_conversion import (
     df2tensor,
@@ -360,7 +357,8 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     module : torch.nn.Module
         A PyTorch model. Can be pre-initialized or uninitialized.
     loss_fn : Union[str, Callable]
-        Loss function for training. Can be a string ('mse', 'cross_entropy', etc.) or a PyTorch function.
+        Loss function for training. Can be a string ('mse', 'cross_entropy', etc.)
+        or a PyTorch function.
     optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
         Optimizer for training (e.g., "adam", "sgd", or a PyTorch optimizer class).
     lr : float, default=0.001
@@ -390,7 +388,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         is_class_incremental: bool = False,
         is_feature_incremental: bool = False,
         device: str = "cpu",
-        seed: Optional[int] = 42,
+        seed: int = 42,
         **kwargs,
     ):
         super().__init__(
@@ -426,7 +424,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         self.optimizer.step()
         return self
 
-    def learn_one(self, x: dict, y: int, **kwargs) -> None:
+    def learn_one(self, x: dict, y: base.typing.ClfTarget) -> None:
         """Learns from a single example."""
         self._update_observed_features(x)
         self._update_observed_classes(y)
@@ -441,7 +439,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         x_t = df2tensor(X, features=self.observed_features, device=self.device)
         self._learn(x_t, y)
 
-    def predict_proba_one(self, x: dict) -> Dict[int, float]:
+    def predict_proba_one(self, x: dict) -> dict[base.typing.ClfTarget, float]:
         """Predicts probabilities for a single example."""
         self._update_observed_features(x)
         x_t = self._dict2tensor(x)

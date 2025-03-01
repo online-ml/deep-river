@@ -147,15 +147,10 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         Most estimators pass the full test suite. However, in some cases,
         some estimators might not
         be able to pass certain checks.
-
-        Returns
-        -------
-        set
-            Set of checks to skip during unit testing.
         """
         return set()
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> "Autoencoder":
+    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
         """
         Performs one step of training with a single example.
 
@@ -165,19 +160,12 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             Input example.
 
         **kwargs
-
-        Returns
-        -------
-        Autoencoder
-            The model itself.
         """
         if not self.module_initialized:
             self._update_observed_features(x)
             self.initialize_module(x=x, **self.kwargs)
         self._adapt_input_dim(x)
-        return self._learn(
-            dict2tensor(x, features=self.observed_features, device=self.device)
-        )
+        self._learn(dict2tensor(x, features=self.observed_features, device=self.device))
 
     def _learn(self, x: torch.Tensor) -> "Autoencoder":
         self.module.train()
@@ -219,7 +207,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         loss = self.loss_func(x_pred, x_t).item()
         return loss
 
-    def learn_many(self, X: pd.DataFrame) -> "Autoencoder":
+    def learn_many(self, X: pd.DataFrame) -> None:
         """
         Performs one step of training with a batch of examples.
 
@@ -227,12 +215,6 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         ----------
         X
             Input batch of examples.
-
-        Returns
-        -------
-        Autoencoder
-            The model itself.
-
         """
         if not self.module_initialized:
 
@@ -241,7 +223,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
         self._adapt_input_dim(X)
         X_t = df2tensor(X, features=self.observed_features, device=self.device)
-        return self._learn(X_t)
+        self._learn(X_t)
 
     def score_many(self, X: pd.DataFrame) -> np.ndarray:
         """
