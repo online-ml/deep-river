@@ -9,7 +9,7 @@ from ordered_set import OrderedSet
 from river import base
 from torch.utils.hooks import RemovableHandle
 
-from deep_river.utils import dict2tensor, get_loss_fn, get_optim_fn
+from deep_river.utils import dict2tensor, get_loss_fn, get_optim_fn, df2tensor
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 from deep_river.utils.layer_adaptation import (
     SUPPORTED_LAYERS,
@@ -414,3 +414,29 @@ class DeepEstimatorInitialized(base.Estimator):
                 )
                 tensor_data = torch.cat([tensor_data, padding], dim=1)
         return tensor_data
+
+    def _df2tensor(self, X: pd.DataFrame):
+        default_value = 0.0
+        tensor_data = df2tensor(
+            X,
+            self.observed_features,
+            default_value=default_value,
+            device=self.device,
+            dtype=torch.float32,
+        )
+        len_current_features = len(self.observed_features)
+        if isinstance(self.input_layer,
+                      torch.nn.Linear):  # Find first Linear layer
+            len_module_input = self.input_layer.in_features
+            if len_current_features < len_module_input:
+                # Pad with default_value if fewer features than required
+                padding = torch.full(
+                    (X.shape[0], len_module_input - len_current_features),
+                    default_value,
+                    device=self.device,
+                    dtype=torch.float32,
+                )
+                tensor_data = torch.cat([tensor_data, padding], dim=1)
+        return tensor_data
+
+

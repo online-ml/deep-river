@@ -436,7 +436,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         """Learns from a batch of examples."""
         self._update_observed_features(X)
         self._update_observed_classes(y)
-        x_t = df2tensor(X, features=self.observed_features, device=self.device)
+        x_t = self._df2tensor(X)
         self._learn(x_t, y)
 
     def predict_proba_one(self, x: dict) -> dict[base.typing.ClfTarget, float]:
@@ -454,7 +454,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         """Predicts probabilities for multiple examples."""
         self._update_observed_features(X)
 
-        x_t = df2tensor(X, features=self.observed_features, device=self.device)
+        x_t = self._df2tensor(X)
 
         self.module.eval()
         with torch.inference_mode():
