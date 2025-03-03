@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 from river import base
-from river.base.typing import ClfTarget, RegTarget
+from river.base.typing import RegTarget
 from sortedcontainers import SortedSet
 
 
@@ -180,16 +180,8 @@ def labels2onehot(
     return onehot
 
 
-import torch
-import numpy as np
-from typing import List, Dict
-from sortedcontainers import SortedSet
-
-
 def output2proba(
-        preds: torch.Tensor,
-        classes: SortedSet,
-        output_is_logit=True
+    preds: torch.Tensor, classes: SortedSet, output_is_logit=True
 ) -> List[Dict]:
     # Convert logits to probabilities if needed.
     if output_is_logit:
@@ -206,10 +198,12 @@ def output2proba(
     n = preds_np.shape[-1]
 
     # Determine the ordering of output classes.
-    # (1) Binary with booleans: if n == 2 and classes is empty or the single class is already a boolean,
+    # (1) Binary with booleans: if n == 2 and classes is empty or
+    # the single class is already a boolean,
     # then force the output keys to be booleans.
-    if n == 2 and (len(classes) == 0 or (
-            len(classes) == 1 and list(classes)[0] in [True, False])):
+    if n == 2 and (
+        len(classes) == 0 or (len(classes) == 1 and list(classes)[0] in [True, False])
+    ):
         if len(classes) == 1:
             base_val = list(classes)[0]
             all_classes = [base_val, not base_val]
@@ -219,24 +213,25 @@ def output2proba(
     # (2) If no classes are provided but n != 2, we don't know how to assign keys.
     elif len(classes) == 0:
         raise ValueError(
-            "Empty classes only supported for binary classification (2 outputs).")
+            "Empty classes only supported for binary classification (2 outputs)."
+        )
 
-    # (3) For a single provided non-boolean class: use it for the first probability and label the others as Unobserved.
+    # (3) For a single provided non-boolean class:
+    # use it for the first probability and label the others as Unobserved.
     elif len(classes) == 1:
         all_classes = list(classes) + [f"Unobserved{i}" for i in range(n - 1)]
-
-    # (4) For multiple provided classes: use them in order, appending extra Unobserved labels if needed.
+    # (4) For multiple provided classes: use them in order,
+    # appending extra Unobserved labels if needed.
     else:
         base = list(classes)
         if n > len(base):
-            all_classes = base + [f"Unobserved{i}" for i in
-                                  range(n - len(base))]
+            all_classes = base + [f"Unobserved{i}" for i in range(n - len(base))]
         else:
             all_classes = base[:n]
 
-    assert len(
-        all_classes) == n, "Mismatch between number of classes and prediction probabilities"
+    assert (
+        len(all_classes) == n
+    ), "Mismatch between number of classes and prediction probabilities"
 
     # Zip each row of probabilities with the corresponding class labels.
     return [dict(zip(all_classes, pred)) for pred in preds_np]
-

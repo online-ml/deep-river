@@ -8,7 +8,6 @@ import torch.optim as optim
 from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
-from river.time_series.base import Forecaster
 
 from deep_river.base import DeepEstimator, DeepEstimatorInitialized
 from deep_river.utils.layer_adaptation import expand_layer
@@ -413,8 +412,10 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         self.module.train()
 
         # Feature incremental: Expand the input layer if necessary
-        if self.is_feature_incremental:
-            self._expand_layer(self.input_layer, target_size=len(self.observed_features), output=False)
+        if self.is_feature_incremental and self.input_layer:
+            self._expand_layer(
+                self.input_layer, target_size=len(self.observed_features), output=False
+            )
 
         self.optimizer.zero_grad()
         y_pred = self.module(x)
