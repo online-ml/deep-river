@@ -8,6 +8,7 @@ import torch.optim as optim
 from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
+from river.time_series.base import Forecaster
 
 from deep_river.base import DeepEstimator, DeepEstimatorInitialized
 from deep_river.utils.layer_adaptation import expand_layer
@@ -385,7 +386,6 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         optimizer_fn: Union[str, Type[optim.Optimizer]],
         lr: float = 0.001,
         output_is_logit: bool = True,
-        is_class_incremental: bool = False,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -402,11 +402,8 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             **kwargs,
         )
         self.output_is_logit = output_is_logit
-        self.is_class_incremental = is_class_incremental
-        self.is_feature_incremental = is_feature_incremental
 
         self.observed_classes: OrderedSet = OrderedSet()
-        self.observed_features: OrderedSet = OrderedSet()
 
         # Check if the module is already initialized (i.e., has parameters)
         self.module_initialized = any(p.numel() > 0 for p in self.module.parameters())
@@ -414,6 +411,11 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def _learn(self, x: torch.Tensor, y: Union[int, pd.Series]):
         """Performs a single training step."""
         self.module.train()
+
+        # Feature incremental: Expand the input layer if necessary
+        if self.is_feature_incremental:
+            self._expand_layer(self.input_layer, target_size=len(self.observed_features), output=False)
+
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
@@ -485,6 +487,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             "module": _TestModule(10),
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
+            "is_feature_incremental": False,
         }
 
     @classmethod

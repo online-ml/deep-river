@@ -3,14 +3,14 @@ from typing import Deque, Dict, List, Optional, Union
 import numpy as np
 import pandas as pd
 import torch
-from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget, RegTarget
+from sortedcontainers import SortedSet
 
 
 def dict2tensor(
     x: dict,
-    features: OrderedSet,
+    features: SortedSet,
     default_value: float = 0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float32,
@@ -94,7 +94,7 @@ def deque2rolling_tensor(
 
 def df2tensor(
     X: pd.DataFrame,
-    features: OrderedSet,
+    features: SortedSet,
     default_value: float = 0,
     device="cpu",
     dtype=torch.float32,
@@ -126,7 +126,7 @@ def df2tensor(
 
 def labels2onehot(
     y: Union[base.typing.ClfTarget, pd.Series],
-    classes: OrderedSet[base.typing.ClfTarget],
+    classes: SortedSet[base.typing.ClfTarget],
     n_classes: Optional[int] = None,
     device="cpu",
     dtype=torch.float32,
@@ -180,30 +180,63 @@ def labels2onehot(
     return onehot
 
 
+import torch
+import numpy as np
+from typing import List, Dict
+from sortedcontainers import SortedSet
+
+
 def output2proba(
-    preds: torch.Tensor, classes: OrderedSet, output_is_logit=True
-) -> List[Dict[ClfTarget, float]]:
+        preds: torch.Tensor,
+        classes: SortedSet,
+        output_is_logit=True
+) -> List[Dict]:
+    # Convert logits to probabilities if needed.
     if output_is_logit:
         if preds.shape[-1] > 1:
             preds = torch.softmax(preds, dim=-1)
         else:
             preds = torch.sigmoid(preds)
+    preds_np = preds.detach().cpu().numpy()
 
-    preds_np = preds.numpy(force=True)
+    # If we have a single column, assume binary and create a complementary column.
     if preds_np.shape[-1] == 1:
         preds_np = np.hstack((preds_np, 1 - preds_np))
 
-    # Assume a binary problem if no classes are known yet
-    if len(classes) == 0:
-        all_classes = OrderedSet([True, False])
-    # Add opposite class if first label seems to be binary
-    elif classes == [True] or classes == [False]:
-        all_classes = classes.union([not classes[0]])
-    # Add `unobserved` classes if pred shape is greater than number of
-    # observed classes
-    else:
-        all_classes = classes.union(
-            [f"Unobserved{i}" for i in range(preds_np.shape[1] - len(classes))]
-        )
+    n = preds_np.shape[-1]
 
+    # Determine the ordering of output classes.
+    # (1) Binary with booleans: if n == 2 and classes is empty or the single class is already a boolean,
+    # then force the output keys to be booleans.
+    if n == 2 and (len(classes) == 0 or (
+            len(classes) == 1 and list(classes)[0] in [True, False])):
+        if len(classes) == 1:
+            base_val = list(classes)[0]
+            all_classes = [base_val, not base_val]
+        else:
+            all_classes = [True, False]
+
+    # (2) If no classes are provided but n != 2, we don't know how to assign keys.
+    elif len(classes) == 0:
+        raise ValueError(
+            "Empty classes only supported for binary classification (2 outputs).")
+
+    # (3) For a single provided non-boolean class: use it for the first probability and label the others as Unobserved.
+    elif len(classes) == 1:
+        all_classes = list(classes) + [f"Unobserved{i}" for i in range(n - 1)]
+
+    # (4) For multiple provided classes: use them in order, appending extra Unobserved labels if needed.
+    else:
+        base = list(classes)
+        if n > len(base):
+            all_classes = base + [f"Unobserved{i}" for i in
+                                  range(n - len(base))]
+        else:
+            all_classes = base[:n]
+
+    assert len(
+        all_classes) == n, "Mismatch between number of classes and prediction probabilities"
+
+    # Zip each row of probabilities with the corresponding class labels.
     return [dict(zip(all_classes, pred)) for pred in preds_np]
+

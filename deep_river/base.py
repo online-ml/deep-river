@@ -5,7 +5,7 @@ from typing import Any, Callable, Deque, Dict, List, Type, Union, cast
 
 import pandas as pd
 import torch
-from ordered_set import OrderedSet
+from sortedcontainers import SortedSet
 from river import base
 from torch.utils.hooks import RemovableHandle
 
@@ -75,7 +75,7 @@ class DeepEstimator(base.Estimator):
         self.optimizer_fn = optimizer_fn
         self.is_feature_incremental = is_feature_incremental
         self.is_class_incremental: bool = False
-        self.observed_features: OrderedSet[str] = OrderedSet([])
+        self.observed_features: SortedSet[str] = SortedSet([])
         self.lr = lr
         self.device = device
         self.kwargs = kwargs
@@ -202,7 +202,7 @@ class DeepEstimator(base.Estimator):
             self.observed_features |= x.columns
 
         if len(self.observed_features) > n_existing_features:
-            self.observed_features = OrderedSet(sorted(self.observed_features))
+            self.observed_features = SortedSet(self.observed_features)
             return True
         else:
             return False
@@ -318,18 +318,22 @@ class DeepEstimatorInitialized(base.Estimator):
 
     Parameters
     ----------
-    module
+    module : torch.nn.Module
         A pre-initialized Torch Module (e.g., an instance of a neural network).
-    loss_fn
-        Loss function to be used for training the wrapped model.
-    optimizer_fn
-        Optimizer to be used for training the wrapped model.
-    lr
-        Learning rate of the optimizer.
-    seed
-        Random seed to be used for training the wrapped model.
+    loss_fn : Union[str, Callable]
+        Loss function to be used for training.
+    optimizer_fn : Union[str, Callable]
+        Optimizer to be used for training.
+    lr : float
+        Learning rate.
+    device : str
+        Device for training (e.g., 'cpu' or 'cuda').
+    seed : int
+        Random seed for reproducibility.
+    is_feature_incremental : bool
+        Whether to allow feature expansion dynamically.
     **kwargs
-        Additional parameters for module initialization and optimizer configuration.
+        Additional parameters.
     """
 
     def __init__(
@@ -340,59 +344,39 @@ class DeepEstimatorInitialized(base.Estimator):
         lr: float = 1e-3,
         device: str = "cpu",
         seed: int = 42,
+        is_feature_incremental: bool = False,
         **kwargs,
     ):
         super().__init__()
-
         self.module = module
+        self.lr = lr
         self.loss_func = get_loss_fn(loss_fn)
         self.loss_fn = loss_fn
-        self.optimizer_func = get_optim_fn(optimizer_fn)
+        self.optimizer = get_optim_fn(optimizer_fn)(self.module.parameters(),
+                                             lr=self.lr)
         self.optimizer_fn = optimizer_fn
-        self.lr = lr
         self.device = device
-        self.kwargs = kwargs
         self.seed = seed
+        self.is_feature_incremental = is_feature_incremental
+        self.kwargs = kwargs
 
         layers = list(self.module.children())
-
-        self.input_layer = layers[0]
-        self.output_layer = layers[-1]
-
-        self.observed_features: OrderedSet = OrderedSet()
-
-        self.module.to(self.device)  # Move the model to the correct device
-        self.optimizer = self.optimizer_func(self.module.parameters(), lr=self.lr)
+        self.input_layer = layers[0] if layers else None
+        self.output_layer = layers[-1] if layers else None
+        self.observed_features : SortedSet = SortedSet()
+        self.module.to(self.device)
         torch.manual_seed(seed)
 
-    def clone(self, new_params: dict[Any, Any] | None = None, include_attributes=False):
-        """
-        Clone the current model while preserving all relevant parameters.
-        """
-        new_params = new_params or {}
-        new_params.update(self.kwargs)
-        new_params.update(self._get_params())
-        new_params.update({"module": self.module})
-
-        clone = self.__class__(**new_params)
-        if include_attributes:
-            clone.__dict__.update(self.__dict__)
-        return clone
-
     def _update_observed_features(self, x):
-        n_existing_features = len(self.observed_features)
-        if isinstance(x, Dict):
-            self.observed_features |= x.keys()
-        else:
-            self.observed_features |= x.columns
+        """Updates observed features dynamically if new ones appear."""
+        prev_feature_count = len(self.observed_features)
+        new_features = x.keys() if isinstance(x, dict) else x.columns
+        self.observed_features.update({f: None for f in new_features})
 
-        if len(self.observed_features) > n_existing_features:
-            self.observed_features = OrderedSet(sorted(self.observed_features))
-            return True
-        else:
-            return False
+        return len(self.observed_features) > prev_feature_count
 
     def _dict2tensor(self, x: dict):
+        """Converts a dictionary to a tensor, handling missing features."""
         default_value = 0.0
         tensor_data = dict2tensor(
             x,
@@ -401,21 +385,10 @@ class DeepEstimatorInitialized(base.Estimator):
             device=self.device,
             dtype=torch.float32,
         )
-        len_current_features = len(self.observed_features)
-        if isinstance(self.input_layer, torch.nn.Linear):  # Find first Linear layer
-            len_module_input = self.input_layer.in_features
-            if len_current_features < len_module_input:
-                # Pad with default_value if fewer features than required
-                padding = torch.full(
-                    (1, len_module_input - len_current_features),
-                    default_value,
-                    device=self.device,
-                    dtype=torch.float32,
-                )
-                tensor_data = torch.cat([tensor_data, padding], dim=1)
-        return tensor_data
+        return self._pad_tensor_if_needed(tensor_data, 1)
 
     def _df2tensor(self, X: pd.DataFrame):
+        """Converts a DataFrame to a tensor, handling missing features."""
         default_value = 0.0
         tensor_data = df2tensor(
             X,
@@ -424,19 +397,147 @@ class DeepEstimatorInitialized(base.Estimator):
             device=self.device,
             dtype=torch.float32,
         )
+        return self._pad_tensor_if_needed(tensor_data, X.shape[0])
+
+    def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
+        """Pads the tensor if fewer features are available than required."""
         len_current_features = len(self.observed_features)
-        if isinstance(self.input_layer,
-                      torch.nn.Linear):  # Find first Linear layer
+        if isinstance(self.input_layer, torch.nn.Linear):
             len_module_input = self.input_layer.in_features
             if len_current_features < len_module_input:
-                # Pad with default_value if fewer features than required
                 padding = torch.full(
-                    (X.shape[0], len_module_input - len_current_features),
+                    (x_len, len_module_input - len_current_features),
                     default_value,
                     device=self.device,
                     dtype=torch.float32,
                 )
+                # Ensure tensor_data has the correct batch size
+                if tensor_data.shape[0] != x_len:
+                    tensor_data = tensor_data.expand(x_len, -1)
+
                 tensor_data = torch.cat([tensor_data, padding], dim=1)
         return tensor_data
 
+    def _load_instructions(self, layer: torch.nn.Module) -> Dict[str, Any]:
+        """
+        Dynamically infer expansion instructions for a given layer.
 
+        Parameters
+        ----------
+        layer : nn.Module
+            The layer to analyze.
+
+        Returns
+        -------
+        Dict
+            Instructions for expanding the layer's parameters.
+        """
+        instructions = {}
+
+        if hasattr(layer, "in_features") and hasattr(layer, "out_features"):
+            instructions["in_features"] = "input_attribute"
+            instructions["out_features"] = "output_attribute"
+
+        if hasattr(layer, "weight"):
+            instructions["weight"] = {
+                "input": [{"axis": 1, "n_subparams": 1}],
+                "output": [{"axis": 0, "n_subparams": 1}],
+            }
+
+        if hasattr(layer, "bias") and layer.bias is not None:
+            instructions["bias"] = {"output": [{"axis": 0, "n_subparams": 1}]}
+
+        return instructions
+
+    def _expand_layer(self, layer: torch.nn.Module, target_size: int, output: bool = True):
+        """
+        Expands a layer dynamically based on inferred attributes.
+
+        Parameters
+        ----------
+        layer : nn.Module
+            The layer to expand.
+        target_size : int
+            The new target size.
+        output : bool, optional
+            Whether to expand the output dimension (default: True).
+        """
+        instructions = self._load_instructions(layer)
+        target_str = "output" if output else "input"
+
+        for param_name, instruction in instructions.items():
+            if instruction == f"{target_str}_attribute":
+                setattr(layer, param_name, target_size)
+
+            elif isinstance(instruction, dict):
+                for axis_info in instruction[target_str]:
+                    param = getattr(layer, param_name)
+                    axis = axis_info["axis"]
+                    dims_to_add = target_size - param.shape[axis]
+                    n_subparams = axis_info["n_subparams"]
+
+                    # Expand weights dynamically
+                    param = self._expand_weights(param, axis, dims_to_add, n_subparams)
+                    setattr(layer, param_name, param)
+
+    def _expand_weights(self, param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int):
+        """
+        Expands weight tensors dynamically along a given axis.
+
+        Parameters
+        ----------
+        param : torch.Tensor
+            The weight tensor to expand.
+        axis : int
+            The axis along which to expand.
+        dims_to_add : int
+            The number of new dimensions to add.
+        n_subparams : int
+            The number of sub-parameters to initialize.
+
+        Returns
+        -------
+        torch.Tensor
+            The expanded weight tensor.
+        """
+        if dims_to_add <= 0:
+            return param  # No need to expand if target size is already met
+
+        new_weights = torch.randn(
+            *(param.shape[:axis] + (dims_to_add,) + param.shape[axis + 1:]),
+            device=param.device,
+            dtype=param.dtype
+        ) * 0.01  # Small random initialization
+
+        return torch.cat([param, new_weights], dim=axis)
+
+
+    def clone(
+        self,
+        new_params: dict[Any, Any] | None = None,
+        include_attributes=False,
+    ):
+        """Clones the estimator.
+
+        Parameters
+        ----------
+        new_params
+            New parameters to be passed to the cloned estimator.
+        include_attributes
+            If True, the attributes of the estimator will be copied to the
+            cloned estimator. This is useful when the estimator is a
+            transformer and the attributes are the learned parameters.
+
+        Returns
+        -------
+        DeepEstimator
+            The cloned estimator.
+        """
+        new_params = new_params or {}
+        new_params.update(self.kwargs)
+        new_params.update(self._get_params())
+
+        clone = self.__class__(**new_params)
+        if include_attributes:
+            clone.__dict__.update(self.__dict__)
+        return clone

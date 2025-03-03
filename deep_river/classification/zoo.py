@@ -310,7 +310,6 @@ class LogisticRegressionInitialized(ClassifierInitialized):
         optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
         output_is_logit: bool = True,
-        is_class_incremental: bool = False,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -325,7 +324,6 @@ class LogisticRegressionInitialized(ClassifierInitialized):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             output_is_logit=output_is_logit,
-            is_class_incremental=is_class_incremental,
             is_feature_incremental=is_feature_incremental,
             device=device,
             lr=lr,
@@ -343,8 +341,7 @@ class LogisticRegressionInitialized(ClassifierInitialized):
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
-            "is_feature_incremental": True,
-            "is_class_incremental": True,
+            "is_feature_incremental": False,
         }
 
 
@@ -418,7 +415,6 @@ class MultiLayerPerceptronInitialized(ClassifierInitialized):
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             output_is_logit=output_is_logit,
-            is_class_incremental=is_class_incremental,
             is_feature_incremental=is_feature_incremental,
             device=device,
             lr=lr,
@@ -436,6 +432,5 @@ class MultiLayerPerceptronInitialized(ClassifierInitialized):
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
-            "is_feature_incremental": True,
-            "is_class_incremental": True,
+            "is_feature_incremental": False,
         }
