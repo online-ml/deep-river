@@ -3,6 +3,7 @@
 import copy
 import importlib
 import inspect
+import itertools
 
 import pytest
 from river.base import Estimator
@@ -38,7 +39,7 @@ def iter_estimators_that_can_be_tested():
     [
         pytest.param(estimator, check, id=f"{estimator}:{check.__name__}")
         for estimator in list(iter_estimators_that_can_be_tested())
-        for check in utils.estimator_checks.yield_checks(estimator)
+        for check in itertools.chain(utils.estimator_checks.yield_checks(estimator),utils.estimator_checks.yield_deep_checks(estimator))
         if check.__name__ not in estimator._unit_test_skips()
     ],
 )
