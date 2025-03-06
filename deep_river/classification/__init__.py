@@ -4,6 +4,8 @@ from deep_river.classification.zoo import (
     LogisticRegression,
     LogisticRegressionInitialized,
     MultiLayerPerceptron,
+    MultiLayerPerceptronInitialized,
+    LSTMClassifierInitialized
 )
 
 """
@@ -16,4 +18,5 @@ __all__ = [
     "MultiLayerPerceptron",
     "LogisticRegression",
     "LogisticRegressionInitialized",
+    "LSTMClassifierInitialized"
 ]

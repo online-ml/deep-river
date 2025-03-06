@@ -550,3 +550,63 @@ class DeepEstimatorInitialized(base.Estimator):
         if include_attributes:
             clone.__dict__.update(self.__dict__)
         return clone
+
+
+class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
+    """
+    Abstract base class that implements basic functionality of
+    River-compatible PyTorch wrappers including a rolling window to allow the
+    model to make predictions based on multiple previous examples.
+
+    Parameters
+    ----------
+    module torch.nn.Module
+        A pre-initialized Torch Module (e.g., an instance of a neural network).
+    loss_fn
+        Loss function to be used for training the wrapped model. Can be a loss
+        function provided by `torch.nn.functional` or one of the following:
+        'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
+        Learning rate of the optimizer.
+    device
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
+    window_size
+        Size of the rolling window used for storing previous examples.
+    append_predict
+        Whether to append inputs passed for prediction to the rolling window.
+    **kwargs
+        Parameters to be passed to the `Module` or the `optimizer`.
+    """
+
+    def __init__(
+        self,
+        module: torch.nn.Module,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Callable] = "sgd",
+        lr: float = 1e-3,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 10,
+        append_predict: bool = False,
+        **kwargs,
+    ):
+        self.window_size = window_size
+        self.append_predict = append_predict
+        self._x_window: Deque = collections.deque(maxlen=window_size)
+        self._batch_i = 0
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            lr=lr,
+            device=device,
+            seed=seed,
+            **kwargs,
+        )

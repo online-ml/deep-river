@@ -8,6 +8,7 @@ import torch.optim as optim
 from ordered_set import OrderedSet
 from river import base
 from river.base.typing import ClfTarget
+from sortedcontainers import SortedSet
 
 from deep_river.base import DeepEstimator, DeepEstimatorInitialized
 from deep_river.utils.layer_adaptation import expand_layer
@@ -149,7 +150,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             seed=seed,
             **kwargs,
         )
-        self.observed_classes: OrderedSet[ClfTarget] = OrderedSet([])
+        self.observed_classes: SortedSet[ClfTarget] = SortedSet([])
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
 
@@ -401,11 +402,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             **kwargs,
         )
         self.output_is_logit = output_is_logit
-
-        self.observed_classes: OrderedSet = OrderedSet()
-
-        # Check if the module is already initialized (i.e., has parameters)
-        self.module_initialized = any(p.numel() > 0 for p in self.module.parameters())
+        self.observed_classes: SortedSet = SortedSet()
 
     def _learn(self, x: torch.Tensor, y: Union[int, pd.Series]):
         """Performs a single training step."""
@@ -442,6 +439,19 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         x_t = self._df2tensor(X)
         self._learn(x_t, y)
 
+    def _update_observed_classes(self, y) -> bool:
+        n_existing_classes = len(self.observed_classes)
+        if isinstance(y, Union[ClfTarget, np.bool_]):  # type: ignore[arg-type]
+            self.observed_classes.add(y)
+        else:
+            self.observed_classes |= y
+
+        if len(self.observed_classes) > n_existing_classes:
+            self.observed_classes = OrderedSet(sorted(self.observed_classes))
+            return True
+        else:
+            return False
+
     def predict_proba_one(self, x: dict) -> dict[base.typing.ClfTarget, float]:
         """Predicts probabilities for a single example."""
         self._update_observed_features(x)
@@ -466,20 +476,6 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         return pd.DataFrame(
             output2proba(y_preds, self.observed_classes, self.output_is_logit)
         )
-
-    def _update_observed_classes(self, y) -> bool:
-        """Tracks new observed classes dynamically."""
-        n_existing_classes = len(self.observed_classes)
-        (
-            self.observed_classes.add(y)
-            if isinstance(y, (int, np.bool_))
-            else self.observed_classes.update(y)
-        )
-
-        if len(self.observed_classes) > n_existing_classes:
-            self.observed_classes = OrderedSet(sorted(self.observed_classes))
-            return True
-        return False
 
     @classmethod
     def _unit_test_params(cls):
