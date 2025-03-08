@@ -26,7 +26,7 @@ def check_dict2tensor(model):
     assert model._dict2tensor(x2).tolist() == [lst]
 
     x3 = {"b": 2, "a": 1, "c": 3}
-    lst= [1, 2, 3]
+    lst = [1, 2, 3]
     lst.extend([0] * (input_len - 3))
     assert model._dict2tensor(x3).tolist() == [lst]
 
@@ -42,7 +42,9 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     if isdeepestimator_initialized(model):
         yield check_dict2tensor
         # Classifier checks
-        if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(model):
+        if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(
+            model
+        ):
             yield check_dict2tensor
 
             if not model._multiclass:
