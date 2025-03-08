@@ -85,6 +85,7 @@ class DeepEstimator(base.Estimator):
         self.output_layer = cast(torch.nn.Module, None)
         self.output_expansion_instructions = cast(Dict, None)
         self.module_initialized = False
+
         torch.manual_seed(seed)
 
     def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
@@ -359,11 +360,14 @@ class DeepEstimatorInitialized(base.Estimator):
         self.device = device
         self.seed = seed
         self.is_feature_incremental = is_feature_incremental
+
         self.kwargs = kwargs
 
         layers = list(self.module.children())
+
         self.input_layer = layers[0] if layers else None
         self.output_layer = layers[-1] if layers else None
+        self.module_input_len = self._get_input_size()
         self.observed_features: SortedSet = SortedSet()
         self.module.to(self.device)
         torch.manual_seed(seed)
@@ -400,23 +404,54 @@ class DeepEstimatorInitialized(base.Estimator):
         )
         return self._pad_tensor_if_needed(tensor_data, X.shape[0])
 
+    def _get_input_size(self):
+        """Dynamically determines the expected input feature size of a PyTorch layer."""
+        if hasattr(self.input_layer, 'in_features'):  # For Linear layers
+            return self.input_layer.in_features
+        elif hasattr(self.input_layer, 'input_size'):  # For LSTM, GRU, RNN
+            return self.input_layer.input_size
+        elif hasattr(self.input_layer, 'in_channels'):  # For Conv layers
+            return self.input_layer.in_channels
+        elif hasattr(self.input_layer, 'weight') and self.input_layer.weight is not None:
+            # Generic case: infer from weight shape
+            return self.input_layer.weight.shape[1]
+        else:
+            raise ValueError(
+                f"Cannot determine input size for layer type {type(self.input_layer)}")
+
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
         """Pads the tensor if fewer features are available than required."""
         len_current_features = len(self.observed_features)
-        if isinstance(self.input_layer, torch.nn.Linear):
-            len_module_input = self.input_layer.in_features
-            if len_current_features < len_module_input:
+
+        if len_current_features < self.module_input_len:
+            padding_shape = None
+
+            if isinstance(self.input_layer, torch.nn.Linear):
+                # Linear layers expect (batch_size, input_features)
+                padding_shape = (
+                x_len, self.module_input_len - len_current_features)
+
+            elif isinstance(self.input_layer,
+                            (torch.nn.LSTM, torch.nn.GRU, torch.nn.RNN)):
+                # RNNs expect (seq_len, batch_size, input_size) or (batch_size, seq_len, input_size)
+                if tensor_data.dim() == 3:  # (seq_len, batch_size, input_size)
+                    seq_len, batch_size, _ = tensor_data.shape
+                    padding_shape = (seq_len, batch_size,
+                                     self.module_input_len - len_current_features)
+                elif tensor_data.dim() == 2:  # (batch_size, input_size) - single timestep
+                    batch_size, _ = tensor_data.shape
+                    padding_shape = (
+                    batch_size, self.module_input_len - len_current_features)
+
+            if padding_shape:
                 padding = torch.full(
-                    (x_len, len_module_input - len_current_features),
+                    padding_shape,
                     default_value,
                     device=self.device,
                     dtype=torch.float32,
                 )
-                # Ensure tensor_data has the correct batch size
-                if tensor_data.shape[0] != x_len:
-                    tensor_data = tensor_data.expand(x_len, -1)
+                tensor_data = torch.cat([tensor_data, padding], dim=-1)
 
-                tensor_data = torch.cat([tensor_data, padding], dim=1)
         return tensor_data
 
     def _load_instructions(
@@ -451,6 +486,21 @@ class DeepEstimatorInitialized(base.Estimator):
             instructions["bias"] = {"output": [{"axis": 0, "n_subparams": 1}]}
 
         return instructions
+
+    def _get_input_size(self):
+        """Dynamically determines the expected input feature size of a PyTorch layer."""
+        if hasattr(self.input_layer, 'in_features'):  # For Linear layers
+            return self.input_layer.in_features
+        elif hasattr(self.input_layer, 'input_size'):  # For LSTM, GRU, RNN
+            return self.input_layer.input_size
+        elif hasattr(self.input_layer, 'in_channels'):  # For Conv layers
+            return self.input_layer.in_channels
+        elif hasattr(self.input_layer, 'weight') and layer.weight is not None:
+            # Generic case: infer from weight shape
+            return self.input_layer.weight.shape[1]
+        else:
+            raise ValueError(
+                f"Cannot determine input size for layer type {type(layer)}")
 
     def _expand_layer(
         self, layer: torch.nn.Module, target_size: int, output: bool = True

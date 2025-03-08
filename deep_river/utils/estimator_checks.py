@@ -7,23 +7,28 @@ __all__ = ["check_estimator"]
 import typing
 
 from river.checks import yield_checks
-from river.utils import inspect
-from river.utils.inspect import extract_relevant
+from river.utils import inspect as river_inspect
+
+from deep_river.utils.inspect import isdeepestimator_initialized
 
 
 def check_dict2tensor(model):
     x = {"a": 1, "b": 2, "c": 3}
     model._update_observed_features(x)
-    #assert model._dict2tensor(x).tolist() == [[1, 2, 3]]
-    assert True == True
+    input_len = model._get_input_size()
+    lst = [1, 2, 3]
+    lst.extend([0] * (input_len - 3))
+    assert model._dict2tensor(x).tolist() == [lst]
 
     x2 = {"b": 2, "c": 3}
-    #assert model._dict2tensor(x2).tolist() == [[0, 2, 3]]
-    assert True == True #todo activate this
+    lst = [0, 2, 3]
+    lst.extend([0] * (input_len - 3))
+    assert model._dict2tensor(x2).tolist() == [lst]
 
     x3 = {"b": 2, "a": 1, "c": 3}
-    #assert model._dict2tensor(x3) == [[1, 2, 3]]
-    assert True == True
+    lst= [1, 2, 3]
+    lst.extend([0] * (input_len - 3))
+    assert model._dict2tensor(x3).tolist() == [lst]
 
 
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
@@ -34,14 +39,15 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     model
 
     """
-
-    yield check_dict2tensor
-    # Classifier checks
-    if inspect.isclassifier(model) and not inspect.ismoclassifier(model):
+    if isdeepestimator_initialized(model):
         yield check_dict2tensor
-
-        if not model._multiclass:
+        # Classifier checks
+        if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(model):
             yield check_dict2tensor
+
+            if not model._multiclass:
+                yield check_dict2tensor
+
 
 def check_estimator(model):
     """Check if a model adheres to `river`'s conventions.
@@ -54,9 +60,9 @@ def check_estimator(model):
     for check in yield_checks(model):
         if check.__name__ in model._unit_test_skips():
             continue
-        check(copy.deepcopy(model)) #todo change to clone
+        check(copy.deepcopy(model))  # todo change to clone
 
     for check in yield_deep_checks(model):
         if check.__name__ in model._unit_test_skips():
             continue
-        check(copy.deepcopy(model)) #todo change to clone
+        check(copy.deepcopy(model))  # todo change to clone

@@ -4,12 +4,15 @@ import pandas as pd
 import torch
 from river.base.typing import ClfTarget
 from sortedcontainers import SortedSet
+from torch import optim
 
-from deep_river.base import RollingDeepEstimator, \
-    RollingDeepEstimatorInitialized
+from deep_river.base import RollingDeepEstimator, RollingDeepEstimatorInitialized
 from deep_river.classification import Classifier, ClassifierInitialized
-from deep_river.utils.tensor_conversion import deque2rolling_tensor, \
-    output2proba, labels2onehot
+from deep_river.utils.tensor_conversion import (
+    deque2rolling_tensor,
+    labels2onehot,
+    output2proba,
+)
 
 
 class _TestLSTM(torch.nn.Module):
@@ -282,7 +285,10 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)
 
-class RollingClassifierInitialized(ClassifierInitialized, RollingDeepEstimatorInitialized):
+
+class RollingClassifierInitialized(
+    ClassifierInitialized, RollingDeepEstimatorInitialized
+):
     """
     Wrapper that feeds a sliding window of the most recent examples to the
     wrapped PyTorch classification model. The class also automatically handles
@@ -339,7 +345,7 @@ class RollingClassifierInitialized(ClassifierInitialized, RollingDeepEstimatorIn
         self,
         module: torch.nn.Module,
         loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
-        optimizer_fn: Union[str, Callable] = "sgd",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
         output_is_logit: bool = True,
         is_feature_incremental: bool = False,
@@ -383,7 +389,7 @@ class RollingClassifierInitialized(ClassifierInitialized, RollingDeepEstimatorIn
             "module": _TestLSTM(10),
             "optimizer_fn": "sgd",
             "lr": 1e-3,
-            "is_feature_incremental": False
+            "is_feature_incremental": False,
         }
 
     @classmethod
@@ -503,7 +509,6 @@ class RollingClassifierInitialized(ClassifierInitialized, RollingDeepEstimatorIn
 
         X = X[list(self.observed_features)]
         self._x_window.extend(X.values.tolist())
-
 
         if len(self._x_window) == self.window_size:
             X_t = deque2rolling_tensor(self._x_window, device=self.device)

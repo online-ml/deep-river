@@ -3,8 +3,7 @@ from typing import Callable, Type, Union
 from torch import nn, optim
 
 from deep_river.classification import Classifier, ClassifierInitialized
-from deep_river.classification.rolling_classifier import \
-    RollingClassifierInitialized
+from deep_river.classification.rolling_classifier import RollingClassifierInitialized
 
 
 class LogisticRegression(Classifier):
@@ -441,6 +440,7 @@ class MultiLayerPerceptronInitialized(ClassifierInitialized):
             "is_feature_incremental": False,
         }
 
+
 class LSTMClassifierInitialized(RollingClassifierInitialized):
     """
     A specialized LSTM-based classifier designed for handling rolling or
@@ -488,7 +488,6 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
             )
             self.softmax = nn.Softmax(dim=-1)
 
-
         def forward(self, X, **kwargs):
             # lstm with input, hidden, and internal state
             output, (hn, cn) = self.lstm(X)
@@ -508,9 +507,7 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
         **kwargs,
     ):
         self.n_features = n_features
-        module = LSTMClassifierInitialized.LSTMModule(
-            n_features=n_features
-        )
+        module = LSTMClassifierInitialized.LSTMModule(n_features=n_features)
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
