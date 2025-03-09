@@ -377,6 +377,10 @@ class DeepEstimatorInitialized(base.Estimator):
         prev_feature_count = len(self.observed_features)
         new_features = x.keys() if isinstance(x, dict) else x.columns
         self.observed_features.update({f: None for f in new_features})
+        if self.is_feature_incremental and self.input_layer:
+            self._expand_layer(
+                self.input_layer, target_size=len(self.observed_features), output=False
+            )
 
         return len(self.observed_features) > prev_feature_count
 

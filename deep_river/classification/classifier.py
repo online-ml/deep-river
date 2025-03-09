@@ -406,17 +406,9 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def _learn(self, x: torch.Tensor, y: Union[base.typing.ClfTarget, pd.Series]):
         """Performs a single training step."""
         self.module.train()
-
-        # Feature incremental: Expand the input layer if necessary
-        if self.is_feature_incremental and self.input_layer:
-            self._expand_layer(
-                self.input_layer, target_size=len(self.observed_features), output=False
-            )
-
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-
         y_onehot = labels2onehot(y, self.observed_classes, n_classes, self.device)
         loss = self.loss_func(y_pred, y_onehot)
         loss.backward()
@@ -426,7 +418,6 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         """Learns from a single example."""
         self._update_observed_features(x)
         self._update_observed_classes(y)
-
         x_t = self._dict2tensor(x)
         self._learn(x_t, y)
 

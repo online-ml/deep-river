@@ -305,9 +305,7 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
     def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
         """Learns from a single example."""
         self._update_observed_features(x)
-
         x_t = self._dict2tensor(x)
-
         self._learn(x_t, y)
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
@@ -330,8 +328,8 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         RegTarget
             Predicted target value.
         """
+        self._update_observed_features(x)
         x_t = self._dict2tensor(x)
-
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t).item()
@@ -340,13 +338,10 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
     def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Predicts probabilities for multiple examples."""
         self._update_observed_features(X)
-
         x_t = self._df2tensor(X)
-
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(x_t)
-
         return pd.DataFrame(y_preds)
 
     @classmethod
