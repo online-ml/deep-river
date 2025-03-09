@@ -7,7 +7,6 @@ import torch.nn as nn
 import torch.optim as optim
 from ordered_set import OrderedSet
 from river import base
-from river.base.typing import ClfTarget
 from sortedcontainers import SortedSet
 
 from deep_river.base import DeepEstimator, DeepEstimatorInitialized
@@ -150,7 +149,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             seed=seed,
             **kwargs,
         )
-        self.observed_classes: SortedSet[ClfTarget] = SortedSet([])
+        self.observed_classes: SortedSet[base.typing.ClfTarget] = SortedSet([])
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
 
@@ -189,7 +188,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         """
         return set()
 
-    def _learn(self, x: torch.Tensor, y: Union[ClfTarget, pd.Series]):
+    def _learn(self, x: torch.Tensor, y: Union[base.typing.ClfTarget, pd.Series]):
         self.module.train()
         self.optimizer.zero_grad()
         y_pred = self.module(x)
@@ -205,7 +204,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.optimizer.step()
         return self
 
-    def learn_one(self, x: dict, y: ClfTarget) -> None:
+    def learn_one(self, x: dict, y: base.typing.ClfTarget) -> None:
         """
         Performs one step of training with a single example.
 
@@ -236,7 +235,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
         self._learn(x=x_t, y=y)
 
-    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
+    def predict_proba_one(self, x: dict) -> Dict[base.typing.ClfTarget, float]:
         """
         Predict the probability of each label given the input.
 
@@ -266,7 +265,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
     def _update_observed_classes(self, y) -> bool:
         n_existing_classes = len(self.observed_classes)
-        if isinstance(y, Union[ClfTarget, np.bool_]):  # type: ignore[arg-type]
+        if isinstance(y, Union[base.typing.ClfTarget, np.bool_]):  # type: ignore[arg-type]
             self.observed_classes.add(y)
         else:
             self.observed_classes |= y
@@ -277,7 +276,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         else:
             return False
 
-    def _adapt_output_dim(self, y: ClfTarget | pd.Series):
+    def _adapt_output_dim(self, y: base.typing.ClfTarget | pd.Series):
         has_new_class = self._update_observed_classes(y)
         if (
             has_new_class
@@ -404,7 +403,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         self.output_is_logit = output_is_logit
         self.observed_classes: SortedSet = SortedSet()
 
-    def _learn(self, x: torch.Tensor, y: Union[int, pd.Series]):
+    def _learn(self, x: torch.Tensor, y: Union[base.typing.ClfTarget, pd.Series]):
         """Performs a single training step."""
         self.module.train()
 
@@ -422,7 +421,6 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         loss = self.loss_func(y_pred, y_onehot)
         loss.backward()
         self.optimizer.step()
-        return self
 
     def learn_one(self, x: dict, y: base.typing.ClfTarget) -> None:
         """Learns from a single example."""
@@ -441,7 +439,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
 
     def _update_observed_classes(self, y) -> bool:
         n_existing_classes = len(self.observed_classes)
-        if isinstance(y, Union[ClfTarget, np.bool_]):  # type: ignore[arg-type]
+        if isinstance(y, Union[base.typing.ClfTarget, np.bool_]):  # type: ignore[arg-type]
             self.observed_classes.add(y)
         else:
             self.observed_classes |= y

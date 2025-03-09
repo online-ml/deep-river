@@ -369,7 +369,6 @@ class RollingClassifierInitialized(
             **kwargs,
         )
         self.output_is_logit = output_is_logit
-
         self.observed_classes: SortedSet = SortedSet()
 
     @classmethod
@@ -404,11 +403,7 @@ class RollingClassifierInitialized(
         set
             Set of checks to skip during unit testing.
         """
-        return {
-            # Test fails since `sum(y_pred)` call in test produces large
-            # floating point error.
-            "check_predict_proba_one",
-        }
+        return set()
 
     def _learn(self, x: torch.Tensor, y: Union[int, pd.Series]):
         """Performs a single training step."""

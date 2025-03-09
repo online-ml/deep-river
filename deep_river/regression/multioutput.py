@@ -3,9 +3,9 @@ from collections import OrderedDict
 from typing import Callable, Type, Union
 
 import torch
-from ordered_set import OrderedSet
 from river.base import MultiTargetRegressor as RiverMultiTargetRegressor
 from river.base.typing import FeatureName, RegTarget
+from sortedcontainers import SortedSet
 
 from deep_river.base import DeepEstimator
 from deep_river.utils import dict2tensor, float2tensor
@@ -166,7 +166,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         if not self.module_initialized:
             self._update_observed_features(x)
             self.initialize_module(x=x, **self.kwargs)
-        x_t = dict2tensor(x, OrderedSet(x.keys()), device=self.device)
+        x_t = dict2tensor(x, SortedSet(x.keys()), device=self.device)
         self.observed_targets.update(y) if y is not None else None
         y_t = float2tensor(y, self.device)
         self._learn(x_t, y_t)
@@ -188,7 +188,7 @@ class MultiTargetRegressor(RiverMultiTargetRegressor, DeepEstimator):
         if not self.module_initialized:
             self._update_observed_features(x)
             self.initialize_module(x=x, **self.kwargs)
-        x_t = dict2tensor(x, OrderedSet(x.keys()), device=self.device)
+        x_t = dict2tensor(x, SortedSet(x.keys()), device=self.device)
         self.module.eval()
         with torch.inference_mode():
             y_pred_t = self.module(x_t).squeeze().tolist()

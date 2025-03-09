@@ -4,15 +4,16 @@ import pandas as pd
 import torch
 from river import base
 from river.base.typing import RegTarget
+from torch import nn, optim
 
-from deep_river.base import DeepEstimator
+from deep_river.base import DeepEstimator, DeepEstimatorInitialized
 from deep_river.utils.tensor_conversion import df2tensor, dict2tensor, float2tensor
 
 
 class _TestModule(torch.nn.Module):
     def __init__(self, n_features):
         super().__init__()
-
+        self.n_features = n_features
         self.dense0 = torch.nn.Linear(n_features, 10)
         self.nonlin = torch.nn.ReLU()
         self.dropout = torch.nn.Dropout(0.5)
@@ -229,3 +230,136 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         with torch.inference_mode():
             y_preds = self.module(X_t).detach().squeeze().tolist()
         return y_preds
+
+
+class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
+    """
+    Wrapper for PyTorch classification models that supports feature and class incremental learning.
+
+    Parameters
+    ----------
+    module : torch.nn.Module
+        A PyTorch model. Can be pre-initialized or uninitialized.
+    loss_fn : Union[str, Callable]
+        Loss function for training. Can be a string ('mse', 'cross_entropy', etc.)
+        or a PyTorch function.
+    optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
+        Optimizer for training (e.g., "adam", "sgd", or a PyTorch optimizer class).
+    lr : float, default=0.001
+        Learning rate of the optimizer.
+    output_is_logit : bool, default=True
+        If True, applies softmax/sigmoid during inference.
+    is_class_incremental : bool, default=False
+        If True, adds neurons when new classes appear.
+    is_feature_incremental : bool, default=False
+        If True, adds neurons when new features appear.
+    device : str, default="cpu"
+        Whether to use "cpu" or "cuda".
+    seed : Optional[int], default=None
+        Random seed for reproducibility.
+    **kwargs
+        Additional parameters for model initialization.
+
+    """
+
+    def __init__(
+        self,
+        module: nn.Module,
+        loss_fn: Union[str, Callable],
+        optimizer_fn: Union[str, Type[optim.Optimizer]],
+        lr: float = 0.001,
+        output_is_logit: bool = True,
+        is_feature_incremental: bool = False,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
+    ):
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            device=device,
+            lr=lr,
+            is_feature_incremental=is_feature_incremental,
+            seed=seed,
+            **kwargs,
+        )
+        self.output_is_logit = output_is_logit
+
+    def _learn(self, x: torch.Tensor, y: Union[RegTarget, pd.Series]):
+        """Performs a single training step."""
+        self.module.train()
+
+        # Feature incremental: Expand the input layer if necessary
+        if self.is_feature_incremental and self.input_layer:
+            self._expand_layer(
+                self.input_layer, target_size=len(self.observed_features), output=False
+            )
+        y_t = float2tensor(y, device=self.device)
+        self.optimizer.zero_grad()
+        y_pred = self.module(x)
+        loss = self.loss_func(y_pred, y_t)
+        loss.backward()
+        self.optimizer.step()
+
+    def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
+        """Learns from a single example."""
+        self._update_observed_features(x)
+
+        x_t = self._dict2tensor(x)
+
+        self._learn(x_t, y)
+
+    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
+        """Learns from a batch of examples."""
+        self._update_observed_features(X)
+        x_t = self._df2tensor(X)
+        self._learn(x_t, y)
+
+    def predict_one(self, x: dict) -> RegTarget:
+        """
+        Predicts the target value for a single example.
+
+        Parameters
+        ----------
+        x
+            Input example.
+
+        Returns
+        -------
+        RegTarget
+            Predicted target value.
+        """
+        x_t = self._dict2tensor(x)
+
+        self.module.eval()
+        with torch.inference_mode():
+            y_pred = self.module(x_t).item()
+        return y_pred
+
+    def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Predicts probabilities for multiple examples."""
+        self._update_observed_features(X)
+
+        x_t = self._df2tensor(X)
+
+        self.module.eval()
+        with torch.inference_mode():
+            y_preds = self.module(x_t)
+
+        return pd.DataFrame(y_preds)
+
+    @classmethod
+    def _unit_test_params(cls):
+        """Provides default parameters for unit testing."""
+        yield {
+            "module": _TestModule(10),
+            "loss_fn": "binary_cross_entropy_with_logits",
+            "optimizer_fn": "sgd",
+            "is_feature_incremental": False,
+        }
+
+    @classmethod
+    def _unit_test_skips(cls) -> set:
+        """Defines unit tests to skip."""
+        return set()
