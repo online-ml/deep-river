@@ -497,22 +497,6 @@ class DeepEstimatorInitialized(base.Estimator):
 
         return instructions
 
-    def _get_input_size(self):
-        """Dynamically determines the expected input feature size of a PyTorch layer."""
-        if hasattr(self.input_layer, "in_features"):  # For Linear layers
-            return self.input_layer.in_features
-        elif hasattr(self.input_layer, "input_size"):  # For LSTM, GRU, RNN
-            return self.input_layer.input_size
-        elif hasattr(self.input_layer, "in_channels"):  # For Conv layers
-            return self.input_layer.in_channels
-        elif hasattr(self.input_layer, "weight") and layer.weight is not None:
-            # Generic case: infer from weight shape
-            return self.input_layer.weight.shape[1]
-        else:
-            raise ValueError(
-                f"Cannot determine input size for layer type {type(layer)}"
-            )
-
     def _expand_layer(
         self, layer: torch.nn.Module, target_size: int, output: bool = True
     ):
