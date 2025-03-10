@@ -386,7 +386,7 @@ class AutoencoderInitialized(DeepEstimatorInitialized, AnomalyDetector):
         """
 
         yield {
-            "module": _TestAutoencoder(30,3),
+            "module": _TestAutoencoder(30, 3),
             "loss_fn": "mse",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,

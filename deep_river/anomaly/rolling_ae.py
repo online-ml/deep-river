@@ -6,8 +6,7 @@ import torch
 from river import anomaly
 from torch import nn
 
-from deep_river.base import RollingDeepEstimator, \
-    RollingDeepEstimatorInitialized
+from deep_river.base import RollingDeepEstimator, RollingDeepEstimatorInitialized
 from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 
@@ -241,7 +240,9 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             return np.zeros(len(X)).tolist()
 
 
-class RollingAutoencoderInitialized(RollingDeepEstimatorInitialized, anomaly.base.AnomalyDetector):
+class RollingAutoencoderInitialized(
+    RollingDeepEstimatorInitialized, anomaly.base.AnomalyDetector
+):
     """
     Wrapper for PyTorch autoencoder models that uses the networks
     reconstruction error for scoring the anomalousness of a given example.
