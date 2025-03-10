@@ -423,14 +423,6 @@ class AutoencoderInitialized(DeepEstimatorInitialized, AnomalyDetector):
         self._update_observed_features(x)
         self._learn(self._dict2tensor(x))
 
-    def _learn(self, x: torch.Tensor):
-        self.module.train()
-        x_pred = self.module(x)
-        loss = self.loss_func(x_pred, x)
-        loss.backward()
-        self.optimizer.step()
-        self.optimizer.zero_grad()
-
     def score_one(self, x: dict) -> float:
         """
         Returns an anomaly score for the provided example in the form of
