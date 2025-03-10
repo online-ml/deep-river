@@ -286,33 +286,18 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         )
         self.output_is_logit = output_is_logit
 
-    def _learn(self, x: torch.Tensor, y: Union[RegTarget, pd.Series]):
-        """Performs a single training step."""
-        self.module.train()
-
-        # Feature incremental: Expand the input layer if necessary
-        if self.is_feature_incremental and self.input_layer:
-            self._expand_layer(
-                self.input_layer, target_size=len(self.observed_features), output=False
-            )
-        y_t = float2tensor(y, device=self.device)
-        self.optimizer.zero_grad()
-        y_pred = self.module(x)
-        loss = self.loss_func(y_pred, y_t)
-        loss.backward()
-        self.optimizer.step()
-
     def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
-        """Learns from a single example."""
         self._update_observed_features(x)
         x_t = self._dict2tensor(x)
-        self._learn(x_t, y)
+        self._learn(x_t, y)  # y is now correctly handled in _learn
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
-        """Learns from a batch of examples."""
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
-        self._learn(x_t, y)
+        y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
+            -1, 1
+        )
+        self._learn(x_t, y_t)
 
     def predict_one(self, x: dict) -> RegTarget:
         """

@@ -2,7 +2,7 @@ from typing import Callable, Type, Union
 
 import pandas as pd
 import torch
-from river.base.typing import RegTarget
+from river import base
 from torch import optim
 
 from deep_river.base import RollingDeepEstimator, RollingDeepEstimatorInitialized
@@ -126,7 +126,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         """
         return set()
 
-    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> None:
+    def learn_one(self, x: dict, y: base.typing.RegTarget, **kwargs) -> None:
         """
         Performs one step of training with the sliding
         window of the most recent examples.
@@ -318,25 +318,7 @@ class RollingRegressorInitialized(
             "check_predict_proba_one",
         }
 
-    def _learn(self, x: torch.Tensor, y: Union[RegTarget, pd.Series]):
-        """Performs a single training step."""
-        self.module.train()
-
-        # Feature incremental: Expand the input layer if necessary
-        if self.is_feature_incremental and self.input_layer:
-            self._expand_layer(
-                self.input_layer, target_size=len(self.observed_features), output=False
-            )
-
-        self.optimizer.zero_grad()
-        y_pred = self.module(x)
-
-        y_true = float2tensor(y, device=self.device)
-        loss = self.loss_func(y_pred, y_true)
-        loss.backward()
-        self.optimizer.step()
-
-    def learn_one(self, x: dict, y: RegTarget, **kwargs) -> None:
+    def learn_one(self, x: dict, y: base.typing.RegTarget, **kwargs) -> None:
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
@@ -350,20 +332,22 @@ class RollingRegressorInitialized(
 
         Returns
         -------
-        Classifier
-            The classifier itself.
+        Self
+            The regressor itself.
         """
-
         self._update_observed_features(x)
 
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
-        # training process
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
-            return self._learn(x=x_t, y=y)
 
-    def predict_one(self, x: dict) -> RegTarget:
+            # Convert y to tensor (ensuring proper shape for regression)
+            y_t = torch.tensor([y], dtype=torch.float32, device=self.device).view(-1, 1)
+
+            self._learn(x=x_t, y=y_t)
+
+    def predict_one(self, x: dict) -> base.typing.RegTarget:
         """
         Predict the probability of each label given the most recent examples
         stored in the sliding window.
@@ -406,8 +390,8 @@ class RollingRegressorInitialized(
 
         Returns
         -------
-        Classifier
-            The classifier itself.
+        Self
+            The regressor itself.
         """
         self._update_observed_features(X)
 
@@ -416,7 +400,13 @@ class RollingRegressorInitialized(
 
         if len(self._x_window) == self.window_size:
             X_t = deque2rolling_tensor(self._x_window, device=self.device)
-            self._learn(x=X_t, y=y)
+
+            # Convert y to tensor (ensuring proper shape for regression)
+            y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
+                -1, 1
+            )
+
+            self._learn(x=X_t, y=y_t)
 
     def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """

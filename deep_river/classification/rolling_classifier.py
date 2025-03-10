@@ -8,11 +8,7 @@ from torch import optim
 
 from deep_river.base import RollingDeepEstimator, RollingDeepEstimatorInitialized
 from deep_river.classification import Classifier, ClassifierInitialized
-from deep_river.utils.tensor_conversion import (
-    deque2rolling_tensor,
-    labels2onehot,
-    output2proba,
-)
+from deep_river.utils.tensor_conversion import deque2rolling_tensor, output2proba
 
 
 class _TestLSTM(torch.nn.Module):
@@ -286,27 +282,28 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         return pd.DataFrame(probas)
 
 
-class RollingClassifierInitialized(ClassifierInitialized,
-                                   RollingDeepEstimatorInitialized):
+class RollingClassifierInitialized(
+    ClassifierInitialized, RollingDeepEstimatorInitialized
+):
     """
     Wrapper that feeds a sliding window of recent examples to the wrapped
     classification model and adapts to new features or classes.
     """
 
     def __init__(
-            self,
-            module: torch.nn.Module,
-            loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
-            optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
-            lr: float = 1e-3,
-            output_is_logit: bool = True,
-            is_class_incremental: bool = False,
-            is_feature_incremental: bool = False,
-            device: str = "cpu",
-            seed: int = 42,
-            window_size: int = 10,
-            append_predict: bool = False,
-            **kwargs,
+        self,
+        module: torch.nn.Module,
+        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
+        lr: float = 1e-3,
+        output_is_logit: bool = True,
+        is_class_incremental: bool = False,
+        is_feature_incremental: bool = False,
+        device: str = "cpu",
+        seed: int = 42,
+        window_size: int = 10,
+        append_predict: bool = False,
+        **kwargs,
     ):
         super().__init__(
             module=module,
@@ -343,8 +340,7 @@ class RollingClassifierInitialized(ClassifierInitialized,
         """Learns from one example using the rolling window."""
         self._update_observed_features(x)
         self._update_observed_classes(y)
-        self._x_window.append(
-            [x.get(feature, 0) for feature in self.observed_features])
+        self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
             self._learn(x=x_t, y=y)
@@ -360,8 +356,7 @@ class RollingClassifierInitialized(ClassifierInitialized,
         with torch.inference_mode():
             x_t = deque2rolling_tensor(x_win, device=self.device)
             y_pred = self.module(x_t)
-            proba = output2proba(y_pred, self.observed_classes,
-                                 self.output_is_logit)
+            proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
         return proba[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
@@ -387,5 +382,3 @@ class RollingClassifierInitialized(ClassifierInitialized,
             x_t = deque2rolling_tensor(x_win, device=self.device)
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)
-
-

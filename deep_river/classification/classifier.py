@@ -3,8 +3,6 @@ from typing import Callable, Dict, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-import torch.nn as nn
-import torch.optim as optim
 from ordered_set import OrderedSet
 from river import base
 from sortedcontainers import SortedSet
@@ -376,6 +374,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     **kwargs
         Additional parameters for model initialization.
     """
+
     def __init__(
         self,
         module: torch.nn.Module,
@@ -403,17 +402,6 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         self.is_class_incremental = is_class_incremental
         self.observed_classes: SortedSet = SortedSet()
 
-    def _learn(self, x: torch.Tensor, y: Union[base.typing.ClfTarget, pd.Series]):
-        """Performs a single training step."""
-        self.module.train()
-        self.optimizer.zero_grad()
-        y_pred = self.module(x)
-        n_classes = y_pred.shape[-1]
-        y_onehot = labels2onehot(y, self.observed_classes, n_classes, self.device)
-        loss = self.loss_func(y_pred, y_onehot)
-        loss.backward()
-        self.optimizer.step()
-
     def learn_one(self, x: dict, y: base.typing.ClfTarget) -> None:
         """Learns from a single example."""
         self._update_observed_features(x)
@@ -435,7 +423,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         """
         n_existing_classes = len(self.observed_classes)
         # Add the new class(es) from y.
-        if isinstance(y, (base.typing.ClfTarget, np.bool_)):
+        if isinstance(y, (base.typing.ClfTarget, np.bool_)):  # type: ignore[arg-type]
             self.observed_classes.add(y)
         else:
             self.observed_classes |= set(y)
@@ -445,7 +433,11 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             self.observed_classes = OrderedSet(sorted(self.observed_classes))
             # Expand the output layer to match the new number of classes.
             if self.is_class_incremental and self.output_layer:
-                self._expand_layer(self.output_layer, target_size=len(self.observed_classes), output=True)
+                self._expand_layer(
+                    self.output_layer,
+                    target_size=len(self.observed_classes),
+                    output=True,
+                )
             return True
         else:
             return False
@@ -485,4 +477,3 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def _unit_test_skips(cls) -> set:
         """Defines unit tests to skip."""
         return set()
-

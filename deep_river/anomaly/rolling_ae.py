@@ -349,15 +349,6 @@ class RollingAutoencoderInitialized(
             "check_predict_proba_one_binary",
         }
 
-    def _learn(self, x: torch.Tensor):
-        self.module.train()
-        x_pred = self.module(x)
-        loss = self.loss_func(x_pred, x)
-
-        self.optimizer.zero_grad()
-        loss.backward()
-        self.optimizer.step()
-
     def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
         """
         Performs one step of training with a single example.
