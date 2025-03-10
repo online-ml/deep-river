@@ -338,24 +338,23 @@ class DeepEstimatorInitialized(base.Estimator):
     """
 
     def __init__(
-        self,
-        module: torch.nn.Module,
-        loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Callable] = "sgd",
-        lr: float = 1e-3,
-        device: str = "cpu",
-        seed: int = 42,
-        is_feature_incremental: bool = False,
-        **kwargs,
+            self,
+            module: torch.nn.Module,
+            loss_fn: Union[str, Callable] = "mse",
+            optimizer_fn: Union[str, Callable] = "sgd",
+            lr: float = 1e-3,
+            device: str = "cpu",
+            seed: int = 42,
+            is_feature_incremental: bool = False,
+            **kwargs,
     ):
         super().__init__()
         self.module = module
         self.lr = lr
         self.loss_func = get_loss_fn(loss_fn)
         self.loss_fn = loss_fn
-        self.optimizer = get_optim_fn(optimizer_fn)(
-            self.module.parameters(), lr=self.lr
-        )
+        self.optimizer = get_optim_fn(optimizer_fn)(self.module.parameters(),
+                                                    lr=self.lr)
         self.optimizer_fn = optimizer_fn
         self.device = device
         self.seed = seed
@@ -363,14 +362,42 @@ class DeepEstimatorInitialized(base.Estimator):
 
         self.kwargs = kwargs
 
-        layers = list(self.module.children())
+        # Automatically extract candidate layers recursively.
+        # This method traverses the module and collects leaf layers while ignoring
+        # non-parametric layers like Softmax and LogSoftmax.
+        candidates = self._extract_candidate_layers(self.module)
+        if candidates:
+            self.input_layer = candidates[0]
+            self.output_layer = candidates[-1]
+        else:
+            self.input_layer = None
+            self.output_layer = None
 
-        self.input_layer = layers[0] if layers else None
-        self.output_layer = layers[-1] if layers else None
-        self.module_input_len = self._get_input_size()
+        # Set the expected input length based on the extracted input layer.
+        self.module_input_len = self._get_input_size() if self.input_layer else None
         self.observed_features: SortedSet = SortedSet()
         self.module.to(self.device)
         torch.manual_seed(seed)
+
+    @staticmethod
+    def _extract_candidate_layers(module: torch.nn.Module) -> list[
+        torch.nn.Module]:
+        """
+        Recursively collects candidate layers for adaptation.
+        Non-parametric layers such as Softmax or LogSoftmax are filtered out.
+        """
+        candidates = []
+        for child in module.children():
+            # If the child has its own children, dive deeper.
+            if list(child.children()):
+                candidates.extend(
+                    DeepEstimatorInitialized._extract_candidate_layers(child))
+            else:
+                # Exclude activation layers that don't have trainable parameters.
+                if not isinstance(child,
+                                  (torch.nn.Softmax, torch.nn.LogSoftmax)):
+                    candidates.append(child)
+        return candidates
 
     def _update_observed_features(self, x):
         """Updates observed features dynamically if new ones appear."""
@@ -379,9 +406,9 @@ class DeepEstimatorInitialized(base.Estimator):
         self.observed_features.update({f: None for f in new_features})
         if self.is_feature_incremental and self.input_layer:
             self._expand_layer(
-                self.input_layer, target_size=len(self.observed_features), output=False
+                self.input_layer, target_size=len(self.observed_features),
+                output=False
             )
-
         return len(self.observed_features) > prev_feature_count
 
     def _dict2tensor(self, x: dict):
@@ -416,9 +443,8 @@ class DeepEstimatorInitialized(base.Estimator):
             return self.input_layer.input_size
         elif hasattr(self.input_layer, "in_channels"):  # For Conv layers
             return self.input_layer.in_channels
-        elif (
-            hasattr(self.input_layer, "weight") and self.input_layer.weight is not None
-        ):
+        elif hasattr(self.input_layer,
+                     "weight") and self.input_layer.weight is not None:
             # Generic case: infer from weight shape
             return self.input_layer.weight.shape[1]
         else:
@@ -435,11 +461,11 @@ class DeepEstimatorInitialized(base.Estimator):
 
             if isinstance(self.input_layer, torch.nn.Linear):
                 # Linear layers expect (batch_size, input_features)
-                padding_shape = (x_len, self.module_input_len - len_current_features)
+                padding_shape = (
+                x_len, self.module_input_len - len_current_features)
 
-            elif isinstance(
-                self.input_layer, (torch.nn.LSTM, torch.nn.GRU, torch.nn.RNN)
-            ):
+            elif isinstance(self.input_layer,
+                            (torch.nn.LSTM, torch.nn.GRU, torch.nn.RNN)):
                 # RNNs expect (seq_len, batch_size, input_size) or (batch_size, seq_len, input_size)
                 if tensor_data.dim() == 3:  # (seq_len, batch_size, input_size)
                     seq_len, batch_size, _ = tensor_data.shape
@@ -448,9 +474,7 @@ class DeepEstimatorInitialized(base.Estimator):
                         batch_size,
                         self.module_input_len - len_current_features,
                     )
-                elif (
-                    tensor_data.dim() == 2
-                ):  # (batch_size, input_size) - single timestep
+                elif tensor_data.dim() == 2:  # (batch_size, input_size) - single timestep
                     batch_size, _ = tensor_data.shape
                     padding_shape = (
                         batch_size,
@@ -469,22 +493,23 @@ class DeepEstimatorInitialized(base.Estimator):
         return tensor_data
 
     def _load_instructions(
-        self, layer: torch.nn.Module
-    ) -> Dict[str, Union[str, dict[str, List[dict[str, int]]]]]:
+            self, layer: torch.nn.Module
+    ) -> dict[str, Union[str, dict[str, list[dict[str, int]]]]]:
         """
         Dynamically infer expansion instructions for a given layer.
 
         Parameters
         ----------
-        layer : nn.Module
+        layer : torch.nn.Module
             The layer to analyze.
 
         Returns
         -------
-        Dict
+        dict
             Instructions for expanding the layer's parameters.
         """
-        instructions: Dict[str, Union[str, dict[str, List[dict[str, int]]]]] = {}
+        instructions: dict[
+            str, Union[str, dict[str, list[dict[str, int]]]]] = {}
 
         if hasattr(layer, "in_features") and hasattr(layer, "out_features"):
             instructions["in_features"] = "input_attribute"
@@ -502,14 +527,14 @@ class DeepEstimatorInitialized(base.Estimator):
         return instructions
 
     def _expand_layer(
-        self, layer: torch.nn.Module, target_size: int, output: bool = True
+            self, layer: torch.nn.Module, target_size: int, output: bool = True
     ):
         """
         Expands a layer dynamically based on inferred attributes.
 
         Parameters
         ----------
-        layer : nn.Module
+        layer : torch.nn.Module
             The layer to expand.
         target_size : int
             The new target size.
@@ -531,11 +556,13 @@ class DeepEstimatorInitialized(base.Estimator):
                     n_subparams = axis_info["n_subparams"]
 
                     # Expand weights dynamically
-                    param = self._expand_weights(param, axis, dims_to_add, n_subparams)
+                    param = self._expand_weights(param, axis, dims_to_add,
+                                                 n_subparams)
                     setattr(layer, param_name, param)
 
     def _expand_weights(
-        self, param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
+            self, param: torch.Tensor, axis: int, dims_to_add: int,
+            n_subparams: int
     ):
         """
         Expands weight tensors dynamically along a given axis.
@@ -560,20 +587,21 @@ class DeepEstimatorInitialized(base.Estimator):
             return param  # No need to expand if target size is already met
 
         new_weights = (
-            torch.randn(
-                *(param.shape[:axis] + (dims_to_add,) + param.shape[axis + 1 :]),
-                device=param.device,
-                dtype=param.dtype,
-            )
-            * 0.01
+                torch.randn(
+                    *(param.shape[:axis] + (dims_to_add,) + param.shape[
+                                                            axis + 1:]),
+                    device=param.device,
+                    dtype=param.dtype,
+                )
+                * 0.01
         )  # Small random initialization
 
         return torch.cat([param, new_weights], dim=axis)
 
     def clone(
-        self,
-        new_params: dict[Any, Any] | None = None,
-        include_attributes=False,
+            self,
+            new_params: dict | None = None,
+            include_attributes=False,
     ):
         """Clones the estimator.
 
@@ -588,7 +616,7 @@ class DeepEstimatorInitialized(base.Estimator):
 
         Returns
         -------
-        DeepEstimator
+        DeepEstimatorInitialized
             The cloned estimator.
         """
         new_params = new_params or {}

@@ -357,7 +357,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     module : torch.nn.Module
         A PyTorch model. Can be pre-initialized or uninitialized.
     loss_fn : Union[str, Callable]
-        Loss function for training. Can be a string ('mse', 'cross_entropy', etc.)
+        Loss function for training. Can be a string (e.g., 'mse', 'cross_entropy', etc.)
         or a PyTorch function.
     optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
         Optimizer for training (e.g., "adam", "sgd", or a PyTorch optimizer class).
@@ -366,25 +366,24 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     output_is_logit : bool, default=True
         If True, applies softmax/sigmoid during inference.
     is_class_incremental : bool, default=False
-        If True, adds neurons when new classes appear.
+        If True, adds neurons to the output layer when new classes appear.
     is_feature_incremental : bool, default=False
-        If True, adds neurons when new features appear.
+        If True, adds neurons to the input layer when new features appear.
     device : str, default="cpu"
         Whether to use "cpu" or "cuda".
-    seed : Optional[int], default=None
+    seed : int, default=42
         Random seed for reproducibility.
     **kwargs
         Additional parameters for model initialization.
-
     """
-
     def __init__(
         self,
-        module: nn.Module,
+        module: torch.nn.Module,
         loss_fn: Union[str, Callable],
-        optimizer_fn: Union[str, Type[optim.Optimizer]],
+        optimizer_fn: Union[str, type],
         lr: float = 0.001,
         output_is_logit: bool = True,
+        is_class_incremental: bool = False,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -394,13 +393,14 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            device=device,
             lr=lr,
-            is_feature_incremental=is_feature_incremental,
+            device=device,
             seed=seed,
+            is_feature_incremental=is_feature_incremental,
             **kwargs,
         )
         self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
         self.observed_classes: SortedSet = SortedSet()
 
     def _learn(self, x: torch.Tensor, y: Union[base.typing.ClfTarget, pd.Series]):
@@ -429,14 +429,23 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         self._learn(x_t, y)
 
     def _update_observed_classes(self, y) -> bool:
+        """
+        Updates observed classes dynamically if new classes appear.
+        Expands the output layer if is_class_incremental is True.
+        """
         n_existing_classes = len(self.observed_classes)
-        if isinstance(y, Union[base.typing.ClfTarget, np.bool_]):  # type: ignore[arg-type]
+        # Add the new class(es) from y.
+        if isinstance(y, (base.typing.ClfTarget, np.bool_)):
             self.observed_classes.add(y)
         else:
-            self.observed_classes |= y
+            self.observed_classes |= set(y)
 
         if len(self.observed_classes) > n_existing_classes:
+            # Ensure a sorted order for consistency.
             self.observed_classes = OrderedSet(sorted(self.observed_classes))
+            # Expand the output layer to match the new number of classes.
+            if self.is_class_incremental and self.output_layer:
+                self._expand_layer(self.output_layer, target_size=len(self.observed_classes), output=True)
             return True
         else:
             return False
@@ -445,23 +454,18 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         """Predicts probabilities for a single example."""
         self._update_observed_features(x)
         x_t = self._dict2tensor(x)
-
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t)
-
         return output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Predicts probabilities for multiple examples."""
         self._update_observed_features(X)
-
         x_t = self._df2tensor(X)
-
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(x_t)
-
         return pd.DataFrame(
             output2proba(y_preds, self.observed_classes, self.output_is_logit)
         )
@@ -474,9 +478,11 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
+            "is_class_incremental": False,
         }
 
     @classmethod
     def _unit_test_skips(cls) -> set:
         """Defines unit tests to skip."""
         return set()
+

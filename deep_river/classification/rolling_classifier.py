@@ -286,9 +286,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         return pd.DataFrame(probas)
 
 
-class RollingClassifierInitialized(
-    ClassifierInitialized, RollingDeepEstimatorInitialized
-):
+class RollingClassifierInitialized(ClassifierInitialized, RollingDeepEstimatorInitialized):
     """
     Wrapper that feeds a sliding window of the most recent examples to the
     wrapped PyTorch classification model. The class also automatically handles
@@ -297,57 +295,45 @@ class RollingClassifierInitialized(
 
     Parameters
     ----------
-    module
-        Torch Module that builds the autoencoder to be wrapped.
-        The Module should accept parameter `n_features` so that the returned
-        model's input shape can be determined based on the number of features
-        in the initial training example.
-    loss_fn
-        Loss function to be used for training the wrapped model. Can be a
-        loss function provided by `torch.nn.functional` or one of the
-        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
-        'smooth_l1', 'kl_div'.
-    optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an
-        optimizer class provided by `torch.optim` or one of the following:
-        "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
-    lr
+    module : torch.nn.Module
+        Torch Module that builds the classifier. The Module should accept a
+        parameter `n_features` so that the returned model's input shape can be
+        determined based on the number of features in the initial training example.
+    loss_fn : Union[str, Callable]
+        Loss function to be used for training the wrapped model.
+    optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
+        Optimizer to be used for training the wrapped model.
+    lr : float
         Learning rate of the optimizer.
-    output_is_logit
-            Whether the module produces logits as output. If true, either
-            softmax or sigmoid is applied to the outputs when predicting.
-    is_class_incremental
+    output_is_logit : bool
+        Whether the module produces logits as output. If true, either softmax or
+        sigmoid is applied to the outputs when predicting.
+    is_class_incremental : bool
         Whether the classifier should adapt to the appearance of previously
-        unobserved classes by adding an unit to the output
-        layer of the network. This works only if the last trainable layer
-        is an nn.Linear layer. Note also, that output activation functions
-        can not be adapted, meaning that a binary classifier with a sigmoid
-        output can not be altered to perform multi-class predictions.
-    is_feature_incremental
-        Whether the model should adapt to the appearance of
-        previously features by adding units to the input
-        layer of the network.
-    device
+        unobserved classes by adding a neuron to the output layer.
+    is_feature_incremental : bool
+        Whether the model should adapt to the appearance of new features by adding
+        units to the input layer.
+    device : str
         Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed
+    seed : int
         Random seed to be used for training the wrapped model.
-    window_size
+    window_size : int
         Number of recent examples to be fed to the wrapped model at each step.
-    append_predict
+    append_predict : bool
         Whether to append inputs passed for prediction to the rolling window.
     **kwargs
-        Parameters to be passed to the `build_fn`
-        function aside from `n_features`.
-
+        Additional parameters.
     """
 
     def __init__(
         self,
         module: torch.nn.Module,
         loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
-        optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
+        optimizer_fn: Union[str, Type[torch.optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
         output_is_logit: bool = True,
+        is_class_incremental: bool = False,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -361,6 +347,7 @@ class RollingClassifierInitialized(
             optimizer_fn=optimizer_fn,
             lr=lr,
             output_is_logit=output_is_logit,
+            is_class_incremental=is_class_incremental,
             is_feature_incremental=is_feature_incremental,
             device=device,
             seed=seed,
@@ -373,52 +360,37 @@ class RollingClassifierInitialized(
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing
-        the respective class.
-
-        Yields
-        -------
-        dict
-            Dictionary of parameters to be used for unit testing
-            the respective class.
-        """
-
         yield {
             "module": _TestLSTM(10),
             "optimizer_fn": "sgd",
             "lr": 1e-3,
             "is_feature_incremental": False,
+            "is_class_incremental": False,
         }
 
     @classmethod
     def _unit_test_skips(cls) -> set:
-        """
-        Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However,
-        in some cases, some estimators might not
-        be able to pass certain checks.
-        Returns
-        -------
-        set
-            Set of checks to skip during unit testing.
-        """
         return set()
 
     def _learn(self, x: torch.Tensor, y: Union[int, pd.Series]):
         """Performs a single training step."""
         self.module.train()
 
-        # Feature incremental: Expand the input layer if necessary
+        # Expand the input layer if new features have been observed.
         if self.is_feature_incremental and self.input_layer:
             self._expand_layer(
                 self.input_layer, target_size=len(self.observed_features), output=False
             )
 
+        # Expand the output layer if new classes have been observed.
+        if self.is_class_incremental and self.output_layer:
+            self._expand_layer(
+                self.output_layer, target_size=len(self.observed_classes), output=True
+            )
+
         self.optimizer.zero_grad()
         y_pred = self.module(x)
         n_classes = y_pred.shape[-1]
-
         y_onehot = labels2onehot(y, self.observed_classes, n_classes, self.device)
         loss = self.loss_func(y_pred, y_onehot)
         loss.backward()
@@ -428,47 +400,22 @@ class RollingClassifierInitialized(
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
-
-        Parameters
-        ----------
-        x
-            Input example.
-        y
-            Target value.
-
-        Returns
-        -------
-        Classifier
-            The classifier itself.
         """
-
         self._update_observed_features(x)
         self._update_observed_classes(y)
-
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
-        # training process
+        # Train only when the window is full.
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
-            return self._learn(x=x_t, y=y)
+            self._learn(x=x_t, y=y)
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """
         Predict the probability of each label given the most recent examples
         stored in the sliding window.
-
-        Parameters
-        ----------
-        x
-            Input example.
-
-        Returns
-        -------
-        Dict[ClfTarget, float]
-            Dictionary of probabilities for each label.
         """
         self._update_observed_features(x)
-
         x_win = self._x_window.copy()
         x_win.append([x.get(feature, 0) for feature in self.observed_features])
         if self.append_predict:
@@ -479,29 +426,15 @@ class RollingClassifierInitialized(
             x_t = deque2rolling_tensor(x_win, device=self.device)
             y_pred = self.module(x_t)
             proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
-
         return proba[0]
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
         Performs one step of training with the most recent training examples
         stored in the sliding window.
-
-        Parameters
-        ----------
-        X
-            Input examples.
-        y
-            Target values.
-
-        Returns
-        -------
-        Classifier
-            The classifier itself.
         """
         self._update_observed_classes(y)
         self._update_observed_features(X)
-
         X = X[list(self.observed_features)]
         self._x_window.extend(X.values.tolist())
 
@@ -511,18 +444,8 @@ class RollingClassifierInitialized(
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """
-        Predict the probability of each label given the most recent examples
-
-        Parameters
-        ----------
-        x
-
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame of probabilities for each label.
+        Predict the probability of each label given the most recent examples.
         """
-
         self._update_observed_features(X)
         X = X[list(self.observed_features)]
         x_win = self._x_window.copy()
@@ -535,3 +458,4 @@ class RollingClassifierInitialized(
             x_t = deque2rolling_tensor(x_win, device=self.device)
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)
+
