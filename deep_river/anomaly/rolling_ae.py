@@ -1,3 +1,4 @@
+import warnings
 from typing import Any, Callable, List, Type, Union
 
 import numpy as np
@@ -80,6 +81,11 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         append_predict: bool = False,
         **kwargs,
     ):
+        warnings.warn(
+            "This is deprecated and will be removed in future releases. "
+            "Please instead use the AutoencoderInitialized class and "
+            "initialize the module beforehand"
+        )
         super().__init__(
             module=module,
             loss_fn=loss_fn,
