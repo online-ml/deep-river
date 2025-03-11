@@ -401,9 +401,10 @@ class DeepEstimatorInitialized(base.Estimator):
         prev_feature_count = len(self.observed_features)
         new_features = x.keys() if isinstance(x, dict) else x.columns
         self.observed_features.update(new_features)
-        if (self.is_feature_incremental
-                and self.input_layer
-                and len(self.observed_features) > self.module_input_len
+        if (
+            self.is_feature_incremental
+            and self.input_layer
+            and len(self.observed_features) > self.module_input_len
         ):
             self._expand_layer(
                 self.input_layer, target_size=len(self.observed_features), output=False
@@ -484,8 +485,8 @@ class DeepEstimatorInitialized(base.Estimator):
                 tensor_data = torch.cat([tensor_data, padding], dim=-1)
         return tensor_data
 
-    def _load_instructions(self, layer: torch.nn.Module):
-        instructions = {}
+    def _load_instructions(self, layer: torch.nn.Module) -> dict[str, Any]:
+        instructions: dict[str, Any] = {}
         if hasattr(layer, "in_features") and hasattr(layer, "out_features"):
             instructions["in_features"] = "input_attribute"
             instructions["out_features"] = "output_attribute"
@@ -500,7 +501,7 @@ class DeepEstimatorInitialized(base.Estimator):
         return instructions
 
     def _expand_layer(
-            self, layer: torch.nn.Module, target_size: int, output: bool = True
+        self, layer: torch.nn.Module, target_size: int, output: bool = True
     ):
         instructions = self._load_instructions(layer)
         target_str = "output" if output else "input"
@@ -519,8 +520,7 @@ class DeepEstimatorInitialized(base.Estimator):
                     dims_to_add = target_size - param.shape[axis]
                     n_subparams = axis_info["n_subparams"]
 
-                    param = self._expand_weights(param, axis, dims_to_add,
-                                                 n_subparams)
+                    param = self._expand_weights(param, axis, dims_to_add, n_subparams)
 
                     if not isinstance(param, torch.nn.Parameter):
                         param = torch.nn.Parameter(param)
@@ -529,8 +529,7 @@ class DeepEstimatorInitialized(base.Estimator):
         self.module_input_len = self._get_input_size()
 
     def _expand_weights(
-            self, param: torch.Tensor, axis: int, dims_to_add: int,
-            n_subparams: int
+        self, param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
     ):
         """
         Expands weight tensors dynamically along a given axis.
@@ -540,13 +539,12 @@ class DeepEstimatorInitialized(base.Estimator):
 
         # Create new weights to be added
         new_weights = (
-                torch.randn(
-                    *(param.shape[:axis] + (dims_to_add,) + param.shape[
-                                                            axis + 1:]),
-                    device=param.device,
-                    dtype=param.dtype,
-                )
-                * 0.01  # Small initialization
+            torch.randn(
+                *(param.shape[:axis] + (dims_to_add,) + param.shape[axis + 1 :]),
+                device=param.device,
+                dtype=param.dtype,
+            )
+            * 0.01  # Small initialization
         )
 
         # Concatenate the new weights along the given axis
