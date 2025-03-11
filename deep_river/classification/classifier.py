@@ -473,6 +473,14 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             "is_class_incremental": False,
         }
 
+        yield {
+            "module": _TestModule(8),
+            "loss_fn": "binary_cross_entropy_with_logits",
+            "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
+            "is_class_incremental": False,
+        }
+
     @classmethod
     def _unit_test_skips(cls) -> set:
         """Defines unit tests to skip."""

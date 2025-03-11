@@ -400,8 +400,11 @@ class DeepEstimatorInitialized(base.Estimator):
         """Updates observed features dynamically if new ones appear."""
         prev_feature_count = len(self.observed_features)
         new_features = x.keys() if isinstance(x, dict) else x.columns
-        self.observed_features.update({f: None for f in new_features})
-        if self.is_feature_incremental and self.input_layer:
+        self.observed_features.update(new_features)
+        if (self.is_feature_incremental
+                and self.input_layer
+                and len(self.observed_features) > self.module_input_len
+        ):
             self._expand_layer(
                 self.input_layer, target_size=len(self.observed_features), output=False
             )
@@ -481,13 +484,8 @@ class DeepEstimatorInitialized(base.Estimator):
                 tensor_data = torch.cat([tensor_data, padding], dim=-1)
         return tensor_data
 
-    def _load_instructions(
-        self, layer: torch.nn.Module
-    ) -> dict[str, Union[str, dict[str, list[dict[str, int]]]]]:
-        """
-        Dynamically infer expansion instructions for a given layer.
-        """
-        instructions: dict[str, Union[str, dict[str, list[dict[str, int]]]]] = {}
+    def _load_instructions(self, layer: torch.nn.Module):
+        instructions = {}
         if hasattr(layer, "in_features") and hasattr(layer, "out_features"):
             instructions["in_features"] = "input_attribute"
             instructions["out_features"] = "output_attribute"
@@ -498,45 +496,64 @@ class DeepEstimatorInitialized(base.Estimator):
             }
         if hasattr(layer, "bias") and layer.bias is not None:
             instructions["bias"] = {"output": [{"axis": 0, "n_subparams": 1}]}
+        print("Layer:", layer, "\nInstructions:", instructions)  # Debug print
         return instructions
 
     def _expand_layer(
-        self, layer: torch.nn.Module, target_size: int, output: bool = True
+            self, layer: torch.nn.Module, target_size: int, output: bool = True
     ):
-        """
-        Expands a layer dynamically based on inferred attributes.
-        """
         instructions = self._load_instructions(layer)
         target_str = "output" if output else "input"
+
         for param_name, instruction in instructions.items():
             if instruction == f"{target_str}_attribute":
                 setattr(layer, param_name, target_size)
             elif isinstance(instruction, dict):
+                # Ensure the target_str key exists in instruction before accessing it
+                if target_str not in instruction:
+                    continue  # Skip expansion if no instructions exist for input/output
+
                 for axis_info in instruction[target_str]:
                     param = getattr(layer, param_name)
                     axis = axis_info["axis"]
                     dims_to_add = target_size - param.shape[axis]
                     n_subparams = axis_info["n_subparams"]
-                    param = self._expand_weights(param, axis, dims_to_add, n_subparams)
+
+                    param = self._expand_weights(param, axis, dims_to_add,
+                                                 n_subparams)
+
+                    if not isinstance(param, torch.nn.Parameter):
+                        param = torch.nn.Parameter(param)
+
                     setattr(layer, param_name, param)
+        self.module_input_len = self._get_input_size()
 
     def _expand_weights(
-        self, param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
+            self, param: torch.Tensor, axis: int, dims_to_add: int,
+            n_subparams: int
     ):
         """
         Expands weight tensors dynamically along a given axis.
         """
         if dims_to_add <= 0:
             return param
+
+        # Create new weights to be added
         new_weights = (
-            torch.randn(
-                *(param.shape[:axis] + (dims_to_add,) + param.shape[axis + 1 :]),
-                device=param.device,
-                dtype=param.dtype,
-            )
-            * 0.01
+                torch.randn(
+                    *(param.shape[:axis] + (dims_to_add,) + param.shape[
+                                                            axis + 1:]),
+                    device=param.device,
+                    dtype=param.dtype,
+                )
+                * 0.01  # Small initialization
         )
-        return torch.cat([param, new_weights], dim=axis)
+
+        # Concatenate the new weights along the given axis
+        expanded_param = torch.cat([param, new_weights], dim=axis)
+
+        # Ensure the result is a torch.nn.Parameter so it's registered as a model parameter
+        return torch.nn.Parameter(expanded_param)
 
     def _learn(self, x: torch.Tensor, y: Optional[Any] = None):
         """
