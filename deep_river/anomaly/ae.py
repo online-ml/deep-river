@@ -286,9 +286,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
 
 class AutoencoderInitialized(DeepEstimatorInitialized, AnomalyDetector):
-    """
+    """ """
 
-    """
     def __init__(
         self,
         module: torch.nn.Module,

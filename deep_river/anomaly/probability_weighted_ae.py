@@ -184,9 +184,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
 
 class ProbabilityWeightedAutoencoderInitialized(ae.AutoencoderInitialized):
-    """
+    """ """
 
-    """
     def __init__(
         self,
         module: torch.nn.Module,

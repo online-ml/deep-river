@@ -384,7 +384,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         optimizer_fn: Union[str, type],
         lr: float = 0.001,
         output_is_logit: bool = True,
-        is_class_incremental: bool = False, #todo needs to be tested
+        is_class_incremental: bool = False,  # todo needs to be tested
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -500,7 +500,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def _unit_test_params(cls):
         """Provides default parameters for unit testing."""
         yield {
-            "module": _TestModule(10,1),
+            "module": _TestModule(10, 1),
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
@@ -508,7 +508,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         }
 
         yield {
-            "module": _TestModule(8,1),
+            "module": _TestModule(8, 1),
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": True,

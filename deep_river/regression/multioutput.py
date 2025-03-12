@@ -2,10 +2,9 @@ import typing
 from collections import OrderedDict
 from typing import Callable, Type, Union
 
-import torch
-import pandas as pd
 import numpy as np
-
+import pandas as pd
+import torch
 from river import base
 from river.base.typing import FeatureName, RegTarget
 from sortedcontainers import SortedSet
@@ -200,10 +199,12 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             y_pred = {t: y_pred_t[i] for i, t in enumerate(self.observed_targets)}
         return y_pred
 
-class MultiTargetRegressorInitialized(base.MultiTargetRegressor, DeepEstimatorInitialized):
-    """
 
-    """
+class MultiTargetRegressorInitialized(
+    base.MultiTargetRegressor, DeepEstimatorInitialized
+):
+    """ """
+
     def __init__(
         self,
         module: torch.nn.Module,
@@ -218,13 +219,13 @@ class MultiTargetRegressorInitialized(base.MultiTargetRegressor, DeepEstimatorIn
     ):
         super().__init__(
             module=module,
-            loss_fn= loss_fn,
-            optimizer_fn = optimizer_fn,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
             lr=lr,
             device=device,
             seed=seed,
-            is_feature_incremental = is_feature_incremental,
-            **kwargs
+            is_feature_incremental=is_feature_incremental,
+            **kwargs,
         )
         self.is_target_incremental = is_target_incremental
         self.observed_targets: SortedSet = SortedSet()
@@ -247,7 +248,7 @@ class MultiTargetRegressorInitialized(base.MultiTargetRegressor, DeepEstimatorIn
             "loss_fn": "l1",
             "optimizer_fn": "sgd",
             "is_feature_incremental": True,
-            "is_target_incremental": True
+            "is_target_incremental": True,
         }
 
     @classmethod
@@ -256,12 +257,11 @@ class MultiTargetRegressorInitialized(base.MultiTargetRegressor, DeepEstimatorIn
             "check_shuffle_features_no_impact",
         }
 
-    def learn_one(self, x: dict, y: dict[FeatureName, RegTarget], **kwargs)-> None:
+    def learn_one(self, x: dict, y: dict[FeatureName, RegTarget], **kwargs) -> None:
         """Learns from a single example."""
         self._update_observed_features(x)
         self._update_observed_targets(y)
         x_t = self._dict2tensor(x)
-        y_t = float2tensor(y)
         self._learn(x_t, y)
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
@@ -276,24 +276,21 @@ class MultiTargetRegressorInitialized(base.MultiTargetRegressor, DeepEstimatorIn
         Updates observed classes dynamically if new classes appear.
         Expands the output layer if is_class_incremental is True.
         """
-        n_existing_targets = len(self.observed_targets)
-        # Add the new class(es) from y.
         if isinstance(y, (base.typing.ClfTarget, np.bool_)):  # type: ignore[arg-type]
             self.observed_targets.update(y)
         else:
             self.observed_targets.update(y)
 
-        if (self.is_target_incremental
-                and self.output_layer)\
-                and len(self.observed_targets) > self._get_output_size():
+        if (self.is_target_incremental and self.output_layer) and len(
+            self.observed_targets
+        ) > self._get_output_size():
             self._expand_layer(
                 self.output_layer,
-                target_size=max(len(self.observed_targets),self._get_output_size()),
+                target_size=max(len(self.observed_targets), self._get_output_size()),
                 output=True,
             )
             return True
         return False
-
 
     def predict_one(self, x: dict) -> typing.Dict[FeatureName, RegTarget]:
         """

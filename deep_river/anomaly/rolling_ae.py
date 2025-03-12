@@ -249,9 +249,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
 class RollingAutoencoderInitialized(
     RollingDeepEstimatorInitialized, anomaly.base.AnomalyDetector
 ):
-    """
+    """ """
 
-    """
     def __init__(
         self,
         module: torch.nn.Module,

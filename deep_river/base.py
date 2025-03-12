@@ -12,9 +12,10 @@ from torch.utils.hooks import RemovableHandle
 from deep_river.utils import (
     df2tensor,
     dict2tensor,
+    float2tensor,
     get_loss_fn,
     get_optim_fn,
-    labels2onehot, float2tensor,
+    labels2onehot,
 )
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 from deep_river.utils.layer_adaptation import (
@@ -477,19 +478,27 @@ class DeepEstimatorInitialized(base.Estimator):
         if not hasattr(self, "output_layer") or self.output_layer is None:
             raise ValueError("No output layer found in the model.")
 
-        if hasattr(self.output_layer, "out_features"):  # Fully Connected Layers (Linear)
+        if hasattr(
+            self.output_layer, "out_features"
+        ):  # Fully Connected Layers (Linear)
             return self.output_layer.out_features
         elif hasattr(self.output_layer, "output_size"):  # Custom Layers
             return self.output_layer.output_size
         elif hasattr(self.output_layer, "out_channels"):  # Convolutional Layers
             return self.output_layer.out_channels
         elif isinstance(self.output_layer, torch.nn.LSTM):  # LSTM Handling
-            return self.output_layer.hidden_size  # LSTMs return (hidden_state, cell_state)
-        elif hasattr(self.output_layer, "weight") and self.output_layer.weight is not None:
+            return (
+                self.output_layer.hidden_size
+            )  # LSTMs return (hidden_state, cell_state)
+        elif (
+            hasattr(self.output_layer, "weight")
+            and self.output_layer.weight is not None
+        ):
             return self.output_layer.weight.shape[0]  # General Weight-Based Guess
         else:
             raise ValueError(
-                f"Cannot determine output size for layer type {type(self.input_layer)}")
+                f"Cannot determine output size for layer type {type(self.input_layer)}"
+            )
 
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
         """Pads the tensor if fewer features are available than required."""

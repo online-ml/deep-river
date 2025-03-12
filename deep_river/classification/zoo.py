@@ -2,8 +2,9 @@ from typing import Callable, Type, Union
 
 from torch import nn, optim
 
-from deep_river.classification import Classifier, ClassifierInitialized
+from deep_river.classification import ClassifierInitialized
 from deep_river.classification.rolling_classifier import RollingClassifierInitialized
+
 
 class LogisticRegressionInitialized(ClassifierInitialized):
     """

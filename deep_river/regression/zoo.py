@@ -2,7 +2,7 @@ from typing import Callable, Type, Union
 
 from torch import nn, optim
 
-from deep_river.regression import Regressor, RegressorInitialized
+from deep_river.regression import RegressorInitialized
 from deep_river.regression.rolling_regressor import RollingRegressorInitialized
 
 
@@ -192,6 +192,7 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
             output, (hn, cn) = self.lstm(X)
             x = hn.view(-1, self.output_size)
             return x
+
     def __init__(
         self,
         n_features: int = 10,
