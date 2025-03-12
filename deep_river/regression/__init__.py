@@ -4,9 +4,7 @@ from deep_river.regression.rolling_regressor import (
     RollingRegressorInitialized,
 )
 
-# isort: split
-from deep_river.regression.multioutput import MultiTargetRegressor
-from deep_river.regression.zoo import LinearRegression, MultiLayerPerceptron
+from deep_river.regression.multioutput import MultiTargetRegressor, MultiTargetRegressorInitialized
 
 """
 This module contains the regressors for the deep_river package.
@@ -17,6 +15,5 @@ __all__ = [
     "RollingRegressor",
     "RollingRegressorInitialized",
     "MultiTargetRegressor",
-    "LinearRegression",
-    "MultiLayerPerceptron",
+    "MultiTargetRegressorInitialized",
 ]

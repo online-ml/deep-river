@@ -1,10 +1,8 @@
 from deep_river.classification.classifier import Classifier, ClassifierInitialized
 from deep_river.classification.rolling_classifier import RollingClassifier
 from deep_river.classification.zoo import (
-    LogisticRegression,
     LogisticRegressionInitialized,
     LSTMClassifierInitialized,
-    MultiLayerPerceptron,
     MultiLayerPerceptronInitialized,
 )
 
@@ -15,8 +13,6 @@ __all__ = [
     "Classifier",
     "ClassifierInitialized",
     "RollingClassifier",
-    "MultiLayerPerceptron",
-    "LogisticRegression",
     "LogisticRegressionInitialized",
     "MultiLayerPerceptronInitialized",
     "LSTMClassifierInitialized",

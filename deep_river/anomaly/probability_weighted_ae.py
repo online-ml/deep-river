@@ -185,84 +185,8 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
 class ProbabilityWeightedAutoencoderInitialized(ae.AutoencoderInitialized):
     """
-    Wrapper for PyTorch autoencoder models for anomaly detection that
-    reduces the employed learning rate based on an outlier probability
-    estimate of the input example as well as a threshold probability
-    `skip_threshold`. If the outlier probability is above the threshold,
-    the learning rate is reduced to less than 0. Given the probability
-    estimate $p_out$, the adjusted learning rate
-    $lr_adj$ is $lr * 1 - (\frac{p_out}{skip_threshold})$.
 
-    Parameters
-    ----------
-    module
-        Torch Module that builds the autoencoder to be wrapped.
-        The Module should accept parameter `n_features` so that the returned
-        model's input shape can be determined based on the number of features
-        in the initial training example.
-    loss_fn
-        Loss function to be used for training the wrapped model.
-        Can be a loss function provided by `torch.nn.functional` or one of the
-        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
-        'smooth_l1', 'kl_div'.
-    optimizer_fn
-        Optimizer to be used for training the wrapped model.
-        Can be an optimizer class provided by `torch.optim` or one of the
-        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
-    lr
-        Base learning rate of the optimizer.
-    skip_threshold
-        Threshold probability to use as a reference for the reduction
-        of the base learning rate.
-    device
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Parameters to be passed to the `module` function
-        aside from `n_features`.
-
-        Examples
-    --------
-    >>> from deep_river.anomaly import ProbabilityWeightedAutoencoder
-    >>> from river import metrics
-    >>> from river.datasets import CreditCard
-    >>> from torch import nn, manual_seed
-    >>> import math
-    >>> from river.compose import Pipeline
-    >>> from river.preprocessing import MinMaxScaler
-
-    >>> _ = manual_seed(42)
-    >>> dataset = CreditCard().take(5000)
-    >>> metric = metrics.RollingROCAUC(window_size=5000)
-
-    >>> class MyAutoEncoder(torch.nn.Module):
-    ...     def __init__(self, n_features, latent_dim=3):
-    ...         super(MyAutoEncoder, self).__init__()
-    ...         self.linear1 = nn.Linear(n_features, latent_dim)
-    ...         self.nonlin = torch.nn.LeakyReLU()
-    ...         self.linear2 = nn.Linear(latent_dim, n_features)
-    ...         self.sigmoid = nn.Sigmoid()
-    ...
-    ...     def forward(self, X, **kwargs):
-    ...         X = self.linear1(X)
-    ...         X = self.nonlin(X)
-    ...         X = self.linear2(X)
-    ...         return self.sigmoid(X)
-
-    >>> ae = ProbabilityWeightedAutoencoder(module=MyAutoEncoder(10,3), lr=0.005)
-    >>> scaler = MinMaxScaler()
-    >>> model = Pipeline(scaler, ae)
-
-    >>> for x, y in dataset:
-    ...    score = model.score_one(x)
-    ...    model.learn_one(x=x)
-    ...    metric.update(y, score)
-    ...
-    >>> print(f"Rolling ROCAUC: {metric.get():.4f}")
-    Rolling ROCAUC: 0.8530
     """
-
     def __init__(
         self,
         module: torch.nn.Module,

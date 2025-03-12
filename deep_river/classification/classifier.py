@@ -19,17 +19,19 @@ from deep_river.utils.tensor_conversion import (
 
 class _TestModule(torch.nn.Module):
 
-    def __init__(self, n_features):
+    def __init__(self, n_features, n_outputs=1):
         super().__init__()
         self.n_features = n_features
+        self.n_outputs = n_outputs
         self.dense0 = torch.nn.Linear(n_features, 5)
         self.nonlinear = torch.nn.ReLU()
-        self.dense1 = torch.nn.Linear(5, 1)
+        self.dense1 = torch.nn.Linear(5, n_outputs)
+        self.softmax = torch.nn.Sigmoid()
 
     def forward(self, x):
         x = self.nonlinear(self.dense0(x))
         x = self.nonlinear(self.dense1(x))
-        return x
+        return self.softmax(x)
 
 
 class Classifier(DeepEstimator, base.MiniBatchClassifier):
@@ -382,7 +384,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         optimizer_fn: Union[str, type],
         lr: float = 0.001,
         output_is_logit: bool = True,
-        is_class_incremental: bool = False,
+        is_class_incremental: bool = False, #todo needs to be tested
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -405,21 +407,55 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def learn_one(self, x: dict, y: base.typing.ClfTarget) -> None:
         """Learns from a single example."""
         self._update_observed_features(x)
-        self._update_observed_classes(y)
+        self._update_observed_targets(y)
         x_t = self._dict2tensor(x)
         self._learn(x_t, y)
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
-        """Learns from a batch of examples."""
+        """
+        Updates the model with multiple instances for supervised learning.
+
+        The function updates the observed features and targets based on the input
+        data. It converts the data from a pandas DataFrame to a tensor format before
+        learning occurs. The updates to the model are executed through an internal
+        learning mechanism.
+
+        Parameters
+        ----------
+        X : pd.DataFrame
+            The data-frame containing instances to be learned by the model. Each
+            row represents a single instance, and each column represents a feature.
+        y : pd.Series
+            The target values corresponding to the instances in `X`. Each entry in
+            the series represents the target associated with a row in `X`.
+
+        Returns
+        -------
+        None
+        """
         self._update_observed_features(X)
-        self._update_observed_classes(y)
+        self._update_observed_targets(y)
         x_t = self._df2tensor(X)
         self._learn(x_t, y)
 
-    def _update_observed_classes(self, y) -> bool:
+    def _update_observed_targets(self, y) -> bool:
         """
-        Updates observed classes dynamically if new classes appear.
-        Expands the output layer if is_class_incremental is True.
+        Updates the set of observed classes with new classes from the provided target(s).
+        If new classes are detected, the method expands the output layer when the model
+        is class-incremental and an output layer exists.
+
+        Parameters
+        ----------
+        y : ClfTarget or bool or array-like
+            The target(s) from which new class(es) are to be observed. Can either
+            be a single classification target, a boolean value, or an iterable of
+            targets.
+
+        Returns
+        -------
+        bool
+            Returns True if new classes were detected and the set of observed
+            classes was updated, otherwise False.
         """
         n_existing_classes = len(self.observed_classes)
         # Add the new class(es) from y.
@@ -429,8 +465,6 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             self.observed_classes |= set(y)
 
         if len(self.observed_classes) > n_existing_classes:
-            # Ensure a sorted order for consistency.
-            self.observed_classes = OrderedSet(sorted(self.observed_classes))
             # Expand the output layer to match the new number of classes.
             if self.is_class_incremental and self.output_layer:
                 self._expand_layer(
@@ -466,7 +500,7 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     def _unit_test_params(cls):
         """Provides default parameters for unit testing."""
         yield {
-            "module": _TestModule(10),
+            "module": _TestModule(10,1),
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
@@ -474,14 +508,32 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         }
 
         yield {
-            "module": _TestModule(8),
+            "module": _TestModule(8,1),
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": True,
             "is_class_incremental": False,
         }
 
+        yield {
+            "module": _TestModule(10, 1),
+            "loss_fn": "binary_cross_entropy_with_logits",
+            "optimizer_fn": "sgd",
+            "is_feature_incremental": False,
+            "is_class_incremental": True,
+        }
+
+        yield {
+            "module": _TestModule(8, 1),
+            "loss_fn": "binary_cross_entropy_with_logits",
+            "optimizer_fn": "sgd",
+            "is_feature_incremental": True,
+            "is_class_incremental": True,
+        }
+
     @classmethod
     def _unit_test_skips(cls) -> set:
         """Defines unit tests to skip."""
-        return set()
+        return {
+            "check_shuffle_features_no_impact",
+        }

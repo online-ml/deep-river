@@ -14,7 +14,7 @@ from deep_river.utils import (
     dict2tensor,
     get_loss_fn,
     get_optim_fn,
-    labels2onehot,
+    labels2onehot, float2tensor,
 )
 from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 from deep_river.utils.layer_adaptation import (
@@ -321,26 +321,43 @@ class RollingDeepEstimator(DeepEstimator):
 
 class DeepEstimatorInitialized(base.Estimator):
     """
-    A DeepEstimator that allows passing an already initialized module.
+    Enhances PyTorch modules with dynamic adaptability to evolving features.
 
-    Parameters
+    The class extends the functionality of a base estimator by dynamically
+    updating and expanding neural network layers to handle incremental
+    changes in feature space. It supports feature set discovery, input size
+    adjustments, weight expansion, and varied learning procedures. This makes
+    it suitable for evolving input spaces while maintaining neural network
+    integrity.
+
+    Attributes
     ----------
     module : torch.nn.Module
-        A pre-initialized Torch Module (e.g., an instance of a neural network).
-    loss_fn : Union[str, Callable]
-        Loss function to be used for training.
-    optimizer_fn : Union[str, Callable]
-        Optimizer to be used for training.
+        The PyTorch model that serves as the backbone of this class's functionality.
     lr : float
-        Learning rate.
+        Learning rate for model optimization.
+    loss_fn : Union[str, Callable]
+        The loss function used for computing training error.
+    loss_func : Callable
+        The compiled loss function produced via `get_loss_fn`.
+    optimizer : torch.optim.Optimizer
+        The compiled optimizer used for updating model weights.
+    optimizer_fn : Union[str, Callable]
+        The optimizer function or class used for training.
     device : str
-        Device for training (e.g., 'cpu' or 'cuda').
+        The computational device (e.g., "cpu", "cuda") used for training.
     seed : int
-        Random seed for reproducibility.
+        The random seed for ensuring reproducible operations.
     is_feature_incremental : bool
-        Whether to allow feature expansion dynamically.
-    **kwargs
-        Additional parameters.
+        Indicates whether the model should automatically expand based on new features.
+    kwargs : dict
+        Additional arguments passed to the model and utilities.
+    input_layer : torch.nn.Module
+        The input layer of the PyTorch model, determined dynamically.
+    output_layer : torch.nn.Module
+        The output layer of the PyTorch model, determined dynamically.
+    observed_features : SortedSet
+        Tracks all observed input features dynamically, allowing for feature incrementation.
     """
 
     def __init__(
@@ -404,7 +421,7 @@ class DeepEstimatorInitialized(base.Estimator):
         if (
             self.is_feature_incremental
             and self.input_layer
-            and len(self.observed_features) > self.module_input_len
+            and self._get_input_size() < len(self.observed_features)
         ):
             self._expand_layer(
                 self.input_layer, target_size=len(self.observed_features), output=False
@@ -437,6 +454,9 @@ class DeepEstimatorInitialized(base.Estimator):
 
     def _get_input_size(self):
         """Dynamically determines the expected input feature size of a PyTorch layer."""
+        if not hasattr(self, "input_layer") or self.output_layer is None:
+            raise ValueError("No input layer found in the model.")
+
         if hasattr(self.input_layer, "in_features"):
             return self.input_layer.in_features
         elif hasattr(self.input_layer, "input_size"):
@@ -452,13 +472,32 @@ class DeepEstimatorInitialized(base.Estimator):
                 f"Cannot determine input size for layer type {type(self.input_layer)}"
             )
 
+    def _get_output_size(self):
+        """Dynamically determines the output feature size of the last layer in the module."""
+        if not hasattr(self, "output_layer") or self.output_layer is None:
+            raise ValueError("No output layer found in the model.")
+
+        if hasattr(self.output_layer, "out_features"):  # Fully Connected Layers (Linear)
+            return self.output_layer.out_features
+        elif hasattr(self.output_layer, "output_size"):  # Custom Layers
+            return self.output_layer.output_size
+        elif hasattr(self.output_layer, "out_channels"):  # Convolutional Layers
+            return self.output_layer.out_channels
+        elif isinstance(self.output_layer, torch.nn.LSTM):  # LSTM Handling
+            return self.output_layer.hidden_size  # LSTMs return (hidden_state, cell_state)
+        elif hasattr(self.output_layer, "weight") and self.output_layer.weight is not None:
+            return self.output_layer.weight.shape[0]  # General Weight-Based Guess
+        else:
+            raise ValueError(
+                f"Cannot determine output size for layer type {type(self.input_layer)}")
+
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
         """Pads the tensor if fewer features are available than required."""
         len_current_features = len(self.observed_features)
-        if len_current_features < self.module_input_len:
+        if len_current_features < self._get_input_size():
             padding_shape = None
             if isinstance(self.input_layer, torch.nn.Linear):
-                padding_shape = (x_len, self.module_input_len - len_current_features)
+                padding_shape = (x_len, self._get_input_size() - len_current_features)
             elif isinstance(
                 self.input_layer, (torch.nn.LSTM, torch.nn.GRU, torch.nn.RNN)
             ):
@@ -467,13 +506,13 @@ class DeepEstimatorInitialized(base.Estimator):
                     padding_shape = (
                         seq_len,
                         batch_size,
-                        self.module_input_len - len_current_features,
+                        self._get_input_size() - len_current_features,
                     )
                 elif tensor_data.dim() == 2:
                     batch_size, _ = tensor_data.shape
                     padding_shape = (
                         batch_size,
-                        self.module_input_len - len_current_features,
+                        self._get_input_size() - len_current_features,
                     )
             if padding_shape:
                 padding = torch.full(
@@ -526,7 +565,6 @@ class DeepEstimatorInitialized(base.Estimator):
                         param = torch.nn.Parameter(param)
 
                     setattr(layer, param_name, param)
-        self.module_input_len = self._get_input_size()
 
     def _expand_weights(
         self, param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
@@ -564,22 +602,6 @@ class DeepEstimatorInitialized(base.Estimator):
         """
         self.module.train()
 
-        # Expand input layer if needed.
-        if self.is_feature_incremental and self.input_layer:
-            self._expand_layer(
-                self.input_layer, target_size=len(self.observed_features), output=False
-            )
-
-        # If classification, expand output layer if needed.
-        if (
-            getattr(self, "is_class_incremental", False)
-            and hasattr(self, "observed_classes")
-            and self.output_layer
-        ):
-            self._expand_layer(
-                self.output_layer, target_size=len(self.observed_classes), output=True
-            )
-
         self.optimizer.zero_grad()
         y_pred = self.module(x)
 
@@ -590,7 +612,7 @@ class DeepEstimatorInitialized(base.Estimator):
             # Regression case: Convert y to tensor and move to device
         elif not hasattr(self, "observed_classes"):
             if not isinstance(y, torch.Tensor):
-                y = torch.tensor(y, dtype=torch.float32, device=self.device).view(-1, 1)
+                y = float2tensor(y, self.device)
 
         # Classification case: Convert y to one-hot encoding
         else:
@@ -604,35 +626,26 @@ class DeepEstimatorInitialized(base.Estimator):
 
 class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
     """
-    Abstract base class that implements basic functionality of
-    River-compatible PyTorch wrappers including a rolling window to allow the
-    model to make predictions based on multiple previous examples.
+    RollingDeepEstimatorInitialized class for rolling window-based deep learning
+    model estimation.
 
-    Parameters
+    This class extends the functionality of the DeepEstimatorInitialized class to
+    support training and prediction using a rolling window. It maintains a fixed-size
+    deque to store a rolling window of input data. It can optionally append predictions
+    to the input window to facilitate iterative prediction workflows. This class is
+    designed for advanced users who need rolling window functionality in their deep
+    learning estimation pipelines.
+
+    Attributes
     ----------
-    module torch.nn.Module
-        A pre-initialized Torch Module (e.g., an instance of a neural network).
-    loss_fn
-        Loss function to be used for training the wrapped model. Can be a loss
-        function provided by `torch.nn.functional` or one of the following:
-        'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
-        'smooth_l1', 'kl_div'.
-    optimizer_fn
-        Optimizer to be used for training the wrapped model.
-        Can be an optimizer class provided by `torch.optim` or one of the
-        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
-    lr
-        Learning rate of the optimizer.
-    device
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed
-        Random seed to be used for training the wrapped model.
-    window_size
-        Size of the rolling window used for storing previous examples.
-    append_predict
-        Whether to append inputs passed for prediction to the rolling window.
-    **kwargs
-        Parameters to be passed to the `Module` or the `optimizer`.
+    window_size : int
+        The size of the rolling window used for training and prediction.
+    append_predict : bool
+        Flag to indicate whether to append predictions into the rolling window.
+    _x_window : Deque
+        A fixed-size deque object, which stores the most recent input window data.
+    _batch_i : int
+        The internal counter for batch index tracking during training or prediction.
     """
 
     def __init__(

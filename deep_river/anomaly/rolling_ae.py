@@ -250,42 +250,8 @@ class RollingAutoencoderInitialized(
     RollingDeepEstimatorInitialized, anomaly.base.AnomalyDetector
 ):
     """
-    Wrapper for PyTorch autoencoder models that uses the networks
-    reconstruction error for scoring the anomalousness of a given example.
-    The class also features a rolling window to allow the model to make
-    predictions based on the reconstructability of multiple previous examples.
 
-    Parameters
-    ----------
-    module
-        Torch module that builds the autoencoder to be wrapped.
-        The module should accept inputs with shape
-        `(window_size, batch_size, n_features)`. It should also
-        feature a parameter `n_features` used to adapt the network to the
-        number of features in the initial training example.
-    loss_fn
-        Loss function to be used for training the wrapped model. Can be a
-        loss function provided by `torch.nn.functional` or one of the
-        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
-        'smooth_l1', 'kl_div'.
-    optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an
-        optimizer class provided by `torch.optim` or one of the following:
-        "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
-    lr
-        Learning rate of the optimizer.
-    device
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed
-        Random seed to be used for training the wrapped model.
-    window_size
-        Size of the rolling window used for storing previous examples.
-    append_predict
-        Whether to append inputs passed for prediction to the rolling window.
-    **kwargs
-        Parameters to be passed to the `Module` or the `optimizer`.
     """
-
     def __init__(
         self,
         module: torch.nn.Module,
@@ -312,16 +278,6 @@ class RollingAutoencoderInitialized(
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing
-        the respective class.
-
-        Yields
-        -------
-        dict
-            Dictionary of parameters to be used for unit testing
-            the respective class.
-        """
 
         yield {
             "module": _TestLSTMAutoencoder(30),
@@ -331,16 +287,6 @@ class RollingAutoencoderInitialized(
 
     @classmethod
     def _unit_test_skips(self) -> set:
-        """
-        Indicates which checks to skip during unit testing.
-        Most estimators pass the full test suite. However, in some cases,
-        some estimators might not
-        be able to pass certain checks.
-        Returns
-        -------
-        set
-            Set of checks to skip during unit testing.
-        """
         return {
             "check_shuffle_features_no_impact",
             "check_emerging_features",
@@ -350,19 +296,6 @@ class RollingAutoencoderInitialized(
         }
 
     def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
-        """
-        Performs one step of training with a single example.
-
-        Parameters
-        ----------
-        x
-            Input example.
-
-        Returns
-        -------
-        RollingAutoencoder
-            The estimator itself.
-        """
         self._update_observed_features(x)
         self._x_window.append(list(x.values()))
 
@@ -371,22 +304,6 @@ class RollingAutoencoderInitialized(
             self._learn(x=x_t)
 
     def learn_many(self, X: pd.DataFrame, y=None) -> None:
-        """
-        Performs one step of training with a batch of examples.
-
-        Parameters
-        ----------
-        X
-            Input batch of examples.
-
-        y
-            Should be None
-
-        Returns
-        -------
-        RollingAutoencoder
-            The estimator itself.
-        """
         self._update_observed_features(X)
 
         self._x_window.append(X.values.tolist())

@@ -339,7 +339,7 @@ class RollingClassifierInitialized(
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> None:
         """Learns from one example using the rolling window."""
         self._update_observed_features(x)
-        self._update_observed_classes(y)
+        self._update_observed_targets(y)
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
         if len(self._x_window) == self.window_size:
             x_t = deque2rolling_tensor(self._x_window, device=self.device)
@@ -361,7 +361,7 @@ class RollingClassifierInitialized(
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """Learns from multiple examples using the rolling window."""
-        self._update_observed_classes(y)
+        self._update_observed_targets(y)
         self._update_observed_features(X)
         X = X[list(self.observed_features)]
         self._x_window.extend(X.values.tolist())

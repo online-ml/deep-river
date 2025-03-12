@@ -287,75 +287,8 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
 class AutoencoderInitialized(DeepEstimatorInitialized, AnomalyDetector):
     """
-    Wrapper for PyTorch autoencoder models that uses the networks
-    reconstruction error for scoring the anomalousness of a given example.
 
-    Parameters
-    ----------
-    module
-        Torch Module that builds the autoencoder to be wrapped.
-        The Module should accept parameter `n_features` so that the returned
-        model's input shape can be determined based on the number of features
-        in the initial training example.
-    loss_fn
-        Loss function to be used for training the wrapped model. Can be a
-        loss function provided by `torch.nn.functional` or one of the
-        following: 'mse', 'l1', 'cross_entropy', 'binary_crossentropy',
-        'smooth_l1', 'kl_div'.
-    optimizer_fn
-        Optimizer to be used for training the wrapped model. Can be an
-        optimizer class provided by `torch.optim` or one of the following:
-        "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
-    lr
-        Learning rate of the optimizer.
-    device
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Parameters to be passed to the `torch.Module` class
-        aside from `n_features`.
-
-    Examples
-    --------
-    >>> from deep_river.anomaly import Autoencoder
-    >>> from river import metrics
-    >>> from river.datasets import CreditCard
-    >>> from torch import nn
-    >>> import math
-    >>> from river.compose import Pipeline
-    >>> from river.preprocessing import MinMaxScaler
-
-    >>> dataset = CreditCard().take(5000)
-    >>> metric = metrics.RollingROCAUC(window_size=5000)
-
-    >>> class MyAutoEncoder(torch.nn.Module):
-    ...     def __init__(self, n_features, latent_dim=3):
-    ...         super(MyAutoEncoder, self).__init__()
-    ...         self.linear1 = nn.Linear(n_features, latent_dim)
-    ...         self.nonlin = torch.nn.LeakyReLU()
-    ...         self.linear2 = nn.Linear(latent_dim, n_features)
-    ...         self.sigmoid = nn.Sigmoid()
-    ...
-    ...     def forward(self, X, **kwargs):
-    ...         X = self.linear1(X)
-    ...         X = self.nonlin(X)
-    ...         X = self.linear2(X)
-    ...         return self.sigmoid(X)
-
-    >>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
-    >>> scaler = MinMaxScaler()
-    >>> model = Pipeline(scaler, ae)
-
-    >>> for x, y in dataset:
-    ...    score = model.score_one(x)
-    ...    model.learn_one(x=x)
-    ...    metric.update(y, score)
-    ...
-    >>> print(f"Rolling ROCAUC: {metric.get():.4f}")
-    Rolling ROCAUC: 0.8901
     """
-
     def __init__(
         self,
         module: torch.nn.Module,
