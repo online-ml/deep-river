@@ -286,7 +286,34 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
 
 
 class AutoencoderInitialized(DeepEstimatorInitialized, AnomalyDetector):
-    """ """
+    """
+    Represents an initialized autoencoder for anomaly detection and feature learning.
+
+    This class is built upon the DeepEstimatorInitialized and AnomalyDetector
+    base classes. It provides methods for performing unsupervised learning
+    through an autoencoder mechanism. The primary objective of the class is
+    to train the autoencoder on input data and compute anomaly scores based
+    on the reconstruction error. It supports learning on individual examples
+    or entire batches of data.
+
+    Attributes
+    ----------
+    is_feature_incremental : bool
+        Indicates whether the model is designed to increment features dynamically.
+    module : torch.nn.Module
+        The PyTorch model representing the autoencoder architecture.
+    loss_fn : Union[str, Callable]
+        Specifies the loss function to compute the reconstruction error.
+    optimizer_fn : Union[str, Callable]
+        Specifies the optimizer to be used for training the autoencoder.
+    lr : float
+        The learning rate for optimization.
+    device : str
+        The device on which the model is loaded and trained (e.g., "cpu",
+        "cuda").
+    seed : int
+        Random seed for ensuring reproducibility.
+    """
 
     def __init__(
         self,
