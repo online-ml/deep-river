@@ -18,8 +18,6 @@ def check_dict2tensor(model):
     input_len = model._get_input_size()
     lst = [1, 2, 3]
     lst.extend([0] * (input_len - 3))
-    print(f"input_len: {input_len}")
-    print(model._dict2tensor(x).tolist())
     assert model._dict2tensor(x).tolist() == [lst]
 
     x2 = {"b": 2, "c": 3}
