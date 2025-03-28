@@ -10,6 +10,7 @@ from sortedcontainers import SortedSet
 from torch.utils.hooks import RemovableHandle
 
 from deep_river.utils import (
+    deque2rolling_tensor,
     df2tensor,
     dict2tensor,
     float2tensor,
@@ -682,3 +683,7 @@ class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
             seed=seed,
             **kwargs,
         )
+
+    def _deque2rolling_tensor(self, x_win: Deque):
+        tensor_data = deque2rolling_tensor(x_win, device=self.device)
+        return self._pad_tensor_if_needed(tensor_data, len(x_win))

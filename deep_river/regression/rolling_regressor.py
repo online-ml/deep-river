@@ -21,11 +21,7 @@ class _TestLSTM(torch.nn.Module):
 
     def forward(self, X, **kwargs):
         # lstm with input, hidden, and internal state
-        print(f"Input shape: {X.shape}")
-        print(f"Input shape: {X.shape}")  # (batch_size, seq_len, input_dim)
-        print(f"Expected shape: (batch_size, seq_len, {self.n_features})")
         output, (hn, cn) = self.lstm(X)
-
         hn = hn.view(-1, self.hidden_size)
         return hn
 
@@ -344,7 +340,7 @@ class RollingRegressorInitialized(
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
         if len(self._x_window) == self.window_size:
-            x_t = deque2rolling_tensor(self._x_window, device=self.device)
+            x_t = self._deque2rolling_tensor(self._x_window)
 
             # Convert y to tensor (ensuring proper shape for regression)
             y_t = torch.tensor([y], dtype=torch.float32, device=self.device).view(-1, 1)
@@ -375,7 +371,7 @@ class RollingRegressorInitialized(
 
         self.module.eval()
         with torch.inference_mode():
-            x_t = deque2rolling_tensor(x_win, device=self.device)
+            x_t = self._deque2rolling_tensor(x_win)
             res = self.module(x_t).numpy(force=True).item()
 
         return res
@@ -403,7 +399,7 @@ class RollingRegressorInitialized(
         self._x_window.extend(X.values.tolist())
 
         if len(self._x_window) == self.window_size:
-            X_t = deque2rolling_tensor(self._x_window, device=self.device)
+            X_t = self._deque2rolling_tensor(self._x_window)
 
             # Convert y to tensor (ensuring proper shape for regression)
             y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
@@ -435,6 +431,6 @@ class RollingRegressorInitialized(
 
         self.module.eval()
         with torch.inference_mode():
-            x_t = deque2rolling_tensor(x_win, device=self.device)
+            x_t = self._deque2rolling_tensor(x_win)
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)

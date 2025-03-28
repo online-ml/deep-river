@@ -342,7 +342,7 @@ class RollingClassifierInitialized(
         self._update_observed_targets(y)
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
         if len(self._x_window) == self.window_size:
-            x_t = deque2rolling_tensor(self._x_window, device=self.device)
+            x_t = self._deque2rolling_tensor(self._x_window)
             self._learn(x=x_t, y=y)
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
@@ -354,7 +354,7 @@ class RollingClassifierInitialized(
             self._x_window = x_win
         self.module.eval()
         with torch.inference_mode():
-            x_t = deque2rolling_tensor(x_win, device=self.device)
+            x_t = self._deque2rolling_tensor(x_win)
             y_pred = self.module(x_t)
             proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
         return proba[0]
@@ -366,7 +366,7 @@ class RollingClassifierInitialized(
         X = X[list(self.observed_features)]
         self._x_window.extend(X.values.tolist())
         if len(self._x_window) == self.window_size:
-            X_t = deque2rolling_tensor(self._x_window, device=self.device)
+            X_t = self._deque2rolling_tensor(self._x_window)
             self._learn(x=X_t, y=y)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -379,6 +379,6 @@ class RollingClassifierInitialized(
             self._x_window = x_win
         self.module.eval()
         with torch.inference_mode():
-            x_t = deque2rolling_tensor(x_win, device=self.device)
+            x_t = self._deque2rolling_tensor(x_win)
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)
