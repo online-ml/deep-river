@@ -21,7 +21,11 @@ class _TestLSTM(torch.nn.Module):
 
     def forward(self, X, **kwargs):
         # lstm with input, hidden, and internal state
+        print(f"Input shape: {X.shape}")
+        print(f"Input shape: {X.shape}")  # (batch_size, seq_len, input_dim)
+        print(f"Expected shape: (batch_size, seq_len, {self.n_features})")
         output, (hn, cn) = self.lstm(X)
+
         hn = hn.view(-1, self.hidden_size)
         return hn
 
