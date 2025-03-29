@@ -502,7 +502,18 @@ class DeepEstimatorInitialized(base.Estimator):
             )
 
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
-        """Pads the tensor if fewer features are available than required."""
+        """
+
+        Parameters
+        ----------
+        tensor_data
+        x_len
+        default_value
+
+        Returns
+        -------
+
+        """
         len_current_features = len(self.observed_features)
         if len_current_features < self._get_input_size():
             padding_shape = None

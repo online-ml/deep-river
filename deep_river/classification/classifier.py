@@ -350,31 +350,91 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
 class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
     """
-    Wrapper for PyTorch classification models that supports feature and class incremental learning.
+    Wrapper for PyTorch classification models that automatically handles
+    increases in the number of classes by adding output neurons in case
+    the number of observed classes exceeds the current
+    number of output neurons.
 
     Parameters
     ----------
-    module : torch.nn.Module
-        A PyTorch model. Can be pre-initialized or uninitialized.
-    loss_fn : Union[str, Callable]
-        Loss function for training. Can be a string (e.g., 'mse', 'cross_entropy', etc.)
-        or a PyTorch function.
-    optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
-        Optimizer for training (e.g., "adam", "sgd", or a PyTorch optimizer class).
-    lr : float, default=0.001
+    module
+        Torch Module that builds the autoencoder to be wrapped.
+    loss_fn
+        Loss function to be used for training the wrapped model. Can be a
+        loss function provided by `torch.nn.functional` or one of the
+        following: 'mse', 'l1', 'cross_entropy',
+        'binary_cross_entropy_with_logits', 'binary_crossentropy',
+        'smooth_l1', 'kl_div'.
+    optimizer_fn
+        Optimizer to be used for training the wrapped model.
+        Can be an optimizer class provided by `torch.optim` or one of the
+        following: "adam", "adam_w", "sgd", "rmsprop", "lbfgs".
+    lr
         Learning rate of the optimizer.
-    output_is_logit : bool, default=True
-        If True, applies softmax/sigmoid during inference.
-    is_class_incremental : bool, default=False
-        If True, adds neurons to the output layer when new classes appear.
-    is_feature_incremental : bool, default=False
-        If True, adds neurons to the input layer when new features appear.
-    device : str, default="cpu"
-        Whether to use "cpu" or "cuda".
-    seed : int, default=42
-        Random seed for reproducibility.
+    output_is_logit
+        Whether the module produces logits as output. If true, either
+        softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental
+        Whether the classifier should adapt to the appearance of
+        previously unobserved classes by adding a unit to the output
+        layer of the network. This works only if the last trainable
+        layer is a nn.Linear layer. Note also, that output activation
+        functions can not be adapted, meaning that a binary classifier
+        with a sigmoid output can not be altered to perform multi-class
+        predictions.
+    is_feature_incremental
+        Whether the model should adapt to the appearance of
+        previously features by adding units to the input
+        layer of the network.
+    device
+        to run the wrapped model on. Can be "cpu" or "cuda".
+    seed
+        Random seed to be used for training the wrapped model.
     **kwargs
-        Additional parameters for model initialization.
+        Parameters to be passed to the `build_fn` function aside from
+        `n_features`.
+
+    Examples
+    --------
+    >>> from river import metrics, preprocessing, compose, datasets
+    >>> from deep_river import classification
+    >>> from torch import nn
+    >>> from torch import manual_seed
+
+    >>> _ = manual_seed(42)
+
+    >>> class MyModule(nn.Module):
+    ...     def __init__(self):
+    ...         super(MyModule, self).__init__()
+    ...         self.dense0 = nn.Linear(10,5)
+    ...         self.nlin = nn.ReLU()
+    ...         self.dense1 = nn.Linear(5, 2)
+    ...         self.softmax = nn.Softmax(dim=-1)
+    ...
+    ...     def forward(self, x, **kwargs):
+    ...         x = self.nlin(self.dense0(x))
+    ...         x = self.nlin(self.dense1(x))
+    ...         x = self.softmax(x)
+    ...         return x
+
+    >>> model_pipeline = compose.Pipeline(
+    ...     preprocessing.StandardScaler,
+    ...     Classifier(module=MyModule,
+    ...                loss_fn="binary_cross_entropy",
+    ...                optimizer_fn='adam')
+    ... )
+
+
+    >>> dataset = datasets.Phishing()
+    >>> metric = metrics.Accuracy()
+
+    >>> for x, y in dataset:
+    ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
+    ...     metric.update(y, y_pred)  # update the metric
+    ...     model_pipeline.learn_one(x,y)
+
+    >>> print(f'Accuracy: {metric.get()}')
+    Accuracy: 0.7264
     """
 
     def __init__(

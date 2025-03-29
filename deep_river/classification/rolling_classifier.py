@@ -286,8 +286,90 @@ class RollingClassifierInitialized(
     ClassifierInitialized, RollingDeepEstimatorInitialized
 ):
     """
-    Wrapper that feeds a sliding window of recent examples to the wrapped
-    classification model and adapts to new features or classes.
+    RollingClassifierInitialized extends both ClassifierInitialized and
+    RollingDeepEstimatorInitialized,
+    incorporating a rolling window mechanism for sequential learning in an
+    evolving feature and class space.
+
+    This classifier dynamically adapts to new features and classes over
+    time while leveraging a rolling
+    window for training. It supports single-instance and batch learning
+    while maintaining adaptability.
+
+    Attributes
+    ----------
+    module : torch.nn.Module
+        The PyTorch model used for classification.
+    loss_fn : Union[str, Callable]
+        The loss function for training, defaulting to binary cross-entropy with logits.
+    optimizer_fn : Union[str, Type[optim.Optimizer]]
+        The optimizer function or class used for training.
+    lr : float
+        The learning rate for optimization.
+    output_is_logit : bool
+        Indicates whether model outputs logits or probabilities.
+    is_class_incremental : bool
+        Whether new classes should be dynamically added.
+    is_feature_incremental : bool
+        Whether new features should be dynamically added.
+    device : str
+        The computational device for training (e.g., "cpu", "cuda").
+    seed : int
+        The random seed for reproducibility.
+    window_size : int
+        The number of past instances considered in the rolling window.
+    append_predict : bool
+        Whether predictions should be appended to the rolling window.
+    observed_classes : SortedSet
+        Tracks observed class labels for incremental learning.
+
+    Examples
+    --------
+    >>> from deep_river.classification import RollingClassifier
+    >>> from river import metrics, preprocessing, datasets, compose
+    >>> import torch
+
+    >>> class RnnModule(torch.nn.Module):
+    ... def __init__(self, n_features, hidden_size=1):
+    ...     super().__init__()
+    ...     self.n_features = n_features
+    ...     self.rnn = torch.nn.RNN(
+    ...         input_size=n_features, hidden_size=hidden_size, num_layers=1
+    ...     )
+    ...     self.softmax = torch.nn.Softmax(dim=-1)
+    ...
+    ... def forward(self, X, **kwargs):
+    ...     out, hn = self.rnn(X)  # lstm with input, hidden, and internal state
+    ...     hn = hn.view(-1, self.rnn.hidden_size)
+    ...     return self.softmax(hn)
+
+    >>> model_pipeline = compose.Pipeline(
+    ...     preprocessing.StandardScaler,
+    ...     RollingClassifierInitialized(module=RnnModule(10,1),
+    ...                loss_fn="binary_cross_entropy",
+    ...                optimizer_fn='adam')
+    ... )
+
+    >>> dataset = datasets.Keystroke()
+    >>> metric = metrics.Accuracy()
+    >>> optimizer_fn = torch.optim.SGD
+
+    >>> model_pipeline = preprocessing.StandardScaler()
+    >>> model_pipeline |= RollingClassifier(
+    ...    module=RnnModule,
+    ...    loss_fn="binary_cross_entropy",
+    ...    optimizer_fn=torch.optim.SGD,
+    ...    window_size=20,
+    ...    lr=1e-2,
+    ...    append_predict=True,
+    ...    is_class_incremental=False,
+    ... )
+
+    >>> for x, y in dataset:
+    ...     y_pred = model_pipeline.predict_one(x)  # make a prediction
+    ...     metric.update(y, y_pred)  # update the metric
+    ...     model_pipeline.learn_one(x, y)  # make the model learn
+    >>> print(f"Accuracy: {metric.get():.2f}")
     """
 
     def __init__(
