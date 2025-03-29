@@ -3,7 +3,6 @@ from collections import deque
 import numpy as np
 import pandas as pd
 import torch
-from ordered_set import OrderedSet
 from sortedcontainers import SortedSet
 
 from deep_river.utils import (
@@ -18,13 +17,13 @@ from deep_river.utils import (
 
 def test_dict2tensor():
     x = {"a": 1, "b": 2, "c": 3}
-    assert dict2tensor(x, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
+    assert dict2tensor(x, features=SortedSet(x.keys())).tolist() == [[1, 2, 3]]
     # Test dissapearing features
     x2 = {"b": 2, "c": 3}
-    assert dict2tensor(x2, features=OrderedSet(x.keys())).tolist() == [[0, 2, 3]]
+    assert dict2tensor(x2, features=SortedSet(x.keys())).tolist() == [[0, 2, 3]]
     # Test shuffled features
     x3 = {"b": 2, "a": 1, "c": 3}
-    assert dict2tensor(x3, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
+    assert dict2tensor(x3, features=SortedSet(x.keys())).tolist() == [[1, 2, 3]]
 
 
 def test_float2tensor():

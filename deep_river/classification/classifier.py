@@ -3,7 +3,6 @@ from typing import Callable, Dict, Type, Union
 import numpy as np
 import pandas as pd
 import torch
-from ordered_set import OrderedSet
 from river import base
 from sortedcontainers import SortedSet
 
@@ -271,7 +270,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             self.observed_classes |= y
 
         if len(self.observed_classes) > n_existing_classes:
-            self.observed_classes = OrderedSet(sorted(self.observed_classes))
+            self.observed_classes = SortedSet(self.observed_classes)
             return True
         else:
             return False

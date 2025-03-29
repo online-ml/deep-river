@@ -36,7 +36,6 @@ pandas = "~2.2.2"
 numpy = "~1.26.4"
 river = "*"
 tqdm = "~4.66.5"
-ordered-set = "~4.1.0"
 torchviz = "~0.0.2"
 mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
 pytkdocs = { version = ">=0.5.0", extras = ["numpy-style"] }
