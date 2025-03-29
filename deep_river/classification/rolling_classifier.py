@@ -21,7 +21,6 @@ class _TestLSTM(torch.nn.Module):
         )
         self.linear = torch.nn.Linear(hidden_size, 2)
 
-
     def forward(self, X, **kwargs):
         # lstm with input, hidden, and internal state
         output, (hn, cn) = self.lstm(X)
@@ -410,7 +409,7 @@ class RollingClassifierInitialized(
     @classmethod
     def _unit_test_params(cls):
         yield {
-            "module": _TestLSTM(10,16),
+            "module": _TestLSTM(10, 16),
             "optimizer_fn": "sgd",
             "lr": 1e-3,
             "is_feature_incremental": False,
