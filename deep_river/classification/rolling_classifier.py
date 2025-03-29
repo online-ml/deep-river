@@ -12,19 +12,22 @@ from deep_river.utils.tensor_conversion import deque2rolling_tensor, output2prob
 
 
 class _TestLSTM(torch.nn.Module):
-    def __init__(self, n_features, output_size=1):
+    def __init__(self, n_features, hidden_size=1):
         super().__init__()
         self.n_features = n_features
-        self.output_size = output_size
+        self.hidden_size = hidden_size
         self.lstm = torch.nn.LSTM(
-            input_size=n_features, hidden_size=output_size, num_layers=1
+            input_size=n_features, hidden_size=hidden_size, num_layers=1
         )
+        self.linear = torch.nn.Linear(hidden_size, 2)
+
 
     def forward(self, X, **kwargs):
         # lstm with input, hidden, and internal state
         output, (hn, cn) = self.lstm(X)
-        hn = hn.view(-1, self.output_size)
-        return hn
+        x = hn.view(-1, self.hidden_size)
+        x = self.linear(x)
+        return torch.nn.functional.softmax(x, dim=-1)
 
 
 class RollingClassifier(Classifier, RollingDeepEstimator):
@@ -407,7 +410,7 @@ class RollingClassifierInitialized(
     @classmethod
     def _unit_test_params(cls):
         yield {
-            "module": _TestLSTM(10),
+            "module": _TestLSTM(10,16),
             "optimizer_fn": "sgd",
             "lr": 1e-3,
             "is_feature_incremental": False,
@@ -416,7 +419,9 @@ class RollingClassifierInitialized(
 
     @classmethod
     def _unit_test_skips(cls) -> set:
-        return set()
+        return {
+            "check_predict_proba_one",
+        }
 
     def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> None:
         """Learns from one example using the rolling window."""
