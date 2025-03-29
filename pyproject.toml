@@ -31,17 +31,17 @@ classifiers = [
 [tool.poetry.dependencies]
 python = ">=3.10,<3.13"
 scikit-learn = "~1.5.0"
-torch = "~2.2.2"
+torch = "==2.2.2"
 pandas = "~2.2.2"
 numpy = "~1.26.4"
 river = "*"
 tqdm = "~4.66.5"
-ordered-set = "~4.1.0"
 torchviz = "~0.0.2"
 mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
 pytkdocs = { version = ">=0.5.0", extras = ["numpy-style"] }
+sortedcontainers = "^2.4.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 graphviz = ">=0.20.3"
 matplotlib = ">=3.9.2"
 mypy = ">=1.11.1"

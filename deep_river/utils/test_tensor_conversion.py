@@ -3,7 +3,7 @@ from collections import deque
 import numpy as np
 import pandas as pd
 import torch
-from ordered_set import OrderedSet
+from sortedcontainers import SortedSet
 
 from deep_river.utils import (
     deque2rolling_tensor,
@@ -17,13 +17,13 @@ from deep_river.utils import (
 
 def test_dict2tensor():
     x = {"a": 1, "b": 2, "c": 3}
-    assert dict2tensor(x, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
+    assert dict2tensor(x, features=SortedSet(x.keys())).tolist() == [[1, 2, 3]]
     # Test dissapearing features
     x2 = {"b": 2, "c": 3}
-    assert dict2tensor(x2, features=OrderedSet(x.keys())).tolist() == [[0, 2, 3]]
+    assert dict2tensor(x2, features=SortedSet(x.keys())).tolist() == [[0, 2, 3]]
     # Test shuffled features
     x3 = {"b": 2, "a": 1, "c": 3}
-    assert dict2tensor(x3, features=OrderedSet(x.keys())).tolist() == [[1, 2, 3]]
+    assert dict2tensor(x3, features=SortedSet(x.keys())).tolist() == [[1, 2, 3]]
 
 
 def test_float2tensor():
@@ -59,7 +59,7 @@ def test_deque2rolling_tensor():
 
 
 def test_df2tensor():
-    features = ["a", "b", "c"]
+    features = SortedSet(["a", "b", "c"])
     x = pd.DataFrame(np.zeros((2, 3)), columns=features)
     assert df2tensor(x, features=features).tolist() == [[0, 0, 0], [0, 0, 0]]
     x2 = pd.DataFrame(np.zeros((2, 2)), columns=["b", "c"])
@@ -67,16 +67,16 @@ def test_df2tensor():
 
 
 def test_labels2onehot():
-    classes = OrderedSet(["first class", "second class", "third class"])
+    classes = SortedSet(["first class", "second class", "third class"])
     y1 = "first class"
     y2 = "third class"
     assert labels2onehot(y1, classes).tolist() == [[1, 0, 0]]
     assert labels2onehot(y2, classes).tolist() == [[0, 0, 1]]
-    classes = OrderedSet(["first class"])
+    classes = SortedSet(["first class"])
     n_classes = 3
     assert labels2onehot(y1, classes, n_classes).tolist() == [[1, 0, 0]]
 
-    classes = OrderedSet(["first class", "second class", "third class"])
+    classes = SortedSet(["first class", "second class", "third class"])
     y1 = pd.Series(["first class", "third class"])
     assert labels2onehot(y1, classes).tolist() == [[1, 0, 0], [0, 0, 1]]
     assert labels2onehot(y1, classes, n_classes=4).tolist() == [
@@ -93,14 +93,14 @@ def dicts_are_close(d1, d2):
 
 def test_output2proba():
     preds = torch.tensor([[2.0, 1.0, 0.1]])
-    classes = OrderedSet(["class1", "class2", "class3"])
+    classes = SortedSet(["class1", "class2", "class3"])
     expected_output = {"class1": 2.0, "class2": 1.0, "class3": 0.1}
     assert dicts_are_close(
         output2proba(preds, classes, output_is_logit=False)[0], expected_output
     )
 
     preds = torch.tensor([[2.0, 1.0, 0.1]])
-    classes = OrderedSet(["class1", "class2", "class3"])
+    classes = SortedSet(["class1", "class2", "class3"])
     softmaxed_preds = torch.softmax(preds, dim=-1).numpy().flatten()
     expected_output = {
         "class1": softmaxed_preds[0],
@@ -113,7 +113,7 @@ def test_output2proba():
     )
 
     preds = torch.tensor([[0.8]])
-    classes = OrderedSet(["positive"])
+    classes = SortedSet(["positive"])
     sigmoid_pred = torch.sigmoid(preds).numpy().flatten()
     expected_output = {
         "positive": sigmoid_pred[0],
@@ -125,14 +125,14 @@ def test_output2proba():
     )
 
     preds = torch.tensor([[0.7]])
-    classes = OrderedSet([])
+    classes = SortedSet([])
     expected_output = {True: 0.7, False: 0.3}
     assert dicts_are_close(
         output2proba(preds, classes, output_is_logit=False)[0], expected_output
     )
 
     preds = torch.tensor([[0.2, 0.5, 0.3]])
-    classes = OrderedSet(["class1"])
+    classes = SortedSet(["class1"])
     expected_output = {"class1": 0.2, "Unobserved0": 0.5, "Unobserved1": 0.3}
 
     assert dicts_are_close(
@@ -140,7 +140,7 @@ def test_output2proba():
     )
 
     preds = torch.tensor([[2.0, 1.0], [0.1, 0.9]])
-    classes = OrderedSet(["class1", "class2"])
+    classes = SortedSet(["class1", "class2"])
     expected_output = [
         {"class1": 2.0, "class2": 1.0},
         {"class1": 0.1, "class2": 0.9},

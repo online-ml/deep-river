@@ -71,7 +71,7 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 
 >>> model_pipeline = compose.Pipeline(
 ...     preprocessing.StandardScaler(),
-...     classification.Classifier(module=MyModule, loss_fn='binary_cross_entropy', optimizer_fn='adam')
+...     classification.ClassifierInitialized(module=MyModule(10), loss_fn='binary_cross_entropy', optimizer_fn='adam')
 ... )
 
 >>> dataset = datasets.Phishing()
@@ -93,7 +93,7 @@ Accuracy: 0.7264
 >>> from river import stream
 >>> from sklearn import datasets
 >>> from torch import nn
->>> from deep_river.regression.multioutput import MultiTargetRegressor
+>>> from deep_river.regression.multioutput import MultiTargetRegressorInitialized
 
 >>> class MyModule(nn.Module):
 ...     def __init__(self, n_features):
@@ -111,8 +111,8 @@ Accuracy: 0.7264
 ...     )
 >>> model = compose.Pipeline(
 ...     preprocessing.StandardScaler(),
-...     MultiTargetRegressor(
-...         module=MyModule,
+...     MultiTargetRegressorInitialized(
+...         module=MyModule(10),
 ...         loss_fn='mse',
 ...         lr=0.3,
 ...         optimizer_fn='sgd',
@@ -127,7 +127,7 @@ MicroAverage(MAE): 34.31
 ### Anomaly Detection
 
 ```python
->>> from deep_river.anomaly import Autoencoder
+>>> from deep_river.anomaly import AutoencoderInitialized
 >>> from river import metrics
 >>> from river.datasets import CreditCard
 >>> from torch import nn
@@ -152,7 +152,7 @@ MicroAverage(MAE): 34.31
 ...         X = self.linear2(X)
 ...         return self.sigmoid(X)
 
->>> ae = Autoencoder(module=MyAutoEncoder, lr=0.005)
+>>> ae = AutoencoderInitialized(module=MyAutoEncoder(10), lr=0.005)
 >>> scaler = MinMaxScaler()
 >>> model = Pipeline(scaler, ae)
 
