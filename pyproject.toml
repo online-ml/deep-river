@@ -4,7 +4,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry]
 name = "deep_river"
-version = "0.2.8"
+version = "0.3.0"
 description = "Online Deep Learning for river"
 authors = ["Cedric Kulbach <cedric.kulbach@googlemail.com>",
            "Lucas Cazzonelli <Cazzonelli@fzi.de>",
