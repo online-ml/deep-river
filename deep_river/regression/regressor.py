@@ -327,7 +327,7 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(x_t)
-        return pd.DataFrame(y_preds)
+        return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())
 
     @classmethod
     def _unit_test_params(cls):
