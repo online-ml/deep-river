@@ -432,5 +432,5 @@ class RollingRegressorInitialized(
         self.module.eval()
         with torch.inference_mode():
             x_t = self._deque2rolling_tensor(x_win)
-            probas = self.module(x_t).detach().tolist()
-        return pd.DataFrame(probas)
+            y_preds = self.module(x_t).detach().tolist()
+        return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())

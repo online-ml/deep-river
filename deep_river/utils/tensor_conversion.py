@@ -189,6 +189,7 @@ def output2proba(
             preds = torch.softmax(preds, dim=-1)
         else:
             preds = torch.sigmoid(preds)
+
     preds_np = preds.detach().cpu().numpy()
 
     # If we have a single column, assume binary and create a complementary column.
