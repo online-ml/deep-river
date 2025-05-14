@@ -21,7 +21,7 @@ class _TestModule(torch.nn.Module):
 
     def forward(self, x):
         return self.net(x)
-    
+
 class DeepForecaster(river_ts.base.Forecaster, base.DeepEstimatorInitialized):
     """
 
@@ -81,10 +81,10 @@ class DeepForecaster(river_ts.base.Forecaster, base.DeepEstimatorInitialized):
             with torch.no_grad():
                 y_pred = self.module(input_tensor)
                 preds.append(float(y_pred.squeeze().cpu().numpy()))
-            
+
             # Autoregressive mode: append the last prediction to the input
             # This depends on how your model handles sequential dependencies
             # You may need to modify input_tensor here if using RNN-style input
             # For now, assuming fixed features (no time-based shift)
-        
+
         return preds
