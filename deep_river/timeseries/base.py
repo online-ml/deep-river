@@ -1,11 +1,10 @@
 from typing import Callable, Type, Union
 
 import pandas as pd
-import river
-from river import time_series as river_ts
 import torch
-from deep_river import base
+from river import time_series as river_ts
 
+from deep_river import base
 
 
 class _TestModule(torch.nn.Module):
@@ -16,16 +15,16 @@ class _TestModule(torch.nn.Module):
         self.net = torch.nn.Sequential(
             torch.nn.Linear(input_dim, hidden_dim),
             torch.nn.ReLU(),
-            torch.nn.Linear(hidden_dim, 1)
+            torch.nn.Linear(hidden_dim, 1),
         )
 
     def forward(self, x):
         return self.net(x)
 
-class DeepForecaster(river_ts.base.Forecaster, base.DeepEstimatorInitialized):
-    """
 
-    """
+class DeepForecaster(river_ts.base.Forecaster, base.DeepEstimatorInitialized):
+    """ """
+
     def __init__(
         self,
         module: torch.nn.Module,

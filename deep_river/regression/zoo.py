@@ -203,6 +203,7 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
     **kwargs
         Parameters to be passed to the `build_fn` function aside from `n_features`.
     """
+
     class LSTMModule(nn.Module):
         def __init__(self, n_features, output_size=1):
             super().__init__()
@@ -257,6 +258,7 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
         }
+
 
 class AttentionRegressorInitialized(RollingRegressorInitialized):
     """
