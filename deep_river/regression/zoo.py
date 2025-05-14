@@ -177,7 +177,32 @@ class MultiLayerPerceptronInitialized(RegressorInitialized):
 
 
 class LSTMRegressorInitialized(RollingRegressorInitialized):
-
+    """
+    LSTM Regressor model for regression.
+    Parameters
+    ----------
+    loss_fn : str or Callable
+        Loss function to be used for training the wrapped model.
+    optimizer_fn : str or Callable
+        Optimizer to be used for training the wrapped model.
+    lr : float
+        Learning rate of the optimizer.
+    output_is_logit : bool
+        Whether the module produces logits as output. If true, either
+        softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental : bool
+        Whether the classifier should adapt to the appearance of previously unobserved classes
+        by adding an unit to the output layer of the network.
+    is_feature_incremental : bool
+        Whether the model should adapt to the appearance of previously features by
+        adding units to the input layer of the network.
+    device : str
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed : int
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    """
     class LSTMModule(nn.Module):
         def __init__(self, n_features, output_size=1):
             super().__init__()
@@ -232,3 +257,43 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
         }
+
+class AttentionRegressorInitialized(RollingRegressorInitialized):
+    """
+    Attention Regressor model for regression.
+
+    Parameters
+    ----------
+    loss_fn : str or Callable
+        Loss function to be used for training the wrapped model.
+    optimizer_fn : str or Callable
+        Optimizer to be used for training the wrapped model.
+    lr : float
+        Learning rate of the optimizer.
+    output_is_logit : bool
+        Whether the module produces logits as output. If true, either
+        softmax or sigmoid is applied to the outputs when predicting.
+    is_class_incremental : bool
+        Whether the classifier should adapt to the appearance of previously unobserved classes
+        by adding an unit to the output layer of the network.
+    is_feature_incremental : bool
+        Whether the model should adapt to the appearance of previously features by
+        adding units to the input layer of the network.
+    device : str
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed : int
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    """
+
+    class AttentionModule(nn.Module):
+        def __init__(self, n_features, output_size=1):
+            super().__init__()
+            self.n_features = n_features
+            self.output_size = output_size
+
+            self.attention = nn.MultiheadAttention(
+                embed_dim=n_features, num_heads=1, batch_first=True
+            )
+            self.dense = nn.Linear(n_features, output_size)
