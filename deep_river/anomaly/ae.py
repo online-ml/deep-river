@@ -180,9 +180,9 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         self.module.train()
         x_pred = self.module(x)
         loss = self.loss_func(x_pred, x)
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
-        self.optimizer.zero_grad()
         return self
 
     def score_one(self, x: dict) -> float:
