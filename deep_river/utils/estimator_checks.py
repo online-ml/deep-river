@@ -74,7 +74,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """
     if isdeepestimator_initialized(
         model
-    ):  # todo remove after refactoring for initilized modules
+    ):  # todo remove after refactoring for initialized modules
         dataset_checks = [check_deep_learn_one]
 
         yield check_dict2tensor
