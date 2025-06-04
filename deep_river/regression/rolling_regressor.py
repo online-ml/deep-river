@@ -339,7 +339,6 @@ class RollingRegressorInitialized(
 
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
-        
         x_t = self._deque2rolling_tensor(self._x_window)
 
         # Convert y to tensor (ensuring proper shape for regression)

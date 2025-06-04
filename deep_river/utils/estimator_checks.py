@@ -6,11 +6,13 @@ __all__ = ["check_estimator"]
 
 import typing
 
-from river.checks import yield_checks, _yield_datasets, _wrapped_partial
-from river.utils import inspect as river_inspect
-import torch
 import pytest
+import torch
+from river.checks import _wrapped_partial, _yield_datasets, yield_checks
+from river.utils import inspect as river_inspect
+
 from deep_river.utils.inspect import isdeepestimator_initialized
+
 
 def check_deep_learn_one(model, dataset):
 
@@ -19,13 +21,12 @@ def check_deep_learn_one(model, dataset):
         original_backward(self, *args, **kwargs)
         raise RuntimeError("Simulated exception during backward pass")
 
-
     for x, y in dataset:
         original_backward = torch.Tensor.backward
         torch.Tensor.backward = patched_backward
-        
+
         try:
-        # First learn_one call - will raise exception after computing gradients
+            # First learn_one call - will raise exception after computing gradients
             with pytest.raises(RuntimeError):
                 if model._supervised:
                     model.learn_one(x, y)
@@ -34,12 +35,14 @@ def check_deep_learn_one(model, dataset):
         finally:
             # Always restore the original function
             torch.Tensor.backward = original_backward
-        
+
         for param in model.module.parameters():
             # New gradients were computed (not None)
-            assert param.grad is not None, "learn_one() should compute gradients" 
+            assert param.grad is not None, "learn_one() should compute gradients"
             # They are valid (finite values)
-            assert torch.all(torch.isfinite(param.grad)), "learn_one() should produce finite gradients"
+            assert torch.all(
+                torch.isfinite(param.grad)
+            ), "learn_one() should produce finite gradients"
 
 
 def check_dict2tensor(model):
@@ -69,10 +72,10 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     model
 
     """
-    if isdeepestimator_initialized(model): #todo remove after refactoring for initilized modules
-        dataset_checks = [
-            check_deep_learn_one
-        ]
+    if isdeepestimator_initialized(
+        model
+    ):  # todo remove after refactoring for initilized modules
+        dataset_checks = [check_deep_learn_one]
 
         yield check_dict2tensor
         # Classifier checks
@@ -83,7 +86,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
 
             if not model._multiclass:
                 yield check_dict2tensor
-        
+
         for dataset_check in dataset_checks:
             for dataset in _yield_datasets(model):
                 yield _wrapped_partial(dataset_check, dataset=dataset)
