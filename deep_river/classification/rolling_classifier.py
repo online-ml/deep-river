@@ -427,9 +427,8 @@ class RollingClassifierInitialized(
         self._update_observed_features(x)
         self._update_observed_targets(y)
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
-        if len(self._x_window) == self.window_size:
-            x_t = self._deque2rolling_tensor(self._x_window)
-            self._learn(x=x_t, y=y)
+        x_t = self._deque2rolling_tensor(self._x_window)
+        self._learn(x=x_t, y=y)
 
     def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """Predicts class probabilities using the rolling window."""
@@ -451,9 +450,8 @@ class RollingClassifierInitialized(
         self._update_observed_features(X)
         X = X[list(self.observed_features)]
         self._x_window.extend(X.values.tolist())
-        if len(self._x_window) == self.window_size:
-            X_t = self._deque2rolling_tensor(self._x_window)
-            self._learn(x=X_t, y=y)
+        X_t = self._deque2rolling_tensor(self._x_window)
+        self._learn(x=X_t, y=y)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Predicts probabilities for many examples."""

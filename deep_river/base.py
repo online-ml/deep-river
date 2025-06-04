@@ -621,9 +621,7 @@ class DeepEstimatorInitialized(base.Estimator):
         - Regression: y is a continuous value, converted to a tensor.
         - Classification: y is converted to one-hot encoding.
         """
-        self.module.train()
 
-        self.optimizer.zero_grad()
         y_pred = self.module(x)
 
         # Autoencoder case: No explicit y, so use x as target
@@ -640,7 +638,9 @@ class DeepEstimatorInitialized(base.Estimator):
             n_classes = y_pred.shape[-1]
             y = labels2onehot(y, self.observed_classes, n_classes, self.device)
 
+        self.module.train()
         loss = self.loss_func(y_pred, y)
+        self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
 
