@@ -298,9 +298,8 @@ class RollingAutoencoderInitialized(
         self._update_observed_features(x)
         self._x_window.append(list(x.values()))
 
-        if len(self._x_window) == self.window_size:
-            x_t = deque2rolling_tensor(self._x_window, device=self.device)
-            self._learn(x=x_t)
+        x_t = deque2rolling_tensor(self._x_window, device=self.device)
+        self._learn(x=x_t)
 
     def learn_many(self, X: pd.DataFrame, y=None) -> None:
         self._update_observed_features(X)

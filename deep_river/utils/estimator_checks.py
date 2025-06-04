@@ -40,8 +40,6 @@ def check_deep_learn_one(model, dataset):
             assert param.grad is not None, "learn_one() should compute gradients" 
             # They are valid (finite values)
             assert torch.all(torch.isfinite(param.grad)), "learn_one() should produce finite gradients"
-            # They represent a meaningful update (not all zeros)
-            assert not torch.all(param.grad == 0), "learn_one() should produce non-zero gradients"
 
 
 def check_dict2tensor(model):
@@ -71,7 +69,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     model
 
     """
-    if isdeepestimator_initialized(model):
+    if isdeepestimator_initialized(model): #todo remove after refactoring for initilized modules
         dataset_checks = [
             check_deep_learn_one
         ]

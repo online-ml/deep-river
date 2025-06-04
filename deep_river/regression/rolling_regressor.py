@@ -339,13 +339,13 @@ class RollingRegressorInitialized(
 
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
-        if len(self._x_window) == self.window_size:
-            x_t = self._deque2rolling_tensor(self._x_window)
+        
+        x_t = self._deque2rolling_tensor(self._x_window)
 
-            # Convert y to tensor (ensuring proper shape for regression)
-            y_t = torch.tensor([y], dtype=torch.float32, device=self.device).view(-1, 1)
+        # Convert y to tensor (ensuring proper shape for regression)
+        y_t = torch.tensor([y], dtype=torch.float32, device=self.device).view(-1, 1)
 
-            self._learn(x=x_t, y=y_t)
+        self._learn(x=x_t, y=y_t)
 
     def predict_one(self, x: dict) -> base.typing.RegTarget:
         """
