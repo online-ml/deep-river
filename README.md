@@ -38,6 +38,31 @@ You can install the latest development version from GitHub as so:
 pip install https://github.com/online-ml/deep-river/archive/refs/heads/master.zip
 ```
 
+### Development Environment
+
+For contributing to deep-river, we recommend using [uv](https://docs.astral.sh/uv/) for fast dependency management and environment setup:
+
+```shell
+# Install uv if you haven't already
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone the repository
+git clone https://github.com/online-ml/deep-river.git
+cd deep-river
+
+# Install all dependencies (including dev dependencies)
+uv sync --extra dev
+
+# Run tests
+make test
+
+# Format code
+make format
+
+# Build documentation
+make doc
+```
+
 ## 🍫 Quickstart
 
 We build the development of neural networks on top of the <a href="https://www.riverml.xyz">river API</a> and refer to the rivers design principles.

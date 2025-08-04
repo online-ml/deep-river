@@ -1,25 +1,23 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
 
-[tool.poetry]
+[project]
 name = "deep_river"
 version = "0.3.0"
 description = "Online Deep Learning for river"
-authors = ["Cedric Kulbach <cedric.kulbach@googlemail.com>",
-           "Lucas Cazzonelli <Cazzonelli@fzi.de>",
-           "Hoang-Anh Ngo <hoang-anh.ngo@alumni.polytechnique.org>",
-           "Max Halford <maxhalford25@gmail.com>",
-           "Saulo Martiello Mastelini <saulomastelini@gmail.com>",
+authors = [
+    {name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com"},
+    {name = "Lucas Cazzonelli", email = "Cazzonelli@fzi.de"},
+    {name = "Hoang-Anh Ngo", email = "hoang-anh.ngo@alumni.polytechnique.org"},
+    {name = "Max Halford", email = "maxhalford25@gmail.com"},
+    {name = "Saulo Martiello Mastelini", email = "saulomastelini@gmail.com"},
 ]
-license = "BSD-3-Clause"
+license = {text = "BSD-3-Clause"}
 readme = "README.md"
-homepage = "https://github.com/online-ml/deep-river"
-repository = "https://github.com/online-ml/deep-river"
-documentation = "https://github.com/online-ml/deep-river"
+requires-python = ">=3.10,<3.13"
 keywords = ["online-learning", "deep-learning", "data-streams"]
 classifiers = [
-    "License :: OSI Approved :: BSD License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -28,53 +26,64 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
-[tool.poetry.dependencies]
-python = ">=3.10,<3.13"
-scikit-learn = "~1.5.0"
-torch = "==2.2.2"
-pandas = "~2.2.2"
-numpy = "~1.26.4"
-river = "*"
-tqdm = "~4.66.5"
-torchviz = "~0.0.2"
-mkdocstrings = { version = ">=0.19.0", extras = ["python"] }
-pytkdocs = { version = ">=0.5.0", extras = ["numpy-style"] }
-sortedcontainers = "^2.4.0"
+dependencies = [
+    "scikit-learn~=1.5.0",
+    "torch==2.2.2",
+    "pandas~=2.2.2",
+    "numpy~=1.26.4",
+    "river",
+    "tqdm~=4.66.5",
+    "torchviz~=0.0.2",
+    "mkdocstrings[python]>=0.19.0",
+    "pytkdocs[numpy-style]>=0.5.0",
+    "sortedcontainers>=2.4.0",
+]
 
-[tool.poetry.group.dev.dependencies]
-graphviz = ">=0.20.3"
-matplotlib = ">=3.9.2"
-mypy = ">=1.11.1"
-codecov = ">=2.1.13"
-pre-commit = ">=3.8.0"
-pytest = ">=8.3.2"
-pytest-cov = ">=5.0.0"
-black = ">=24.8.0"
-flake8 = ">=7.1.1"
-isort = ">=5.13.2"
-jupyter = ">=1.0.0"
-pyupgrade = "==3.17.0"
-flask = ">=3.0.2"
-ipykernel = ">=6.9.0"
-mike = ">=0.5.3"
-mkdocs = ">=1.2.3"
-mkdocs-awesome-pages-plugin = ">=2.7.0"
-mkdocs-gen-files = ">=0.3.5"
-mkdocs-charts-plugin = ">=0.0.8"
-mkdocs-literate-nav = ">=0.4.1"
-mkdocs-material = ">=8.1.11"
-ipython_genutils = ">=0.1.0"
-mkdocs-jupyter = ">=0.20.0"
-nbconvert = ">=6.4.2"
-jupyter_contrib_nbextensions = "0.7.0"
-numpydoc = ">=1.2"
-notebook = "==6.4.3"
-spacy = ">=3.2.2"
-jinja2 = ">=3.0.3"
-dominate = "*"
-jupyter-client = "*"
-python-slugify = "*"
-watermark = "==2.3.1"
+[project.urls]
+Homepage = "https://github.com/online-ml/deep-river"
+Repository = "https://github.com/online-ml/deep-river"
+Documentation = "https://github.com/online-ml/deep-river"
+
+[project.optional-dependencies]
+dev = [
+    "graphviz>=0.20.3",
+    "matplotlib>=3.9.2",
+    "mypy>=1.11.1",
+    "codecov>=2.1.13",
+    "pre-commit>=3.8.0",
+    "pytest>=8.3.2",
+    "pytest-cov>=5.0.0",
+    "black>=24.8.0",
+    "flake8>=7.1.1",
+    "isort>=5.13.2",
+    "jupyter>=1.0.0",
+    "pyupgrade==3.17.0",
+    "flask>=3.0.2",
+    "ipykernel>=6.9.0",
+    "mike>=0.5.3",
+    "mkdocs>=1.2.3",
+    "mkdocs-awesome-pages-plugin>=2.7.0",
+    "mkdocs-gen-files>=0.3.5",
+    "mkdocs-charts-plugin>=0.0.8",
+    "mkdocs-literate-nav>=0.4.1",
+    "mkdocs-material>=8.1.11",
+    "ipython_genutils>=0.1.0",
+    "mkdocs-jupyter>=0.20.0",
+    "nbconvert>=6.4.2",
+    "jupyter_contrib_nbextensions==0.7.0",
+    "numpydoc>=1.2",
+    "notebook==6.4.3",
+    "spacy>=3.2.2",
+    "jinja2>=3.0.3",
+    "dominate",
+    "jupyter-client",
+    "python-slugify",
+    "watermark==2.3.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["deep_river*"]
+exclude = ["site*", "paper*"]
 
 [tool.mypy]
 ignore_missing_imports = true
