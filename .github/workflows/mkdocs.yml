@@ -24,7 +24,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: uv-${{ runner.os }}-3.12-${{ hashFiles('**/uv.lock') }}
+          key: uv-${{ runner.os }}-3.12-${{ hashFiles('**/uv.lock', '**/poetry.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-3.12-
             uv-${{ runner.os }}-
