@@ -48,9 +48,9 @@ jobs:
         run: uv run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
       - name: Run tests
-        run: |
-          export PYTHONPATH=$PWD
-          uv run pytest -v --cov=deep_river -m "not datasets"
+        run: uv run pytest -v --cov=deep_river -m "not datasets"
+        env:
+          PYTHONPATH: ${{ github.workspace }}
 
       - name: Upload coverage reports to Codecov with GitHub Action
         uses: codecov/codecov-action@v4
