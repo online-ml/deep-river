@@ -7,36 +7,38 @@ jobs:
   ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install Ubuntu dependencies
         run: sudo apt-get install graphviz pandoc
 
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: 3.12
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
+          version: "latest"
 
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
+      - name: Set up Python
+        run: uv python install 3.12
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
         with:
-          path: .venv
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-3.12-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-3.12-
+            uv-${{ runner.os }}-
 
-      - name: Install dependencies with river
-        run: poetry install --no-interaction
-        shell: bash
+      - name: Install dependencies
+        run: uv sync --all-extras
 
       - name: Build docs
         run: |
           cd benchmarks
-          poetry run python render.py
+          uv run python render.py
           cd ..
-          poetry run mkdocs build
+          uv run mkdocs build
 
       - name: Deploy docs
         run: |
-          poetry run mkdocs gh-deploy --force
+          uv run mkdocs gh-deploy --force
