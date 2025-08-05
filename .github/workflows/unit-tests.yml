@@ -21,52 +21,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
       - name: Set up Python ${{ matrix.python }}
-        uses: actions/setup-python@v2
+        run: uv python install ${{ matrix.python }}
+
+      - name: Cache uv dependencies
+        uses: actions/cache@v4
         with:
-          python-version: ${{ matrix.python }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          python-version: ${{ matrix.python }}
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-          installer-parallel: true
-
-      - name: Install Poetry (Windows fallback)
-        if: runner.os == 'Windows'
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install poetry
-        shell: powershell
-
-      - name: Configure Poetry for Windows
-        if: runner.os == 'Windows'
-        run: poetry config virtualenvs.in-project true
-        shell: powershell
-
-      - name: Load cached venv
-        id: cached-poetry-dependencies
-        uses: actions/cache@v3
-        with:
-          path: .venv
-          key: venv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/poetry.lock') }}
+          path: ~/.cache/uv
+          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/uv.lock') }}
+          restore-keys: |
+            uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-
+            uv-${{ runner.os }}-${{ matrix.python }}-
+            uv-${{ runner.os }}-
 
       - name: Install dependencies with river ${{ matrix.river }}
         run: |
-          poetry add river==${{ matrix.river }}
-          poetry install --no-interaction
-        shell: bash
+          uv add river==${{ matrix.river }}
+          uv sync --all-extras
 
       - name: Download datasets
-        run: poetry run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+        run: uv run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
       - name: Run tests
         run: |
           export PYTHONPATH=$PWD
-          poetry run pytest -v --cov=deep_river -m "not datasets"
-        shell: bash
+          uv run pytest -v --cov=deep_river -m "not datasets"
 
       - name: Upload coverage reports to Codecov with GitHub Action
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v4
