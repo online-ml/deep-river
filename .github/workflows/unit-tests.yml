@@ -33,7 +33,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/uv.lock', '**/poetry.lock') }}
+          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
             uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-
             uv-${{ runner.os }}-${{ matrix.python }}-
