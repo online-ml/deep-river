@@ -79,6 +79,7 @@ dev = [
     "jupyter-client",
     "python-slugify",
     "watermark==2.3.1",
+    "plotly>=5.0.0"
 ]
 
 [tool.setuptools.packages.find]
@@ -90,3 +91,16 @@ ignore_missing_imports = true
 
 [tool.isort]
 profile = "black"
+
+[dependency-groups]
+dev = [
+    "dominate>=2.9.1",
+    "jupyter-contrib-nbextensions>=0.7.0",
+    "mkdocs-awesome-pages-plugin>=2.10.1",
+    "mkdocs-gen-files>=0.5.0",
+    "mkdocs-jupyter>=0.25.1",
+    "mkdocs-literate-nav>=0.6.2",
+    "mkdocs-material>=9.6.16",
+    "plotly>=6.3.0",
+    "watermark>=2.3.1",
+]

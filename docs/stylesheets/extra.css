@@ -26,7 +26,7 @@
   border-radius: 0.5em;
 }
 
-.md-typeset details {
+.md-typeset details:not(.bench-details) {
   margin: 0;
   border-radius: 0;
   padding: 0 1em;
@@ -34,18 +34,18 @@
   border-left-color: black;
 }
 
-.md-typeset summary {
+.md-typeset summary:not(.bench-summary) {
   background-color: transparent;
   font-weight: 0;
   border-left: 0;
 }
 
-.md-typeset summary::before,
-.md-typeset summary::after {
+.md-typeset summary:not(.bench-summary)::before,
+.md-typeset summary:not(.bench-summary)::after {
   background-color: transparent;
 }
 
- /*Landing page container*/
+/*Landing page container*/
 .tx-container {
     position: absolute; top: 0; left: 0;
     height:100%;
@@ -405,4 +405,93 @@ select[name="Dataset"] {
 
 .vega-bind-name {
     display: None;
+}
+
+.md-typeset .benchmark-plot {
+  margin: 1.5rem auto 2.5rem;
+  padding: 1.25rem 1.25rem 0.75rem;
+  background: var(--md-default-bg-color, #ffffff);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 111, 0, 0.14);
+  box-shadow: 0 2px 14px rgba(0,0,0,0.06);
+  transition: box-shadow .2s ease, transform .2s ease;
+}
+.md-typeset .benchmark-plot:hover {
+  box-shadow: 0 6px 28px rgba(0,0,0,0.12);
+  transform: translateY(-1px);
+}
+.md-typeset .plotly-graph-div {
+  border-radius: 8px;
+  overflow: hidden;
+  min-height: 420px;
+}
+.md-typeset .plotly .modebar {
+  right: 14px !important;
+  top: 10px !important;
+  opacity: .75;
+}
+.md-typeset .plotly .modebar:hover { opacity: 1; }
+
+@media screen and (max-width: 768px) {
+  .md-typeset .benchmark-plot { padding: 1rem .75rem; }
+  .md-typeset .plotly-graph-div { min-height: 360px; }
+}
+
+@media screen and (min-width: 1200px) {
+  .md-typeset .benchmark-plot { max-width: 1100px; }
+}
+
+/* Dark mode refinements for Plotly (higher contrast on axes/labels) */
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg text {
+  fill: #e6e6e6 !important; /* default text color */
+}
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .xtick text,
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .ytick text,
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .legend text,
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .xaxis-title text,
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .yaxis-title text {
+  fill: #e6e6e6 !important;
+}
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg g[class*="grid"] path {
+  stroke: rgba(255,255,255,0.15) !important; /* grid lines */
+}
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .xzeroline,
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg .yzeroline,
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .main-svg [class*="zl"] {
+  stroke: rgba(255,255,255,0.25) !important; /* zero line */
+}
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .hoverlayer .hovertext path {
+  fill: #f0f0f0 !important;
+  stroke: #cfcfcf !important;
+}
+[data-md-color-scheme="slate"] .md-typeset .benchmark-plot .js-plotly-plot .hoverlayer .hovertext text {
+  fill: #1e1e1e !important;
+}
+/* --- Benchmark details alignment (matches render.py) --- */
+.md-typeset .bench-details {
+  margin: 0.5rem 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(127,127,127,0.22);
+  border-left-width: 1px;
+  border-radius: 10px;
+  background: var(--md-default-bg-color);
+}
+.md-typeset .bench-details[open] {
+  background: rgba(255, 111, 0, 0.02);
+  border-color: rgba(255, 111, 0, 0.25);
+}
+.md-typeset .bench-summary {
+  font-weight: 600 !important;
+}
+.md-typeset .bench-pre {
+  margin: 0.5rem 0 0;
+  padding: 0.75rem 1rem;
+  background: rgba(0,0,0,0.03);
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+@media (prefers-color-scheme: dark) {
+  .md-typeset .bench-pre { background: rgba(255,255,255,0.05); }
 }
