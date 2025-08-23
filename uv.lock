@@ -714,15 +714,21 @@ dev = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "black" },
     { name = "dominate" },
+    { name = "flake8" },
+    { name = "isort" },
     { name = "jupyter-contrib-nbextensions" },
     { name = "mkdocs-awesome-pages-plugin" },
     { name = "mkdocs-gen-files" },
     { name = "mkdocs-jupyter" },
     { name = "mkdocs-literate-nav" },
     { name = "mkdocs-material" },
+    { name = "mypy" },
     { name = "plotly" },
     { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pyupgrade" },
     { name = "watermark" },
 ]
 
@@ -777,15 +783,21 @@ provides-extras = ["dev"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "black", specifier = ">=25.1.0" },
     { name = "dominate", specifier = ">=2.9.1" },
+    { name = "flake8", specifier = ">=7.3.0" },
+    { name = "isort", specifier = ">=6.0.1" },
     { name = "jupyter-contrib-nbextensions", specifier = ">=0.7.0" },
     { name = "mkdocs-awesome-pages-plugin", specifier = ">=2.10.1" },
     { name = "mkdocs-gen-files", specifier = ">=0.5.0" },
     { name = "mkdocs-jupyter", specifier = ">=0.25.1" },
     { name = "mkdocs-literate-nav", specifier = ">=0.6.2" },
     { name = "mkdocs-material", specifier = ">=9.6.16" },
+    { name = "mypy", specifier = ">=1.17.0" },
     { name = "plotly", specifier = ">=6.3.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pyupgrade", specifier = ">=3.17.0" },
     { name = "watermark", specifier = ">=2.3.1" },
 ]
 
