@@ -102,5 +102,6 @@ dev = [
     "mkdocs-literate-nav>=0.6.2",
     "mkdocs-material>=9.6.16",
     "plotly>=6.3.0",
+    "pre-commit>=4.2.0",
     "watermark>=2.3.1",
 ]

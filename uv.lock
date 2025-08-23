@@ -722,6 +722,7 @@ dev = [
     { name = "mkdocs-literate-nav" },
     { name = "mkdocs-material" },
     { name = "plotly" },
+    { name = "pre-commit" },
     { name = "watermark" },
 ]
 
@@ -784,6 +785,7 @@ dev = [
     { name = "mkdocs-literate-nav", specifier = ">=0.6.2" },
     { name = "mkdocs-material", specifier = ">=9.6.16" },
     { name = "plotly", specifier = ">=6.3.0" },
+    { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "watermark", specifier = ">=2.3.1" },
 ]
 
