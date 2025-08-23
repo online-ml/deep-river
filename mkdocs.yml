@@ -144,7 +144,12 @@ plugins:
   - autorefs
   - mkdocs-jupyter:
       execute: false
-      include: ["*.ipynb"]
+      include:
+        - "**/*.ipynb"
+      ignore:
+        - "**/.ipynb_checkpoints/*"
+        - ".ipynb_checkpoints/*"
+        - "**/*-checkpoint.ipynb"
       ignore_h1_titles: true
       include_source: true
       theme: auto
