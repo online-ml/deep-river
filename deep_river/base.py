@@ -960,15 +960,6 @@ def load_model(filepath: Union[str, Path]):
         if key not in save_data:
             raise ValueError(f"Invalid save file format: missing '{key}' key")
 
-    # Check version compatibility (for future use)
-    if "deep_river_version" in save_data:
-        saved_version = save_data["deep_river_version"]
-        if saved_version != "0.3.0":
-            warnings.warn(
-                f"Model was saved with deep-river version {saved_version}, "
-                f"current version is 0.3.0. Compatibility is not guaranteed."
-            )
-
     # Import the estimator class
     estimator_class_path = save_data["estimator_class"]
     module_path, class_name = estimator_class_path.rsplit(".", 1)
