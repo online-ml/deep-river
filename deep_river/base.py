@@ -1101,4 +1101,3 @@ def load_model(filepath: Union[str, Path]):
             )
 
     return estimator
-

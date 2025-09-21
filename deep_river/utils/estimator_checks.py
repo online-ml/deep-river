@@ -267,6 +267,7 @@ def check_model_persistence_with_custom_kwargs(model):
         if Path(temp_path).exists():
             Path(temp_path).unlink()
 
+
 def check_feature_incremental_preservation(model):
     """Test that feature incremental settings are preserved."""
     # Only test models that support feature incremental learning
@@ -320,10 +321,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     if isdeepestimator_initialized(
         model
     ):  # todo remove after refactoring for initialized modules
-        dataset_checks = [
-            check_deep_learn_one,
-            check_model_persistence
-        ]
+        dataset_checks = [check_deep_learn_one, check_model_persistence]
 
         # Non-dataset checks (run once per model)
         yield check_dict2tensor
