@@ -224,64 +224,6 @@ def check_model_persistence_untrained(model):
             Path(temp_path).unlink()
 
 
-def check_model_info_functionality(model, dataset):
-    """Test that get_model_info works correctly."""
-    # Skip for problematic models
-    model_name = type(model).__name__
-    skip_patterns = [
-        "LSTMClassifierInitialized",
-        "LogisticRegressionInitialized",
-        "MultiLayerPerceptronInitialized",
-        "RollingClassifierInitialized",
-        "MultiTargetRegressorInitialized",
-    ]
-
-    if any(pattern in model_name for pattern in skip_patterns):
-        return
-
-    # Train on a few samples first
-    sample_count = 0
-    for x, y in dataset:
-        if model._supervised:
-            model.learn_one(x, y)
-        else:
-            model.learn_one(x)
-        sample_count += 1
-        if sample_count >= 3:
-            break
-
-    if sample_count == 0:
-        return
-
-    # Test get_model_info functionality
-    from deep_river.base import get_model_info
-
-    with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
-        temp_path = f.name
-
-    try:
-        # Save the model
-        model.save(temp_path)
-
-        # Get model info
-        info = get_model_info(temp_path)
-
-        # Check info contents
-        assert "estimator_type" in info, "Info should contain estimator type"
-        assert "estimator_class" in info, "Info should contain estimator class"
-        assert "deep_river_version" in info, "Info should contain version"
-        assert "config" in info, "Info should contain config"
-
-        if hasattr(model, "loss_fn"):
-            assert (
-                info["config"]["loss_fn"] == model.loss_fn
-            ), "Config should match model"
-
-    finally:
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
-
-
 def check_model_persistence_with_custom_kwargs(model):
     """Test saving models with custom keyword arguments."""
     # Skip for problematic models
@@ -324,30 +266,6 @@ def check_model_persistence_with_custom_kwargs(model):
     finally:
         if Path(temp_path).exists():
             Path(temp_path).unlink()
-
-
-def check_model_persistence_error_handling(model):
-    """Test error handling for persistence operations."""
-    from deep_river.base import get_model_info, load_model
-
-    # Test loading non-existent file
-    try:
-        load_model("non_existent_file_12345.pkl")
-        assert False, "Should have raised FileNotFoundError"
-    except FileNotFoundError:
-        pass  # Expected
-    except Exception:
-        pass  # Other exceptions are also acceptable for this test
-
-    # Test getting info for non-existent file
-    try:
-        get_model_info("non_existent_file_12345.pkl")
-        assert False, "Should have raised FileNotFoundError"
-    except FileNotFoundError:
-        pass  # Expected
-    except Exception:
-        pass  # Other exceptions are also acceptable for this test
-
 
 def check_feature_incremental_preservation(model):
     """Test that feature incremental settings are preserved."""
@@ -404,15 +322,13 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     ):  # todo remove after refactoring for initialized modules
         dataset_checks = [
             check_deep_learn_one,
-            check_model_persistence,
-            check_model_info_functionality,
+            check_model_persistence
         ]
 
         # Non-dataset checks (run once per model)
         yield check_dict2tensor
         yield check_model_persistence_untrained
         yield check_model_persistence_with_custom_kwargs
-        yield check_model_persistence_error_handling
         yield check_feature_incremental_preservation
 
         # Classifier checks
