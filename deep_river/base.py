@@ -275,7 +275,10 @@ class DeepEstimator(base.Estimator):
         >>> # ... train the model ...
         >>> model.save('my_model.pkl')
         """
-        save_model(self, filepath)
+        raise NotImplementedError(
+            "Model persistence is only available in DeepEstimatorInitialized. "
+            "Please use DeepEstimatorInitialized or its subclasses for save/load functionality."
+        )
 
     @classmethod
     def load(cls, filepath: Union[str, Path]):
@@ -297,7 +300,10 @@ class DeepEstimator(base.Estimator):
         >>> from deep_river.classification import Classifier
         >>> model = Classifier.load('my_model.pkl')
         """
-        return load_model(filepath)
+        raise NotImplementedError(
+            "Model persistence is only available in DeepEstimatorInitialized. "
+            "Please use DeepEstimatorInitialized or its subclasses for save/load functionality."
+        )
 
 
 class RollingDeepEstimator(DeepEstimator):
@@ -698,17 +704,35 @@ class DeepEstimatorInitialized(base.Estimator):
         """
         Save the model to a file.
 
+        This method saves the complete state of the estimator including:
+        - PyTorch model state (weights, biases)
+        - Optimizer state
+        - Configuration parameters
+        - Metadata (observed classes, features, etc.)
+        - Module information for reconstruction
+
         Parameters
         ----------
         filepath : Union[str, Path]
-            Path where the model should be saved.
+            Path where the model should be saved. Will be created if it doesn't exist.
+
+        Examples
+        --------
+        >>> from deep_river.classification import Classifier
+        >>> model = Classifier(module=SimpleNet(n_features=4), loss_fn='cross_entropy')
+        >>> # ... train the model ...
+        >>> model.save('my_model.pkl')
         """
-        save_model(self, filepath)
+        self._save_model(filepath)
 
     @classmethod
     def load(cls, filepath: Union[str, Path]):
         """
         Load a model from a file.
+
+        This method reconstructs a complete estimator from a saved file,
+        restoring all state including model weights, optimizer state, configuration,
+        and metadata.
 
         Parameters
         ----------
@@ -718,9 +742,215 @@ class DeepEstimatorInitialized(base.Estimator):
         Returns
         -------
         estimator
-            The loaded model instance.
+            A fully reconstructed estimator instance.
+
+        Examples
+        --------
+        >>> from deep_river.classification import Classifier
+        >>> model = Classifier.load('my_model.pkl')
+        >>> # Model is ready to use for prediction or continued training
         """
-        return load_model(filepath)
+        return cls._load_model(filepath)
+
+    def _save_model(self, filepath: Union[str, Path]) -> None:
+        """
+        Internal method to save the model state to disk.
+        """
+        filepath = Path(filepath)
+        filepath.parent.mkdir(parents=True, exist_ok=True)
+
+        # Determine estimator type and class
+        estimator_type = type(self).__name__
+        estimator_module = type(self).__module__
+        estimator_class = f"{estimator_module}.{estimator_type}"
+
+        # Prepare save data structure
+        save_data: Dict[str, Any] = {
+            "estimator_type": estimator_type,
+            "estimator_class": estimator_class,
+            "deep_river_version": "0.3.0",  # Current version
+        }
+
+        # Save model state
+        if hasattr(self, "module") and self.module is not None:
+            save_data["model_state_dict"] = self.module.state_dict()
+
+            # Save optimizer state if available
+            if hasattr(self, "optimizer") and self.optimizer is not None:
+                save_data["optimizer_state_dict"] = self.optimizer.state_dict()
+
+        # Save configuration
+        config: Dict[str, Any] = {
+            "loss_fn": getattr(self, "loss_fn", "mse"),
+            "optimizer_fn": getattr(self, "optimizer_fn", "sgd"),
+            "lr": getattr(self, "lr", 1e-3),
+            "device": getattr(self, "device", "cpu"),
+            "seed": getattr(self, "seed", 42),
+        }
+
+        # Add type-specific configuration
+        if hasattr(self, "is_feature_incremental"):
+            config["is_feature_incremental"] = self.is_feature_incremental
+        if hasattr(self, "is_class_incremental"):
+            config["is_class_incremental"] = getattr(self, "is_class_incremental")
+        if hasattr(self, "output_is_logit"):
+            config["output_is_logit"] = getattr(self, "output_is_logit")
+        if hasattr(self, "window_size"):
+            config["window_size"] = getattr(self, "window_size")
+        if hasattr(self, "append_predict"):
+            config["append_predict"] = getattr(self, "append_predict")
+
+        save_data["config"] = config
+
+        # Save metadata
+        metadata: Dict[str, Any] = {}
+
+        if hasattr(self, "observed_classes"):
+            observed_classes = getattr(self, "observed_classes")
+            metadata["observed_classes"] = self._serialize_sorted_set(observed_classes)
+        if hasattr(self, "observed_features"):
+            metadata["observed_features"] = self._serialize_sorted_set(self.observed_features)
+        if hasattr(self, "module_initialized"):
+            metadata["module_initialized"] = getattr(self, "module_initialized", True)
+        if hasattr(self, "_x_window"):
+            # For rolling estimators, save window buffer state
+            metadata["has_window_buffer"] = True
+            x_window = getattr(self, "_x_window")
+            if x_window is not None and len(x_window) > 0:
+                metadata["window_buffer"] = list(x_window)
+
+        save_data["metadata"] = metadata
+
+        # Save module information for reconstruction
+        module_info: Dict[str, Any] = {}
+        if hasattr(self, "module") and self.module is not None:
+            # Save module class info
+            module_info["module_class"] = (
+                f"{type(self.module).__module__}.{type(self.module).__name__}"
+            )
+            # Save module kwargs if available
+            if hasattr(self, "kwargs"):
+                module_info["module_kwargs"] = self.kwargs
+            else:
+                module_info["module_kwargs"] = {}
+
+        save_data["module_info"] = module_info
+
+        # Save using pickle
+        with open(filepath, "wb") as f:
+            pickle.dump(save_data, f)
+
+    @classmethod
+    def _load_model(cls, filepath: Union[str, Path]):
+        """
+        Internal method to load the model state from disk.
+        """
+        filepath = Path(filepath)
+
+        if not filepath.exists():
+            raise FileNotFoundError(f"Model file not found: {filepath}")
+
+        # Load save data
+        with open(filepath, "rb") as f:
+            save_data = pickle.load(f)
+
+        # Validate save data format
+        required_keys = ["estimator_type", "estimator_class", "config"]
+        for key in required_keys:
+            if key not in save_data:
+                raise ValueError(f"Invalid save file format: missing '{key}' key")
+
+        # Import the estimator class
+        estimator_class_path = save_data["estimator_class"]
+        module_path, class_name = estimator_class_path.rsplit(".", 1)
+        module = importlib.import_module(module_path)
+        estimator_class = getattr(module, class_name)
+
+        # Reconstruct the estimator
+        config = save_data["config"]
+        module_info = save_data.get("module_info", {})
+
+        if "module_class" in module_info:
+            # Import the module class
+            module_class_path = module_info["module_class"]
+            module_module_path, module_class_name = module_class_path.rsplit(".", 1)
+            module_module = importlib.import_module(module_module_path)
+            module_cls = getattr(module_module, module_class_name)
+
+            # Create the module instance first
+            module_kwargs = module_info.get("module_kwargs", {})
+
+            # Try to infer n_features from model state if available
+            if "model_state_dict" in save_data:
+                model_state = save_data["model_state_dict"]
+                # Look for the first linear layer to get n_features
+                for param_name, param in model_state.items():
+                    if "weight" in param_name and param.dim() == 2:
+                        n_features = param.shape[1]
+                        module_kwargs["n_features"] = n_features
+                        break
+
+            # Create module instance
+            module_instance = module_cls(**module_kwargs)
+
+            # Load state dict into module
+            if "model_state_dict" in save_data:
+                module_instance.load_state_dict(save_data["model_state_dict"])
+
+            # Create estimator with initialized module
+            estimator_config = {
+                k: v
+                for k, v in config.items()
+                if k not in ["window_size", "append_predict"]
+            }  # Remove rolling-specific params for base class
+            
+            # Handle rolling estimator case
+            if "window_size" in config:
+                estimator_config.update({
+                    "window_size": config["window_size"],
+                    "append_predict": config.get("append_predict", False)
+                })
+
+            estimator = estimator_class(module=module_instance, **estimator_config)
+
+        else:
+            raise ValueError("Module information not found in save file")
+
+        # Restore optimizer state
+        if "optimizer_state_dict" in save_data and hasattr(estimator, "optimizer"):
+            if estimator.optimizer is not None:
+                estimator.optimizer.load_state_dict(save_data["optimizer_state_dict"])
+
+        # Restore metadata
+        if "metadata" in save_data:
+            metadata = save_data["metadata"]
+
+            if "observed_classes" in metadata:
+                estimator.observed_classes = cls._deserialize_sorted_set(
+                    metadata["observed_classes"]
+                )
+            if "observed_features" in metadata:
+                estimator.observed_features = cls._deserialize_sorted_set(
+                    metadata["observed_features"]
+                )
+            if "window_buffer" in metadata and hasattr(estimator, "_x_window"):
+                # Restore window buffer for rolling estimators
+                from collections import deque
+                estimator._x_window = deque(
+                    metadata["window_buffer"], maxlen=config.get("window_size")
+                )
+
+        return estimator
+
+    @staticmethod
+    def _serialize_sorted_set(sorted_set: SortedSet) -> list:
+        """Convert SortedSet to list for serialization."""
+        return list(sorted_set) if sorted_set is not None else []
+
+    @staticmethod
+    def _deserialize_sorted_set(data: list) -> SortedSet:
+        """Convert list back to SortedSet."""
+        return SortedSet(data) if data is not None else SortedSet()
 
 
 class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
@@ -778,326 +1008,3 @@ class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
         return self._pad_tensor_if_needed(tensor_data, len(x_win))
 
 
-# ============================================================================
-# Model Persistence Utilities
-# ============================================================================
-
-
-def _serialize_sorted_set(sorted_set: SortedSet) -> list:
-    """Convert SortedSet to list for serialization."""
-    return list(sorted_set) if sorted_set is not None else []
-
-
-def _deserialize_sorted_set(data: list) -> SortedSet:
-    """Convert list back to SortedSet."""
-    return SortedSet(data) if data is not None else SortedSet()
-
-
-def save_model(estimator, filepath: Union[str, Path]) -> None:
-    """
-    Save a deep-river model to disk.
-
-    This function saves the complete state of a deep-river estimator including:
-    - PyTorch model state (weights, biases)
-    - Optimizer state
-    - Configuration parameters
-    - Metadata (observed classes, features, etc.)
-    - Module information for reconstruction
-
-    Parameters
-    ----------
-    estimator
-        A deep-river estimator instance (DeepEstimator, DeepEstimatorInitialized,
-        RollingDeepEstimator, or their subclasses).
-    filepath : Union[str, Path]
-        Path where the model should be saved. Will be created if it doesn't exist.
-
-    Examples
-    --------
-    >>> from deep_river.classification import Classifier
-    >>> from deep_river.base import save_model, load_model
-    >>> import torch
-
-    >>> class SimpleNet(torch.nn.Module):
-    ...     def __init__(self, n_features):
-    ...         super().__init__()
-    ...         self.linear = torch.nn.Linear(n_features, 2)
-    ...     def forward(self, x):
-    ...         return self.linear(x)
-
-    >>> model = Classifier(module=SimpleNet, loss_fn='cross_entropy')
-    >>> # ... train the model ...
-    >>> save_model(model, 'my_model.pkl')
-    >>> loaded_model = load_model('my_model.pkl')
-    """
-    filepath = Path(filepath)
-    filepath.parent.mkdir(parents=True, exist_ok=True)
-
-    # Determine estimator type and class
-    estimator_type = type(estimator).__name__
-    estimator_module = type(estimator).__module__
-    estimator_class = f"{estimator_module}.{estimator_type}"
-
-    # Prepare save data structure
-    save_data: Dict[str, Any] = {
-        "estimator_type": estimator_type,
-        "estimator_class": estimator_class,
-        "deep_river_version": "0.3.0",  # Current version
-    }
-
-    # Save model state if module is initialized
-    if hasattr(estimator, "module") and estimator.module is not None:
-        save_data["model_state_dict"] = estimator.module.state_dict()
-
-        # Save optimizer state if available
-        if hasattr(estimator, "optimizer") and estimator.optimizer is not None:
-            save_data["optimizer_state_dict"] = estimator.optimizer.state_dict()
-
-    # Save configuration
-    config: Dict[str, Any] = {
-        "loss_fn": estimator.loss_fn,
-        "optimizer_fn": estimator.optimizer_fn,
-        "lr": estimator.lr,
-        "device": estimator.device,
-        "seed": estimator.seed,
-    }
-
-    # Add type-specific configuration
-    if hasattr(estimator, "is_feature_incremental"):
-        config["is_feature_incremental"] = estimator.is_feature_incremental
-    if hasattr(estimator, "is_class_incremental"):
-        config["is_class_incremental"] = estimator.is_class_incremental
-    if hasattr(estimator, "output_is_logit"):
-        config["output_is_logit"] = estimator.output_is_logit
-    if hasattr(estimator, "window_size"):
-        config["window_size"] = estimator.window_size
-    if hasattr(estimator, "append_predict"):
-        config["append_predict"] = estimator.append_predict
-
-    save_data["config"] = config
-
-    # Save metadata
-    metadata: Dict[str, Any] = {}
-
-    if hasattr(estimator, "observed_classes"):
-        metadata["observed_classes"] = _serialize_sorted_set(estimator.observed_classes)
-    if hasattr(estimator, "observed_features"):
-        metadata["observed_features"] = _serialize_sorted_set(
-            estimator.observed_features
-        )
-    if hasattr(estimator, "module_initialized"):
-        metadata["module_initialized"] = estimator.module_initialized
-    if hasattr(estimator, "window_buffer"):
-        # For rolling estimators, save window buffer state
-        metadata["has_window_buffer"] = hasattr(estimator, "window_buffer")
-        if hasattr(estimator, "window_buffer") and len(estimator.window_buffer) > 0:
-            metadata["window_buffer"] = list(estimator.window_buffer)
-
-    save_data["metadata"] = metadata
-
-    # Save module information for reconstruction
-    module_info: Dict[str, Any] = {}
-    if hasattr(estimator, "module_cls"):
-        # For DeepEstimator - save module class info
-        module_info["module_class"] = (
-            f"{estimator.module_cls.__module__}.{estimator.module_cls.__name__}"
-        )
-        module_info["module_kwargs"] = estimator.kwargs
-    elif hasattr(estimator, "module") and estimator.module is not None:
-        # For DeepEstimatorInitialized - save module class info
-        module_info["module_class"] = (
-            f"{type(estimator.module).__module__}.{type(estimator.module).__name__}"
-        )
-        # Try to extract constructor arguments if possible
-        if hasattr(estimator, "kwargs"):
-            module_info["module_kwargs"] = estimator.kwargs
-        else:
-            module_info["module_kwargs"] = {}
-
-    save_data["module_info"] = module_info
-
-    # Save using pickle
-    with open(filepath, "wb") as f:
-        pickle.dump(save_data, f)
-
-
-def load_model(filepath: Union[str, Path]):
-    """
-    Load a deep-river model from disk.
-
-    This function reconstructs a complete deep-river estimator from a saved file,
-    restoring all state including model weights, optimizer state, configuration,
-    and metadata.
-
-    Parameters
-    ----------
-    filepath : Union[str, Path]
-        Path to the saved model file.
-
-    Returns
-    -------
-    estimator
-        A fully reconstructed deep-river estimator instance.
-
-    Examples
-    --------
-    >>> from deep_river.base import load_model
-    >>> model = load_model('my_model.pkl')
-    >>> # Model is ready to use for prediction or continued training
-    """
-    filepath = Path(filepath)
-
-    if not filepath.exists():
-        raise FileNotFoundError(f"Model file not found: {filepath}")
-
-    # Load save data
-    with open(filepath, "rb") as f:
-        save_data = pickle.load(f)
-
-    # Validate save data format
-    required_keys = ["estimator_type", "estimator_class", "config"]
-    for key in required_keys:
-        if key not in save_data:
-            raise ValueError(f"Invalid save file format: missing '{key}' key")
-
-    # Import the estimator class
-    estimator_class_path = save_data["estimator_class"]
-    module_path, class_name = estimator_class_path.rsplit(".", 1)
-    module = importlib.import_module(module_path)
-    estimator_class = getattr(module, class_name)
-
-    # Reconstruct the estimator
-    config = save_data["config"]
-    module_info = save_data.get("module_info", {})
-
-    if "module_class" in module_info:
-        # Import the module class
-        module_class_path = module_info["module_class"]
-        module_module_path, module_class_name = module_class_path.rsplit(".", 1)
-        module_module = importlib.import_module(module_module_path)
-        module_cls = getattr(module_module, module_class_name)
-
-        # Create estimator with module class (for DeepEstimator)
-        if "Initialized" not in save_data["estimator_type"]:
-            # For non-initialized estimators
-            estimator = estimator_class(
-                module=module_cls, **config, **module_info.get("module_kwargs", {})
-            )
-        else:
-            # For initialized estimators, we need to create the module first
-            # We'll handle this after loading the state dict
-            estimator = None
-    else:
-        raise ValueError("Module information not found in save file")
-
-    # Restore model state
-    if "model_state_dict" in save_data and estimator is not None:
-        # For non-initialized estimators, we need to create the module and set it
-        if hasattr(estimator, "module") and estimator.module is None:
-            # Create the module instance first
-            module_kwargs = module_info.get("module_kwargs", {})
-
-            # Try to infer n_features from model state if available
-            if "model_state_dict" in save_data:
-                model_state = save_data["model_state_dict"]
-                # Look for the first linear layer to get n_features
-                for param_name, param in model_state.items():
-                    if "weight" in param_name and param.dim() == 2:
-                        n_features = param.shape[1]
-                        module_kwargs["n_features"] = n_features
-                        break
-
-            # Create and set the module
-            module_instance = module_cls(**module_kwargs)
-            estimator.module = module_instance
-            estimator.module_initialized = (
-                True if hasattr(estimator, "module_initialized") else None
-            )
-
-            # Load the state
-            estimator.module.load_state_dict(save_data["model_state_dict"])
-
-        elif hasattr(estimator, "module") and estimator.module is not None:
-            # For already initialized modules
-            estimator.module.load_state_dict(save_data["model_state_dict"])
-        else:
-            # For DeepEstimator, we need to initialize the module first
-            # This will happen during the first learn_one call
-            pass
-
-    # Handle DeepEstimatorInitialized case
-    if estimator is None and "Initialized" in save_data["estimator_type"]:
-        # Create the module instance first
-        module_kwargs = module_info.get("module_kwargs", {})
-
-        # Try to infer n_features from model state if available
-        if "model_state_dict" in save_data:
-            model_state = save_data["model_state_dict"]
-            # Look for the first linear layer to get n_features
-            for param_name, param in model_state.items():
-                if "weight" in param_name and param.dim() == 2:
-                    n_features = param.shape[1]
-                    module_kwargs["n_features"] = n_features
-                    break
-
-        # Create module instance
-        module_instance = module_cls(**module_kwargs)
-
-        # Load state dict into module
-        if "model_state_dict" in save_data:
-            module_instance.load_state_dict(save_data["model_state_dict"])
-
-        # Create estimator with initialized module
-        estimator_config = {
-            k: v
-            for k, v in config.items()
-            if k not in ["window_size", "append_predict"]
-        }  # Remove rolling-specific params
-        estimator = estimator_class(module=module_instance, **estimator_config)
-
-        # For initialized estimators, make sure the module is actually set
-        if hasattr(estimator, "module") and module_instance is not None:
-            estimator.module = module_instance
-            # Mark as initialized
-            if hasattr(estimator, "module_initialized"):
-                estimator.module_initialized = True
-
-            # Restore observed features if available
-            if "observed_features" in save_data:
-                estimator.observed_features = save_data["observed_features"]
-
-            # Restore other saved attributes
-            for attr_name, attr_value in save_data.get(
-                "estimator_attributes", {}
-            ).items():
-                if hasattr(estimator, attr_name):
-                    setattr(estimator, attr_name, attr_value)
-
-    # Restore optimizer state
-    if "optimizer_state_dict" in save_data and hasattr(estimator, "optimizer"):
-        if estimator is not None and estimator.optimizer is not None:
-            estimator.optimizer.load_state_dict(save_data["optimizer_state_dict"])
-
-    # Restore metadata
-    if "metadata" in save_data and estimator is not None:
-        metadata = save_data["metadata"]
-
-        if "observed_classes" in metadata:
-            estimator.observed_classes = _deserialize_sorted_set(
-                metadata["observed_classes"]
-            )
-        if "observed_features" in metadata:
-            estimator.observed_features = _deserialize_sorted_set(
-                metadata["observed_features"]
-            )
-        if "module_initialized" in metadata:
-            estimator.module_initialized = metadata["module_initialized"]
-        if "window_buffer" in metadata and hasattr(estimator, "window_buffer"):
-            # Restore window buffer for rolling estimators
-            from collections import deque
-
-            estimator.window_buffer = deque(
-                metadata["window_buffer"], maxlen=config.get("window_size")
-            )
-
-    return estimator
