@@ -725,6 +725,53 @@ class DeepEstimatorInitialized(base.Estimator):
         """
         self._save_model(filepath)
 
+    def _get_save_config(self) -> Dict[str, Any]:
+        """
+        Get the configuration dictionary for saving.
+        Subclasses can override this method to add their specific configurations.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Configuration dictionary with all parameters needed for reconstruction.
+        """
+        config: Dict[str, Any] = {
+            "loss_fn": getattr(self, "loss_fn", "mse"),
+            "optimizer_fn": getattr(self, "optimizer_fn", "sgd"),
+            "lr": getattr(self, "lr", 1e-3),
+            "device": getattr(self, "device", "cpu"),
+            "seed": getattr(self, "seed", 42),
+        }
+        
+        # Add DeepEstimatorInitialized specific configuration
+        if hasattr(self, "is_feature_incremental"):
+            config["is_feature_incremental"] = self.is_feature_incremental
+            
+        return config
+
+    def _get_save_metadata(self) -> Dict[str, Any]:
+        """
+        Get the metadata dictionary for saving.
+        Subclasses can override this method to add their specific metadata.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Metadata dictionary with runtime state information.
+        """
+        metadata: Dict[str, Any] = {}
+
+        # Base metadata for DeepEstimatorInitialized
+        if hasattr(self, "observed_classes"):
+            observed_classes = getattr(self, "observed_classes")
+            metadata["observed_classes"] = self._serialize_sorted_set(observed_classes)
+        if hasattr(self, "observed_features"):
+            metadata["observed_features"] = self._serialize_sorted_set(self.observed_features)
+        if hasattr(self, "module_initialized"):
+            metadata["module_initialized"] = getattr(self, "module_initialized", True)
+            
+        return metadata
+
     @classmethod
     def load(cls, filepath: Union[str, Path]):
         """
@@ -779,45 +826,13 @@ class DeepEstimatorInitialized(base.Estimator):
             if hasattr(self, "optimizer") and self.optimizer is not None:
                 save_data["optimizer_state_dict"] = self.optimizer.state_dict()
 
-        # Save configuration
-        config: Dict[str, Any] = {
-            "loss_fn": getattr(self, "loss_fn", "mse"),
-            "optimizer_fn": getattr(self, "optimizer_fn", "sgd"),
-            "lr": getattr(self, "lr", 1e-3),
-            "device": getattr(self, "device", "cpu"),
-            "seed": getattr(self, "seed", 42),
-        }
-
-        # Add type-specific configuration
-        if hasattr(self, "is_feature_incremental"):
-            config["is_feature_incremental"] = self.is_feature_incremental
-        if hasattr(self, "is_class_incremental"):
-            config["is_class_incremental"] = getattr(self, "is_class_incremental")
-        if hasattr(self, "output_is_logit"):
-            config["output_is_logit"] = getattr(self, "output_is_logit")
-        if hasattr(self, "window_size"):
-            config["window_size"] = getattr(self, "window_size")
-        if hasattr(self, "append_predict"):
-            config["append_predict"] = getattr(self, "append_predict")
+        # Save configuration - base configuration plus type-specific
+        config = self._get_save_config()
 
         save_data["config"] = config
 
-        # Save metadata
-        metadata: Dict[str, Any] = {}
-
-        if hasattr(self, "observed_classes"):
-            observed_classes = getattr(self, "observed_classes")
-            metadata["observed_classes"] = self._serialize_sorted_set(observed_classes)
-        if hasattr(self, "observed_features"):
-            metadata["observed_features"] = self._serialize_sorted_set(self.observed_features)
-        if hasattr(self, "module_initialized"):
-            metadata["module_initialized"] = getattr(self, "module_initialized", True)
-        if hasattr(self, "_x_window"):
-            # For rolling estimators, save window buffer state
-            metadata["has_window_buffer"] = True
-            x_window = getattr(self, "_x_window")
-            if x_window is not None and len(x_window) > 0:
-                metadata["window_buffer"] = list(x_window)
+        # Save metadata - base metadata plus type-specific
+        metadata = self._get_save_metadata()
 
         save_data["metadata"] = metadata
 
@@ -1006,5 +1021,43 @@ class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
     def _deque2rolling_tensor(self, x_win: Deque):
         tensor_data = deque2rolling_tensor(x_win, device=self.device)
         return self._pad_tensor_if_needed(tensor_data, len(x_win))
+
+    def _get_save_config(self) -> Dict[str, Any]:
+        """
+        Get the configuration dictionary for saving.
+        Extends the base configuration with rolling-specific parameters.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Configuration dictionary including rolling window parameters.
+        """
+        config = super()._get_save_config()
+        
+        # Add rolling-specific configuration
+        config["window_size"] = self.window_size
+        config["append_predict"] = self.append_predict
+        
+        return config
+
+    def _get_save_metadata(self) -> Dict[str, Any]:
+        """
+        Get the metadata dictionary for saving.
+        Extends the base metadata with rolling window state.
+        
+        Returns
+        -------
+        Dict[str, Any]
+            Metadata dictionary including rolling window buffer state.
+        """
+        metadata = super()._get_save_metadata()
+        
+        # Add rolling-specific metadata
+        if hasattr(self, "_x_window"):
+            metadata["has_window_buffer"] = True
+            if self._x_window is not None and len(self._x_window) > 0:
+                metadata["window_buffer"] = list(self._x_window)
+        
+        return metadata
 
 
