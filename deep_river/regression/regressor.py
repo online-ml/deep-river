@@ -1,4 +1,4 @@
-from typing import Callable, Type, Union
+from typing import Any, Callable, Dict, Type, Union
 
 import pandas as pd
 import torch
@@ -268,7 +268,6 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         loss_fn: Union[str, Callable],
         optimizer_fn: Union[str, Type[optim.Optimizer]],
         lr: float = 0.001,
-        output_is_logit: bool = True,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -284,7 +283,7 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
             seed=seed,
             **kwargs,
         )
-        self.output_is_logit = output_is_logit
+        # Note: output_is_logit removed as it's not relevant for regression
 
     def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
         self._update_observed_features(x)
@@ -328,7 +327,7 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         with torch.inference_mode():
             y_preds = self.module(x_t)
         return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())
-
+    
     @classmethod
     def _unit_test_params(cls):
         """Provides default parameters for unit testing."""
@@ -339,7 +338,3 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
             "is_feature_incremental": False,
         }
 
-    @classmethod
-    def _unit_test_skips(cls) -> set:
-        """Defines unit tests to skip."""
-        return set()
