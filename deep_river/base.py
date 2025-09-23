@@ -729,7 +729,7 @@ class DeepEstimatorInitialized(base.Estimator):
         """
         Get the configuration dictionary for saving.
         Subclasses can override this method to add their specific configurations.
-        
+
         Returns
         -------
         Dict[str, Any]
@@ -742,18 +742,18 @@ class DeepEstimatorInitialized(base.Estimator):
             "device": getattr(self, "device", "cpu"),
             "seed": getattr(self, "seed", 42),
         }
-        
+
         # Add DeepEstimatorInitialized specific configuration
         if hasattr(self, "is_feature_incremental"):
             config["is_feature_incremental"] = self.is_feature_incremental
-            
+
         return config
 
     def _get_save_metadata(self) -> Dict[str, Any]:
         """
         Get the metadata dictionary for saving.
         Subclasses can override this method to add their specific metadata.
-        
+
         Returns
         -------
         Dict[str, Any]
@@ -766,10 +766,12 @@ class DeepEstimatorInitialized(base.Estimator):
             observed_classes = getattr(self, "observed_classes")
             metadata["observed_classes"] = self._serialize_sorted_set(observed_classes)
         if hasattr(self, "observed_features"):
-            metadata["observed_features"] = self._serialize_sorted_set(self.observed_features)
+            metadata["observed_features"] = self._serialize_sorted_set(
+                self.observed_features
+            )
         if hasattr(self, "module_initialized"):
             metadata["module_initialized"] = getattr(self, "module_initialized", True)
-            
+
         return metadata
 
     @classmethod
@@ -918,13 +920,15 @@ class DeepEstimatorInitialized(base.Estimator):
                 for k, v in config.items()
                 if k not in ["window_size", "append_predict"]
             }  # Remove rolling-specific params for base class
-            
+
             # Handle rolling estimator case
             if "window_size" in config:
-                estimator_config.update({
-                    "window_size": config["window_size"],
-                    "append_predict": config.get("append_predict", False)
-                })
+                estimator_config.update(
+                    {
+                        "window_size": config["window_size"],
+                        "append_predict": config.get("append_predict", False),
+                    }
+                )
 
             estimator = estimator_class(module=module_instance, **estimator_config)
 
@@ -951,6 +955,7 @@ class DeepEstimatorInitialized(base.Estimator):
             if "window_buffer" in metadata and hasattr(estimator, "_x_window"):
                 # Restore window buffer for rolling estimators
                 from collections import deque
+
                 estimator._x_window = deque(
                     metadata["window_buffer"], maxlen=config.get("window_size")
                 )
@@ -1026,38 +1031,36 @@ class RollingDeepEstimatorInitialized(DeepEstimatorInitialized):
         """
         Get the configuration dictionary for saving.
         Extends the base configuration with rolling-specific parameters.
-        
+
         Returns
         -------
         Dict[str, Any]
             Configuration dictionary including rolling window parameters.
         """
         config = super()._get_save_config()
-        
+
         # Add rolling-specific configuration
         config["window_size"] = self.window_size
         config["append_predict"] = self.append_predict
-        
+
         return config
 
     def _get_save_metadata(self) -> Dict[str, Any]:
         """
         Get the metadata dictionary for saving.
         Extends the base metadata with rolling window state.
-        
+
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary including rolling window buffer state.
         """
         metadata = super()._get_save_metadata()
-        
+
         # Add rolling-specific metadata
         if hasattr(self, "_x_window"):
             metadata["has_window_buffer"] = True
             if self._x_window is not None and len(self._x_window) > 0:
                 metadata["window_buffer"] = list(self._x_window)
-        
+
         return metadata
-
-

@@ -327,7 +327,7 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         with torch.inference_mode():
             y_preds = self.module(x_t)
         return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())
-    
+
     @classmethod
     def _unit_test_params(cls):
         """Provides default parameters for unit testing."""
@@ -337,4 +337,3 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
         }
-

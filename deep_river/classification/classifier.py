@@ -594,36 +594,38 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
         """
         Get the configuration dictionary for saving.
         Extends the base configuration with classifier-specific parameters.
-        
+
         Returns
         -------
         Dict[str, Any]
             Configuration dictionary including classifier parameters.
         """
         config = super()._get_save_config()
-        
+
         # Add classifier-specific configuration
         config["output_is_logit"] = self.output_is_logit
         config["is_class_incremental"] = self.is_class_incremental
-        
+
         return config
 
     def _get_save_metadata(self) -> Dict[str, Any]:
         """
         Get the metadata dictionary for saving.
         Extends the base metadata with classifier-specific metadata.
-        
+
         Returns
         -------
         Dict[str, Any]
             Metadata dictionary including observed classes.
         """
         metadata = super()._get_save_metadata()
-        
+
         # Add classifier-specific metadata
         if hasattr(self, "observed_classes"):
-            metadata["observed_classes"] = self._serialize_sorted_set(self.observed_classes)
-        
+            metadata["observed_classes"] = self._serialize_sorted_set(
+                self.observed_classes
+            )
+
         return metadata
 
     @classmethod
