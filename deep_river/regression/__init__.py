@@ -9,8 +9,8 @@ from deep_river.regression.rolling_regressor import (
 )
 from deep_river.regression.zoo import (
     LinearRegressionInitialized,
-    MultiLayerPerceptronInitialized,
     LSTMRegressorInitialized,
+    MultiLayerPerceptronInitialized,
 )
 
 """
