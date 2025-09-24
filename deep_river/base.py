@@ -687,11 +687,8 @@ class DeepEstimatorInitialized(base.Estimator):
         # Classification case: Convert y to one-hot encoding
         else:
             n_classes = y_pred.shape[-1]
-            try:
-                # Try to access observed_classes if it exists (for classification models)
-                observed_classes = self.observed_classes  # type: ignore
-            except AttributeError:
-                observed_classes = SortedSet()
+            # Access observed_classes if it exists, otherwise use an empty SortedSet
+            observed_classes = getattr(self, 'observed_classes', SortedSet())
             y = labels2onehot(y, observed_classes, n_classes, self.device)
 
         self.module.train()
