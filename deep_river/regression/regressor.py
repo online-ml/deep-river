@@ -268,7 +268,6 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
         loss_fn: Union[str, Callable],
         optimizer_fn: Union[str, Type[optim.Optimizer]],
         lr: float = 0.001,
-        output_is_logit: bool = True,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -284,7 +283,7 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
             seed=seed,
             **kwargs,
         )
-        self.output_is_logit = output_is_logit
+        # Note: output_is_logit removed as it's not relevant for regression
 
     def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
         self._update_observed_features(x)
@@ -338,8 +337,3 @@ class RegressorInitialized(DeepEstimatorInitialized, base.MiniBatchRegressor):
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
         }
-
-    @classmethod
-    def _unit_test_skips(cls) -> set:
-        """Defines unit tests to skip."""
-        return set()

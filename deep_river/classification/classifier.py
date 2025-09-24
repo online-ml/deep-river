@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type, Union
+from typing import Any, Callable, Dict, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -589,6 +589,44 @@ class ClassifierInitialized(DeepEstimatorInitialized, base.MiniBatchClassifier):
             "is_feature_incremental": True,
             "is_class_incremental": True,
         }
+
+    def _get_save_config(self) -> Dict[str, Any]:
+        """
+        Get the configuration dictionary for saving.
+        Extends the base configuration with classifier-specific parameters.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Configuration dictionary including classifier parameters.
+        """
+        config = super()._get_save_config()
+
+        # Add classifier-specific configuration
+        config["output_is_logit"] = self.output_is_logit
+        config["is_class_incremental"] = self.is_class_incremental
+
+        return config
+
+    def _get_save_metadata(self) -> Dict[str, Any]:
+        """
+        Get the metadata dictionary for saving.
+        Extends the base metadata with classifier-specific metadata.
+
+        Returns
+        -------
+        Dict[str, Any]
+            Metadata dictionary including observed classes.
+        """
+        metadata = super()._get_save_metadata()
+
+        # Add classifier-specific metadata
+        if hasattr(self, "observed_classes"):
+            metadata["observed_classes"] = self._serialize_sorted_set(
+                self.observed_classes
+            )
+
+        return metadata
 
     @classmethod
     def _unit_test_skips(cls) -> set:
