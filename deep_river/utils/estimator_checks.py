@@ -312,24 +312,29 @@ def check_feature_incremental_preservation(model):
 
 def check_params_utilities(model):
     """Test parameter utility functions."""
+    import torch
+    import torch.nn as nn
+
     from deep_river.utils.params import (
-        get_activation_fn,
-        get_loss_fn,
-        get_optim_fn,
-        get_init_fn,
         ACTIVATION_FNS,
         LOSS_FNS,
         OPTIMIZER_FNS,
+        get_activation_fn,
+        get_init_fn,
+        get_loss_fn,
+        get_optim_fn,
     )
-    import torch
-    import torch.nn as nn
 
     # Test activation functions
     for activation_name in ACTIVATION_FNS:
         activation_cls = get_activation_fn(activation_name)
-        assert callable(activation_cls), f"Activation {activation_name} should be callable"
+        assert callable(
+            activation_cls
+        ), f"Activation {activation_name} should be callable"
         instance = activation_cls()
-        assert isinstance(instance, nn.Module), f"Activation {activation_name} should create nn.Module"
+        assert isinstance(
+            instance, nn.Module
+        ), f"Activation {activation_name} should create nn.Module"
 
     # Test loss functions
     for loss_name in LOSS_FNS:
@@ -343,10 +348,19 @@ def check_params_utilities(model):
         # Test instantiation with dummy parameters
         params = [torch.empty(1, requires_grad=True)]
         instance = optim_cls(params, lr=1e-3)
-        assert isinstance(instance, torch.optim.Optimizer), f"Optimizer {optim_name} should create torch.optim.Optimizer"
+        assert isinstance(
+            instance, torch.optim.Optimizer
+        ), f"Optimizer {optim_name} should create torch.optim.Optimizer"
 
     # Test initialization functions
-    init_functions = ["xavier_uniform", "xavier_normal", "kaiming_uniform", "kaiming_normal", "uniform", "normal"]
+    init_functions = [
+        "xavier_uniform",
+        "xavier_normal",
+        "kaiming_uniform",
+        "kaiming_normal",
+        "uniform",
+        "normal",
+    ]
     for init_name in init_functions:
         init_fn = get_init_fn(init_name)
         assert callable(init_fn), f"Init function {init_name} should be callable"
@@ -359,18 +373,20 @@ def check_params_utilities(model):
 
 def check_tensor_conversion_utilities(model):
     """Test tensor conversion utility functions."""
-    from deep_river.utils.tensor_conversion import (
-        dict2tensor,
-        float2tensor,
-        deque2rolling_tensor,
-        df2tensor,
-        labels2onehot,
-    )
     from collections import deque
-    import pandas as pd
+
     import numpy as np
+    import pandas as pd
     import torch
     from sortedcontainers import SortedSet
+
+    from deep_river.utils.tensor_conversion import (
+        deque2rolling_tensor,
+        df2tensor,
+        dict2tensor,
+        float2tensor,
+        labels2onehot,
+    )
 
     # Test dict2tensor
     x = {"a": 1, "b": 2, "c": 3}
@@ -382,7 +398,9 @@ def check_tensor_conversion_utilities(model):
     # Test with missing features
     x2 = {"b": 2, "c": 3}
     result2 = dict2tensor(x2, features=features)
-    assert result2.tolist() == [[0, 2, 3]], "dict2tensor should handle missing features with zeros"
+    assert result2.tolist() == [
+        [0, 2, 3]
+    ], "dict2tensor should handle missing features with zeros"
 
     # Test float2tensor
     y = 1.0
@@ -393,8 +411,10 @@ def check_tensor_conversion_utilities(model):
     # Test deque2rolling_tensor
     window = deque(np.ones((2, 3)).tolist(), maxlen=3)
     result = deque2rolling_tensor(window)
-    assert isinstance(result, torch.Tensor), "deque2rolling_tensor should return torch.Tensor"
-    
+    assert isinstance(
+        result, torch.Tensor
+    ), "deque2rolling_tensor should return torch.Tensor"
+
     # Test labels2onehot
     classes = SortedSet(["a", "b", "c"])
     y = "b"
@@ -402,7 +422,9 @@ def check_tensor_conversion_utilities(model):
     assert isinstance(result, torch.Tensor), "labels2onehot should return torch.Tensor"
     expected = torch.zeros(1, len(classes))
     expected[0, 1] = 1.0  # "b" is at index 1
-    assert torch.allclose(result, expected), "labels2onehot should create proper one-hot encoding"
+    assert torch.allclose(
+        result, expected
+    ), "labels2onehot should create proper one-hot encoding"
 
     # Test df2tensor
     df = pd.DataFrame({"a": [1, 2], "b": [3, 4]})
@@ -414,13 +436,15 @@ def check_tensor_conversion_utilities(model):
 
 def check_hooks_utilities(model):
     """Test hooks utility functions."""
-    from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
     import torch.nn as nn
+
+    from deep_river.utils.hooks import ForwardOrderTracker, apply_hooks
 
     # Test ForwardOrderTracker
     tracker = ForwardOrderTracker()
-    assert isinstance(tracker.ordered_modules, list), \
-        "ForwardOrderTracker should initialize with empty list"
+    assert isinstance(
+        tracker.ordered_modules, list
+    ), "ForwardOrderTracker should initialize with empty list"
     assert len(tracker.ordered_modules) == 0, "ForwardOrderTracker should start empty"
 
     # Create a simple module with parameters
@@ -430,13 +454,13 @@ def check_hooks_utilities(model):
             self.linear = nn.Linear(2, 1)
 
     module = SimpleModule()
-    
+
     # Test apply_hooks
     handles = []
     result_handles = apply_hooks(module, tracker, handles)
     assert len(result_handles) > 0, "apply_hooks should return handles"
     assert result_handles is handles, "apply_hooks should return the same handles list"
-    
+
     # Clean up hooks
     for handle in result_handles:
         handle.remove()
@@ -444,9 +468,10 @@ def check_hooks_utilities(model):
 
 def check_inspect_utilities(model):
     """Test inspect utility functions."""
-    from deep_river.utils.inspect import isdeepestimator_initialized
     from river.anomaly import HalfSpaceTrees
-    
+
+    from deep_river.utils.inspect import isdeepestimator_initialized
+
     # Test with non-deep estimator
     non_deep_model = HalfSpaceTrees()
     result = isdeepestimator_initialized(non_deep_model)
@@ -457,16 +482,23 @@ def check_inspect_utilities(model):
 def check_anomaly_scaler_functions(model):
     """Test anomaly scaler functionality."""
     from deep_river.anomaly.scaler import AnomalyScaler
-    
+
     # We can't instantiate abstract classes directly, but we can check they exist
     # and have the right structure
-    assert hasattr(AnomalyScaler, 'score_one'), "AnomalyScaler should have score_one method"
-    assert hasattr(AnomalyScaler, 'learn_one'), "AnomalyScaler should have learn_one method"
-    assert hasattr(AnomalyScaler, 'score_many'), "AnomalyScaler should have score_many method"
-    
+    assert hasattr(
+        AnomalyScaler, "score_one"
+    ), "AnomalyScaler should have score_one method"
+    assert hasattr(
+        AnomalyScaler, "learn_one"
+    ), "AnomalyScaler should have learn_one method"
+    assert hasattr(
+        AnomalyScaler, "score_many"
+    ), "AnomalyScaler should have score_many method"
+
     # Test _unit_test_params method exists
-    assert hasattr(AnomalyScaler, '_unit_test_params'), \
-        "AnomalyScaler should have _unit_test_params method"
+    assert hasattr(
+        AnomalyScaler, "_unit_test_params"
+    ), "AnomalyScaler should have _unit_test_params method"
 
 
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
@@ -487,7 +519,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
         yield check_model_persistence_untrained
         yield check_model_persistence_with_custom_kwargs
         yield check_feature_incremental_preservation
-        
+
         # New utility checks
         yield check_params_utilities
         yield check_tensor_conversion_utilities
