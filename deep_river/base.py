@@ -817,7 +817,6 @@ class DeepEstimatorInitialized(base.Estimator):
         save_data: Dict[str, Any] = {
             "estimator_type": estimator_type,
             "estimator_class": estimator_class,
-            "deep_river_version": "0.3.0",  # Current version
         }
 
         # Save model state
