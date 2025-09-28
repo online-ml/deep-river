@@ -25,6 +25,7 @@ try:
 except ImportError as e:
     raise ValueError("You have to install graphviz to use the draw method") from e
 
+
 class DeepEstimator(base.Estimator):
     """
     Enhances PyTorch modules with dynamic adaptability to evolving features.
@@ -111,9 +112,7 @@ class DeepEstimator(base.Estimator):
         candidates = []
         for child in module.children():
             if list(child.children()):
-                candidates.extend(
-                    DeepEstimator._extract_candidate_layers(child)
-                )
+                candidates.extend(DeepEstimator._extract_candidate_layers(child))
             else:
                 if not isinstance(child, (torch.nn.Softmax, torch.nn.LogSoftmax)):
                     candidates.append(child)

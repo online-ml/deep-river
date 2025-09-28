@@ -25,6 +25,7 @@ class _TestAutoencoder(torch.nn.Module):
         X = self.linear2(X)
         return nn.functional.sigmoid(X)
 
+
 class Autoencoder(DeepEstimator, AnomalyDetector):
     """
     Represents an initialized autoencoder for anomaly detection and feature learning.
