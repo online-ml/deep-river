@@ -72,79 +72,136 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 ### Classification
 
 ```python
->>> from river import metrics, datasets, preprocessing, compose
->>> from deep_river import classification
->>> from torch import nn
->>> from torch import optim
->>> from torch import manual_seed
+>> > from river import metrics, datasets, preprocessing, compose
+>> > from deep_river import classification
+>> > from torch import nn
+>> > from torch import optim
+>> > from torch import manual_seed
 
->>> _ = manual_seed(42)
+>> > _ = manual_seed(42)
 
->>> class MyModule(nn.Module):
-...     def __init__(self, n_features):
-...         super(MyModule, self).__init__()
-...         self.dense0 = nn.Linear(n_features, 5)
-...         self.nonlin = nn.ReLU()
-...         self.dense1 = nn.Linear(5, 2)
-...         self.softmax = nn.Softmax(dim=-1)
+>> >
+
+class MyModule(nn.Module):
+
+
+    ...
+
+
+def __init__(self, n_features):
+
+
+    ...
+super(MyModule, self).__init__()
 ...
-...     def forward(self, X, **kwargs):
-...         X = self.nonlin(self.dense0(X))
-...         X = self.nonlin(self.dense1(X))
-...         X = self.softmax(X)
-...         return X
+self.dense0 = nn.Linear(n_features, 5)
+...
+self.nonlin = nn.ReLU()
+...
+self.dense1 = nn.Linear(5, 2)
+...
+self.softmax = nn.Softmax(dim=-1)
+...
+...
 
->>> model_pipeline = compose.Pipeline(
-...     preprocessing.StandardScaler(),
-...     classification.ClassifierInitialized(module=MyModule(10), loss_fn='binary_cross_entropy', optimizer_fn='adam')
+
+def forward(self, X, **kwargs):
+
+
+    ...
+X = self.nonlin(self.dense0(X))
+...
+X = self.nonlin(self.dense1(X))
+...
+X = self.softmax(X)
+...
+return X
+
+>> > model_pipeline = compose.Pipeline(
+    ...
+preprocessing.StandardScaler(),
+...
+classification.Classifier(module=MyModule(10), loss_fn='binary_cross_entropy',
+                          optimizer_fn='adam')
 ... )
 
->>> dataset = datasets.Phishing()
->>> metric = metrics.Accuracy()
+>> > dataset = datasets.Phishing()
+>> > metric = metrics.Accuracy()
 
->>> for x, y in dataset:
-...     y_pred = model_pipeline.predict_one(x)  # make a prediction
-...     metric.update(y, y_pred)  # update the metric
-...     model_pipeline.learn_one(x, y)  # make the model learn
->>> print(f"Accuracy: {metric.get():.4f}")
+>> > for x, y in dataset:
+    ...
+y_pred = model_pipeline.predict_one(x)  # make a prediction
+...
+metric.update(y, y_pred)  # update the metric
+...
+model_pipeline.learn_one(x, y)  # make the model learn
+>> > print(f"Accuracy: {metric.get():.4f}")
 Accuracy: 0.7264
 
 ```
-### Multi Target Regression 
+### Multi Target Regression
+
 ```python
->>> from river import evaluate, compose
->>> from river import metrics
->>> from river import preprocessing
->>> from river import stream
->>> from sklearn import datasets
->>> from torch import nn
->>> from deep_river.regression.multioutput import MultiTargetRegressorInitialized
+>> > from river import evaluate, compose
+>> > from river import metrics
+>> > from river import preprocessing
+>> > from river import stream
+>> > from sklearn import datasets
+>> > from torch import nn
+>> > from deep_river.regression.multioutput import MultiTargetRegressor
 
->>> class MyModule(nn.Module):
-...     def __init__(self, n_features):
-...         super(MyModule, self).__init__()
-...         self.dense0 = nn.Linear(n_features, 3)
+>> >
+
+class MyModule(nn.Module):
+
+
+    ...
+
+
+def __init__(self, n_features):
+
+
+    ...
+super(MyModule, self).__init__()
 ...
-...     def forward(self, X, **kwargs):
-...         X = self.dense0(X)
-...         return X
+self.dense0 = nn.Linear(n_features, 3)
+...
+...
 
->>> dataset = stream.iter_sklearn_dataset(
-...         dataset=datasets.load_linnerud(),
-...         shuffle=True,
-...         seed=42
+
+def forward(self, X, **kwargs):
+
+
+    ...
+X = self.dense0(X)
+...
+return X
+
+>> > dataset = stream.iter_sklearn_dataset(
+    ...
+dataset = datasets.load_linnerud(),
+...
+shuffle = True,
+...
+seed = 42
 ...     )
->>> model = compose.Pipeline(
-...     preprocessing.StandardScaler(),
-...     MultiTargetRegressorInitialized(
-...         module=MyModule(10),
-...         loss_fn='mse',
-...         lr=0.3,
-...         optimizer_fn='sgd',
+>> > model = compose.Pipeline(
+    ...
+preprocessing.StandardScaler(),
+...
+MultiTargetRegressorInitialized(
+    ...
+module = MyModule(10),
+...
+loss_fn = 'mse',
+...
+lr = 0.3,
+...
+optimizer_fn = 'sgd',
 ...     ))
->>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
->>> ev = evaluate.progressive_val_score(dataset, model, metric)
->>> print(f"MicroAverage(MAE): {metric.get():.2f}")
+>> > metric = metrics.multioutput.MicroAverage(metrics.MAE())
+>> > ev = evaluate.progressive_val_score(dataset, model, metric)
+>> > print(f"MicroAverage(MAE): {metric.get():.2f}")
 MicroAverage(MAE): 34.31
 
 ```
@@ -152,42 +209,69 @@ MicroAverage(MAE): 34.31
 ### Anomaly Detection
 
 ```python
->>> from deep_river.anomaly import AutoencoderInitialized
->>> from river import metrics
->>> from river.datasets import CreditCard
->>> from torch import nn
->>> import math
->>> from river.compose import Pipeline
->>> from river.preprocessing import MinMaxScaler
+>> > from deep_river.anomaly import Autoencoder
+>> > from river import metrics
+>> > from river.datasets import CreditCard
+>> > from torch import nn
+>> > import math
+>> > from river.compose import Pipeline
+>> > from river.preprocessing import MinMaxScaler
 
->>> dataset = CreditCard().take(5000)
->>> metric = metrics.RollingROCAUC(window_size=5000)
+>> > dataset = CreditCard().take(5000)
+>> > metric = metrics.RollingROCAUC(window_size=5000)
 
->>> class MyAutoEncoder(nn.Module):
-...     def __init__(self, n_features, latent_dim=3):
-...         super(MyAutoEncoder, self).__init__()
-...         self.linear1 = nn.Linear(n_features, latent_dim)
-...         self.nonlin = nn.LeakyReLU()
-...         self.linear2 = nn.Linear(latent_dim, n_features)
-...         self.sigmoid = nn.Sigmoid()
+>> >
+
+class MyAutoEncoder(nn.Module):
+
+
+    ...
+
+
+def __init__(self, n_features, latent_dim=3):
+
+
+    ...
+super(MyAutoEncoder, self).__init__()
 ...
-...     def forward(self, X, **kwargs):
-...         X = self.linear1(X)
-...         X = self.nonlin(X)
-...         X = self.linear2(X)
-...         return self.sigmoid(X)
-
->>> ae = AutoencoderInitialized(module=MyAutoEncoder(10), lr=0.005)
->>> scaler = MinMaxScaler()
->>> model = Pipeline(scaler, ae)
-
->>> for x, y in dataset:
-...     score = model.score_one(x)
-...     model.learn_one(x=x)
-...     metric.update(y, score)
+self.linear1 = nn.Linear(n_features, latent_dim)
 ...
->>> print(f"Rolling ROCAUC: {metric.get():.4f}")
-Rolling ROCAUC: 0.8901
+self.nonlin = nn.LeakyReLU()
+...
+self.linear2 = nn.Linear(latent_dim, n_features)
+...
+self.sigmoid = nn.Sigmoid()
+...
+...
+
+
+def forward(self, X, **kwargs):
+
+
+    ...
+X = self.linear1(X)
+...
+X = self.nonlin(X)
+...
+X = self.linear2(X)
+...
+return self.sigmoid(X)
+
+>> > ae = AutoencoderInitialized(module=MyAutoEncoder(10), lr=0.005)
+>> > scaler = MinMaxScaler()
+>> > model = Pipeline(scaler, ae)
+
+>> > for x, y in dataset:
+    ...
+score = model.score_one(x)
+...
+model.learn_one(x=x)
+...
+metric.update(y, score)
+...
+>> > print(f"Rolling ROCAUC: {metric.get():.4f}")
+Rolling
+ROCAUC: 0.8901
 
 ```
 

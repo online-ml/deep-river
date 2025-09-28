@@ -2,11 +2,11 @@ from typing import Callable, Type, Union
 
 from torch import nn, optim
 
-from deep_river.regression import RegressorInitialized
-from deep_river.regression.rolling_regressor import RollingRegressorInitialized
+from deep_river.regression import Regressor
+from deep_river.regression.rolling_regressor import RollingRegressor
 
 
-class LinearRegressionInitialized(RegressorInitialized):
+class LinearRegressionInitialized(Regressor):
     """
     Linear Regression model for regression.
 
@@ -77,7 +77,7 @@ class LinearRegressionInitialized(RegressorInitialized):
         }
 
 
-class MultiLayerPerceptronInitialized(RegressorInitialized):
+class MultiLayerPerceptronInitialized(Regressor):
     """
     Linear Regression model for regression.
 
@@ -163,7 +163,7 @@ class MultiLayerPerceptronInitialized(RegressorInitialized):
         }
 
 
-class LSTMRegressorInitialized(RollingRegressorInitialized):
+class LSTMRegressor(RollingRegressor):
     """
     LSTM Regressor model for time series regression.
 
@@ -218,7 +218,7 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
         **kwargs,
     ):
         self.n_features = n_features
-        module = LSTMRegressorInitialized.LSTMModule(n_features=n_features)
+        module = LSTMRegressor.LSTMModule(n_features=n_features)
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(

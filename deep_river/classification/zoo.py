@@ -2,11 +2,11 @@ from typing import Callable, Type, Union
 
 from torch import nn, optim
 
-from deep_river.classification import ClassifierInitialized
+from deep_river.classification import Classifier
 from deep_river.classification.rolling_classifier import RollingClassifierInitialized
 
 
-class LogisticRegressionInitialized(ClassifierInitialized):
+class LogisticRegressionInitialized(Classifier):
     """
     Logistic Regression model for classification.
 
@@ -87,7 +87,7 @@ class LogisticRegressionInitialized(ClassifierInitialized):
         }
 
 
-class MultiLayerPerceptronInitialized(ClassifierInitialized):
+class MultiLayerPerceptronInitialized(Classifier):
     """
     Logistic Regression model for classification.
 
