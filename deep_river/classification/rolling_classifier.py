@@ -29,9 +29,7 @@ class _TestLSTM(torch.nn.Module):
         return torch.nn.functional.softmax(x, dim=-1)
 
 
-class RollingClassifierInitialized(
-    Classifier, RollingDeepEstimator
-):
+class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
     """
     RollingClassifierInitialized extends both ClassifierInitialized and
     RollingDeepEstimatorInitialized,

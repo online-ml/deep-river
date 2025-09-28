@@ -328,9 +328,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_feature_incremental_preservation
 
     # Classifier checks
-    if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(
-        model
-    ):
+    if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(model):
         yield check_dict2tensor
 
         if not model._multiclass:

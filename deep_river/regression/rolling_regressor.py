@@ -25,9 +25,7 @@ class _TestLSTM(torch.nn.Module):
         return hn
 
 
-class RollingRegressor(
-    RollingDeepEstimator, Regressor
-):
+class RollingRegressor(RollingDeepEstimator, Regressor):
     """
     RollingRegressorInitialized class built for regression tasks with a
     window-based learning mechanism.

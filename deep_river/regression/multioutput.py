@@ -21,9 +21,8 @@ class _TestModule(torch.nn.Module):
     def forward(self, X, **kwargs):
         return self.dense0(X)
 
-class MultiTargetRegressor(
-    base.MultiTargetRegressor, DeepEstimator
-):
+
+class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
     """ """
 
     def __init__(

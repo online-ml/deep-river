@@ -27,6 +27,7 @@ class _TestModule(torch.nn.Module):
         X = self.softmax(self.output(X))
         return X
 
+
 class Regressor(DeepEstimator, base.MiniBatchRegressor):
     """
     Wrapper for PyTorch classification models that supports feature and class incremental learning.

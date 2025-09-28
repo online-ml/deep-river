@@ -31,9 +31,7 @@ class _TestLSTMAutoencoder(nn.Module):
         return output
 
 
-class RollingAutoencoder(
-    RollingDeepEstimator, anomaly.base.AnomalyDetector
-):
+class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
     """ """
 
     def __init__(

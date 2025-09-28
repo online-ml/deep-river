@@ -31,6 +31,7 @@ class _TestModule(torch.nn.Module):
         x = self.nonlinear(self.dense1(x))
         return self.softmax(x)
 
+
 class Classifier(DeepEstimator, base.MiniBatchClassifier):
     """
     Wrapper for PyTorch classification models that automatically handles
