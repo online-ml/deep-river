@@ -190,6 +190,7 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
     **kwargs
         Additional parameters to be passed to the parent class.
     """
+
     class LSTMModule(nn.Module):
         def __init__(self, n_features, output_size=1):
             super().__init__()

@@ -642,7 +642,7 @@ class DeepEstimatorInitialized(base.Estimator):
 
     @staticmethod
     def _expand_weights(
-            param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
+        param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
     ):
         """
         Expands weight tensors dynamically along a given axis.
@@ -691,7 +691,7 @@ class DeepEstimatorInitialized(base.Estimator):
         else:
             n_classes = y_pred.shape[-1]
             # Access observed_classes if it exists, otherwise use an empty SortedSet
-            observed_classes = getattr(self, 'observed_classes', SortedSet())
+            observed_classes = getattr(self, "observed_classes", SortedSet())
             y = labels2onehot(y, observed_classes, n_classes, self.device)
 
         self.module.train()
