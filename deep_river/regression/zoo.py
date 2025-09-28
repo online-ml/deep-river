@@ -18,12 +18,6 @@ class LinearRegressionInitialized(RegressorInitialized):
         Optimizer to be used for training the wrapped model.
     lr : float
         Learning rate of the optimizer.
-    output_is_logit : bool
-        Whether the module produces logits as output. If true, either
-        softmax or sigmoid is applied to the outputs when predicting.
-    is_class_incremental : bool
-        Whether the classifier should adapt to the appearance of previously unobserved classes
-        by adding an unit to the output layer of the network.
     is_feature_incremental : bool
         Whether the model should adapt to the appearance of previously features by
         adding units to the input layer of the network.
@@ -46,10 +40,9 @@ class LinearRegressionInitialized(RegressorInitialized):
     def __init__(
         self,
         n_features: int = 10,
-        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
-        output_is_logit: bool = True,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -63,7 +56,6 @@ class LinearRegressionInitialized(RegressorInitialized):
             module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            output_is_logit=output_is_logit,
             is_feature_incremental=is_feature_incremental,
             device=device,
             lr=lr,
@@ -97,9 +89,6 @@ class MultiLayerPerceptronInitialized(RegressorInitialized):
         Optimizer to be used for training the wrapped model.
     lr : float
         Learning rate of the optimizer.
-    output_is_logit : bool
-        Whether the module produces logits as output. If true, either
-        softmax or sigmoid is applied to the outputs when predicting.
     is_class_incremental : bool
         Whether the classifier should adapt to the appearance of previously unobserved classes
         by adding an unit to the output layer of the network.
@@ -133,10 +122,9 @@ class MultiLayerPerceptronInitialized(RegressorInitialized):
         n_features: int = 10,
         n_width: int = 5,
         n_layers: int = 5,
-        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
-        output_is_logit: bool = True,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
@@ -154,7 +142,6 @@ class MultiLayerPerceptronInitialized(RegressorInitialized):
             module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
-            output_is_logit=output_is_logit,
             is_feature_incremental=is_feature_incremental,
             device=device,
             lr=lr,
@@ -177,7 +164,32 @@ class MultiLayerPerceptronInitialized(RegressorInitialized):
 
 
 class LSTMRegressorInitialized(RollingRegressorInitialized):
+    """
+    LSTM Regressor model for time series regression.
 
+    This model uses LSTM (Long Short-Term Memory) networks to capture temporal
+    dependencies in sequential data for regression tasks.
+
+    Parameters
+    ----------
+    n_features : int
+        Number of input features.
+    loss_fn : str or Callable
+        Loss function to be used for training the wrapped model.
+    optimizer_fn : str or Callable
+        Optimizer to be used for training the wrapped model.
+    lr : float
+        Learning rate of the optimizer.
+    is_feature_incremental : bool
+        Whether the model should adapt to the appearance of previously features by
+        adding units to the input layer of the network.
+    device : str
+        Device to run the wrapped model on. Can be "cpu" or "cuda".
+    seed : int
+        Random seed to be used for training the wrapped model.
+    **kwargs
+        Additional parameters to be passed to the parent class.
+    """
     class LSTMModule(nn.Module):
         def __init__(self, n_features, output_size=1):
             super().__init__()
@@ -196,10 +208,9 @@ class LSTMRegressorInitialized(RollingRegressorInitialized):
     def __init__(
         self,
         n_features: int = 10,
-        loss_fn: Union[str, Callable] = "binary_cross_entropy_with_logits",
+        loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
         lr: float = 1e-3,
-        output_is_logit: bool = True,
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,

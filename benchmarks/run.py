@@ -3,7 +3,6 @@ import itertools
 import json
 import logging
 import multiprocessing
-from datetime import timedelta
 from typing import List
 
 import pandas as pd

@@ -99,7 +99,8 @@ class DeepEstimator(base.Estimator):
 
         torch.manual_seed(seed)
 
-    def _filter_kwargs(self, fn: Callable, override=None, **kwargs) -> dict:
+    @staticmethod
+    def _filter_kwargs(fn: Callable, override=None, **kwargs) -> dict:
         """Filters `net_params` and returns those in `fn`'s arguments.
 
         Parameters
@@ -135,9 +136,9 @@ class DeepEstimator(base.Estimator):
         """
         Parameters
         ----------
-        module
-          The instance or class or callable to be initialized, e.g.
-          ``self.module``.
+        x
+            The first input example or batch of examples. Can be a dictionary
+            or a pandas DataFrame.
         kwargs : dict
           The keyword arguments to initialize the instance or class. Can be an
           empty dict.
@@ -147,6 +148,7 @@ class DeepEstimator(base.Estimator):
           The initialized component.
         """
         torch.manual_seed(self.seed)
+        n_features = 0
         if isinstance(x, Dict):
             n_features = len(x)
         elif isinstance(x, pd.DataFrame):
@@ -638,8 +640,9 @@ class DeepEstimatorInitialized(base.Estimator):
 
                     setattr(layer, param_name, param)
 
+    @staticmethod
     def _expand_weights(
-        self, param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
+            param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
     ):
         """
         Expands weight tensors dynamically along a given axis.
