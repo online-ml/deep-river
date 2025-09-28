@@ -108,6 +108,7 @@ dev = [
     "plotly>=6.3.0",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
     "pyupgrade>=3.17.0",
     "watermark>=2.3.1",
 ]

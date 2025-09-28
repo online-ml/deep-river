@@ -728,6 +728,7 @@ dev = [
     { name = "plotly" },
     { name = "pre-commit" },
     { name = "pytest" },
+    { name = "pytest-cov" },
     { name = "pyupgrade" },
     { name = "watermark" },
 ]
@@ -797,6 +798,7 @@ dev = [
     { name = "plotly", specifier = ">=6.3.0" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-cov", specifier = ">=6.2.1" },
     { name = "pyupgrade", specifier = ">=3.17.0" },
     { name = "watermark", specifier = ">=2.3.1" },
 ]

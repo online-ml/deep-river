@@ -13,8 +13,6 @@ import torch
 from river.checks import _wrapped_partial, _yield_datasets, yield_checks
 from river.utils import inspect as river_inspect
 
-from deep_river.utils.inspect import isdeepestimator_initialized
-
 
 def check_deep_learn_one(model, dataset):
 
@@ -318,29 +316,25 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     model
 
     """
-    if isdeepestimator_initialized(
-        model
-    ):  # todo remove after refactoring for initialized modules
-        dataset_checks = [check_deep_learn_one, check_model_persistence]
 
-        # Non-dataset checks (run once per model)
+    dataset_checks = [check_deep_learn_one, check_model_persistence]
+
+    # Non-dataset checks (run once per model)
+    yield check_dict2tensor
+    yield check_model_persistence_untrained
+    yield check_model_persistence_with_custom_kwargs
+    yield check_feature_incremental_preservation
+
+    # Classifier checks
+    if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(model):
         yield check_dict2tensor
-        yield check_model_persistence_untrained
-        yield check_model_persistence_with_custom_kwargs
-        yield check_feature_incremental_preservation
 
-        # Classifier checks
-        if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(
-            model
-        ):
+        if not model._multiclass:
             yield check_dict2tensor
 
-            if not model._multiclass:
-                yield check_dict2tensor
-
-        for dataset_check in dataset_checks:
-            for dataset in _yield_datasets(model):
-                yield _wrapped_partial(dataset_check, dataset=dataset)
+    for dataset_check in dataset_checks:
+        for dataset in _yield_datasets(model):
+            yield _wrapped_partial(dataset_check, dataset=dataset)
 
 
 def check_estimator(model):

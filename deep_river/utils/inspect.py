@@ -4,4 +4,4 @@ from deep_river import base
 
 
 def isdeepestimator_initialized(model):
-    return isinstance(extract_relevant(model), base.DeepEstimatorInitialized)
+    return isinstance(extract_relevant(model), base.DeepEstimator)
