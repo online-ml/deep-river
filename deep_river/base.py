@@ -2,7 +2,7 @@ import collections
 import importlib
 import pickle
 from pathlib import Path
-from typing import Any, Callable, Deque, Dict, List, Optional, Type, Union, cast
+from typing import Any, Callable, Deque, Dict, Optional, Union
 
 import pandas as pd
 import torch
@@ -156,6 +156,13 @@ class DeepEstimator(base.Estimator):
             dtype=torch.float32,
         )
         return self._pad_tensor_if_needed(tensor_data, X.shape[0])
+
+    def draw(self) -> Digraph:
+        """Draws the wrapped model."""
+        first_parameter = next(self.module.parameters())
+        input_shape = first_parameter.size()
+        y_pred = self.module(torch.rand(input_shape))
+        return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
 
     def _get_input_size(self):
         """Dynamically determines the expected input feature size of a PyTorch layer."""

@@ -1,5 +1,4 @@
-import warnings
-from typing import Any, Callable, List, Type, Union
+from typing import Any, Callable, List, Union
 
 import numpy as np
 import pandas as pd

@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import Any, Callable, Type, Union
+from typing import Any, Callable, Union
 
 import pandas as pd
 import torch
@@ -8,8 +8,6 @@ from river import stats, utils
 from scipy.special import ndtr
 
 from deep_river.anomaly import ae
-from deep_river.utils import dict2tensor
-from deep_river.utils.tensor_conversion import df2tensor
 
 
 class ProbabilityWeightedAutoencoder(ae.Autoencoder):

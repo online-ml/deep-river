@@ -13,8 +13,6 @@ import torch
 from river.checks import _wrapped_partial, _yield_datasets, yield_checks
 from river.utils import inspect as river_inspect
 
-from deep_river.utils.inspect import isdeepestimator_initialized
-
 
 def check_deep_learn_one(model, dataset):
 

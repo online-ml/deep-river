@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Type, Union
+from typing import Any, Callable, Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -8,9 +8,6 @@ from sortedcontainers import SortedSet
 
 from deep_river.base import DeepEstimator
 from deep_river.utils.tensor_conversion import (
-    df2tensor,
-    dict2tensor,
-    labels2onehot,
     output2proba,
 )
 

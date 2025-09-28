@@ -1,5 +1,5 @@
 import typing
-from typing import Callable, Type, Union
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
