@@ -1,5 +1,4 @@
 import math
-import warnings
 from typing import Any, Callable, Union
 
 import pandas as pd
@@ -25,11 +24,6 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         window_size=250,
         **kwargs,
     ):
-        warnings.warn(
-            "This is deprecated and will be removed in future releases. "
-            "Please instead use the AutoencoderInitialized class and "
-            "initialize the module beforehand"
-        )
         super().__init__(
             module=module,
             loss_fn=loss_fn,
