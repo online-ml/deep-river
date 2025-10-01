@@ -209,3 +209,4 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
             x_t = self._deque2rolling_tensor(x_win)
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)
+

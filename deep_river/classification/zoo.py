@@ -38,6 +38,7 @@ class LogisticRegressionInitialized(Classifier):
     class LRModule(nn.Module):
         def __init__(self, n_features: int):
             super().__init__()
+            self.n_features = n_features  # notwendig für clone Rekonstruktion
             self.dense0 = nn.Linear(in_features=n_features, out_features=1)
             self.softmax = nn.Softmax(dim=-1)
 
@@ -119,6 +120,9 @@ class MultiLayerPerceptronInitialized(Classifier):
     class MLPModule(nn.Module):
         def __init__(self, n_width, n_layers, n_features):
             super().__init__()
+            self.n_width = n_width      # notwendig für clone Rekonstruktion
+            self.n_layers = n_layers    # notwendig für clone Rekonstruktion
+            self.n_features = n_features  # notwendig für clone Rekonstruktion
             self.input_layer = nn.Linear(n_features, n_width)
             hidden = []
             hidden += [nn.Linear(n_width, n_width) for _ in range(n_layers - 1)]
