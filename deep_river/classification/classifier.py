@@ -21,12 +21,12 @@ class _TestModule(torch.nn.Module):
         self.dense0 = torch.nn.Linear(n_features, 5)
         self.nonlinear = torch.nn.ReLU()
         self.dense1 = torch.nn.Linear(5, n_outputs)
-        self.softmax = torch.nn.Sigmoid()
+        # Softmax entfernt – Ausgaben sind jetzt rohe Logits
 
     def forward(self, x):
         x = self.nonlinear(self.dense0(x))
         x = self.nonlinear(self.dense1(x))
-        return self.softmax(x)
+        return x  # rohe Logits
 
 
 class Classifier(DeepEstimator, base.MiniBatchClassifier):
@@ -150,34 +150,60 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self._update_observed_features(x)
         self._update_observed_targets(y)
         x_t = self._dict2tensor(x)
-        self._learn(x_t, y)
+        if self.loss_fn == "cross_entropy":
+            self._classification_step_cross_entropy(x_t, y)
+        else:
+            # Fallback: ursprüngliche Logik (One-Hot + beliebige Loss)
+            self._learn(x_t, y)
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
-        """
-        Updates the model with multiple instances for supervised learning.
-
-        The function updates the observed features and targets based on the input
-        data. It converts the data from a pandas DataFrame to a tensor format before
-        learning occurs. The updates to the model are executed through an internal
-        learning mechanism.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            The data-frame containing instances to be learned by the model. Each
-            row represents a single instance, and each column represents a feature.
-        y : pd.Series
-            The target values corresponding to the instances in `X`. Each entry in
-            the series represents the target associated with a row in `X`.
-
-        Returns
-        -------
-        None
-        """
+        """Batch-Lernen für mehrere Instanzen."""
         self._update_observed_features(X)
         self._update_observed_targets(y)
         x_t = self._df2tensor(X)
-        self._learn(x_t, y)
+        if self.loss_fn == "cross_entropy":
+            self._classification_step_cross_entropy(x_t, y)
+        else:
+            self._learn(x_t, y)
+
+    def _classification_step_cross_entropy(self, x_t: torch.Tensor, y) -> None:
+        """Training Schritt für cross_entropy mit Klassenindex Targets.
+        Reihenfolge jetzt: Zielindizes berechnen -> ggf. Layer erweitern -> Forward -> Loss.
+        """
+        # Klassenindizes extrahieren (vor Forward Pass)
+        if not isinstance(y, (pd.Series, list, tuple, np.ndarray)):
+            class_indices = [self.observed_classes.index(y)]
+        else:
+            if isinstance(y, pd.Series):
+                labels_iter = y.values
+            else:
+                labels_iter = y
+            class_indices = [self.observed_classes.index(lbl) for lbl in labels_iter]
+
+        max_idx = max(class_indices)
+        current_out = self._get_output_size()
+        if max_idx >= current_out:
+            # Sicherheitsguard falls automatische Expansion vorher (in _update_observed_targets) nicht gegriffen hat
+            if self.is_class_incremental and self.output_layer is not None:
+                self._expand_layer(self.output_layer, target_size=max_idx + 1, output=True)
+            else:
+                raise RuntimeError(
+                    f"Encountered class index {max_idx} but output layer size is {current_out} and expansion is disabled."
+                )
+
+        # Forward Pass nach sicherer Dimension
+        self.module.train()
+        y_pred = self.module(x_t)
+
+        y_idx = torch.tensor(class_indices, device=self.device, dtype=torch.long)
+        if y_idx.ndim == 1 and y_pred.shape[0] == 1:
+            # Single sample Fall (reshape auf (1,)) ist korrekt
+            pass
+        # Loss & Optimierung
+        self.optimizer.zero_grad()
+        loss = self.loss_func(y_pred, y_idx)
+        loss.backward()
+        self.optimizer.step()
 
     def _update_observed_targets(self, y) -> bool:
         """
@@ -272,43 +298,8 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             "is_class_incremental": True,
         }
 
-    def _get_save_config(self) -> Dict[str, Any]:
-        """
-        Get the configuration dictionary for saving.
-        Extends the base configuration with classifier-specific parameters.
 
-        Returns
-        -------
-        Dict[str, Any]
-            Configuration dictionary including classifier parameters.
-        """
-        config = super()._get_save_config()
 
-        # Add classifier-specific configuration
-        config["output_is_logit"] = self.output_is_logit
-        config["is_class_incremental"] = self.is_class_incremental
-
-        return config
-
-    def _get_save_metadata(self) -> Dict[str, Any]:
-        """
-        Get the metadata dictionary for saving.
-        Extends the base metadata with classifier-specific metadata.
-
-        Returns
-        -------
-        Dict[str, Any]
-            Metadata dictionary including observed classes.
-        """
-        metadata = super()._get_save_metadata()
-
-        # Add classifier-specific metadata
-        if hasattr(self, "observed_classes"):
-            metadata["observed_classes"] = self._serialize_sorted_set(
-                self.observed_classes
-            )
-
-        return metadata
 
     @classmethod
     def _unit_test_skips(cls) -> set:

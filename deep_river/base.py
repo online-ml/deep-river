@@ -21,11 +21,13 @@ from deep_river.utils import (
     labels2onehot,
 )
 
+# Entfernt hartes Erzwingen von graphviz beim Import – optional in draw()
 try:
-    from graphviz import Digraph
-    from torchviz import make_dot
-except ImportError as e:
-    raise ValueError("You have to install graphviz to use the draw method") from e
+    from graphviz import Digraph  # type: ignore
+    from torchviz import make_dot  # type: ignore
+except Exception:  # pragma: no cover
+    Digraph = None
+    make_dot = None
 
 
 class DeepEstimator(base.Estimator):
@@ -96,8 +98,21 @@ class DeepEstimator(base.Estimator):
         self.kwargs = kwargs
 
         candidates = self._extract_candidate_layers(self.module)
-        self.input_layer = candidates[0]
-        self.output_layer = candidates[-1]
+        # Wähle ersten Kandidaten mit Parametern als input_layer
+        for cand in candidates:
+            if any(p.requires_grad for p in cand.parameters()):
+                self.input_layer = cand
+                break
+        else:
+            self.input_layer = candidates[0] if candidates else None
+        # Wähle letzten parametrischen Layer als output_layer (z.B. nicht ReLU)
+        self.output_layer = None
+        for cand in reversed(candidates):
+            if any(p.requires_grad for p in cand.parameters()):
+                self.output_layer = cand
+                break
+        if self.output_layer is None and candidates:
+            self.output_layer = candidates[-1]
 
         # Set the expected input length based on the extracted input layer.
         self.module_input_len = self._get_input_size() if self.input_layer else None
@@ -161,6 +176,9 @@ class DeepEstimator(base.Estimator):
 
     def draw(self) -> Digraph:
         """Draws the wrapped model."""
+        if Digraph is None or make_dot is None:
+            raise ImportError("graphviz and torchviz must be installed to draw the model.")
+
         first_parameter = next(self.module.parameters())
         input_shape = first_parameter.size()
         y_pred = self.module(torch.rand(input_shape))
@@ -187,31 +205,26 @@ class DeepEstimator(base.Estimator):
             )
 
     def _get_output_size(self):
-        """Dynamically determines the output feature size of the last layer in the module."""
+        """Dynamically determines the output feature size of the last (parametrischen) layer."""
         if not hasattr(self, "output_layer") or self.output_layer is None:
             raise ValueError("No output layer found in the model.")
-
-        if hasattr(
-            self.output_layer, "out_features"
-        ):  # Fully Connected Layers (Linear)
-            return self.output_layer.out_features
-        elif hasattr(self.output_layer, "output_size"):  # Custom Layers
-            return self.output_layer.output_size
-        elif hasattr(self.output_layer, "out_channels"):  # Convolutional Layers
-            return self.output_layer.out_channels
-        elif isinstance(self.output_layer, torch.nn.LSTM):  # LSTM Handling
-            return (
-                self.output_layer.hidden_size
-            )  # LSTMs return (hidden_state, cell_state)
-        elif (
-            hasattr(self.output_layer, "weight")
-            and self.output_layer.weight is not None
-        ):
-            return self.output_layer.weight.shape[0]  # General Weight-Based Guess
+        layer = self.output_layer
+        if hasattr(layer, "out_features"):
+            return layer.out_features
+        elif hasattr(layer, "output_size"):
+            return layer.output_size
+        elif hasattr(layer, "out_channels"):
+            return layer.out_channels
+        elif isinstance(layer, torch.nn.LSTM):
+            return layer.hidden_size
+        elif hasattr(layer, "weight") and getattr(layer, 'weight') is not None:
+            return layer.weight.shape[0]
         else:
-            raise ValueError(
-                f"Cannot determine output size for layer type {type(self.input_layer)}"
-            )
+            # Fallback: Suche rückwärts nach einem Layer mit Gewicht
+            for cand in reversed(list(self.module.modules())):
+                if hasattr(cand, 'weight') and getattr(cand, 'weight') is not None:
+                    return cand.weight.shape[0]
+            raise ValueError(f"Cannot determine output size for layer type {type(layer)}")
 
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
         """
@@ -277,26 +290,35 @@ class DeepEstimator(base.Estimator):
         instructions = self._load_instructions(layer)
         target_str = "output" if output else "input"
 
+        layer_modified = False
         for param_name, instruction in instructions.items():
             if instruction == f"{target_str}_attribute":
-                setattr(layer, param_name, target_size)
+                if getattr(layer, param_name) != target_size:
+                    setattr(layer, param_name, target_size)
+                    layer_modified = True
             elif isinstance(instruction, dict):
-                # Ensure the target_str key exists in instruction before accessing it
                 if target_str not in instruction:
-                    continue  # Skip expansion if no instructions exist for input/output
-
+                    continue
                 for axis_info in instruction[target_str]:
                     param = getattr(layer, param_name)
                     axis = axis_info["axis"]
                     dims_to_add = target_size - param.shape[axis]
                     n_subparams = axis_info["n_subparams"]
+                    if dims_to_add > 0:
+                        param = self._expand_weights(param, axis, dims_to_add, n_subparams)
+                        if not isinstance(param, torch.nn.Parameter):
+                            param = torch.nn.Parameter(param)
+                        setattr(layer, param_name, param)
+                        layer_modified = True
+        # Falls etwas verändert wurde: Optimizer neu aufsetzen, damit neue Parameter enthalten sind.
+        if layer_modified:
+            self._rebuild_optimizer()
 
-                    param = self._expand_weights(param, axis, dims_to_add, n_subparams)
-
-                    if not isinstance(param, torch.nn.Parameter):
-                        param = torch.nn.Parameter(param)
-
-                    setattr(layer, param_name, param)
+    def _rebuild_optimizer(self):
+        """Reinitialisiert den Optimizer mit allen aktuellen Modellparametern.
+        Notwendig nach dynamischen Layer-Erweiterungen, weil neue Parameter sonst nicht trainiert würden."""
+        optim_fn = get_optim_fn(self.optimizer_fn)
+        self.optimizer = optim_fn(self.module.parameters(), lr=self.lr)
 
     @staticmethod
     def _expand_weights(
