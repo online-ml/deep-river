@@ -124,10 +124,12 @@ class MultiLayerPerceptronInitialized(Classifier):
     n_width : int, default=5
         Width (units) of each hidden layer.
     n_layers : int, default=5
-        Number of hidden layers (>=1). If 1, only the input layer feeds the output.
+        Number of hidden layers (>=1). If 1,
+        only the input layer feeds the output.
     n_init_classes : int, default=2
         Initial number of classes/output units.
-    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental, is_class_incremental, device, seed, gradient_clip_value, **kwargs
+    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
+        is_class_incremental, device, seed, gradient_clip_value, **kwargs
         See :class:`LogisticRegressionInitialized`.
 
     Examples
@@ -149,7 +151,6 @@ class MultiLayerPerceptronInitialized(Classifier):
             self.hidden = nn.ModuleList(hidden)
             self.denselast = nn.Linear(n_width, n_init_classes)
             self.activation = nn.ReLU()
-
 
         def forward(self, x, **kwargs):
             x = self.activation(self.input_layer(x))
@@ -228,7 +229,9 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
         Hidden state dimensionality of the LSTM.
     n_init_classes : int, default=2
         Initial number of output classes.
-    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental, is_class_incremental, device, seed, gradient_clip_value, **kwargs
+    loss_fn, optimizer_fn, lr, output_is_logit,
+        is_feature_incremental, is_class_incremental, device, seed,
+        gradient_clip_value, **kwargs
         Standard parameters as in other classifiers.
 
     Examples

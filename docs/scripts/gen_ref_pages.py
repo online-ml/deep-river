@@ -8,27 +8,34 @@ nav = mkdocs_gen_files.Nav()
 
 for path in sorted(Path("deep_river").rglob("*.py")):
     module_path = path.relative_to("deep_river").with_suffix("")
-    doc_path = path.relative_to("deep_river").with_suffix(".md")
-    full_doc_path = Path("reference", doc_path)
-
     parts = list(module_path.parts)
 
     # Skip dunder and special modules
     if parts[-1] in {"__init__", "__version__", "__main__", " "}:
         continue
 
-    # Exclude almost all utils.* modules except the explicitly whitelisted ones
+    # Default doc path (mirrors package structure)
+    doc_path = path.relative_to("deep_river").with_suffix(".md")
+    full_doc_path = Path("reference", doc_path)
+    nav_key_parts = parts[:]  # copy for potential modification
+
+    # Handle utils filtering
     if parts[0] == "utils":
         allowed_utils = {"tensor_conversion", "params"}
-        # parts example: ["utils", "params"]
-        if len(parts) >= 2 and parts[1] not in allowed_utils:
+        if len(parts) >= 2 and parts[1] in allowed_utils:
+            # Flatten: expose as top-level pages (no utils section)
+            top_name = parts[1]
+            nav_key_parts = [top_name]
+            doc_path = Path(f"{top_name}.md")
+            full_doc_path = Path("reference", doc_path)
+        else:
+            # Skip any other utils module
             continue
-        # Also skip deeper nested utils modules unless first submodule is allowed
-        if len(parts) >= 2 and parts[1] in allowed_utils and len(parts) > 2:
-            # currently no deeper structure needed in docs; keep only the top-level module page
+        # Skip deeper nesting even for allowed modules (not currently used)
+        if len(parts) > 2:
             continue
 
-    nav[parts] = doc_path.as_posix()
+    nav[nav_key_parts] = doc_path.as_posix()
 
     with mkdocs_gen_files.open(full_doc_path, "w+") as fd:
         identifier = ".".join(parts)

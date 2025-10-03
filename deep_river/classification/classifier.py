@@ -1,4 +1,4 @@
-from typing import Callable, Union
+from typing import Callable, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -186,10 +186,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         current_out = self._get_output_size()
         if max_idx >= current_out:
             if self.is_class_incremental and self.output_layer is not None:
-                self._expand_layer(self.output_layer, target_size=max_idx + 1, output=True)
+                self._expand_layer(
+                    self.output_layer, target_size=max_idx + 1, output=True
+                )
             else:
                 raise RuntimeError(
-                    f"Encountered class index {max_idx} but output layer size is {current_out} and expansion is disabled."
+                    f"Encountered class index {max_idx} but output layer size is "
+                    f"{current_out} and expansion is disabled."
                 )
 
         self.module.train()
@@ -199,7 +202,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         loss = self.loss_func(y_pred, y_idx)
         loss.backward()
         if getattr(self, "gradient_clip_value", None) is not None:
-            torch.nn.utils.clip_grad_norm_(self.module.parameters(), self.gradient_clip_value)
+            clip_val = self.gradient_clip_value
+            if clip_val is not None:
+                torch.nn.utils.clip_grad_norm_(self.module.parameters(), clip_val)
         self.optimizer.step()
 
     def _update_observed_targets(self, y) -> bool:
@@ -252,7 +257,8 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.module.eval()
         with torch.inference_mode():
             y_pred = self.module(x_t)
-        return output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
+        raw = output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
+        return cast(dict[base.typing.ClfTarget, float], raw)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Predict probabilities for a batch of instances.

@@ -1,7 +1,6 @@
 from typing import Callable, Type, Union
 
 from torch import nn, optim
-import torch
 
 from deep_river.regression import Regressor
 from deep_river.regression.rolling_regressor import RollingRegressor
@@ -209,7 +208,9 @@ class LSTMRegressor(RollingRegressor):
     """
 
     class LSTMModule(nn.Module):
-        def __init__(self, n_features: int, hidden_size: int, num_layers: int, dropout: float):
+        def __init__(
+            self, n_features: int, hidden_size: int, num_layers: int, dropout: float
+        ):
             super().__init__()
             self.n_features = n_features
             self.hidden_size = hidden_size
@@ -223,7 +224,9 @@ class LSTMRegressor(RollingRegressor):
                 dropout=0.0 if num_layers == 1 else min(dropout, 0.5),
             )
             self.head = nn.Linear(hidden_size, 1)
-            self.out_activation = nn.Identity()  # placeholder if Softplus etc. desired later
+            self.out_activation = (
+                nn.Identity()
+            )  # placeholder if Softplus etc. desired later
             self.post_dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
 
         def forward(self, X, **kwargs):  # X: (seq_len, batch=1, n_features)

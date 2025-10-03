@@ -105,7 +105,9 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
-        y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(-1, 1)
+        y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
+            -1, 1
+        )
         self._learn(x_t, y_t)
 
     def predict_one(self, x: dict) -> RegTarget:

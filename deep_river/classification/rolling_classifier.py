@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type, Union
+from typing import Callable, Dict, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -72,7 +72,9 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
     >>> import torch
     >>> from torch import nn
     >>> from river import metrics, datasets
-    >>> from deep_river.classification.rolling_classifier import RollingClassifierInitialized  # doctest: +SKIP
+    >>> from deep_river.classification.rolling_classifier import (  # doctest: +SKIP
+    ...     RollingClassifierInitialized
+    ... )
     >>> class TinyRNN(nn.Module):  # doctest: +SKIP
     ...     def __init__(self, n_features=5, hidden=4):
     ...         super().__init__()
@@ -163,7 +165,7 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
             x_t = self._deque2rolling_tensor(x_win)
             y_pred = self.module(x_t)
             proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
-        return proba[0]
+        return cast(Dict[ClfTarget, float], proba[0])
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """Batch update: extend window with rows of X and perform a step."""

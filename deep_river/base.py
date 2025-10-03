@@ -1,8 +1,8 @@
 import collections
+import copy  # fallback for robust module cloning
 import importlib
 import inspect
 import pickle
-import copy  # fallback for robust module cloning
 from pathlib import Path
 from typing import Any, Callable, Deque, Dict, Optional, Union
 
@@ -20,14 +20,6 @@ from deep_river.utils import (
     get_optim_fn,
     labels2onehot,
 )
-
-# Removed hard requirement of graphviz on import – used optionally in draw()
-try:
-    from graphviz import Digraph  # type: ignore
-    from torchviz import make_dot  # type: ignore
-except Exception:  # pragma: no cover
-    Digraph = None
-    make_dot = None
 
 
 class DeepEstimator(base.Estimator):
@@ -66,7 +58,12 @@ class DeepEstimator(base.Estimator):
     ...         self.fc = nn.Linear(n_features, 2)
     ...     def forward(self, x):
     ...         return self.fc(x)
-    >>> est = DeepEstimator(module=TinyNet(3), loss_fn='mse', optimizer_fn='sgd', is_feature_incremental=True)
+    >>> est = DeepEstimator(
+    ...     module=TinyNet(3),
+    ...     loss_fn='mse',
+    ...     optimizer_fn='sgd',
+    ...     is_feature_incremental=True,
+    ... )
     >>> est._update_observed_features({'a': 1.0, 'b': 2.0, 'c': 3.0})  # internal bookkeeping
     True
 
@@ -145,6 +142,10 @@ class DeepEstimator(base.Estimator):
 
         self.kwargs = kwargs
 
+        # Explicit Optional annotations to satisfy mypy when assigning None
+        self.input_layer: Optional[torch.nn.Module] = None
+        self.output_layer: Optional[torch.nn.Module] = None
+
         candidates = self._extract_candidate_layers(self.module)
         # Pick the first parameterised layer as input_layer
         for cand in candidates:
@@ -154,7 +155,6 @@ class DeepEstimator(base.Estimator):
         else:
             self.input_layer = candidates[0] if candidates else None
         # Pick the last parameterised layer as output_layer
-        self.output_layer = None
         for cand in reversed(candidates):
             if any(p.requires_grad for p in cand.parameters()):
                 self.output_layer = cand
@@ -251,20 +251,18 @@ class DeepEstimator(base.Estimator):
         )
         return self._pad_tensor_if_needed(tensor_data, X.shape[0])
 
-    def draw(self) -> Digraph:
-        """Render (a partial) computational graph of the wrapped model.
+    def draw(self):  # type: ignore[override]
+        """Render a (partial) computational graph of the wrapped model.
 
-        Requires ``graphviz`` and ``torchviz``. A dummy random forward pass is
-        executed using the shape of the first parameter to produce a graph
-        of the current architecture.
-
-        Returns
-        -------
-        graphviz.Digraph
-            A graph visualising parameter dependencies.
+        Imports ``graphviz`` and ``torchviz`` lazily. Raises an informative
+        ImportError if the optional dependencies are not installed.
         """
-        if Digraph is None or make_dot is None:
-            raise ImportError("graphviz and torchviz must be installed to draw the model.")
+        try:  # pragma: no cover
+            from torchviz import make_dot  # type: ignore
+        except Exception as err:  # noqa: BLE001
+            raise ImportError(
+                "graphviz and torchviz must be installed to draw the model."
+            ) from err
 
         first_parameter = next(self.module.parameters())
         input_shape = first_parameter.size()
@@ -308,14 +306,16 @@ class DeepEstimator(base.Estimator):
             return layer.out_channels
         elif isinstance(layer, torch.nn.LSTM):
             return layer.hidden_size
-        elif hasattr(layer, "weight") and getattr(layer, 'weight') is not None:
+        elif hasattr(layer, "weight") and getattr(layer, "weight") is not None:
             return layer.weight.shape[0]
         else:
             # Fallback: walk backwards to the closest layer with weights
             for cand in reversed(list(self.module.modules())):
-                if hasattr(cand, 'weight') and getattr(cand, 'weight') is not None:
+                if hasattr(cand, "weight") and getattr(cand, "weight") is not None:
                     return cand.weight.shape[0]
-            raise ValueError(f"Cannot determine output size for layer type {type(layer)}")
+            raise ValueError(
+                f"Cannot determine output size for layer type {type(layer)}"
+            )
 
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
         """Right‑pad ``tensor_data`` to the module's nominal input size if needed.
@@ -392,7 +392,9 @@ class DeepEstimator(base.Estimator):
         if isinstance(layer, torch.nn.LSTM):
             instructions["input_size"] = "input_attribute"
             if hasattr(layer, "weight_ih_l0"):
-                instructions["weight_ih_l0"] = {"input": [{"axis": 1, "n_subparams": 1}]}
+                instructions["weight_ih_l0"] = {
+                    "input": [{"axis": 1, "n_subparams": 1}]
+                }
         return instructions
 
     def _expand_layer(
@@ -417,7 +419,9 @@ class DeepEstimator(base.Estimator):
                     dims_to_add = target_size - param.shape[axis]
                     n_subparams = axis_info["n_subparams"]
                     if dims_to_add > 0:
-                        param = self._expand_weights(param, axis, dims_to_add, n_subparams)
+                        param = self._expand_weights(
+                            param, axis, dims_to_add, n_subparams
+                        )
                         if not isinstance(param, torch.nn.Parameter):
                             param = torch.nn.Parameter(param)
                         setattr(layer, param_name, param)
@@ -492,7 +496,9 @@ class DeepEstimator(base.Estimator):
         self.optimizer.zero_grad()
         loss.backward()
         if getattr(self, "gradient_clip_value", None) is not None:
-            torch.nn.utils.clip_grad_norm_(self.module.parameters(), self.gradient_clip_value)
+            clip_val = self.gradient_clip_value
+            if clip_val is not None:
+                torch.nn.utils.clip_grad_norm_(self.module.parameters(), clip_val)
         self.optimizer.step()
 
     def save(self, filepath: Union[str, Path]) -> None:
@@ -534,21 +540,34 @@ class DeepEstimator(base.Estimator):
         if "module" in init_params and isinstance(init_params["module"], dict):
             module_info = init_params.pop("module")
             module_cls = cls._import_from_path(module_info["class"])
-            module = module_cls(**cls._filter_kwargs(module_cls.__init__, module_info["kwargs"]))
+            module = module_cls(
+                **cls._filter_kwargs(module_cls.__init__, module_info["kwargs"])
+            )
             if state.get("model_state_dict"):
                 module.load_state_dict(state["model_state_dict"])
             init_params["module"] = module
 
-        estimator = estimator_cls(**cls._filter_kwargs(estimator_cls.__init__, init_params))
+        estimator = estimator_cls(
+            **cls._filter_kwargs(estimator_cls.__init__, init_params)
+        )
 
         if state.get("optimizer_state_dict") and hasattr(estimator, "optimizer"):
-            try: estimator.optimizer.load_state_dict(state["optimizer_state_dict"])
-            except: pass
+            try:
+                estimator.optimizer.load_state_dict(
+                    state["optimizer_state_dict"]  # type: ignore[arg-type]
+                )
+            except Exception:  # noqa: E722
+                pass
 
         estimator._restore_runtime_state(state.get("runtime_state", {}))
         return estimator
 
-    def clone(self, new_params=None, include_attributes: bool = False, copy_weights: bool = False):
+    def clone(
+        self,
+        new_params=None,
+        include_attributes: bool = False,
+        copy_weights: bool = False,
+    ):
         """Return a fresh estimator instance with (optionally) copied state.
 
         Parameters
@@ -593,7 +612,10 @@ class DeepEstimator(base.Estimator):
             elif name == "module":
                 params["module"] = {
                     "class": f"{type(self.module).__module__}.{type(self.module).__name__}",
-                    "kwargs": {**getattr(self, "kwargs", {}), **self._infer_module_params()}
+                    "kwargs": {
+                        **getattr(self, "kwargs", {}),
+                        **self._infer_module_params(),
+                    },
                 }
             elif hasattr(self, name):
                 params[name] = getattr(self, name)
@@ -622,6 +644,7 @@ class DeepEstimator(base.Estimator):
                 setattr(self, attr, SortedSet(data) if data else SortedSet())
             elif attr == "window_buffer" and hasattr(self, "_x_window"):
                 from collections import deque
+
                 self._x_window = deque(data, maxlen=getattr(self, "window_size", 10))
 
     # -------------------- Helper utilities --------------------
@@ -651,21 +674,23 @@ class DeepEstimator(base.Estimator):
         """Create a fresh (re‑initialised) copy of the wrapped module."""
         params = self._infer_module_params()
         try:
-            return self.module.__class__(**self._filter_kwargs(self.module.__class__.__init__, params))
-        except:
+            return self.module.__class__(
+                **self._filter_kwargs(self.module.__class__.__init__, params)
+            )
+        except Exception:  # noqa: E722
             mod_copy = copy.deepcopy(self.module)
             for m in mod_copy.modules():
                 if hasattr(m, "reset_parameters"):
                     try:
                         m.reset_parameters()
-                    except:
+                    except Exception:  # noqa: E722
                         pass
             return mod_copy
 
     @staticmethod
     def _import_from_path(path: str):
         """Import and return an object from a fully qualified dotted path."""
-        module_path, name = path.rsplit('.', 1)
+        module_path, name = path.rsplit(".", 1)
         return getattr(importlib.import_module(module_path), name)
 
     @staticmethod
@@ -673,8 +698,15 @@ class DeepEstimator(base.Estimator):
         """Filter a mapping to parameters accepted by ``callable_obj``."""
         try:
             sig = inspect.signature(callable_obj)
-            allowed = {p.name for p in sig.parameters.values()
-                      if p.kind in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY)}
+            allowed = {
+                p.name
+                for p in sig.parameters.values()
+                if p.kind
+                in (
+                    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+                    inspect.Parameter.KEYWORD_ONLY,
+                )
+            }
             return {k: v for k, v in kwargs.items() if k in allowed}
         except (ValueError, TypeError):
             return kwargs
@@ -695,37 +727,8 @@ class RollingDeepEstimator(DeepEstimator):
 
     Maintains a ``collections.deque`` of the most recent ``window_size`` inputs
     enabling models (e.g. sequence learners) to condition on a short history.
-    Optionally the model's own predictions can be appended to the window (via
-    ``append_predict``) to facilitate iterative forecasting.
-
-    Example
-    -------
-    >>> import torch
-    >>> from torch import nn
-    >>> from deep_river.base import RollingDeepEstimator
-    >>> class TinySeq(nn.Module):
-    ...     def __init__(self, n_features=4):
-    ...         super().__init__()
-    ...         self.rnn = nn.GRU(input_size=n_features, hidden_size=8, batch_first=True)
-    ...         self.out = nn.Linear(8, 1)
-    ...     def forward(self, x):
-    ...         # x shape: (seq_len, batch, features) in this simplified example
-    ...         if x.dim() == 2:  # (batch, features) -> (seq=1, batch, features)
-    ...             x = x.unsqueeze(0)
-    ...         out, _ = self.rnn(x)
-    ...         return self.out(out[-1])
-    >>> est = RollingDeepEstimator(module=TinySeq(), window_size=5)
-
-    Parameters
-    ----------
-    module : torch.nn.Module
-        Wrapped PyTorch module.
-    window_size : int, default=10
-        Maximum number of most recent samples kept.
-    append_predict : bool, default=False
-        If True, predictions may be appended to the window (feature engineering / autoregression).
-    **kwargs
-        Forwarded to :class:`DeepEstimator`.
+    Optionally the model's own predictions can be appended to the window
+    (via ``append_predict``) to facilitate iterative forecasting.
     """
 
     def __init__(
