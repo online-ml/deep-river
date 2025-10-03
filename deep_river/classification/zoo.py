@@ -7,24 +7,63 @@ from deep_river.classification.rolling_classifier import RollingClassifierInitia
 
 
 class LogisticRegressionInitialized(Classifier):
-    """
-    Logistic Regression Modell mit dynamischer Klassenerweiterung.
+    """Incremental logistic regression with optional dynamic class expansion.
 
-    Änderungen:
-    - Softmax entfernt (CrossEntropy erwartet rohe Logits)
-    - Initiale Ausgabedimension konfigurierbar (n_init_classes, default=2)
-    - Ausgabeschicht wird bei neuen Klassen erweitert, falls is_class_incremental=True
+    This variant outputs raw logits (no internal softmax) so that losses like
+    ``cross_entropy`` can be applied directly. The output layer can grow in
+    response to newly observed class labels when ``is_class_incremental=True``.
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Initial number of input features.
+    n_init_classes : int, default=2
+        Initial number of output units/classes. Expanded automatically if new
+        classes appear and class incrementality is enabled.
+    loss_fn : str | Callable, default='cross_entropy'
+        Training loss.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    output_is_logit : bool, default=True
+        Indicates outputs are logits (enables proper conversion in ``predict_proba``).
+    is_feature_incremental : bool, default=False
+        Whether to dynamically expand the input layer when new features appear.
+    is_class_incremental : bool, default=True
+        Whether to expand the output layer for new class labels.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Optional gradient norm clipping value.
+    **kwargs
+        Forwarded to the parent constructor.
+
+    Examples
+    --------
+    >>> from deep_river.classification.zoo import LogisticRegressionInitialized
+    >>> from river import datasets, metrics
+    >>> model = LogisticRegressionInitialized(n_features=10)
+    >>> metric = metrics.Accuracy()
+    >>> for x, y in datasets.Phishing().take(30):  # doctest: +SKIP
+    ...     pred = model.predict_one(x)
+    ...     metric.update(y, pred)
+    ...     model.learn_one(x, y)
+    >>> round(metric.get(), 4)  # doctest: +SKIP
+    0.70
     """
 
     class LRModule(nn.Module):
         def __init__(self, n_features: int, n_init_classes: int):
             super().__init__()
             self.n_features = n_features
-            self.n_init_classes = n_init_classes  # für Rekonstruktion
+            self.n_init_classes = n_init_classes  # kept for reconstruction
             self.dense0 = nn.Linear(in_features=n_features, out_features=n_init_classes)
 
         def forward(self, x, **kwargs):
-            return self.dense0(x)  # rohe Logits
+            return self.dense0(x)  # raw logits
 
     def __init__(
         self,
@@ -74,14 +113,28 @@ class LogisticRegressionInitialized(Classifier):
 
 
 class MultiLayerPerceptronInitialized(Classifier):
-    """
-    Mehrschichtiges Perzeptron mit dynamischer Klassenerweiterung.
+    """Configurable multi-layer perceptron with dynamic class expansion.
 
-    Änderungen:
-    - Softmax entfernt (CrossEntropy erwartet Logits)
-    - Sigmoid durch ReLU ersetzt in Hidden-Layern (gewöhnlicher Standard)
-    - Initiale Ausgabedimension konfigurierbar (n_init_classes, default=2)
-    - Ausgabeschicht erweitert sich bei neuen Klassen
+    Hidden layers use ReLU activations; the output layer emits raw logits.
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Initial number of features.
+    n_width : int, default=5
+        Width (units) of each hidden layer.
+    n_layers : int, default=5
+        Number of hidden layers (>=1). If 1, only the input layer feeds the output.
+    n_init_classes : int, default=2
+        Initial number of classes/output units.
+    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental, is_class_incremental, device, seed, gradient_clip_value, **kwargs
+        See :class:`LogisticRegressionInitialized`.
+
+    Examples
+    --------
+    >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
+    >>> m = MultiLayerPerceptronInitialized(n_features=8, n_width=16, n_layers=3)  # doctest: +SKIP
+    >>> # Use m inside a river pipeline as with any other classifier.
     """
 
     class MLPModule(nn.Module):
@@ -92,18 +145,18 @@ class MultiLayerPerceptronInitialized(Classifier):
             self.n_features = n_features
             self.n_init_classes = n_init_classes
             self.input_layer = nn.Linear(n_features, n_width)
-            hidden = []
-            hidden += [nn.Linear(n_width, n_width) for _ in range(n_layers - 1)]
+            hidden = [nn.Linear(n_width, n_width) for _ in range(n_layers - 1)]
             self.hidden = nn.ModuleList(hidden)
             self.denselast = nn.Linear(n_width, n_init_classes)
             self.activation = nn.ReLU()
+
 
         def forward(self, x, **kwargs):
             x = self.activation(self.input_layer(x))
             for layer in self.hidden:
                 x = self.activation(layer(x))
             x = self.denselast(x)
-            return x  # rohe Logits
+            return x  # raw logits
 
     def __init__(
         self,
@@ -160,15 +213,28 @@ class MultiLayerPerceptronInitialized(Classifier):
 
 
 class LSTMClassifierInitialized(RollingClassifierInitialized):
-    """
-    LSTM-basierter Klassifikator (rolling) mit dynamischer Klassenerweiterung.
+    """Rolling LSTM classifier with dynamic class expansion.
 
-    Änderungen / Design:
-    - LSTM verbirgt eine feste "hidden_size" (Feature-Repräsentation)
-    - Separater Linear-Head (head) mappt hidden -> Klassenlogits
-    - Keine Softmax im Modul (rohe Logits); `cross_entropy` als Standard-Loss
-    - Dynamische Klassenerweiterung funktioniert über bestehende `_update_observed_targets` Logik,
-      da der Output-Layer (head) als letzter parametrischer Layer erkannt und erweitert wird.
+    An LSTM backbone feeds into a linear head that produces logits. Designed for
+    sequential/temporal streams processed via a rolling window (see
+    :class:`RollingClassifierInitialized`). The output layer (``head``) expands
+    when new classes are observed (if enabled).
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Number of input features per timestep.
+    hidden_size : int, default=16
+        Hidden state dimensionality of the LSTM.
+    n_init_classes : int, default=2
+        Initial number of output classes.
+    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental, is_class_incremental, device, seed, gradient_clip_value, **kwargs
+        Standard parameters as in other classifiers.
+
+    Examples
+    --------
+    >>> from deep_river.classification.zoo import LSTMClassifierInitialized  # doctest: +SKIP
+    >>> lstm_clf = LSTMClassifierInitialized(n_features=6, hidden_size=8)    # doctest: +SKIP
     """
 
     class LSTMModule(nn.Module):
@@ -182,13 +248,11 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
             )
             self.head = nn.Linear(hidden_size, n_init_classes)
 
-        def forward(self, X, **kwargs):
-            # X shape: (seq_len, batch=1, n_features) für rolling Fenster
+        def forward(self, X, **kwargs):  # X: (seq_len, batch=1, n_features)
             output, (hn, cn) = self.lstm(X)
-            # hn shape: (num_layers, batch, hidden_size) -> wir nehmen letzte Schicht
             h_last = hn[-1]  # (batch, hidden_size)
             logits = self.head(h_last)
-            return logits  # (batch, n_classes) rohe Logits
+            return logits  # (batch, n_classes) raw logits
 
     def __init__(
         self,

@@ -8,8 +8,46 @@ from deep_river.regression.rolling_regressor import RollingRegressor
 
 
 class LinearRegressionInitialized(Regressor):
-    """
-    Einfache lineare Regression mit optionalem Feature-Inkremental und Gradient Clipping.
+    """Incremental linear regression with optional feature growth and gradient clipping.
+
+    A thin wrapper that instantiates a single linear layer and enables
+    dynamic feature expansion when ``is_feature_incremental=True``. The model
+    outputs a single continuous target value.
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Initial number of input features (columns). The input layer can expand
+        if feature incrementality is enabled and new feature names appear.
+    loss_fn : str | Callable, default='mse'
+        Loss used for optimisation.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    is_feature_incremental : bool, default=False
+        Whether to expand the input layer when new features appear.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Gradient norm clipping threshold. Disabled if ``None``.
+    **kwargs
+        Forwarded to :class:`~deep_river.base.DeepEstimator`.
+
+    Examples
+    --------
+    >>> from deep_river.regression.zoo import LinearRegressionInitialized
+    >>> from river import datasets, metrics
+    >>> model = LinearRegressionInitialized(n_features=5)  # doctest: +SKIP
+    >>> metric = metrics.MAE()  # doctest: +SKIP
+    >>> for x, y in datasets.Bikes().take(20):  # doctest: +SKIP
+    ...     pred = model.predict_one(x)
+    ...     metric.update(y, pred)
+    ...     model.learn_one(x, y)
+    >>> round(metric.get(), 2)  # doctest: +SKIP
+    7.10
     """
 
     class LRModule(nn.Module):
@@ -50,11 +88,6 @@ class LinearRegressionInitialized(Regressor):
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-        """
-
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
@@ -64,8 +97,27 @@ class LinearRegressionInitialized(Regressor):
 
 
 class MultiLayerPerceptronInitialized(Regressor):
-    """
-    MLP Regression mit optionalem Feature-Inkremental und Gradient Clipping.
+    """Multi-layer perceptron regressor with optional feature growth.
+
+    Stacks ``n_layers`` fully connected layers of width ``n_width`` with a
+    sigmoid non-linearity (kept for backward compatibility) followed by a single
+    output unit. Can expand its input layer when new feature names appear.
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Initial number of input features.
+    n_width : int, default=5
+        Hidden layer width.
+    n_layers : int, default=5
+        Number of hidden layers. Must be >=1.
+    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, gradient_clip_value, **kwargs
+        Standard estimator configuration.
+
+    Notes
+    -----
+    The use of ``sigmoid`` after each hidden layer can cause saturation; for
+    deeper networks consider replacing with ReLU or GELU in a custom module.
     """
 
     class MLPModule(nn.Module):
@@ -118,11 +170,6 @@ class MultiLayerPerceptronInitialized(Regressor):
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-        """
-
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
@@ -132,30 +179,33 @@ class MultiLayerPerceptronInitialized(Regressor):
 
 
 class LSTMRegressor(RollingRegressor):
-    """
-    LSTM Regressor für sequenzielle Regressionsaufgaben mit Rolling Window.
+    """Rolling LSTM regressor for sequential / time-series data.
 
-    Verbesserungen gegenüber der vorherigen sehr schwachen Version:
-    - Separate versteckte Dimension (hidden_size) statt hidden_size=output=1
-    - Separater Linear-Head (hidden -> 1) für bessere Ausdrucksstärke
-    - Optional Dropout zwischen LSTM und Head
-    - Konfigurierbare Anzahl LSTM-Layer (num_layers)
-    - Option gradient_clipping zur Stabilisierung (Default 1.0)
+    Improves over a naïve single-unit LSTM by separating the hidden representation
+    (``hidden_size``) from the 1D regression output head. Supports optional
+    dropout and multiple LSTM layers. Designed to work with a rolling window
+    maintained by :class:`~deep_river.base.RollingDeepEstimator`.
 
-    Parameter
-    ---------
-    n_features : int
-        Anzahl der Eingangsfeatures (Start – kann bei feature-incremental wachsen).
-    hidden_size : int
-        LSTM Hidden-State Dimension (Standard 32).
-    num_layers : int
-        Anzahl LSTM-Layer (Standard 1).
-    dropout : float
-        Dropout nach dem LSTM (nur wenn > 0 und num_layers > 1 in LSTM selbst; wir nutzen es vorm Head).
-    gradient_clip_value : float | None
-        Falls gesetzt, wird der Gradienten-Norm-Clipping-Wert verwendet.
-    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed
-        Wie bei anderen Regressoren.
+    Parameters
+    ----------
+    n_features : int, default=10
+        Number of input features per timestep (may grow if feature-incremental).
+    hidden_size : int, default=32
+        Dimensionality of the LSTM hidden state.
+    num_layers : int, default=1
+        Number of stacked LSTM layers.
+    dropout : float, default=0.0
+        Dropout probability applied after the LSTM (and internally by PyTorch if
+        ``num_layers > 1``). Capped internally for safety.
+    gradient_clip_value : float | None, default=1.0
+        Gradient norm clipping threshold (helps stability). ``None`` disables it.
+    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, **kwargs
+        Standard configuration.
+
+    Examples
+    --------
+    >>> from deep_river.regression.zoo import LSTMRegressor  # doctest: +SKIP
+    >>> lstm_reg = LSTMRegressor(n_features=6, hidden_size=16)  # doctest: +SKIP
     """
 
     class LSTMModule(nn.Module):
@@ -169,19 +219,18 @@ class LSTMRegressor(RollingRegressor):
                 input_size=n_features,
                 hidden_size=hidden_size,
                 num_layers=num_layers,
-                batch_first=False,  # Eingabe (seq_len, batch, features)
-                dropout=0.0 if num_layers == 1 else min(dropout, 0.5),  # internes Dropout nur falls >1 Layer
+                batch_first=False,
+                dropout=0.0 if num_layers == 1 else min(dropout, 0.5),
             )
             self.head = nn.Linear(hidden_size, 1)
-            self.out_activation = nn.Identity()  # Platzhalter falls später z.B. Softplus
+            self.out_activation = nn.Identity()  # placeholder if Softplus etc. desired later
             self.post_dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
 
         def forward(self, X, **kwargs):  # X: (seq_len, batch=1, n_features)
             output, (hn, cn) = self.lstm(X)
-            # hn: (num_layers, batch, hidden_size) -> letzter Layer
-            h_last = hn[-1]  # (batch, hidden_size)
+            h_last = hn[-1]
             h_last = self.post_dropout(h_last)
-            y = self.head(h_last)  # (batch, 1)
+            y = self.head(h_last)
             return self.out_activation(y)
 
     def __init__(

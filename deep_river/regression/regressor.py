@@ -29,33 +29,50 @@ class _TestModule(torch.nn.Module):
 
 
 class Regressor(DeepEstimator, base.MiniBatchRegressor):
-    """
-    Wrapper for PyTorch classification models that supports feature and class incremental learning.
+    """Incremental wrapper for PyTorch regression models.
+
+    Provides feature-incremental learning (optional) by expanding the first
+    trainable layer on-the-fly when unseen feature names are encountered.
+    Suitable for streaming / online regression tasks using the :mod:`river` API.
 
     Parameters
     ----------
     module : torch.nn.Module
-        A PyTorch model. Can be pre-initialized or uninitialized.
-    loss_fn : Union[str, Callable]
-        Loss function for training. Can be a string ('mse', 'cross_entropy', etc.)
-        or a PyTorch function.
-    optimizer_fn : Union[str, Type[torch.optim.Optimizer]]
-        Optimizer for training (e.g., "adam", "sgd", or a PyTorch optimizer class).
-    lr : float, default=0.001
-        Learning rate of the optimizer.
-    output_is_logit : bool, default=True
-        If True, applies softmax/sigmoid during inference.
-    is_class_incremental : bool, default=False
-        If True, adds neurons when new classes appear.
+        PyTorch module that outputs a numeric prediction (shape (N, 1) or (N,)).
+    loss_fn : str | Callable
+        Loss identifier or callable (e.g. ``'mse'``).
+    optimizer_fn : str | Type[torch.optim.Optimizer]
+        Optimizer spec (``'adam'``, ``'sgd'`` or optimizer class).
+    lr : float, default=1e-3
+        Learning rate.
     is_feature_incremental : bool, default=False
-        If True, adds neurons when new features appear.
-    device : str, default="cpu"
-        Whether to use "cpu" or "cuda".
-    seed : Optional[int], default=None
+        If True, expands the input layer for new feature names.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
         Random seed for reproducibility.
     **kwargs
-        Additional parameters for model initialization.
+        Extra args stored for cloning/persistence.
 
+    Examples
+    --------
+    >>> from river import datasets, metrics
+    >>> from deep_river.regression import Regressor
+    >>> from torch import nn
+    >>> class TinyReg(nn.Module):
+    ...     def __init__(self, n_features=4):
+    ...         super().__init__()
+    ...         self.fc = nn.Linear(n_features, 1)
+    ...     def forward(self, x):
+    ...         return self.fc(x)
+    >>> model = Regressor(module=TinyReg(4), loss_fn='mse', optimizer_fn='sgd')  # doctest: +SKIP
+    >>> metric = metrics.MAE()  # doctest: +SKIP
+    >>> for x, y in datasets.Bikes().take(30):  # doctest: +SKIP
+    ...     yp = model.predict_one(x)
+    ...     metric.update(y, yp)
+    ...     model.learn_one(x, y)
+    >>> round(metric.get(), 2)  # doctest: +SKIP
+    7.50
     """
 
     def __init__(
@@ -79,35 +96,20 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             seed=seed,
             **kwargs,
         )
-        # Note: output_is_logit removed as it's not relevant for regression
 
     def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
         self._update_observed_features(x)
         x_t = self._dict2tensor(x)
-        self._learn(x_t, y)  # y is now correctly handled in _learn
+        self._learn(x_t, y)
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
-        y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
-            -1, 1
-        )
+        y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(-1, 1)
         self._learn(x_t, y_t)
 
     def predict_one(self, x: dict) -> RegTarget:
-        """
-        Predicts the target value for a single example.
-
-        Parameters
-        ----------
-        x
-            Input example.
-
-        Returns
-        -------
-        RegTarget
-            Predicted target value.
-        """
+        """Predict target value for a single instance."""
         self._update_observed_features(x)
         x_t = self._dict2tensor(x)
         self.module.eval()
@@ -116,7 +118,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         return y_pred
 
     def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Predicts probabilities for multiple examples."""
+        """Predict target values for multiple instances (returns single-column DataFrame)."""
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
         self.module.eval()

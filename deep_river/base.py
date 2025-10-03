@@ -2,7 +2,7 @@ import collections
 import importlib
 import inspect
 import pickle
-import copy  # added for robust module cloning fallback
+import copy  # fallback for robust module cloning
 from pathlib import Path
 from typing import Any, Callable, Deque, Dict, Optional, Union
 
@@ -21,7 +21,7 @@ from deep_river.utils import (
     labels2onehot,
 )
 
-# Entfernt hartes Erzwingen von graphviz beim Import – optional in draw()
+# Removed hard requirement of graphviz on import – used optionally in draw()
 try:
     from graphviz import Digraph  # type: ignore
     from torchviz import make_dot  # type: ignore
@@ -31,44 +31,90 @@ except Exception:  # pragma: no cover
 
 
 class DeepEstimator(base.Estimator):
-    """
-    Enhances PyTorch modules with dynamic adaptability to evolving features.
+    """Incremental wrapper around a PyTorch module with dynamic feature adaptation.
 
-    The class extends the functionality of a base estimator by dynamically
-    updating and expanding neural network layers to handle incremental
-    changes in feature space. It supports feature set discovery, input size
-    adjustments, weight expansion, and varied learning procedures. This makes
-    it suitable for evolving input spaces while maintaining neural network
-    integrity.
+    This class augments a regular ``torch.nn.Module`` with utilities that make it
+    compatible with the `river` incremental learning API. Beyond standard online
+    optimisation it optionally supports *feature-incremental* learning: whenever
+    previously unseen input feature names appear, the first trainable layer (the
+    *input layer*) can be expanded on‑the‑fly so that the model seamlessly accepts
+    the enlarged feature space without re‑initialisation.
+
+    The class also provides a persistence protocol (``save``/``load``/``clone``)
+    that captures both the module weights and the runtime state (observed feature
+    names, rolling buffers, etc.), allowing exact round‑trips across Python
+    sessions. Optimisers are transparently rebuilt after structural changes so any
+    newly created parameters participate in subsequent optimisation steps.
+
+    Typical workflow
+    ----------------
+    1. Instantiate with a vanilla PyTorch module (e.g. an ``nn.Sequential`` or a
+       custom subclass).
+    2. Feed samples via higher level task specific subclasses (e.g. classifier)
+       that call ``_learn`` internally.
+    3. (Optional) Enable ``is_feature_incremental=True`` for dynamic input growth.
+    4. Persist with ``save`` and later restore with ``load``.
+
+    Example
+    -------
+    >>> import torch
+    >>> from torch import nn
+    >>> from deep_river.base import DeepEstimator
+    >>> class TinyNet(nn.Module):
+    ...     def __init__(self, n_features=3):
+    ...         super().__init__()
+    ...         self.fc = nn.Linear(n_features, 2)
+    ...     def forward(self, x):
+    ...         return self.fc(x)
+    >>> est = DeepEstimator(module=TinyNet(3), loss_fn='mse', optimizer_fn='sgd', is_feature_incremental=True)
+    >>> est._update_observed_features({'a': 1.0, 'b': 2.0, 'c': 3.0})  # internal bookkeeping
+    True
+
+    Notes
+    -----
+    - The class itself is task‑agnostic. Task specific behaviour (e.g. converting
+      labels to one‑hot encodings) lives in subclasses such as ``Classifier`` or
+      ``Regressor``.
+    - Only the *first* and *last* trainable leaf modules are treated as input and
+      output layers. Non‑parametric layers (e.g. ``ReLU``) are skipped.
+
+    Parameters
+    ----------
+    module : torch.nn.Module
+        The PyTorch model whose parameters are to be updated incrementally.
+    loss_fn : str | Callable, default='mse'
+        Loss identifier or callable passed to :func:`get_loss_fn`.
+    optimizer_fn : str | Callable, default='sgd'
+        Optimiser identifier or optimiser class / factory.
+    lr : float, default=1e-3
+        Learning rate.
+    device : str, default='cpu'
+        Device on which the module is run.
+    seed : int, default=42
+        Random seed (sets ``torch.manual_seed``).
+    is_feature_incremental : bool, default=False
+        If True, expands the input layer when new feature names are encountered.
+    gradient_clip_value : float | None, default=None
+        If provided, gradient norm is clipped to this value each optimisation step.
+    **kwargs : dict
+        Additional custom arguments retained for reconstruction on ``clone`` / ``load``.
 
     Attributes
     ----------
     module : torch.nn.Module
-        The PyTorch model that serves as the backbone of this class's functionality.
-    lr : float
-        Learning rate for model optimization.
-    loss_fn : Union[str, Callable]
-        The loss function used for computing training error.
+        The wrapped PyTorch module.
     loss_func : Callable
-        The compiled loss function produced via `get_loss_fn`.
+        Resolved loss function callable.
     optimizer : torch.optim.Optimizer
-        The compiled optimizer used for updating model weights.
-    optimizer_fn : Union[str, Callable]
-        The optimizer function or class used for training.
-    device : str
-        The computational device (e.g., "cpu", "cuda") used for training.
-    seed : int
-        The random seed for ensuring reproducible operations.
-    is_feature_incremental : bool
-        Indicates whether the model should automatically expand based on new features.
-    kwargs : dict
-        Additional arguments passed to the model and utilities.
-    input_layer : torch.nn.Module
-        The input layer of the PyTorch model, determined dynamically.
-    output_layer : torch.nn.Module
-        The output layer of the PyTorch model, determined dynamically.
-    observed_features : SortedSet
-        Tracks all observed input features dynamically, allowing for feature incrementation.
+        Optimiser instance (rebuilt after structural changes).
+    input_layer : torch.nn.Module | None
+        First trainable leaf module (may be ``None`` if module has no parameters).
+    output_layer : torch.nn.Module | None
+        Last trainable leaf module.
+    observed_features : SortedSet[str]
+        Ordered set of feature names seen so far.
+    module_input_len : int | None
+        Cached original input size of the input layer (if identifiable).
     """
 
     def __init__(
@@ -100,14 +146,14 @@ class DeepEstimator(base.Estimator):
         self.kwargs = kwargs
 
         candidates = self._extract_candidate_layers(self.module)
-        # Wähle ersten Kandidaten mit Parametern als input_layer
+        # Pick the first parameterised layer as input_layer
         for cand in candidates:
             if any(p.requires_grad for p in cand.parameters()):
                 self.input_layer = cand
                 break
         else:
             self.input_layer = candidates[0] if candidates else None
-        # Wähle letzten parametrischen Layer als output_layer (z.B. nicht ReLU)
+        # Pick the last parameterised layer as output_layer
         self.output_layer = None
         for cand in reversed(candidates):
             if any(p.requires_grad for p in cand.parameters()):
@@ -116,7 +162,7 @@ class DeepEstimator(base.Estimator):
         if self.output_layer is None and candidates:
             self.output_layer = candidates[-1]
 
-        # Set the expected input length based on the extracted input layer.
+        # Store initial expected input length
         self.module_input_len = self._get_input_size() if self.input_layer else None
         self.observed_features: SortedSet = SortedSet()
         self.module.to(self.device)
@@ -124,9 +170,12 @@ class DeepEstimator(base.Estimator):
 
     @staticmethod
     def _extract_candidate_layers(module: torch.nn.Module) -> list[torch.nn.Module]:
-        """
-        Recursively collects candidate layers for adaptation.
-        Non-parametric layers such as Softmax or LogSoftmax are filtered out.
+        """Return a flat list of leaf candidate layers.
+
+        Recursively descends into ``module`` and collects leaf modules (modules
+        without children) that are potentially expandable. Non‑parametric
+        distribution layers like ``Softmax`` or ``LogSoftmax`` are excluded so the
+        *input* and *output* layers represent learnable transformations.
         """
         candidates = []
         for child in module.children():
@@ -138,7 +187,24 @@ class DeepEstimator(base.Estimator):
         return candidates
 
     def _update_observed_features(self, x):
-        """Updates observed features dynamically if new ones appear."""
+        """Update the set of observed feature names.
+
+        If ``is_feature_incremental`` is True and new feature names are detected,
+        the input layer is expanded in‑place to match the new dimensionality. The
+        optimiser is rebuilt after expansion so that newly created weights are
+        tracked.
+
+        Parameters
+        ----------
+        x : dict | pandas.DataFrame
+            Sample (``dict``) or batch (``DataFrame``) whose keys/columns represent
+            feature names.
+
+        Returns
+        -------
+        bool
+            True if previously unseen feature names were added.
+        """
         prev_feature_count = len(self.observed_features)
         new_features = x.keys() if isinstance(x, dict) else x.columns
         self.observed_features.update(new_features)
@@ -153,7 +219,13 @@ class DeepEstimator(base.Estimator):
         return len(self.observed_features) > prev_feature_count
 
     def _dict2tensor(self, x: dict):
-        """Converts a dictionary to a tensor, handling missing features."""
+        """Convert a feature dict into a dense float tensor.
+
+        Missing previously observed features are imputed with ``0.0``. If the
+        current number of observed features is *smaller* than the module's initial
+        expected input size a right‑hand zero padding is applied so shapes remain
+        consistent during the warm‑up phase.
+        """
         default_value = 0.0
         tensor_data = dict2tensor(
             x,
@@ -165,7 +237,10 @@ class DeepEstimator(base.Estimator):
         return self._pad_tensor_if_needed(tensor_data, 1)
 
     def _df2tensor(self, X: pd.DataFrame):
-        """Converts a DataFrame to a tensor, handling missing features."""
+        """Convert a feature DataFrame into a dense float tensor.
+
+        See :meth:`_dict2tensor` for handling of missing features and padding.
+        """
         default_value = 0.0
         tensor_data = df2tensor(
             X,
@@ -177,7 +252,17 @@ class DeepEstimator(base.Estimator):
         return self._pad_tensor_if_needed(tensor_data, X.shape[0])
 
     def draw(self) -> Digraph:
-        """Draws the wrapped model."""
+        """Render (a partial) computational graph of the wrapped model.
+
+        Requires ``graphviz`` and ``torchviz``. A dummy random forward pass is
+        executed using the shape of the first parameter to produce a graph
+        of the current architecture.
+
+        Returns
+        -------
+        graphviz.Digraph
+            A graph visualising parameter dependencies.
+        """
         if Digraph is None or make_dot is None:
             raise ImportError("graphviz and torchviz must be installed to draw the model.")
 
@@ -187,7 +272,11 @@ class DeepEstimator(base.Estimator):
         return make_dot(y_pred.mean(), params=dict(self.module.named_parameters()))
 
     def _get_input_size(self):
-        """Dynamically determines the expected input feature size of a PyTorch layer."""
+        """Infer the nominal input size of the input layer.
+
+        The method inspects common attribute names (``in_features``, ``input_size``,
+        etc.) or falls back to the second dimension of the layer's weight matrix.
+        """
         if not hasattr(self, "input_layer") or self.output_layer is None:
             raise ValueError("No input layer found in the model.")
 
@@ -207,7 +296,7 @@ class DeepEstimator(base.Estimator):
             )
 
     def _get_output_size(self):
-        """Dynamically determines the output feature size of the last (parametrischen) layer."""
+        """Infer the output dimensionality of the last trainable layer."""
         if not hasattr(self, "output_layer") or self.output_layer is None:
             raise ValueError("No output layer found in the model.")
         layer = self.output_layer
@@ -222,24 +311,34 @@ class DeepEstimator(base.Estimator):
         elif hasattr(layer, "weight") and getattr(layer, 'weight') is not None:
             return layer.weight.shape[0]
         else:
-            # Fallback: Suche rückwärts nach einem Layer mit Gewicht
+            # Fallback: walk backwards to the closest layer with weights
             for cand in reversed(list(self.module.modules())):
                 if hasattr(cand, 'weight') and getattr(cand, 'weight') is not None:
                     return cand.weight.shape[0]
             raise ValueError(f"Cannot determine output size for layer type {type(layer)}")
 
     def _pad_tensor_if_needed(self, tensor_data, x_len, default_value=0.0):
-        """
+        """Right‑pad ``tensor_data`` to the module's nominal input size if needed.
+
+        During the warm‑up phase (before all *initial* features have been observed)
+        incoming tensors may have fewer columns than the module expects. To keep
+        shapes consistent we append zero columns (or the provided ``default_value``)
+        until the nominal size is reached.
 
         Parameters
         ----------
-        tensor_data
-        x_len
-        default_value
+        tensor_data : torch.Tensor
+            Prepared feature tensor.
+        x_len : int
+            Number of instances represented (1 for single samples, batch size or
+            sequence length depending on shape).
+        default_value : float, default=0.0
+            Value used for padding.
 
         Returns
         -------
-
+        torch.Tensor
+            Possibly padded tensor.
         """
         len_current_features = len(self.observed_features)
         if len_current_features < self._get_input_size():
@@ -273,6 +372,11 @@ class DeepEstimator(base.Estimator):
         return tensor_data
 
     def _load_instructions(self, layer: torch.nn.Module) -> dict[str, Any]:
+        """Create a rule spec describing how to expand a layer in place.
+
+        The returned dictionary indicates which attributes / parameter tensors can
+        be resized when performing input (feature) or output (class / unit) growth.
+        """
         instructions: dict[str, Any] = {}
         if hasattr(layer, "in_features") and hasattr(layer, "out_features"):
             instructions["in_features"] = "input_attribute"
@@ -284,19 +388,17 @@ class DeepEstimator(base.Estimator):
             }
         if hasattr(layer, "bias") and layer.bias is not None:
             instructions["bias"] = {"output": [{"axis": 0, "n_subparams": 1}]}
-        # LSTM Spezialfall: input_size anpassbar, Gewichte heissen weight_ih_l{layer}
+        # LSTM special case
         if isinstance(layer, torch.nn.LSTM):
-            # input_size als input_attribute markieren
             instructions["input_size"] = "input_attribute"
-            # weight_ih_l0 expandierbar entlang Achse 1 (Eingabe-Features)
             if hasattr(layer, "weight_ih_l0"):
                 instructions["weight_ih_l0"] = {"input": [{"axis": 1, "n_subparams": 1}]}
-            # bias_ih_l0 / bias_hh_l0 unverändert (Output-Dimension = 4*hidden_size bleibt fix)
         return instructions
 
     def _expand_layer(
         self, layer: torch.nn.Module, target_size: int, output: bool = True
     ):
+        """In‑place expand ``layer`` to ``target_size`` along input or output dimension."""
         instructions = self._load_instructions(layer)
         target_str = "output" if output else "input"
 
@@ -320,13 +422,16 @@ class DeepEstimator(base.Estimator):
                             param = torch.nn.Parameter(param)
                         setattr(layer, param_name, param)
                         layer_modified = True
-        # Falls etwas verändert wurde: Optimizer neu aufsetzen, damit neue Parameter enthalten sind.
+        # Rebuild optimiser so new params are tracked
         if layer_modified:
             self._rebuild_optimizer()
 
     def _rebuild_optimizer(self):
-        """Reinitialisiert den Optimizer mit allen aktuellen Modellparametern.
-        Notwendig nach dynamischen Layer-Erweiterungen, weil neue Parameter sonst nicht trainiert würden."""
+        """Recreate the optimiser with current model parameters.
+
+        Necessary after structural expansion so newly created parameters receive
+        gradients and updates.
+        """
         optim_fn = get_optim_fn(self.optimizer_fn)
         self.optimizer = optim_fn(self.module.parameters(), lr=self.lr)
 
@@ -334,53 +439,51 @@ class DeepEstimator(base.Estimator):
     def _expand_weights(
         param: torch.Tensor, axis: int, dims_to_add: int, n_subparams: int
     ):
-        """
-        Expands weight tensors dynamically along a given axis.
+        """Return a new parameter tensor with additional randomly initialised slices.
+
+        Parameters
+        ----------
+        param : torch.Tensor
+            Original parameter tensor.
+        axis : int
+            Axis along which to append.
+        dims_to_add : int
+            Number of units to append.
+        n_subparams : int
+            (Reserved for future composite parameters – currently unused.)
         """
         if dims_to_add <= 0:
             return param
 
-        # Create new weights to be added
         new_weights = (
             torch.randn(
                 *(param.shape[:axis] + (dims_to_add,) + param.shape[axis + 1 :]),
                 device=param.device,
                 dtype=param.dtype,
             )
-            * 0.01  # Small initialization
+            * 0.01
         )
-
-        # Concatenate the new weights along the given axis
         expanded_param = torch.cat([param, new_weights], dim=axis)
-
-        # Ensure the result is a torch.nn.Parameter so it's registered as a model parameter
         return torch.nn.Parameter(expanded_param)
 
     def _learn(self, x: torch.Tensor, y: Optional[Any] = None):
-        """
-        Performs a single training step.
+        """Perform a single optimisation step.
 
-        Supports classification, regression, and autoencoding:
-        - Autoencoders: y is None, so x is used as the target.
-        - Regression: y is a continuous value, converted to a tensor.
-        - Classification: y is converted to one-hot encoding.
-        """
+        Behaviour depends on the task context:
 
+        * Autoencoding: ``y`` is ``None`` – the input tensor is used as target.
+        * Regression: ``y`` is a scalar/1D value converted to a tensor.
+        * Classification: handled in subclasses which prepare ``y`` appropriately
+          (either via one‑hot encoding or class indices for cross entropy).
+        """
         y_pred = self.module(x)
-
-        # Autoencoder case: No explicit y, so use x as target
-        if y is None:
+        if y is None:  # Autoencoder
             y = x
-
-            # Regression case: Convert y to tensor and move to device
-        elif not hasattr(self, "observed_classes"):
+        elif not hasattr(self, "observed_classes"):  # Regression
             if not isinstance(y, torch.Tensor):
                 y = float2tensor(y, self.device)
-
-        # Classification case: Convert y to one-hot encoding
-        else:
+        else:  # Classification (one‑hot path)
             n_classes = y_pred.shape[-1]
-            # Access observed_classes if it exists, otherwise use an empty SortedSet
             observed_classes = getattr(self, "observed_classes", SortedSet())
             y = labels2onehot(y, observed_classes, n_classes, self.device)
 
@@ -393,7 +496,13 @@ class DeepEstimator(base.Estimator):
         self.optimizer.step()
 
     def save(self, filepath: Union[str, Path]) -> None:
-        """Save model to file."""
+        """Persist the estimator (architecture, weights, optimiser & runtime state).
+
+        Parameters
+        ----------
+        filepath : str | Path
+            Destination file. Parent directories are created automatically.
+        """
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -410,11 +519,14 @@ class DeepEstimator(base.Estimator):
 
     @classmethod
     def load(cls, filepath: Union[str, Path]):
-        """Load model from file."""
+        """Load a previously saved estimator.
+
+        The method reconstructs the estimator class, its wrapped module, optimiser
+        state and runtime information (feature names, buffers, etc.).
+        """
         with open(filepath, "rb") as f:
             state = pickle.load(f)
 
-        # Reconstruct estimator with all init params
         estimator_cls = cls._import_from_path(state["estimator_class"])
         init_params = state["init_params"]
 
@@ -429,7 +541,6 @@ class DeepEstimator(base.Estimator):
 
         estimator = estimator_cls(**cls._filter_kwargs(estimator_cls.__init__, init_params))
 
-        # Restore optimizer and runtime state
         if state.get("optimizer_state_dict") and hasattr(estimator, "optimizer"):
             try: estimator.optimizer.load_state_dict(state["optimizer_state_dict"])
             except: pass
@@ -438,14 +549,22 @@ class DeepEstimator(base.Estimator):
         return estimator
 
     def clone(self, new_params=None, include_attributes: bool = False, copy_weights: bool = False):
-        """Clone estimator with optional parameter overrides."""
+        """Return a fresh estimator instance with (optionally) copied state.
+
+        Parameters
+        ----------
+        new_params : dict | None
+            Parameter overrides for the cloned instance.
+        include_attributes : bool, default=False
+            If True, runtime state (observed features, buffers) is also copied.
+        copy_weights : bool, default=False
+            If True, model weights are copied (otherwise the module is re‑initialised).
+        """
         new_params = new_params or {}
         copy_weights = new_params.pop("copy_weights", copy_weights)
 
-        # Get all init parameters and apply overrides
         params = {**self._get_all_init_params(), **new_params}
 
-        # Handle module cloning
         if "module" not in new_params:
             params["module"] = self._rebuild_module()
 
@@ -460,7 +579,11 @@ class DeepEstimator(base.Estimator):
         return new_est
 
     def _get_all_init_params(self) -> Dict[str, Any]:
-        """Get all __init__ parameters from current instance."""
+        """Return a serialisable mapping of constructor parameters.
+
+        The module is represented by its fully qualified class name and a best
+        effort reconstruction of its init kwargs (see :meth:`_infer_module_params`).
+        """
         sig = inspect.signature(self.__class__.__init__)
         params = {}
 
@@ -468,7 +591,6 @@ class DeepEstimator(base.Estimator):
             if name == "self":
                 continue
             elif name == "module":
-                # Store module info for reconstruction
                 params["module"] = {
                     "class": f"{type(self.module).__module__}.{type(self.module).__name__}",
                     "kwargs": {**getattr(self, "kwargs", {}), **self._infer_module_params()}
@@ -481,7 +603,7 @@ class DeepEstimator(base.Estimator):
         return params
 
     def _get_runtime_state(self) -> Dict[str, Any]:
-        """Get runtime state (observed features, classes, window buffer, etc.)."""
+        """Collect runtime (non‑constructor) state for persistence."""
         state = {}
 
         for attr in ["observed_features", "observed_classes"]:
@@ -494,7 +616,7 @@ class DeepEstimator(base.Estimator):
         return state
 
     def _restore_runtime_state(self, state: Dict[str, Any]) -> None:
-        """Restore runtime state from saved data."""
+        """Restore runtime state (features, classes, rolling buffers)."""
         for attr, data in state.items():
             if attr.endswith(("_features", "_classes")):
                 setattr(self, attr, SortedSet(data) if data else SortedSet())
@@ -502,18 +624,21 @@ class DeepEstimator(base.Estimator):
                 from collections import deque
                 self._x_window = deque(data, maxlen=getattr(self, "window_size", 10))
 
-    # -------------------- Simplified helper utilities --------------------
+    # -------------------- Helper utilities --------------------
     def _infer_module_params(self) -> dict:
-        """Infer module init parameters from attributes and state."""
+        """Best effort inference of module constructor parameters.
+
+        Examines the module's ``__init__`` signature and pulls attribute values
+        with matching names from the current instance. For linear layers it also
+        infers ``n_features`` from the first 2D weight matrix encountered.
+        """
         params = {}
         if hasattr(self.module, "__dict__"):
-            # Try to get params from module attributes
             sig = inspect.signature(self.module.__class__.__init__)
             for name in sig.parameters:
                 if name != "self" and hasattr(self.module, name):
                     params[name] = getattr(self.module, name)
 
-        # Infer n_features from first weight if needed
         if "n_features" not in params and hasattr(self.module, "named_parameters"):
             for name, param in self.module.named_parameters():
                 if "weight" in name and param.dim() == 2:
@@ -523,12 +648,11 @@ class DeepEstimator(base.Estimator):
         return params
 
     def _rebuild_module(self):
-        """Rebuild module with same parameters but fresh weights."""
+        """Create a fresh (re‑initialised) copy of the wrapped module."""
         params = self._infer_module_params()
         try:
             return self.module.__class__(**self._filter_kwargs(self.module.__class__.__init__, params))
         except:
-            # Fallback to deepcopy with reset
             mod_copy = copy.deepcopy(self.module)
             for m in mod_copy.modules():
                 if hasattr(m, "reset_parameters"):
@@ -540,13 +664,13 @@ class DeepEstimator(base.Estimator):
 
     @staticmethod
     def _import_from_path(path: str):
-        """Import object from fully qualified path."""
+        """Import and return an object from a fully qualified dotted path."""
         module_path, name = path.rsplit('.', 1)
         return getattr(importlib.import_module(module_path), name)
 
     @staticmethod
     def _filter_kwargs(callable_obj, kwargs: Dict[str, Any]) -> Dict[str, Any]:
-        """Filter kwargs to only include parameters accepted by callable."""
+        """Filter a mapping to parameters accepted by ``callable_obj``."""
         try:
             sig = inspect.signature(callable_obj)
             allowed = {p.name for p in sig.parameters.values()
@@ -557,37 +681,51 @@ class DeepEstimator(base.Estimator):
 
     @staticmethod
     def _serialize_sorted_set(sorted_set: SortedSet) -> list:
-        """Convert SortedSet to list for serialization."""
+        """Convert a ``SortedSet`` to a plain list (JSON / pickle friendly)."""
         return list(sorted_set) if sorted_set else []
 
     @staticmethod
     def _deserialize_sorted_set(data: list) -> SortedSet:
-        """Convert list back to SortedSet."""
+        """Convert a list back into a ``SortedSet``."""
         return SortedSet(data) if data else SortedSet()
 
 
 class RollingDeepEstimator(DeepEstimator):
-    """
-    RollingDeepEstimatorInitialized class for rolling window-based deep learning
-    model estimation.
+    """Extension of :class:`DeepEstimator` with a fixed-size rolling window.
 
-    This class extends the functionality of the DeepEstimatorInitialized class to
-    support training and prediction using a rolling window. It maintains a fixed-size
-    deque to store a rolling window of input data. It can optionally append predictions
-    to the input window to facilitate iterative prediction workflows. This class is
-    designed for advanced users who need rolling window functionality in their deep
-    learning estimation pipelines.
+    Maintains a ``collections.deque`` of the most recent ``window_size`` inputs
+    enabling models (e.g. sequence learners) to condition on a short history.
+    Optionally the model's own predictions can be appended to the window (via
+    ``append_predict``) to facilitate iterative forecasting.
 
-    Attributes
+    Example
+    -------
+    >>> import torch
+    >>> from torch import nn
+    >>> from deep_river.base import RollingDeepEstimator
+    >>> class TinySeq(nn.Module):
+    ...     def __init__(self, n_features=4):
+    ...         super().__init__()
+    ...         self.rnn = nn.GRU(input_size=n_features, hidden_size=8, batch_first=True)
+    ...         self.out = nn.Linear(8, 1)
+    ...     def forward(self, x):
+    ...         # x shape: (seq_len, batch, features) in this simplified example
+    ...         if x.dim() == 2:  # (batch, features) -> (seq=1, batch, features)
+    ...             x = x.unsqueeze(0)
+    ...         out, _ = self.rnn(x)
+    ...         return self.out(out[-1])
+    >>> est = RollingDeepEstimator(module=TinySeq(), window_size=5)
+
+    Parameters
     ----------
-    window_size : int
-        The size of the rolling window used for training and prediction.
-    append_predict : bool
-        Flag to indicate whether to append predictions into the rolling window.
-    _x_window : Deque
-        A fixed-size deque object, which stores the most recent input window data.
-    _batch_i : int
-        The internal counter for batch index tracking during training or prediction.
+    module : torch.nn.Module
+        Wrapped PyTorch module.
+    window_size : int, default=10
+        Maximum number of most recent samples kept.
+    append_predict : bool, default=False
+        If True, predictions may be appended to the window (feature engineering / autoregression).
+    **kwargs
+        Forwarded to :class:`DeepEstimator`.
     """
 
     def __init__(
@@ -617,5 +755,6 @@ class RollingDeepEstimator(DeepEstimator):
         )
 
     def _deque2rolling_tensor(self, x_win: Deque):
+        """Convert the internal deque to a tensor (with padding logic)."""
         tensor_data = deque2rolling_tensor(x_win, device=self.device)
         return self._pad_tensor_if_needed(tensor_data, len(x_win))

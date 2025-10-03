@@ -199,14 +199,14 @@ def output2proba(
         sums[sums == 0] = 1.0
         return arr / sums
 
-    # Boolean-Modus (binäre Klassifikation) – immer {False, True}
+    # Boolean mode (binary classification) – always {False, True}
     boolean_mode = all(c in (True, False) for c in classes) and n_outputs in (1, 2) or (n_classes == 0 and n_outputs in (1, 2))
     if boolean_mode:
         if n_outputs == 1:
             p_true = preds_np[:, 0].astype('float64')
             p_false = (1.0 - p_true).astype('float64')
             probs = np.stack([p_true, p_false], axis=1)
-            probs = renorm_rows(probs)  # erzwinge exakte Summe 1 in float64
+            probs = renorm_rows(probs)
             return [dict(zip([True, False], row.astype('float64'))) for row in probs]
         else:  # n_outputs == 2
             probs = preds_np.astype('float64')
@@ -214,7 +214,7 @@ def output2proba(
                 probs = renorm_rows(probs)
             return [dict(zip([False, True], row.astype('float64'))) for row in probs]
 
-    # Single-output (nicht-boolean) -> beobachtete Klasse + Unobserved0
+    # Single-output (non-boolean) -> observed class + Unobserved0
     if n_outputs == 1:
         p_obs = preds_np[:, 0].astype('float64')
         p_un = (1.0 - p_obs).astype('float64')
@@ -228,7 +228,7 @@ def output2proba(
             labels = [primary, "Unobserved0"]
         return [dict(zip(labels, row.astype('float64'))) for row in probs]
 
-    # Multi-output handling (n_outputs > 1, nicht boolean)
+    # Multi-output handling (n_outputs > 1, non-boolean)
     if n_classes == 0:
         labels = list(range(n_outputs))
         rows = preds_np
