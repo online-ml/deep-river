@@ -7,26 +7,46 @@ from deep_river.regression.rolling_regressor import RollingRegressor
 
 
 class LinearRegressionInitialized(Regressor):
-    """
-    Linear Regression model for regression.
+    """Incremental linear regression with optional feature growth and gradient clipping.
+
+    A thin wrapper that instantiates a single linear layer and enables
+    dynamic feature expansion when ``is_feature_incremental=True``. The model
+    outputs a single continuous target value.
 
     Parameters
     ----------
-    loss_fn : str or Callable
-        Loss function to be used for training the wrapped model.
-    optimizer_fn : str or Callable
-        Optimizer to be used for training the wrapped model.
-    lr : float
-        Learning rate of the optimizer.
-    is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by
-        adding units to the input layer of the network.
-    device : str
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed : int
-        Random seed to be used for training the wrapped model.
+    n_features : int, default=10
+        Initial number of input features (columns). The input layer can expand
+        if feature incrementality is enabled and new feature names appear.
+    loss_fn : str | Callable, default='mse'
+        Loss used for optimisation.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    is_feature_incremental : bool, default=False
+        Whether to expand the input layer when new features appear.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Gradient norm clipping threshold. Disabled if ``None``.
     **kwargs
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+        Forwarded to :class:`~deep_river.base.DeepEstimator`.
+
+    Examples
+    --------
+    >>> from deep_river.regression.zoo import LinearRegressionInitialized
+    >>> from river import datasets, metrics
+    >>> model = LinearRegressionInitialized(n_features=5)  # doctest: +SKIP
+    >>> metric = metrics.MAE()  # doctest: +SKIP
+    >>> for x, y in datasets.Bikes().take(20):  # doctest: +SKIP
+    ...     pred = model.predict_one(x)
+    ...     metric.update(y, pred)
+    ...     model.learn_one(x, y)
+    >>> round(metric.get(), 2)  # doctest: +SKIP
+    7.10
     """
 
     class LRModule(nn.Module):
@@ -46,6 +66,7 @@ class LinearRegressionInitialized(Regressor):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -60,47 +81,42 @@ class LinearRegressionInitialized(Regressor):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-        """
-
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
+            "gradient_clip_value": None,
         }
 
 
 class MultiLayerPerceptronInitialized(Regressor):
-    """
-    Linear Regression model for regression.
+    """Multi-layer perceptron regressor with optional feature growth.
+
+    Stacks ``n_layers`` fully connected layers of width ``n_width`` with a
+    sigmoid non-linearity (kept for backward compatibility) followed by a single
+    output unit. Can expand its input layer when new feature names appear.
 
     Parameters
     ----------
-    loss_fn : str or Callable
-        Loss function to be used for training the wrapped model.
-    optimizer_fn : str or Callable
-        Optimizer to be used for training the wrapped model.
-    lr : float
-        Learning rate of the optimizer.
-    is_class_incremental : bool
-        Whether the classifier should adapt to the appearance of previously unobserved classes
-        by adding an unit to the output layer of the network.
-    is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by
-        adding units to the input layer of the network.
-    device : str
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed : int
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    n_features : int, default=10
+        Initial number of input features.
+    n_width : int, default=5
+        Hidden layer width.
+    n_layers : int, default=5
+        Number of hidden layers. Must be >=1.
+    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, gradient_clip_value, **kwargs
+        Standard estimator configuration.
+
+    Notes
+    -----
+    The use of ``sigmoid`` after each hidden layer can cause saturation; for
+    deeper networks consider replacing with ReLU or GELU in a custom module.
     """
 
     class MLPModule(nn.Module):
@@ -128,6 +144,7 @@ class MultiLayerPerceptronInitialized(Regressor):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -146,71 +163,88 @@ class MultiLayerPerceptronInitialized(Regressor):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-        """
-
         yield {
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
+            "gradient_clip_value": None,
         }
 
 
 class LSTMRegressor(RollingRegressor):
-    """
-    LSTM Regressor model for time series regression.
+    """Rolling LSTM regressor for sequential / time-series data.
 
-    This model uses LSTM (Long Short-Term Memory) networks to capture temporal
-    dependencies in sequential data for regression tasks.
+    Improves over a naïve single-unit LSTM by separating the hidden representation
+    (``hidden_size``) from the 1D regression output head. Supports optional
+    dropout and multiple LSTM layers. Designed to work with a rolling window
+    maintained by :class:`~deep_river.base.RollingDeepEstimator`.
 
     Parameters
     ----------
-    n_features : int
-        Number of input features.
-    loss_fn : str or Callable
-        Loss function to be used for training the wrapped model.
-    optimizer_fn : str or Callable
-        Optimizer to be used for training the wrapped model.
-    lr : float
-        Learning rate of the optimizer.
-    is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by
-        adding units to the input layer of the network.
-    device : str
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed : int
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Additional parameters to be passed to the parent class.
+    n_features : int, default=10
+        Number of input features per timestep (may grow if feature-incremental).
+    hidden_size : int, default=32
+        Dimensionality of the LSTM hidden state.
+    num_layers : int, default=1
+        Number of stacked LSTM layers.
+    dropout : float, default=0.0
+        Dropout probability applied after the LSTM (and internally by PyTorch if
+        ``num_layers > 1``). Capped internally for safety.
+    gradient_clip_value : float | None, default=1.0
+        Gradient norm clipping threshold (helps stability). ``None`` disables it.
+    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, **kwargs
+        Standard configuration.
+
+    Examples
+    --------
+    >>> from deep_river.regression.zoo import LSTMRegressor  # doctest: +SKIP
+    >>> lstm_reg = LSTMRegressor(n_features=6, hidden_size=16)  # doctest: +SKIP
     """
 
     class LSTMModule(nn.Module):
-        def __init__(self, n_features, output_size=1):
+        def __init__(
+            self, n_features: int, hidden_size: int, num_layers: int, dropout: float
+        ):
             super().__init__()
             self.n_features = n_features
-            self.output_size = output_size
+            self.hidden_size = hidden_size
+            self.num_layers = num_layers
+            self.dropout = dropout
             self.lstm = nn.LSTM(
-                input_size=n_features, hidden_size=output_size, num_layers=1
+                input_size=n_features,
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                batch_first=False,
+                dropout=0.0 if num_layers == 1 else min(dropout, 0.5),
             )
+            self.head = nn.Linear(hidden_size, 1)
+            self.out_activation = (
+                nn.Identity()
+            )  # placeholder if Softplus etc. desired later
+            self.post_dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
 
-        def forward(self, X, **kwargs):
-            # lstm with input, hidden, and internal state
+        def forward(self, X, **kwargs):  # X: (seq_len, batch=1, n_features)
             output, (hn, cn) = self.lstm(X)
-            x = hn.view(-1, self.output_size)
-            return x
+            h_last = hn[-1]
+            h_last = self.post_dropout(h_last)
+            y = self.head(h_last)
+            return self.out_activation(y)
 
     def __init__(
         self,
         n_features: int = 10,
+        hidden_size: int = 32,
+        num_layers: int = 1,
+        dropout: float = 0.0,
+        gradient_clip_value: float | None = 1.0,
         loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "adam",
         lr: float = 1e-3,
         is_feature_incremental: bool = False,
         device: str = "cpu",
@@ -218,7 +252,16 @@ class LSTMRegressor(RollingRegressor):
         **kwargs,
     ):
         self.n_features = n_features
-        module = LSTMRegressor.LSTMModule(n_features=n_features)
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.gradient_clip_value = gradient_clip_value
+        module = LSTMRegressor.LSTMModule(
+            n_features=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+        )
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
@@ -229,18 +272,17 @@ class LSTMRegressor(RollingRegressor):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-        """
-
         yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
-            "optimizer_fn": "sgd",
+            "loss_fn": "mse",
+            "optimizer_fn": "adam",
+            "hidden_size": 8,
+            "num_layers": 1,
+            "dropout": 0.0,
             "is_feature_incremental": False,
         }

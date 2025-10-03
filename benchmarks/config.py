@@ -1,25 +1,21 @@
-from model_zoo.torch import (TorchLinearRegression, TorchLogisticRegression,
-                             TorchLSTMClassifier, TorchLSTMRegressor,
-                             TorchMLPClassifier, TorchMLPRegressor)
-from river import (dummy, evaluate, linear_model, neural_net, optim,
+from river import (dummy, linear_model, neural_net, optim,
                    preprocessing, stats)
 
-from deep_river.classification import Classifier as TorchClassifier
-from deep_river.classification import \
-    RollingClassifier as TorchRollingClassifier
-from deep_river.regression import Regressor as TorchRegressor
-from deep_river.regression import RollingRegressor as TorchRollingRegressor
+from deep_river.classification.zoo import LogisticRegressionInitialized, MultiLayerPerceptronInitialized as ClassificationMLP, LSTMClassifierInitialized
+from deep_river.regression.zoo import LinearRegressionInitialized, MultiLayerPerceptronInitialized as RegressionMLP, LSTMRegressor
+from tracks import BinaryClassificationTrack, MultiClassClassificationTrack, RegressionTrack
 
 N_CHECKPOINTS = 50
 
 LEARNING_RATE = 0.005
 
 TRACKS = [
-    evaluate.BinaryClassificationTrack(),
-    evaluate.MultiClassClassificationTrack(),
-    evaluate.RegressionTrack(),
+    BinaryClassificationTrack(),
+    MultiClassClassificationTrack(),
+    RegressionTrack(),
 ]
 
+# Models configuration for different tracks
 MODELS = {
     "Binary classification": {
         "Logistic regression": (
@@ -27,85 +23,133 @@ MODELS = {
             | linear_model.LogisticRegression(
                 optimizer=optim.SGD(LEARNING_RATE)
             )
-        )
+        ),
+        "Deep River Logistic": (
+            preprocessing.StandardScaler()
+            | LogisticRegressionInitialized(
+                loss_fn="cross_entropy",
+                optimizer_fn="sgd",
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=LEARNING_RATE
+            )
+        ),
+        "Deep River MLP": (
+            preprocessing.StandardScaler()
+            | ClassificationMLP(
+                loss_fn="cross_entropy",
+                optimizer_fn="sgd",
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=LEARNING_RATE
+            )
+        ),
+        "Deep River LSTM": (
+            preprocessing.StandardScaler()
+            | LSTMClassifierInitialized(
+                loss_fn="cross_entropy",
+                optimizer_fn="adam",  # Adam meist stabiler für RNNs
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=1e-3,
+                hidden_size=32,
+                # window_size optional via kwargs (RollingClassifierInitialized nimmt window_size)
+                window_size=30,
+            )
+        ),
+        "[baseline] Prior class": dummy.PriorClassifier(),
     },
     "Multiclass classification": {
-        "Torch Logistic Regression": (
+        "Logistic regression": (
             preprocessing.StandardScaler()
-            | TorchClassifier(
-                module=TorchLogisticRegression,
-                loss_fn="binary_cross_entropy",
-                optimizer_fn="sgd",
-                is_class_incremental=True,
-                lr=LEARNING_RATE,
+            | linear_model.LogisticRegression(
+                optimizer=optim.SGD(LEARNING_RATE)
             )
         ),
-        "Torch MLP": (
+        "Deep River Logistic": (
             preprocessing.StandardScaler()
-            | TorchClassifier(
-                module=TorchMLPClassifier,
-                loss_fn="binary_cross_entropy",
+            | LogisticRegressionInitialized(
+                loss_fn="cross_entropy",
                 optimizer_fn="sgd",
                 is_class_incremental=True,
-                lr=LEARNING_RATE,
+                is_feature_incremental=True,
+                lr=LEARNING_RATE
             )
         ),
-        "Torch LSTM": (
+        "Deep River MLP": (
             preprocessing.StandardScaler()
-            | TorchRollingClassifier(
-                module=TorchLSTMClassifier,
-                loss_fn="binary_cross_entropy",
+            | ClassificationMLP(
+                loss_fn="cross_entropy",
                 optimizer_fn="sgd",
                 is_class_incremental=True,
-                lr=LEARNING_RATE,
-                window_size=20,
-                append_predict=False,
-                hidden_size=10,
+                is_feature_incremental=True,
+                lr=LEARNING_RATE
+            )
+        ),
+        "Deep River LSTM": (
+            preprocessing.StandardScaler()
+            | LSTMClassifierInitialized(
+                loss_fn="cross_entropy",
+                optimizer_fn="adam",
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=1e-3,
+                hidden_size=32,
+                window_size=30,
             )
         ),
         "[baseline] Last Class": dummy.NoChangeClassifier(),
+        "[baseline] Prior Class": dummy.PriorClassifier(),
     },
     "Regression": {
-        "Torch Linear Regression": (
+        "Linear regression": (
             preprocessing.StandardScaler()
-            | TorchRegressor(
-                module=TorchLinearRegression,
-                loss_fn="mse",
-                optimizer_fn="sgd",
-                lr=LEARNING_RATE,
+            | linear_model.LinearRegression(
+                optimizer=optim.SGD(LEARNING_RATE)
             )
         ),
-        "Torch MLP": (
+        "Deep River Linear": (
             preprocessing.StandardScaler()
-            | TorchRegressor(
-                module=TorchMLPRegressor,
+            | LinearRegressionInitialized(
                 loss_fn="mse",
                 optimizer_fn="sgd",
                 lr=LEARNING_RATE,
+                is_feature_incremental=True,
+            )
+        ),
+        "Deep River MLP": (
+            preprocessing.StandardScaler()
+            | RegressionMLP(
+                loss_fn="mse",
+                optimizer_fn="sgd",
+                lr=LEARNING_RATE,
+                is_feature_incremental=True,
+            )
+        ),
+        "Deep River LSTM": (
+            preprocessing.StandardScaler()
+            | LSTMRegressor(
+                loss_fn="mse",
+                optimizer_fn="adam",   # Wichtiger Wechsel für LSTM
+                lr=1e-3,                # Kleinerer Lernrate für Stabilität
+                hidden_size=64,         # Größere Kapazität
+                num_layers=1,           # Einfach starten
+                dropout=0.1,            # Leichtes Dropout zur Regularisierung
+                gradient_clip_value=1.0,
+                window_size=30,         # Längeres Kontextfenster
+                is_feature_incremental=True,
             )
         ),
         "River MLP": preprocessing.StandardScaler()
         | neural_net.MLPRegressor(
-            hidden_dims=(5,),
+            hidden_dims=(10,),
             activations=(
                 neural_net.activations.ReLU,
                 neural_net.activations.ReLU,
                 neural_net.activations.Identity,
             ),
-            optimizer=optim.SGD(1e-3),
+            optimizer=optim.SGD(LEARNING_RATE),
             seed=42,
-        ),
-        "Torch LSTM": (
-            preprocessing.StandardScaler()
-            | TorchRollingRegressor(
-                module=TorchLSTMRegressor,
-                loss_fn="mse",
-                optimizer_fn="sgd",
-                lr=LEARNING_RATE,
-                window_size=20,
-                append_predict=False,
-                hidden_size=10,
-            )
         ),
         "[baseline] Mean predictor": dummy.StatisticRegressor(stats.Mean()),
     },

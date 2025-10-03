@@ -19,43 +19,57 @@ class _TestLSTM(torch.nn.Module):
         )
 
     def forward(self, X, **kwargs):
-        # lstm with input, hidden, and internal state
         output, (hn, cn) = self.lstm(X)
         hn = hn.view(-1, self.hidden_size)
         return hn
 
 
 class RollingRegressor(RollingDeepEstimator, Regressor):
-    """
-    RollingRegressorInitialized class built for regression tasks with a
-    window-based learning mechanism.
-    Handles incremental learning by maintaining a sliding window of
-    training data for both individual
-    examples and batches of data. Enables feature incremental updates and
-    compatibility with PyTorch modules.
-    Ideal for time-series or sequential data tasks where the training
-    set changes dynamically.
+    """Incremental regressor with a fixed-size rolling window.
 
-    Attributes
+    Maintains the most recent ``window_size`` observations in a deque and feeds
+    them as a (sequence_length, batch=1, n_features) tensor to the wrapped
+    PyTorch module. This enables simple sequence style conditioning for models
+    such as RNN/LSTM/GRU without storing the full historical stream.
+
+    Parameters
     ----------
     module : torch.nn.Module
-        A PyTorch neural network model that defines the architecture of the regressor.
-    loss_fn : Union[str, Callable]
-        Loss function used for optimization. Either a string (e.g., "mse") or a callable.
-    optimizer_fn : Union[str, Type[optim.Optimizer]]
-        Optimizer function or string used for training the neural network model.
-    lr : float
-        Learning rate for the optimizer.
-    is_feature_incremental : bool
-        Whether the model incrementally updates its features during training.
-    device : str
-        Target device for model training and inference (e.g., "cpu", "cuda").
-    seed : int
-        Random seed for reproducibility.
-    window_size : int
-        Size of the sliding window used for storing the most recent training examples.
-    append_predict : bool
-        Whether predictions should contribute to the sliding window data.
+        Wrapped regression module (expects rolling tensor input shape).
+    loss_fn : str | Callable, default='mse'
+        Loss used for optimisation.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    is_feature_incremental : bool, default=False
+        Whether to expand the first trainable layer when new feature names appear.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    window_size : int, default=10
+        Number of most recent samples kept in the rolling buffer.
+    append_predict : bool, default=False
+        If True, predicted samples (during prediction) are appended to the window
+        enabling simple autoregressive rollouts.
+    **kwargs
+        Forwarded to :class:`~deep_river.base.RollingDeepEstimator`.
+
+    Examples
+    --------
+    >>> import torch
+    >>> from torch import nn
+    >>> from deep_river.regression.rolling_regressor import RollingRegressor  # doctest: +SKIP
+    >>> class TinySeq(nn.Module):  # doctest: +SKIP
+    ...     def __init__(self, n_features=4):
+    ...         super().__init__()
+    ...         self.rnn = nn.GRU(n_features, 8)
+    ...         self.head = nn.Linear(8, 1)
+    ...     def forward(self, x):  # x: (seq_len, batch, features)
+    ...         out, _ = self.rnn(x)
+    ...         return self.head(out[-1])
+    >>> rr = RollingRegressor(module=TinySeq(4), window_size=5)  # doctest: +SKIP
     """
 
     def __init__(
@@ -123,21 +137,14 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         }
 
     def learn_one(self, x: dict, y: base.typing.RegTarget, **kwargs) -> None:
-        """
-        Performs one step of training with the most recent training examples
-        stored in the sliding window.
+        """Update model using a single (x, y) and current rolling window.
 
         Parameters
         ----------
-        x
-            Input example.
-        y
+        x : dict
+            Feature mapping.
+        y : float
             Target value.
-
-        Returns
-        -------
-        Self
-            The regressor itself.
         """
         self._update_observed_features(x)
 
@@ -151,19 +158,17 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         self._learn(x=x_t, y=y_t)
 
     def predict_one(self, x: dict) -> base.typing.RegTarget:
-        """
-        Predict the probability of each label given the most recent examples
-        stored in the sliding window.
+        """Predict a single regression target using rolling context.
 
         Parameters
         ----------
-        x
-            Input example.
+        x : dict
+            Feature mapping.
 
         Returns
         -------
-        Dict[ClfTarget, float]
-            Dictionary of probabilities for each label.
+        float
+            Predicted target value.
         """
         self._update_observed_features(x)
 
@@ -175,26 +180,19 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         self.module.eval()
         with torch.inference_mode():
             x_t = self._deque2rolling_tensor(x_win)
-            res = self.module(x_t).numpy(force=True).item()
+            y_pred = self.module(x_t)
+            if isinstance(y_pred, torch.Tensor):
+                y_pred = y_pred.detach().view(-1)[-1].cpu().numpy().item()
+            else:
+                y_pred = float(y_pred)
 
-        return res
+        return y_pred
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
-        """
-        Performs one step of training with the most recent training examples
-        stored in the sliding window.
+        """Batch update with multiple samples using the rolling window.
 
-        Parameters
-        ----------
-        X
-            Input examples.
-        y
-            Target values.
-
-        Returns
-        -------
-        Self
-            The regressor itself.
+        Only performs an optimisation step once the internal window has reached
+        ``window_size`` length to ensure a full sequence is available.
         """
         self._update_observed_features(X)
 
@@ -212,17 +210,9 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             self._learn(x=X_t, y=y_t)
 
     def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
-        """
-        Predict the probability of each label given the most recent examples
+        """Predict targets for multiple samples (appends to a copy of the window).
 
-        Parameters
-        ----------
-        X
-
-        Returns
-        -------
-        pd.DataFrame
-            DataFrame of probabilities for each label.
+        Returns a single-column DataFrame named ``'y_pred'``.
         """
 
         self._update_observed_features(X)
@@ -235,5 +225,8 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         self.module.eval()
         with torch.inference_mode():
             x_t = self._deque2rolling_tensor(x_win)
-            y_preds = self.module(x_t).detach().tolist()
-        return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())
+            y_preds = self.module(x_t)
+            if isinstance(y_preds, torch.Tensor):
+                y_preds = y_preds.detach().cpu().view(-1).numpy().tolist()
+
+        return pd.DataFrame({"y_pred": y_preds})

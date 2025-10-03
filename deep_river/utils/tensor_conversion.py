@@ -1,4 +1,4 @@
-from typing import Deque, Dict, List, Optional, Union
+from typing import Deque, Dict, Hashable, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -181,9 +181,9 @@ def labels2onehot(
 
 
 def output2proba(
-    preds: torch.Tensor, classes: SortedSet, output_is_logit=True
-) -> List[Dict]:
-    # Convert logits to probabilities if needed.
+    preds: torch.Tensor, classes: SortedSet, output_is_logit: bool = True
+) -> List[Dict[Hashable, float]]:
+    is_probabilistic = output_is_logit
     if output_is_logit:
         if preds.shape[-1] > 1:
             preds = torch.softmax(preds, dim=-1)
@@ -191,48 +191,61 @@ def output2proba(
             preds = torch.sigmoid(preds)
 
     preds_np = preds.detach().cpu().numpy()
+    n_outputs = preds_np.shape[-1]
+    n_classes = len(classes)
 
-    # If we have a single column, assume binary and create a complementary column.
-    if preds_np.shape[-1] == 1:
-        preds_np = np.hstack((preds_np, 1 - preds_np))
+    def renorm_rows(arr):
+        sums = arr.sum(axis=1, keepdims=True)
+        sums[sums == 0] = 1.0
+        return arr / sums
 
-    n = preds_np.shape[-1]
+    # Boolean mode (binary classification) – always {False, True}
+    boolean_mode = (
+        all(c in (True, False) for c in classes) and n_outputs in (1, 2)
+    ) or (n_classes == 0 and n_outputs in (1, 2))
+    if boolean_mode:
+        if n_outputs == 1:
+            p_true = preds_np[:, 0].astype("float64")
+            p_false = (1.0 - p_true).astype("float64")
+            probs = np.stack([p_true, p_false], axis=1)
+            probs = renorm_rows(probs)
+            return [dict(zip([True, False], row.astype("float64"))) for row in probs]
+        else:  # n_outputs == 2
+            probs = preds_np.astype("float64")
+            if is_probabilistic:
+                probs = renorm_rows(probs)
+            return [dict(zip([False, True], row.astype("float64"))) for row in probs]
 
-    # Determine the ordering of output classes.
-    # (1) Binary with booleans: if n == 2 and classes is empty or
-    # the single class is already a boolean,
-    # then force the output keys to be booleans.
-    if n == 2 and (
-        len(classes) == 0 or (len(classes) == 1 and list(classes)[0] in [True, False])
-    ):
-        if len(classes) == 1:
-            base_val = list(classes)[0]
-            all_classes = [base_val, not base_val]
+    # Single-output (non-boolean) -> observed class + Unobserved0
+    if n_outputs == 1:
+        p_obs = preds_np[:, 0].astype("float64")
+        p_un = (1.0 - p_obs).astype("float64")
+        probs = np.stack([p_obs, p_un], axis=1)
+        if is_probabilistic:
+            probs = renorm_rows(probs)
+        if n_classes == 0:
+            labels: List[Hashable] = [0, 1]
         else:
-            all_classes = [True, False]
+            primary = list(classes)[0]
+            labels = [primary, "Unobserved0"]  # mixed types intentional
+        return [dict(zip(labels, row.astype("float64"))) for row in probs]
 
-    # (2) If no classes are provided but n != 2, we don't know how to assign keys.
-    elif len(classes) == 0:
-        raise ValueError(
-            "Empty classes only supported for binary classification (2 outputs)."
-        )
+    # Multi-output handling (n_outputs > 1, non-boolean)
+    if n_classes == 0:
+        labels2: List[Hashable] = list(range(n_outputs))
+        rows = preds_np
+        if is_probabilistic:
+            rows = renorm_rows(rows.astype("float64")).astype(rows.dtype)
+        return [dict(zip(labels2, row)) for row in rows]
 
-    # (3) For a single provided non-boolean class:
-    # use it for the first probability and label the others as Unobserved.
-    elif len(classes) == 1:
-        all_classes = list(classes) + [f"Unobserved{i}" for i in range(n - 1)]
-    # (4) For multiple provided classes: use them in order,
-    # appending extra Unobserved labels if needed.
+    labels3: List[Hashable] = list(classes)
+    if len(labels3) < n_outputs:
+        for i in range(n_outputs - len(labels3)):
+            labels3.append(f"Unobserved{i}")  # type: ignore[list-item]
     else:
-        base = list(classes)
-        if n > len(base):
-            all_classes = base + [f"Unobserved{i}" for i in range(n - len(base))]
-        else:
-            all_classes = base[:n]
+        labels3 = labels3[:n_outputs]
 
-    assert (
-        len(all_classes) == n
-    ), "Mismatch between number of classes and prediction probabilities"
-
-    # Zip each row of probabilities with the corresponding class labels.
-    return [dict(zip(all_classes, pred)) for pred in preds_np]
+    rows = preds_np
+    if is_probabilistic:
+        rows = renorm_rows(rows.astype("float64")).astype(rows.dtype)
+    return [dict(zip(labels3, row)) for row in rows]
