@@ -130,6 +130,7 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
         seed: int = 42,
         window_size: int = 10,
         append_predict: bool = False,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -144,6 +145,7 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
             seed=seed,
             window_size=window_size,
             append_predict=append_predict,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
         self.output_is_logit = output_is_logit
@@ -209,4 +211,3 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
             x_t = self._deque2rolling_tensor(x_win)
             probas = self.module(x_t).detach().tolist()
         return pd.DataFrame(probas)
-

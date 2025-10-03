@@ -175,9 +175,14 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         self.module.eval()
         with torch.inference_mode():
             x_t = self._deque2rolling_tensor(x_win)
-            res = self.module(x_t).numpy(force=True).item()
+            y_pred = self.module(x_t)
+            if isinstance(y_pred, torch.Tensor):
+                # Erwartet Form (batch, 1) oder (1,) -> skalieren
+                y_pred = y_pred.detach().view(-1)[-1].cpu().numpy().item()
+            else:
+                y_pred = float(y_pred)
 
-        return res
+        return y_pred
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         """
@@ -235,5 +240,9 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         self.module.eval()
         with torch.inference_mode():
             x_t = self._deque2rolling_tensor(x_win)
-            y_preds = self.module(x_t).detach().tolist()
-        return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())
+            y_preds = self.module(x_t)
+            if isinstance(y_preds, torch.Tensor):
+                y_preds = y_preds.detach().cpu().view(-1).numpy().tolist()
+
+        # Rückgabe als DataFrame mit einer Spalte
+        return pd.DataFrame({"y_pred": y_preds})

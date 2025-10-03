@@ -80,6 +80,7 @@ class DeepEstimator(base.Estimator):
         device: str = "cpu",
         seed: int = 42,
         is_feature_incremental: bool = False,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         super().__init__()
@@ -94,6 +95,7 @@ class DeepEstimator(base.Estimator):
         self.device = device
         self.seed = seed
         self.is_feature_incremental = is_feature_incremental
+        self.gradient_clip_value = gradient_clip_value
 
         self.kwargs = kwargs
 
@@ -282,6 +284,14 @@ class DeepEstimator(base.Estimator):
             }
         if hasattr(layer, "bias") and layer.bias is not None:
             instructions["bias"] = {"output": [{"axis": 0, "n_subparams": 1}]}
+        # LSTM Spezialfall: input_size anpassbar, Gewichte heissen weight_ih_l{layer}
+        if isinstance(layer, torch.nn.LSTM):
+            # input_size als input_attribute markieren
+            instructions["input_size"] = "input_attribute"
+            # weight_ih_l0 expandierbar entlang Achse 1 (Eingabe-Features)
+            if hasattr(layer, "weight_ih_l0"):
+                instructions["weight_ih_l0"] = {"input": [{"axis": 1, "n_subparams": 1}]}
+            # bias_ih_l0 / bias_hh_l0 unverändert (Output-Dimension = 4*hidden_size bleibt fix)
         return instructions
 
     def _expand_layer(
@@ -378,6 +388,8 @@ class DeepEstimator(base.Estimator):
         loss = self.loss_func(y_pred, y)
         self.optimizer.zero_grad()
         loss.backward()
+        if getattr(self, "gradient_clip_value", None) is not None:
+            torch.nn.utils.clip_grad_norm_(self.module.parameters(), self.gradient_clip_value)
         self.optimizer.step()
 
     def save(self, filepath: Union[str, Path]) -> None:

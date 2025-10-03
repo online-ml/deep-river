@@ -1,8 +1,8 @@
 from river import (dummy, linear_model, neural_net, optim,
-                   preprocessing, stats, compose)
+                   preprocessing, stats)
 
-from deep_river.classification.zoo import LogisticRegressionInitialized, MultiLayerPerceptronInitialized as ClassificationMLP
-from deep_river.regression.zoo import LinearRegressionInitialized, MultiLayerPerceptronInitialized as RegressionMLP
+from deep_river.classification.zoo import LogisticRegressionInitialized, MultiLayerPerceptronInitialized as ClassificationMLP, LSTMClassifierInitialized
+from deep_river.regression.zoo import LinearRegressionInitialized, MultiLayerPerceptronInitialized as RegressionMLP, LSTMRegressor
 from tracks import BinaryClassificationTrack, MultiClassClassificationTrack, RegressionTrack
 
 N_CHECKPOINTS = 50
@@ -44,6 +44,19 @@ MODELS = {
                 lr=LEARNING_RATE
             )
         ),
+        "Deep River LSTM": (
+            preprocessing.StandardScaler()
+            | LSTMClassifierInitialized(
+                loss_fn="cross_entropy",
+                optimizer_fn="adam",  # Adam meist stabiler für RNNs
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=1e-3,
+                hidden_size=32,
+                # window_size optional via kwargs (RollingClassifierInitialized nimmt window_size)
+                window_size=30,
+            )
+        ),
         "[baseline] Prior class": dummy.PriorClassifier(),
     },
     "Multiclass classification": {
@@ -73,6 +86,18 @@ MODELS = {
                 lr=LEARNING_RATE
             )
         ),
+        "Deep River LSTM": (
+            preprocessing.StandardScaler()
+            | LSTMClassifierInitialized(
+                loss_fn="cross_entropy",
+                optimizer_fn="adam",
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=1e-3,
+                hidden_size=32,
+                window_size=30,
+            )
+        ),
         "[baseline] Last Class": dummy.NoChangeClassifier(),
         "[baseline] Prior Class": dummy.PriorClassifier(),
     },
@@ -98,6 +123,20 @@ MODELS = {
                 loss_fn="mse",
                 optimizer_fn="sgd",
                 lr=LEARNING_RATE,
+                is_feature_incremental=True,
+            )
+        ),
+        "Deep River LSTM": (
+            preprocessing.StandardScaler()
+            | LSTMRegressor(
+                loss_fn="mse",
+                optimizer_fn="adam",   # Wichtiger Wechsel für LSTM
+                lr=1e-3,                # Kleinerer Lernrate für Stabilität
+                hidden_size=64,         # Größere Kapazität
+                num_layers=1,           # Einfach starten
+                dropout=0.1,            # Leichtes Dropout zur Regularisierung
+                gradient_clip_value=1.0,
+                window_size=30,         # Längeres Kontextfenster
                 is_feature_incremental=True,
             )
         ),

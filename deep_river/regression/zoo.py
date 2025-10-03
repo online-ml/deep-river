@@ -1,6 +1,7 @@
 from typing import Callable, Type, Union
 
 from torch import nn, optim
+import torch
 
 from deep_river.regression import Regressor
 from deep_river.regression.rolling_regressor import RollingRegressor
@@ -8,25 +9,7 @@ from deep_river.regression.rolling_regressor import RollingRegressor
 
 class LinearRegressionInitialized(Regressor):
     """
-    Linear Regression model for regression.
-
-    Parameters
-    ----------
-    loss_fn : str or Callable
-        Loss function to be used for training the wrapped model.
-    optimizer_fn : str or Callable
-        Optimizer to be used for training the wrapped model.
-    lr : float
-        Learning rate of the optimizer.
-    is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by
-        adding units to the input layer of the network.
-    device : str
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed : int
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    Einfache lineare Regression mit optionalem Feature-Inkremental und Gradient Clipping.
     """
 
     class LRModule(nn.Module):
@@ -46,6 +29,7 @@ class LinearRegressionInitialized(Regressor):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -60,6 +44,7 @@ class LinearRegressionInitialized(Regressor):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
@@ -74,33 +59,13 @@ class LinearRegressionInitialized(Regressor):
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
+            "gradient_clip_value": None,
         }
 
 
 class MultiLayerPerceptronInitialized(Regressor):
     """
-    Linear Regression model for regression.
-
-    Parameters
-    ----------
-    loss_fn : str or Callable
-        Loss function to be used for training the wrapped model.
-    optimizer_fn : str or Callable
-        Optimizer to be used for training the wrapped model.
-    lr : float
-        Learning rate of the optimizer.
-    is_class_incremental : bool
-        Whether the classifier should adapt to the appearance of previously unobserved classes
-        by adding an unit to the output layer of the network.
-    is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by
-        adding units to the input layer of the network.
-    device : str
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed : int
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Parameters to be passed to the `build_fn` function aside from `n_features`.
+    MLP Regression mit optionalem Feature-Inkremental und Gradient Clipping.
     """
 
     class MLPModule(nn.Module):
@@ -128,6 +93,7 @@ class MultiLayerPerceptronInitialized(Regressor):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -146,6 +112,7 @@ class MultiLayerPerceptronInitialized(Regressor):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
@@ -160,57 +127,72 @@ class MultiLayerPerceptronInitialized(Regressor):
             "loss_fn": "binary_cross_entropy_with_logits",
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
+            "gradient_clip_value": None,
         }
 
 
 class LSTMRegressor(RollingRegressor):
     """
-    LSTM Regressor model for time series regression.
+    LSTM Regressor für sequenzielle Regressionsaufgaben mit Rolling Window.
 
-    This model uses LSTM (Long Short-Term Memory) networks to capture temporal
-    dependencies in sequential data for regression tasks.
+    Verbesserungen gegenüber der vorherigen sehr schwachen Version:
+    - Separate versteckte Dimension (hidden_size) statt hidden_size=output=1
+    - Separater Linear-Head (hidden -> 1) für bessere Ausdrucksstärke
+    - Optional Dropout zwischen LSTM und Head
+    - Konfigurierbare Anzahl LSTM-Layer (num_layers)
+    - Option gradient_clipping zur Stabilisierung (Default 1.0)
 
-    Parameters
-    ----------
+    Parameter
+    ---------
     n_features : int
-        Number of input features.
-    loss_fn : str or Callable
-        Loss function to be used for training the wrapped model.
-    optimizer_fn : str or Callable
-        Optimizer to be used for training the wrapped model.
-    lr : float
-        Learning rate of the optimizer.
-    is_feature_incremental : bool
-        Whether the model should adapt to the appearance of previously features by
-        adding units to the input layer of the network.
-    device : str
-        Device to run the wrapped model on. Can be "cpu" or "cuda".
-    seed : int
-        Random seed to be used for training the wrapped model.
-    **kwargs
-        Additional parameters to be passed to the parent class.
+        Anzahl der Eingangsfeatures (Start – kann bei feature-incremental wachsen).
+    hidden_size : int
+        LSTM Hidden-State Dimension (Standard 32).
+    num_layers : int
+        Anzahl LSTM-Layer (Standard 1).
+    dropout : float
+        Dropout nach dem LSTM (nur wenn > 0 und num_layers > 1 in LSTM selbst; wir nutzen es vorm Head).
+    gradient_clip_value : float | None
+        Falls gesetzt, wird der Gradienten-Norm-Clipping-Wert verwendet.
+    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed
+        Wie bei anderen Regressoren.
     """
 
     class LSTMModule(nn.Module):
-        def __init__(self, n_features, output_size=1):
+        def __init__(self, n_features: int, hidden_size: int, num_layers: int, dropout: float):
             super().__init__()
             self.n_features = n_features
-            self.output_size = output_size
+            self.hidden_size = hidden_size
+            self.num_layers = num_layers
+            self.dropout = dropout
             self.lstm = nn.LSTM(
-                input_size=n_features, hidden_size=output_size, num_layers=1
+                input_size=n_features,
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                batch_first=False,  # Eingabe (seq_len, batch, features)
+                dropout=0.0 if num_layers == 1 else min(dropout, 0.5),  # internes Dropout nur falls >1 Layer
             )
+            self.head = nn.Linear(hidden_size, 1)
+            self.out_activation = nn.Identity()  # Platzhalter falls später z.B. Softplus
+            self.post_dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
 
-        def forward(self, X, **kwargs):
-            # lstm with input, hidden, and internal state
+        def forward(self, X, **kwargs):  # X: (seq_len, batch=1, n_features)
             output, (hn, cn) = self.lstm(X)
-            x = hn.view(-1, self.output_size)
-            return x
+            # hn: (num_layers, batch, hidden_size) -> letzter Layer
+            h_last = hn[-1]  # (batch, hidden_size)
+            h_last = self.post_dropout(h_last)
+            y = self.head(h_last)  # (batch, 1)
+            return self.out_activation(y)
 
     def __init__(
         self,
         n_features: int = 10,
+        hidden_size: int = 32,
+        num_layers: int = 1,
+        dropout: float = 0.0,
+        gradient_clip_value: float | None = 1.0,
         loss_fn: Union[str, Callable] = "mse",
-        optimizer_fn: Union[str, Type[optim.Optimizer]] = "sgd",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "adam",
         lr: float = 1e-3,
         is_feature_incremental: bool = False,
         device: str = "cpu",
@@ -218,7 +200,16 @@ class LSTMRegressor(RollingRegressor):
         **kwargs,
     ):
         self.n_features = n_features
-        module = LSTMRegressor.LSTMModule(n_features=n_features)
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.dropout = dropout
+        self.gradient_clip_value = gradient_clip_value
+        module = LSTMRegressor.LSTMModule(
+            n_features=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            dropout=dropout,
+        )
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
@@ -229,18 +220,17 @@ class LSTMRegressor(RollingRegressor):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
     @classmethod
     def _unit_test_params(cls):
-        """
-        Returns a dictionary of parameters to be used for unit testing the
-        respective class.
-        """
-
         yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
-            "optimizer_fn": "sgd",
+            "loss_fn": "mse",
+            "optimizer_fn": "adam",
+            "hidden_size": 8,
+            "num_layers": 1,
+            "dropout": 0.0,
             "is_feature_incremental": False,
         }

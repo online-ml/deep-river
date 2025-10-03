@@ -38,6 +38,7 @@ class LogisticRegressionInitialized(Classifier):
         is_class_incremental: bool = True,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -57,6 +58,7 @@ class LogisticRegressionInitialized(Classifier):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
@@ -67,6 +69,7 @@ class LogisticRegressionInitialized(Classifier):
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
             "is_class_incremental": True,
+            "gradient_clip_value": None,
         }
 
 
@@ -116,6 +119,7 @@ class MultiLayerPerceptronInitialized(Classifier):
         is_class_incremental: bool = True,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -140,6 +144,7 @@ class MultiLayerPerceptronInitialized(Classifier):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
@@ -150,6 +155,7 @@ class MultiLayerPerceptronInitialized(Classifier):
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
             "is_class_incremental": True,
+            "gradient_clip_value": None,
         }
 
 
@@ -197,6 +203,7 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
         is_class_incremental: bool = True,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         self.n_features = n_features
@@ -219,6 +226,7 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
             device=device,
             lr=lr,
             seed=seed,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
 
@@ -231,4 +239,5 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
             "hidden_size": 8,
             "n_init_classes": 2,
             "is_class_incremental": True,
+            "gradient_clip_value": None,
         }

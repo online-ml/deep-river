@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, Union
+from typing import Callable, Union
 
 import numpy as np
 import pandas as pd
@@ -71,6 +71,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         to run the wrapped model on. Can be "cpu" or "cuda".
     seed
         Random seed to be used for training the wrapped model.
+    gradient_clip_value
+        Value at which to clip gradients, preventing explosion during
+        backpropagation. If set to None, gradient clipping is disabled.
     **kwargs
         Parameters to be passed to the `build_fn` function aside from
         `n_features`.
@@ -129,6 +132,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
+        gradient_clip_value: float | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -139,6 +143,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             device=device,
             seed=seed,
             is_feature_incremental=is_feature_incremental,
+            gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
         self.output_is_logit = output_is_logit
@@ -196,13 +201,12 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         y_pred = self.module(x_t)
 
         y_idx = torch.tensor(class_indices, device=self.device, dtype=torch.long)
-        if y_idx.ndim == 1 and y_pred.shape[0] == 1:
-            # Single sample Fall (reshape auf (1,)) ist korrekt
-            pass
         # Loss & Optimierung
         self.optimizer.zero_grad()
         loss = self.loss_func(y_pred, y_idx)
         loss.backward()
+        if getattr(self, "gradient_clip_value", None) is not None:
+            torch.nn.utils.clip_grad_norm_(self.module.parameters(), self.gradient_clip_value)
         self.optimizer.step()
 
     def _update_observed_targets(self, y) -> bool:
