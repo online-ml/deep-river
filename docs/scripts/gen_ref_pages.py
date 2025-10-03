@@ -13,15 +13,20 @@ for path in sorted(Path("deep_river").rglob("*.py")):
 
     parts = list(module_path.parts)
 
-    if parts[-1] == "__init__":
-        # parts = parts[:-1]
+    # Skip dunder and special modules
+    if parts[-1] in {"__init__", "__version__", "__main__", " "}:
         continue
-    elif parts[-1] == "__version__":
-        continue
-    elif parts[-1] == "__main__":
-        continue
-    elif parts[-1] == " ":
-        continue
+
+    # Exclude almost all utils.* modules except the explicitly whitelisted ones
+    if parts[0] == "utils":
+        allowed_utils = {"tensor_conversion", "params"}
+        # parts example: ["utils", "params"]
+        if len(parts) >= 2 and parts[1] not in allowed_utils:
+            continue
+        # Also skip deeper nested utils modules unless first submodule is allowed
+        if len(parts) >= 2 and parts[1] in allowed_utils and len(parts) > 2:
+            # currently no deeper structure needed in docs; keep only the top-level module page
+            continue
 
     nav[parts] = doc_path.as_posix()
 
