@@ -8,6 +8,10 @@ on:
     branches:
       - master
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -62,13 +66,18 @@ jobs:
             if-no-files-found: warn
 
       - name: Upload coverage reports to Codecov
+        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.22.0'
         uses: codecov/codecov-action@v4
         with:
+          # OIDC erlaubt tokenlosen Upload für öffentliche Repos (empfohlen v4)
+          use_oidc: true
+          # Optional: Falls Secret vorhanden (z.B. für private Forks), wird es zusätzlich genutzt
+          token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
           flags: unittests
           name: ${{ matrix.os }}-py${{ matrix.python }}-river${{ matrix.river }}
           fail_ci_if_error: true
           verbose: true
+          disable_search: true   # Wir geben die Datei explizit an
         env:
-          # Für öffentliche Repos ist kein Token nötig; für private Repos muss CODECOV_TOKEN Secret gesetzt sein.
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}

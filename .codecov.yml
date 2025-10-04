@@ -1,1 +1,52 @@
+# Codecov Konfiguration
+# Referenz: https://docs.codecov.com/docs/codecov-yaml
+
+codecov:
+  require_ci_to_pass: false   # Kommentar kann erscheinen auch wenn Job noch läuft
+  max_report_age: 24          # Stunden
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...90"            # Visuale Farbskala
+  status:
+    project:
+      default:
+        target: auto           # Codecov wählt smartes Ziel (meist Durchschnitt Historie)
+        threshold: 2%          # Bis zu 2% Rückgang toleriert
+        informational: false
+    patch:
+      default:
+        target: auto
+        threshold: 2%
+        informational: false
+
+# Flags-Konfiguration; wir haben aktuell nur "unittests"
+flags:
+  unittests:
+    carryforward: true         # Falls in einem Run Flag fehlt, wird alte Messung übernommen
+
+ignore:
+  - "docs/**"
+  - "benchmarks/**"
+  - "site/**"
+  - "paper/**"
+  - "__pycache__/**"
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true        # Kein neuer Kommentar, wenn Coverage gleich bleibt
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+# Optional für zukünftige Erweiterungen
+# github_checks:
+#   annotations: true
 
