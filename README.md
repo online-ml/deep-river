@@ -6,6 +6,10 @@
     <a href="https://codecov.io/gh/online-ml/deep-river" > 
         <img src="https://codecov.io/gh/online-ml/deep-river/branch/master/graph/badge.svg?token=ZKUIISZAYA"/> 
     </a>
+    <!-- Discord -->
+    <a href="https://discord.gg/qNmrKEZMAn">
+        <img src="https://dcbadge.vercel.app/api/server/qNmrKEZMAn?style=flat-square" alt="discord">
+    </a>
     <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/deep-river">
     <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/deep-river">
     <img alt="GitHub" src="https://img.shields.io/github/license/online-ml/deep-river">

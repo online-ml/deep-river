@@ -47,10 +47,28 @@ jobs:
       - name: Download datasets
         run: uv run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
-      - name: Run tests
-        run: uv run pytest -v --cov=deep_river -m "not datasets"
+      - name: Run tests (generate coverage.xml)
+        run: |
+          uv run pytest -v --cov=deep_river --cov-report=term-missing --cov-report=xml:coverage.xml -m "not datasets"
         env:
           PYTHONPATH: ${{ github.workspace }}
 
-      - name: Upload coverage reports to Codecov with GitHub Action
+      - name: Upload coverage artifact (diagnostic)
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+            name: coverage-${{ matrix.os }}-py${{ matrix.python }}-river${{ matrix.river }}
+            path: coverage.xml
+            if-no-files-found: warn
+
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v4
+        with:
+          files: coverage.xml
+          flags: unittests
+          name: ${{ matrix.os }}-py${{ matrix.python }}-river${{ matrix.river }}
+          fail_ci_if_error: true
+          verbose: true
+        env:
+          # Für öffentliche Repos ist kein Token nötig; für private Repos muss CODECOV_TOKEN Secret gesetzt sein.
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
