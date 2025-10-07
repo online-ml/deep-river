@@ -3,13 +3,9 @@
 </p>
 <p align="center">
     <img alt="PyPI" src="https://img.shields.io/pypi/v/deep-river">
-    <!-- Coverage (Shields.io aggregated) -->
+    <!-- Single Coverage Badge (Shields.io) -->
     <a href="https://app.codecov.io/gh/online-ml/deep-river" >
         <img alt="Coverage" src="https://img.shields.io/codecov/c/github/online-ml/deep-river?branch=master&logo=codecov&label=coverage" />
-    </a>
-    <!-- Offizielles Codecov Badge -->
-    <a href="https://app.codecov.io/gh/online-ml/deep-river" >
-        <img alt="Codecov" src="https://codecov.io/gh/online-ml/deep-river/branch/master/graph/badge.svg" />
     </a>
     <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/deep-river">
     <img alt="PyPI - Downloads" src="https://img.shields.io/pypi/dm/deep-river">
