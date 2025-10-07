@@ -95,7 +95,7 @@ class LinearRegressionInitialized(Regressor):
         }
 
 
-class MultiLayerPerceptronInitialized(Regressor):
+class MultiLayerPerceptron(Regressor):
     """Multi-layer perceptron regressor with optional feature growth.
 
     Stacks ``n_layers`` fully connected layers of width ``n_width`` with a
@@ -150,7 +150,7 @@ class MultiLayerPerceptronInitialized(Regressor):
         self.n_features = n_features
         self.n_width = n_width
         self.n_layers = n_layers
-        module = MultiLayerPerceptronInitialized.MLPModule(
+        module = MultiLayerPerceptron.MLPModule(
             n_features=n_features, n_layers=n_layers, n_width=n_width
         )
         if "module" in kwargs:
@@ -285,4 +285,112 @@ class LSTMRegressor(RollingRegressor):
             "num_layers": 1,
             "dropout": 0.0,
             "is_feature_incremental": False,
+        }
+
+
+class RNNRegressor(RollingRegressor):
+    """Rolling RNN regressor for sequential / time-series data.
+
+    Uses a ``nn.RNN`` backbone and a linear head to output a single continuous
+    target. Leverages the rolling window maintained by :class:`RollingRegressor`
+    to feed the last ``window_size`` observations as a sequence.
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Number of input features per timestep.
+    hidden_size : int, default=32
+        Hidden state dimensionality of the RNN.
+    num_layers : int, default=1
+        Number of stacked RNN layers.
+    nonlinearity : str, default='tanh'
+        Non-linearity used inside the RNN (``'tanh'`` or ``'relu'``).
+    dropout : float, default=0.0
+        Dropout applied after extracting the last hidden state (no internal RNN dropout).
+    gradient_clip_value : float | None, default=1.0
+        Gradient norm clipping threshold. ``None`` disables clipping.
+    loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, **kwargs
+        Standard configuration as in other regressors.
+    """
+
+    class RNNModule(nn.Module):
+        def __init__(
+            self,
+            n_features: int,
+            hidden_size: int,
+            num_layers: int,
+            nonlinearity: str,
+            dropout: float,
+        ):
+            super().__init__()
+            self.n_features = n_features
+            self.hidden_size = hidden_size
+            self.num_layers = num_layers
+            self.rnn = nn.RNN(
+                input_size=n_features,
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                nonlinearity=nonlinearity,
+            )
+            self.head = nn.Linear(hidden_size, 1)
+            self.post_dropout = nn.Dropout(p=dropout) if dropout > 0 else nn.Identity()
+
+        def forward(self, X, **kwargs):
+            out, hn = self.rnn(X)
+            h_last = hn[-1]
+            h_last = self.post_dropout(h_last)
+            y = self.head(h_last)
+            return y
+
+    def __init__(
+        self,
+        n_features: int = 10,
+        hidden_size: int = 32,
+        num_layers: int = 1,
+        nonlinearity: str = "tanh",
+        dropout: float = 0.0,
+        gradient_clip_value: float | None = 1.0,
+        loss_fn: Union[str, Callable] = "mse",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "adam",
+        lr: float = 1e-3,
+        is_feature_incremental: bool = False,
+        device: str = "cpu",
+        seed: int = 42,
+        **kwargs,
+    ):
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.nonlinearity = nonlinearity
+        self.dropout = dropout
+        module = RNNRegressor.RNNModule(
+            n_features=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            nonlinearity=nonlinearity,
+            dropout=dropout,
+        )
+        if "module" in kwargs:
+            del kwargs["module"]
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            is_feature_incremental=is_feature_incremental,
+            device=device,
+            lr=lr,
+            seed=seed,
+            gradient_clip_value=gradient_clip_value,
+            **kwargs,
+        )
+
+    @classmethod
+    def _unit_test_params(cls):
+        yield {
+            "loss_fn": "mse",
+            "optimizer_fn": "adam",
+            "hidden_size": 8,
+            "num_layers": 1,
+            "is_feature_incremental": False,
+            "dropout": 0.0,
         }

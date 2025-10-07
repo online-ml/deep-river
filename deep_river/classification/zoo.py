@@ -3,7 +3,7 @@ from typing import Callable, Type, Union
 from torch import nn, optim
 
 from deep_river.classification import Classifier
-from deep_river.classification.rolling_classifier import RollingClassifierInitialized
+from deep_river.classification.rolling_classifier import RollingClassifier
 
 
 class LogisticRegressionInitialized(Classifier):
@@ -213,7 +213,7 @@ class MultiLayerPerceptronInitialized(Classifier):
         }
 
 
-class LSTMClassifierInitialized(RollingClassifierInitialized):
+class LSTMClassifier(RollingClassifier):
     """Rolling LSTM classifier with dynamic class expansion.
 
     An LSTM backbone feeds into a linear head that produces logits. Designed for
@@ -236,8 +236,8 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
 
     Examples
     --------
-    >>> from deep_river.classification.zoo import LSTMClassifierInitialized  # doctest: +SKIP
-    >>> lstm_clf = LSTMClassifierInitialized(n_features=6, hidden_size=8)    # doctest: +SKIP
+    >>> from deep_river.classification.zoo import LSTMClassifier  # doctest: +SKIP
+    >>> lstm_clf = LSTMClassifier(n_features=6, hidden_size=8)    # doctest: +SKIP
     """
 
     class LSTMModule(nn.Module):
@@ -276,7 +276,7 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
         self.n_features = n_features
         self.hidden_size = hidden_size
         self.n_init_classes = n_init_classes
-        module = LSTMClassifierInitialized.LSTMModule(
+        module = LSTMClassifier.LSTMModule(
             n_features=n_features,
             hidden_size=hidden_size,
             n_init_classes=n_init_classes,
@@ -302,6 +302,117 @@ class LSTMClassifierInitialized(RollingClassifierInitialized):
         yield {
             "loss_fn": "cross_entropy",
             "optimizer_fn": "sgd",
+            "is_feature_incremental": False,
+            "hidden_size": 8,
+            "n_init_classes": 2,
+            "is_class_incremental": True,
+            "gradient_clip_value": None,
+        }
+
+
+class RNNClassifier(RollingClassifier):
+    """Rolling RNN classifier with dynamic class expansion.
+
+    Uses a (stacked) ``nn.RNN`` backbone followed by a linear head that produces
+    raw logits. Designed for streaming sequential data via a fixed-size rolling
+    window handled by :class:`RollingClassifierInitialized`.
+
+    Parameters
+    ----------
+    n_features : int, default=10
+        Number of input features per timestep.
+    hidden_size : int, default=16
+        Hidden state dimensionality of the RNN.
+    num_layers : int, default=1
+        Number of stacked RNN layers.
+    nonlinearity : str, default='tanh'
+        Non-linearity used inside the RNN (``'tanh'`` or ``'relu'``).
+    n_init_classes : int, default=2
+        Initial number of classes (output units).
+    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
+        is_class_incremental, device, seed, gradient_clip_value, **kwargs
+        Standard parameters as in the other rolling classifiers.
+    """
+
+    class RNNModule(nn.Module):
+        def __init__(
+            self,
+            n_features: int,
+            hidden_size: int,
+            num_layers: int,
+            nonlinearity: str,
+            n_init_classes: int,
+        ):
+            super().__init__()
+            self.n_features = n_features
+            self.hidden_size = hidden_size
+            self.num_layers = num_layers
+            self.nonlinearity = nonlinearity
+            self.n_init_classes = n_init_classes
+            self.rnn = nn.RNN(
+                input_size=n_features,
+                hidden_size=hidden_size,
+                num_layers=num_layers,
+                nonlinearity=nonlinearity,
+            )
+            self.head = nn.Linear(hidden_size, n_init_classes)
+
+        def forward(self, X, **kwargs):  # X: (seq_len, batch, n_features)
+            out, hn = self.rnn(X)
+            h_last = hn[-1]
+            return self.head(h_last)  # raw logits
+
+    def __init__(
+        self,
+        n_features: int = 10,
+        hidden_size: int = 16,
+        num_layers: int = 1,
+        nonlinearity: str = "tanh",
+        n_init_classes: int = 2,
+        loss_fn: Union[str, Callable] = "cross_entropy",
+        optimizer_fn: Union[str, Type[optim.Optimizer]] = "adam",
+        lr: float = 1e-3,
+        output_is_logit: bool = True,
+        is_feature_incremental: bool = False,
+        is_class_incremental: bool = True,
+        device: str = "cpu",
+        seed: int = 42,
+        gradient_clip_value: float | None = None,
+        **kwargs,
+    ):
+        self.n_features = n_features
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.nonlinearity = nonlinearity
+        self.n_init_classes = n_init_classes
+        module = RNNClassifier.RNNModule(
+            n_features=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            nonlinearity=nonlinearity,
+            n_init_classes=n_init_classes,
+        )
+        if "module" in kwargs:
+            del kwargs["module"]
+        super().__init__(
+            module=module,
+            loss_fn=loss_fn,
+            optimizer_fn=optimizer_fn,
+            output_is_logit=output_is_logit,
+            is_feature_incremental=is_feature_incremental,
+            is_class_incremental=is_class_incremental,
+            device=device,
+            lr=lr,
+            seed=seed,
+            gradient_clip_value=gradient_clip_value,
+            **kwargs,
+        )
+
+    @classmethod
+    def _unit_test_params(cls):
+        yield {
+            "loss_fn": "cross_entropy",
+            "optimizer_fn": "adam",
             "is_feature_incremental": False,
             "hidden_size": 8,
             "n_init_classes": 2,

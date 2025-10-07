@@ -1,8 +1,8 @@
 from river import (dummy, linear_model, neural_net, optim,
                    preprocessing, stats)
 
-from deep_river.classification.zoo import LogisticRegressionInitialized, MultiLayerPerceptronInitialized as ClassificationMLP, LSTMClassifierInitialized
-from deep_river.regression.zoo import LinearRegressionInitialized, MultiLayerPerceptronInitialized as RegressionMLP, LSTMRegressor
+from deep_river.classification.zoo import LogisticRegressionInitialized, MultiLayerPerceptronInitialized as ClassificationMLP, LSTMClassifier, RNNClassifier
+from deep_river.regression.zoo import LinearRegressionInitialized, MultiLayerPerceptron as RegressionMLP, LSTMRegressor, RNNRegressor
 from tracks import BinaryClassificationTrack, MultiClassClassificationTrack, RegressionTrack
 
 N_CHECKPOINTS = 50
@@ -45,8 +45,8 @@ MODELS = {
             )
         ),
         "Deep River LSTM": (
-            preprocessing.StandardScaler()
-            | LSTMClassifierInitialized(
+                preprocessing.StandardScaler()
+                | LSTMClassifier(
                 loss_fn="cross_entropy",
                 optimizer_fn="adam",  # Adam meist stabiler für RNNs
                 is_class_incremental=True,
@@ -54,6 +54,19 @@ MODELS = {
                 lr=1e-3,
                 hidden_size=32,
                 # window_size optional via kwargs (RollingClassifierInitialized nimmt window_size)
+                window_size=30,
+            )
+        ),
+        "Deep River RNN": (
+                preprocessing.StandardScaler()
+                | RNNClassifier(
+                loss_fn="cross_entropy",
+                optimizer_fn="adam",
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=1e-3,
+                hidden_size=32,
+                num_layers=1,
                 window_size=30,
             )
         ),
@@ -87,14 +100,27 @@ MODELS = {
             )
         ),
         "Deep River LSTM": (
-            preprocessing.StandardScaler()
-            | LSTMClassifierInitialized(
+                preprocessing.StandardScaler()
+                | LSTMClassifier(
                 loss_fn="cross_entropy",
                 optimizer_fn="adam",
                 is_class_incremental=True,
                 is_feature_incremental=True,
                 lr=1e-3,
                 hidden_size=32,
+                window_size=30,
+            )
+        ),
+        "Deep River RNN": (
+                preprocessing.StandardScaler()
+                | RNNClassifier(
+                loss_fn="cross_entropy",
+                optimizer_fn="adam",
+                is_class_incremental=True,
+                is_feature_incremental=True,
+                lr=1e-3,
+                hidden_size=32,
+                num_layers=1,
                 window_size=30,
             )
         ),
@@ -137,6 +163,20 @@ MODELS = {
                 dropout=0.1,            # Leichtes Dropout zur Regularisierung
                 gradient_clip_value=1.0,
                 window_size=30,         # Längeres Kontextfenster
+                is_feature_incremental=True,
+            )
+        ),
+        "Deep River RNN": (
+            preprocessing.StandardScaler()
+            | RNNRegressor(
+                loss_fn="mse",
+                optimizer_fn="adam",
+                lr=1e-3,
+                hidden_size=64,
+                num_layers=1,
+                dropout=0.1,
+                gradient_clip_value=1.0,
+                window_size=30,
                 is_feature_incremental=True,
             )
         ),
