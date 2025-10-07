@@ -21,11 +21,6 @@ coverage:
         threshold: 2%
         informational: false
 
-# Flags-Konfiguration; wir haben aktuell nur "unittests"
-flags:
-  unittests:
-    carryforward: true         # Falls in einem Run Flag fehlt, wird alte Messung übernommen
-
 ignore:
   - "docs/**"
   - "benchmarks/**"
@@ -49,4 +44,3 @@ parsers:
 # Optional für zukünftige Erweiterungen
 # github_checks:
 #   annotations: true
-
