@@ -6,7 +6,7 @@ from deep_river.regression.rolling_regressor import (
     RollingRegressor,
 )
 from deep_river.regression.zoo import (
-    LinearRegressionInitialized,
+    LinearRegression,
     LSTMRegressor,
     MultiLayerPerceptron,
     RNNRegressor,
@@ -19,7 +19,7 @@ __all__ = [
     "Regressor",
     "RollingRegressor",
     "MultiTargetRegressor",
-    "LinearRegressionInitialized",
+    "LinearRegression",
     "LSTMRegressor",
     "MultiLayerPerceptron",
     "RNNRegressor",

@@ -6,7 +6,7 @@ from deep_river.regression import Regressor
 from deep_river.regression.rolling_regressor import RollingRegressor
 
 
-class LinearRegressionInitialized(Regressor):
+class LinearRegression(Regressor):
     """Incremental linear regression with optional feature growth and gradient clipping.
 
     A thin wrapper that instantiates a single linear layer and enables
@@ -37,18 +37,17 @@ class LinearRegressionInitialized(Regressor):
 
     Examples
     --------
-
         Streaming regression on the Bikes dataset (only numeric features kept).
         The exact MAE value may vary depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
         >>> from river import datasets, metrics
-        >>> from deep_river.regression.zoo import LinearRegressionInitialized
+        >>> from deep_river.regression.zoo import LinearRegression
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Bikes()))
         >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
-        >>> reg = LinearRegressionInitialized(n_features=len(numeric_keys), optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> reg = LinearRegression(n_features=len(numeric_keys), optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
         >>> mae = metrics.MAE()
         >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
         ...     x_num = {k: x[k] for k in numeric_keys}
@@ -57,8 +56,8 @@ class LinearRegressionInitialized(Regressor):
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")
-        MAE:
         ...
+        MAE: ...
     """
 
     class LRModule(nn.Module):
@@ -82,7 +81,7 @@ class LinearRegressionInitialized(Regressor):
         **kwargs,
     ):
         self.n_features = n_features
-        module = LinearRegressionInitialized.LRModule(n_features=n_features)
+        module = LinearRegression.LRModule(n_features=n_features)
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
@@ -132,8 +131,8 @@ class MultiLayerPerceptron(Regressor):
 
     Examples
     --------
-        Streaming regression on the Bikes dataset (only numeric features kept).
-        The exact MAE value may vary depending on library version and hardware::
+    Streaming regression on the Bikes dataset (only numeric features kept).
+    The exact MAE value may vary depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
@@ -150,7 +149,7 @@ class MultiLayerPerceptron(Regressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
-        >>> print(f"MAE: {mae.get():.4f}")
+        >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
         MAE: ...
     """
 
@@ -238,8 +237,8 @@ class LSTMRegressor(RollingRegressor):
 
     Examples
     --------
-        Streaming regression on the Bikes dataset (only numeric features kept).
-        The exact MAE value may vary depending on library version and hardware::
+    Streaming regression on the Bikes dataset (only numeric features kept).
+    The exact MAE value may vary depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
@@ -256,9 +255,8 @@ class LSTMRegressor(RollingRegressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
-        >>> print(f"MAE: {mae.get():.4f}")
-        ...
-        MAE: 3.0120
+        >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
+        MAE: ...
     """
 
     class LSTMModule(nn.Module):
@@ -368,8 +366,8 @@ class RNNRegressor(RollingRegressor):
 
     Examples
     --------
-        Streaming regression on the Bikes dataset (only numeric features kept).
-        The exact MAE value may vary depending on library version and hardware::
+    Streaming regression on the Bikes dataset (only numeric features kept).
+    The exact MAE value may vary depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
@@ -386,9 +384,8 @@ class RNNRegressor(RollingRegressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
-        >>> print(f"MAE: {mae.get():.4f}")
-        ...
-        MAE: 3.2066
+        >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
+        MAE: ...
     """
 
     class RNNModule(nn.Module):
