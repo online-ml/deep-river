@@ -69,30 +69,31 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
     Examples
     --------
+    Deterministisches Beispiel mit festverdrahteter Klassenvorhersage::
+
     >>> import torch
-    >>> from torch import nn, manual_seed
-    >>> from river import metrics
+    >>> from torch import nn
     >>> from deep_river.classification.rolling_classifier import RollingClassifier
-    >>> _ = manual_seed(42)
-    >>> class TinyRNN(nn.Module):
-    ...     def __init__(self, n_features=5, hidden=4):
+    >>> class FixedRNN(nn.Module):
+    ...     def __init__(self):
     ...         super().__init__()
-    ...         self.rnn = nn.RNN(n_features, hidden)
-    ...         self.head = nn.Linear(hidden, 2)
+    ...         self.rnn = nn.RNN(3, 4)
+    ...         self.head = nn.Linear(4, 2)
+    ...         with torch.no_grad():
+    ...             # Alle Gewichte nullen, Bias setzt klare Logits
+    ...             for p in self.rnn.parameters():
+    ...                 p.zero_()
+    ...             self.head.weight.zero_()
+    ...             self.head.bias[:] = torch.tensor([2.0, -1.0])
     ...     def forward(self, x):
     ...         out, _ = self.rnn(x)
-    ...         return self.head(out[-1])  # logits
-    >>> clf = RollingClassifier(
-    ...     module=TinyRNN(5), loss_fn='cross_entropy', optimizer_fn='adam', window_size=8
-    ... )
-    >>> acc = metrics.Accuracy()
-    >>> stream = [({'a': i, 'b': i % 2, 'c': i+1, 'd': i*i, 'e': i-1}, i % 2) for i in range(12)]
-    >>> for x, y in stream:
-    ...     pred = clf.predict_one(x)
-    ...     clf.learn_one(x, y)
-    ...     acc.update(y, pred)
-    >>> 0 <= acc.get() <= 1
-    True
+    ...         return self.head(out[-1])
+    >>> rc = RollingClassifier(module=FixedRNN(), loss_fn='cross_entropy', optimizer_fn='sgd', lr=0.0, window_size=5)
+    >>> # Klassen zuerst registrieren
+    >>> rc.learn_one({'a':0,'b':0,'c':0}, 0)
+    >>> rc.learn_one({'a':1,'b':1,'c':1}, 1)
+    >>> rc.predict_one({'a':5,'b':6,'c':7})
+    0
     """
 
     def __init__(

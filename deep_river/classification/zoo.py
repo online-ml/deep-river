@@ -43,19 +43,21 @@ class LogisticRegressionInitialized(Classifier):
 
     Examples
     --------
+    Deterministisches Beispiel mit festen Logits für exakte Klassenvorhersage::
+
+    >>> import torch
     >>> from deep_river.classification.zoo import LogisticRegressionInitialized
-    >>> from river import metrics
-    >>> from torch import manual_seed
-    >>> manual_seed(42)
-    >>> model = LogisticRegressionInitialized(n_features=4, n_init_classes=2)
-    >>> metric = metrics.Accuracy()
-    >>> stream = [({'a': i, 'b': i+1, 'c': i%2, 'd': (i+1)%2}, i % 2) for i in range(8)]
-    >>> for x, y in stream:
-    ...     pred = model.predict_one(x)
-    ...     model.learn_one(x, y)
-    ...     metric.update(y, pred)
-    >>> 0 <= metric.get() <= 1
-    True
+    >>> model = LogisticRegressionInitialized(n_features=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
+    >>> # Klassen registrieren
+    >>> model.learn_one({'a':0,'b':0,'c':0}, 0)
+    >>> model.learn_one({'a':1,'b':1,'c':1}, 1)
+    >>> def _prep_lin(m):
+    ...     with torch.no_grad():
+    ...         m.dense0.weight.zero_()
+    ...         m.dense0.bias[:] = torch.tensor([1.5, -0.5])
+    >>> _prep_lin(model.module)
+    >>> model.predict_one({'a':2,'b':3,'c':4})
+    0
     """
 
     class LRModule(nn.Module):
@@ -137,12 +139,23 @@ class MultiLayerPerceptronInitialized(Classifier):
 
     Examples
     --------
+    Deterministisches Beispiel (alle Gewichte 0, Bias legt Klasse fest)::
+
+    >>> import torch
     >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
-    >>> from torch import manual_seed
-    >>> manual_seed(42)
-    >>> m = MultiLayerPerceptronInitialized(n_features=8, n_width=16, n_layers=3)
-    >>> hasattr(m, 'module')
-    True
+    >>> m = MultiLayerPerceptronInitialized(n_features=4, n_width=6, n_layers=2, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
+    >>> m.learn_one({'a':0,'b':0,'c':0,'d':0}, 0)
+    >>> m.learn_one({'a':1,'b':1,'c':1,'d':1}, 1)
+    >>> def _prep_mlp(mod):
+    ...     with torch.no_grad():
+    ...         mod.input_layer.weight.zero_()
+    ...         for layer in mod.hidden:
+    ...             layer.weight.zero_()
+    ...         mod.denselast.weight.zero_()
+    ...         mod.denselast.bias[:] = torch.tensor([2.0, -1.0])
+    >>> _prep_mlp(m.module)
+    >>> m.predict_one({'a':5,'b':6,'c':7,'d':8})
+    0
     """
 
     class MLPModule(nn.Module):
@@ -242,10 +255,22 @@ class LSTMClassifier(RollingClassifier):
 
     Examples
     --------
+    Deterministischer Test: RNN-Gewichte nullen, Bias steuert Klasse::
+
+    >>> import torch
     >>> from deep_river.classification.zoo import LSTMClassifier
-    >>> lstm_clf = LSTMClassifier(n_features=6, hidden_size=8)
-    >>> isinstance(lstm_clf, LSTMClassifier)
-    True
+    >>> lstm_clf = LSTMClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
+    >>> lstm_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
+    >>> lstm_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
+    >>> def _prep_lstm(m):
+    ...     with torch.no_grad():
+    ...         for p in m.lstm.parameters():
+    ...             p.data.zero_()
+    ...         m.head.weight.data.zero_()
+    ...         m.head.bias.data[:] = torch.tensor([2.2, -0.7])
+    >>> _prep_lstm(lstm_clf.module)
+    >>> lstm_clf.predict_one({'f0':2,'f1':3,'f2':4,'f3':5})
+    0
     """
 
     class LSTMModule(nn.Module):
@@ -334,12 +359,31 @@ class RNNClassifier(RollingClassifier):
     num_layers : int, default=1
         Number of stacked RNN layers.
     nonlinearity : str, default='tanh'
-        Non-linearity used inside the RNN (``'tanh'`` or ``'relu'``).
+        Non-linearity used inside the RNN ('tanh' or 'relu').
     n_init_classes : int, default=2
-        Initial number of classes (output units).
+        Initial number of classes/output units.
     loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
         is_class_incremental, device, seed, gradient_clip_value, **kwargs
         Standard parameters as in the other rolling classifiers.
+
+    Examples
+    --------
+    Deterministischer Test mit Null-Gewichten und Bias-Klasse::
+
+    >>> import torch
+    >>> from deep_river.classification.zoo import RNNClassifier
+    >>> rnn_clf = RNNClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
+    >>> rnn_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
+    >>> rnn_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
+    >>> def _prep_rnn(m):
+    ...     with torch.no_grad():
+    ...         for p in m.rnn.parameters():
+    ...             p.data.zero_()
+    ...         m.head.weight.data.zero_()
+    ...         m.head.bias.data[:] = torch.tensor([3.0, -2.0])
+    >>> _prep_rnn(rnn_clf.module)
+    >>> rnn_clf.predict_one({'f0':9,'f1':8,'f2':7,'f3':6})
+    0
     """
 
     class RNNModule(nn.Module):

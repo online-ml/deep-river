@@ -42,16 +42,10 @@ class LinearRegressionInitialized(Regressor):
     >>> import torch
     >>> from torch import nn
     >>> from deep_river.regression.zoo import LinearRegressionInitialized
-    >>> class FixedLinear(nn.Module):
-    ...     def __init__(self):
-    ...         super().__init__()
-    ...         self.fc = nn.Linear(5, 1)
-    ...         with torch.no_grad():
-    ...             self.fc.weight[:] = torch.tensor([[0.2, 0.2, 0.2, 0.2, 0.2]])
-    ...             self.fc.bias[:] = torch.tensor([0.1])
-    ...     def forward(self, x):
-    ...         return self.fc(x)
-    >>> model = LinearRegressionInitialized(n_features=5, loss_fn='mse', optimizer_fn='sgd', lr=0.0, module=FixedLinear())  # type: ignore[arg-type]
+    >>> model = LinearRegressionInitialized(n_features=5, loss_fn='mse', optimizer_fn='sgd', lr=0.0)
+    >>> with torch.no_grad():
+    ...     model.module.dense0.weight[:] = torch.tensor([[0.2, 0.2, 0.2, 0.2, 0.2]])
+    ...     model.module.dense0.bias[:] = torch.tensor([0.1])
     >>> x = {'f0':1,'f1':2,'f2':3,'f3':4,'f4':5}
     >>> # Erwartet: 0.2*(1+2+3+4+5)+0.1 = 3.1
     >>> round(model.predict_one(x), 2)
@@ -215,6 +209,7 @@ class LSTMRegressor(RollingRegressor):
     >>> from deep_river.regression.zoo import LSTMRegressor
     >>> lstm_reg = LSTMRegressor(n_features=6, hidden_size=16)
     """
+
     class LSTMModule(nn.Module):
         def __init__(
             self, n_features: int, hidden_size: int, num_layers: int, dropout: float
@@ -320,6 +315,7 @@ class RNNRegressor(RollingRegressor):
     loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, **kwargs
         Standard configuration as in other regressors.
     """
+
     class RNNModule(nn.Module):
         def __init__(
             self,
