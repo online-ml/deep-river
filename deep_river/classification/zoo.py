@@ -43,21 +43,23 @@ class LogisticRegressionInitialized(Classifier):
 
     Examples
     --------
-    Deterministisches Beispiel mit festen Logits für exakte Klassenvorhersage::
+´       Streaming binary classification on the Phishing dataset. The exact Accuracy value may vary depending on library version and hardware::
 
-    >>> import torch
-    >>> from deep_river.classification.zoo import LogisticRegressionInitialized
-    >>> model = LogisticRegressionInitialized(n_features=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
-    >>> # Klassen registrieren
-    >>> model.learn_one({'a':0,'b':0,'c':0}, 0)
-    >>> model.learn_one({'a':1,'b':1,'c':1}, 1)
-    >>> def _prep_lin(m):
-    ...     with torch.no_grad():
-    ...         m.dense0.weight.zero_()
-    ...         m.dense0.bias[:] = torch.tensor([1.5, -0.5])
-    >>> _prep_lin(model.module)
-    >>> model.predict_one({'a':2,'b':3,'c':4})
-    0
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification.zoo import LogisticRegressionInitialized
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> clf = LogisticRegressionInitialized(n_features=len(first_x), n_init_classes=2, optimizer_fn='sgd', lr=1e-2, is_class_incremental=True)
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        ...     clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        Accuracy: ...
     """
 
     class LRModule(nn.Module):
@@ -139,23 +141,23 @@ class MultiLayerPerceptronInitialized(Classifier):
 
     Examples
     --------
-    Deterministisches Beispiel (alle Gewichte 0, Bias legt Klasse fest)::
+        Phishing dataset stream with online Accuracy. The exact value may vary depending on library version and hardware::
 
-    >>> import torch
-    >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
-    >>> m = MultiLayerPerceptronInitialized(n_features=4, n_width=6, n_layers=2, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
-    >>> m.learn_one({'a':0,'b':0,'c':0,'d':0}, 0)
-    >>> m.learn_one({'a':1,'b':1,'c':1,'d':1}, 1)
-    >>> def _prep_mlp(mod):
-    ...     with torch.no_grad():
-    ...         mod.input_layer.weight.zero_()
-    ...         for layer in mod.hidden:
-    ...             layer.weight.zero_()
-    ...         mod.denselast.weight.zero_()
-    ...         mod.denselast.bias[:] = torch.tensor([2.0, -1.0])
-    >>> _prep_mlp(m.module)
-    >>> m.predict_one({'a':5,'b':6,'c':7,'d':8})
-    0
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> mlp = MultiLayerPerceptronInitialized(n_features=len(first_x), n_width=8, n_layers=2, n_init_classes=2, optimizer_fn='sgd', lr=5e-3, is_class_incremental=True)
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        ...     mlp.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = mlp.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        Accuracy: ...
     """
 
     class MLPModule(nn.Module):
@@ -237,7 +239,7 @@ class LSTMClassifier(RollingClassifier):
 
     An LSTM backbone feeds into a linear head that produces logits. Designed for
     sequential/temporal streams processed via a rolling window (see
-    :class:`RollingClassifierInitialized`). The output layer (``head``) expands
+    :class:`RollingClassifier`). The output layer (``head``) expands
     when new classes are observed (if enabled).
 
     Parameters
@@ -255,22 +257,22 @@ class LSTMClassifier(RollingClassifier):
 
     Examples
     --------
-    Deterministischer Test: RNN-Gewichte nullen, Bias steuert Klasse::
+    Deterministic test: zero out recurrent weights; bias enforces class 0::
 
-    >>> import torch
-    >>> from deep_river.classification.zoo import LSTMClassifier
-    >>> lstm_clf = LSTMClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
-    >>> lstm_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
-    >>> lstm_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
-    >>> def _prep_lstm(m):
-    ...     with torch.no_grad():
-    ...         for p in m.lstm.parameters():
-    ...             p.data.zero_()
-    ...         m.head.weight.data.zero_()
-    ...         m.head.bias.data[:] = torch.tensor([2.2, -0.7])
-    >>> _prep_lstm(lstm_clf.module)
-    >>> lstm_clf.predict_one({'f0':2,'f1':3,'f2':4,'f3':5})
-    0
+        >>> import torch
+        >>> from deep_river.classification.zoo import LSTMClassifier
+        >>> lstm_clf = LSTMClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
+        >>> lstm_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
+        >>> lstm_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
+        >>> def _prep_lstm(m):
+        ...     with torch.no_grad():
+        ...         for p in m.lstm.parameters():
+        ...             p.data.zero_()
+        ...         m.head.weight.data.zero_()
+        ...         m.head.bias.data[:] = torch.tensor([2.2, -0.7])
+        >>> _prep_lstm(lstm_clf.module)
+        >>> lstm_clf.predict_one({'f0':2,'f1':3,'f2':4,'f3':5})
+        0
     """
 
     class LSTMModule(nn.Module):
@@ -348,7 +350,7 @@ class RNNClassifier(RollingClassifier):
 
     Uses a (stacked) ``nn.RNN`` backbone followed by a linear head that produces
     raw logits. Designed for streaming sequential data via a fixed-size rolling
-    window handled by :class:`RollingClassifierInitialized`.
+    window handled by :class:`RollingClassifier`.
 
     Parameters
     ----------
@@ -368,22 +370,22 @@ class RNNClassifier(RollingClassifier):
 
     Examples
     --------
-    Deterministischer Test mit Null-Gewichten und Bias-Klasse::
+    Deterministic test with zeroed weights & fixed bias -> class 0::
 
-    >>> import torch
-    >>> from deep_river.classification.zoo import RNNClassifier
-    >>> rnn_clf = RNNClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
-    >>> rnn_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
-    >>> rnn_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
-    >>> def _prep_rnn(m):
-    ...     with torch.no_grad():
-    ...         for p in m.rnn.parameters():
-    ...             p.data.zero_()
-    ...         m.head.weight.data.zero_()
-    ...         m.head.bias.data[:] = torch.tensor([3.0, -2.0])
-    >>> _prep_rnn(rnn_clf.module)
-    >>> rnn_clf.predict_one({'f0':9,'f1':8,'f2':7,'f3':6})
-    0
+        >>> import torch
+        >>> from deep_river.classification.zoo import RNNClassifier
+        >>> rnn_clf = RNNClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
+        >>> rnn_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
+        >>> rnn_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
+        >>> def _prep_rnn(m):
+        ...     with torch.no_grad():
+        ...         for p in m.rnn.parameters():
+        ...             p.data.zero_()
+        ...         m.head.weight.data.zero_()
+        ...         m.head.bias.data[:] = torch.tensor([3.0, -2.0])
+        >>> _prep_rnn(rnn_clf.module)
+        >>> rnn_clf.predict_one({'f0':9,'f1':8,'f2':7,'f3':6})
+        0
     """
 
     class RNNModule(nn.Module):

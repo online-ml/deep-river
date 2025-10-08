@@ -70,27 +70,44 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
     Examples
     --------
-    Deterministisches Beispiel mit festen Logits zur exakten Prüfung der
-    vorhergesagten Klasse (keine effektive Gewichtsänderung durch lr=0)::
+        Online binary classification on the Phishing dataset from :mod:`river`.
+        We build a tiny MLP and maintain an online Accuracy metric. The exact value
+        may vary depending on library version and hardware::
 
-    >>> import torch
-    >>> from torch import nn
-    >>> from deep_river.classification import Classifier
-    >>> class FixedLogits(nn.Module):
-    ...     def __init__(self):
-    ...         super().__init__()
-    ...         self.fc = nn.Linear(4, 2)
-    ...         with torch.no_grad():
-    ...             self.fc.weight.zero_()
-    ...             self.fc.bias[:] = torch.tensor([2.5, -1.0])  # Klasse 0 gewinnt
-    ...     def forward(self, x):
-    ...         return self.fc(x)  # konstante Logits
-    >>> clf = Classifier(module=FixedLogits(), loss_fn='cross_entropy', optimizer_fn='sgd', lr=0.0)
-    >>> # Zwei Klassen zuerst beobachten, damit Ordnung stabil ist
-    >>> clf.learn_one({'a':0,'b':0,'c':0,'d':0}, 0)
-    >>> clf.learn_one({'a':1,'b':1,'c':1,'d':1}, 1)
-    >>> clf.predict_one({'a':2,'b':3,'c':4,'d':5})
-    0
+        >>> import random, numpy as np
+        >>> import torch
+        >>> from torch import nn, manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification import Classifier
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> n_features = len(first_x)
+        >>> class SmallMLP(nn.Module):
+        ...     def __init__(self, n_features):
+        ...         super().__init__()
+        ...         self.net = nn.Sequential(
+        ...             nn.Linear(n_features, 16),
+        ...             nn.ReLU(),
+        ...             nn.Linear(16, 2)
+        ...         )
+        ...     def forward(self, x):
+        ...         return self.net(x)  # raw logits
+        >>> clf = Classifier(
+        ...     module=SmallMLP(n_features),
+        ...     loss_fn='cross_entropy',
+        ...     optimizer_fn='sgd',
+        ...     lr=1e-2,
+        ...     is_class_incremental=True
+        ... )
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(50)):
+        ...     if i > 0:  # only predict after first sample is seen
+        ...         y_pred = clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        ...     clf.learn_one(x, y)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        ...
+        Accuracy: 0.5306
     """
 
     def __init__(

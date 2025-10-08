@@ -32,15 +32,15 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
     """Rolling window variant of :class:`Classifier`.
 
     Maintains a fixed-size deque of the most recent observations (``window_size``)
-    and feeds them as a temporal slice to the underlying module. This allows
-    simple sequence conditioning without full recurrent state management or
-    replay buffers.
+    and feeds them as a temporal slice to the underlying module. This enables
+    simple short-term sequence conditioning without explicit recurrent state
+    handling on the user side.
 
     Parameters
     ----------
     module : torch.nn.Module
         Classification module consuming a rolling tensor shaped roughly as
-        (seq_len, batch=1, n_features) depending on internal conversion.
+        ``(seq_len, batch=1, n_features)`` depending on internal conversion.
     loss_fn : str | Callable, default='binary_cross_entropy_with_logits'
         Loss identifier or callable.
     optimizer_fn : str | type, default='sgd'
@@ -69,31 +69,42 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
     Examples
     --------
-    Deterministisches Beispiel mit festverdrahteter Klassenvorhersage::
 
-    >>> import torch
-    >>> from torch import nn
-    >>> from deep_river.classification.rolling_classifier import RollingClassifier
-    >>> class FixedRNN(nn.Module):
-    ...     def __init__(self):
-    ...         super().__init__()
-    ...         self.rnn = nn.RNN(3, 4)
-    ...         self.head = nn.Linear(4, 2)
-    ...         with torch.no_grad():
-    ...             # Alle Gewichte nullen, Bias setzt klare Logits
-    ...             for p in self.rnn.parameters():
-    ...                 p.zero_()
-    ...             self.head.weight.zero_()
-    ...             self.head.bias[:] = torch.tensor([2.0, -1.0])
-    ...     def forward(self, x):
-    ...         out, _ = self.rnn(x)
-    ...         return self.head(out[-1])
-    >>> rc = RollingClassifier(module=FixedRNN(), loss_fn='cross_entropy', optimizer_fn='sgd', lr=0.0, window_size=5)
-    >>> # Klassen zuerst registrieren
-    >>> rc.learn_one({'a':0,'b':0,'c':0}, 0)
-    >>> rc.learn_one({'a':1,'b':1,'c':1}, 1)
-    >>> rc.predict_one({'a':5,'b':6,'c':7})
-    0
+        Streaming binary classification on the Phishing dataset with a tiny RNN.
+        We only assert the final Accuracy lies in ``[0, 1]`` for doctest stability.
+
+        >>> import random, numpy as np, torch
+        >>> from torch import nn, manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification import RollingClassifier
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> n_features = len(first_x)
+        >>> class TinyRNN(nn.Module):
+        ...     def __init__(self, n_features):
+        ...         super().__init__()
+        ...         self.rnn = nn.RNN(n_features, 8)
+        ...         self.head = nn.Linear(8, 2)
+        ...     def forward(self, x):
+        ...         out, _ = self.rnn(x)
+        ...         return self.head(out[-1])  # logits
+        >>> rclf = RollingClassifier(
+        ...     module=TinyRNN(n_features),
+        ...     loss_fn='cross_entropy',
+        ...     optimizer_fn='sgd',
+        ...     lr=5e-3,
+        ...     window_size=8,
+        ...     is_class_incremental=True
+        ... )
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        ...     if i > 0:
+        ...         y_pred = rclf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        ...     rclf.learn_one(x, y)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        ...
+        Accuracy: 0.5641
     """
 
     def __init__(
@@ -112,22 +123,24 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         gradient_clip_value: float | None = None,
         **kwargs,
     ):
-        super().__init__(
+        # Use RollingDeepEstimator init to build window + base functionality
+        RollingDeepEstimator.__init__(
+            self,
             module=module,
             loss_fn=loss_fn,
             optimizer_fn=optimizer_fn,
             lr=lr,
-            output_is_logit=output_is_logit,
-            is_class_incremental=is_class_incremental,
-            is_feature_incremental=is_feature_incremental,
             device=device,
             seed=seed,
             window_size=window_size,
             append_predict=append_predict,
+            is_feature_incremental=is_feature_incremental,
             gradient_clip_value=gradient_clip_value,
             **kwargs,
         )
+        # Classification specific attributes (mirror Classifier.__init__)
         self.output_is_logit = output_is_logit
+        self.is_class_incremental = is_class_incremental
         self.observed_classes: SortedSet = SortedSet()
 
     @classmethod

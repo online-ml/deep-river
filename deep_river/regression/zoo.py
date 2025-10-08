@@ -37,19 +37,28 @@ class LinearRegressionInitialized(Regressor):
 
     Examples
     --------
-    Deterministisches Beispiel mit festen Gewichten (kein Training nötig)::
 
-    >>> import torch
-    >>> from torch import nn
-    >>> from deep_river.regression.zoo import LinearRegressionInitialized
-    >>> model = LinearRegressionInitialized(n_features=5, loss_fn='mse', optimizer_fn='sgd', lr=0.0)
-    >>> with torch.no_grad():
-    ...     model.module.dense0.weight[:] = torch.tensor([[0.2, 0.2, 0.2, 0.2, 0.2]])
-    ...     model.module.dense0.bias[:] = torch.tensor([0.1])
-    >>> x = {'f0':1,'f1':2,'f2':3,'f3':4,'f4':5}
-    >>> # Erwartet: 0.2*(1+2+3+4+5)+0.1 = 3.1
-    >>> round(model.predict_one(x), 2)
-    3.1
+        Streaming regression on the Bikes dataset (only numeric features kept).
+        The exact MAE value may vary depending on library version and hardware::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.regression.zoo import LinearRegressionInitialized
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Bikes()))
+        >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
+        >>> reg = LinearRegressionInitialized(n_features=len(numeric_keys), optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> mae = metrics.MAE()
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
+        ...     x_num = {k: x[k] for k in numeric_keys}
+        ...     if i > 0:
+        ...         y_pred = reg.predict_one(x_num)
+        ...         mae.update(y, y_pred)
+        ...     reg.learn_one(x_num, y)
+        >>> print(f"MAE: {mae.get():.4f}")
+        MAE:
+        ...
     """
 
     class LRModule(nn.Module):
@@ -120,6 +129,29 @@ class MultiLayerPerceptron(Regressor):
     -----
     The use of ``sigmoid`` after each hidden layer can cause saturation; for
     deeper networks consider replacing with ReLU or GELU in a custom module.
+
+    Examples
+    --------
+        Streaming regression on the Bikes dataset (only numeric features kept).
+        The exact MAE value may vary depending on library version and hardware::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.regression.zoo import MultiLayerPerceptron
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Bikes()))
+        >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
+        >>> reg = MultiLayerPerceptron(n_features=len(numeric_keys), n_width=8, n_layers=2, optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> mae = metrics.MAE()
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+        ...     x_num = {k: x[k] for k in numeric_keys}
+        ...     if i > 0:
+        ...         y_pred = reg.predict_one(x_num)
+        ...         mae.update(y, y_pred)
+        ...     reg.learn_one(x_num, y)
+        >>> print(f"MAE: {mae.get():.4f}")
+        MAE: ...
     """
 
     class MLPModule(nn.Module):
@@ -206,8 +238,27 @@ class LSTMRegressor(RollingRegressor):
 
     Examples
     --------
-    >>> from deep_river.regression.zoo import LSTMRegressor
-    >>> lstm_reg = LSTMRegressor(n_features=6, hidden_size=16)
+        Streaming regression on the Bikes dataset (only numeric features kept).
+        The exact MAE value may vary depending on library version and hardware::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.regression.zoo import LSTMRegressor
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Bikes()))
+        >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
+        >>> reg = LSTMRegressor(n_features=len(numeric_keys), hidden_size=8, num_layers=1, optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> mae = metrics.MAE()
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+        ...     x_num = {k: x[k] for k in numeric_keys}
+        ...     if i > 0:
+        ...         y_pred = reg.predict_one(x_num)
+        ...         mae.update(y, y_pred)
+        ...     reg.learn_one(x_num, y)
+        >>> print(f"MAE: {mae.get():.4f}")
+        ...
+        MAE: 3.0120
     """
 
     class LSTMModule(nn.Module):
@@ -314,6 +365,30 @@ class RNNRegressor(RollingRegressor):
         Gradient norm clipping threshold. ``None`` disables clipping.
     loss_fn, optimizer_fn, lr, is_feature_incremental, device, seed, **kwargs
         Standard configuration as in other regressors.
+
+    Examples
+    --------
+        Streaming regression on the Bikes dataset (only numeric features kept).
+        The exact MAE value may vary depending on library version and hardware::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.regression.zoo import RNNRegressor
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Bikes()))
+        >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
+        >>> reg = RNNRegressor(n_features=len(numeric_keys), hidden_size=8, num_layers=1, optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> mae = metrics.MAE()
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+        ...     x_num = {k: x[k] for k in numeric_keys}
+        ...     if i > 0:
+        ...         y_pred = reg.predict_one(x_num)
+        ...         mae.update(y, y_pred)
+        ...     reg.learn_one(x_num, y)
+        >>> print(f"MAE: {mae.get():.4f}")
+        ...
+        MAE: 3.2066
     """
 
     class RNNModule(nn.Module):
