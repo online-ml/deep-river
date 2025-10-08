@@ -44,15 +44,18 @@ class LogisticRegressionInitialized(Classifier):
     Examples
     --------
     >>> from deep_river.classification.zoo import LogisticRegressionInitialized
-    >>> from river import datasets, metrics
-    >>> model = LogisticRegressionInitialized(n_features=10)
+    >>> from river import metrics
+    >>> from torch import manual_seed
+    >>> manual_seed(42)
+    >>> model = LogisticRegressionInitialized(n_features=4, n_init_classes=2)
     >>> metric = metrics.Accuracy()
-    >>> for x, y in datasets.Phishing().take(30):  # doctest: +SKIP
+    >>> stream = [({'a': i, 'b': i+1, 'c': i%2, 'd': (i+1)%2}, i % 2) for i in range(8)]
+    >>> for x, y in stream:
     ...     pred = model.predict_one(x)
-    ...     metric.update(y, pred)
     ...     model.learn_one(x, y)
-    >>> round(metric.get(), 4)  # doctest: +SKIP
-    0.70
+    ...     metric.update(y, pred)
+    >>> 0 <= metric.get() <= 1
+    True
     """
 
     class LRModule(nn.Module):
@@ -135,8 +138,11 @@ class MultiLayerPerceptronInitialized(Classifier):
     Examples
     --------
     >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
-    >>> m = MultiLayerPerceptronInitialized(n_features=8, n_width=16, n_layers=3)  # doctest: +SKIP
-    >>> # Use m inside a river pipeline as with any other classifier.
+    >>> from torch import manual_seed
+    >>> manual_seed(42)
+    >>> m = MultiLayerPerceptronInitialized(n_features=8, n_width=16, n_layers=3)
+    >>> hasattr(m, 'module')
+    True
     """
 
     class MLPModule(nn.Module):
@@ -236,8 +242,10 @@ class LSTMClassifier(RollingClassifier):
 
     Examples
     --------
-    >>> from deep_river.classification.zoo import LSTMClassifier  # doctest: +SKIP
-    >>> lstm_clf = LSTMClassifier(n_features=6, hidden_size=8)    # doctest: +SKIP
+    >>> from deep_river.classification.zoo import LSTMClassifier
+    >>> lstm_clf = LSTMClassifier(n_features=6, hidden_size=8)
+    >>> isinstance(lstm_clf, LSTMClassifier)
+    True
     """
 
     class LSTMModule(nn.Module):

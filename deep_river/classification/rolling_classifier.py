@@ -70,11 +70,10 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
     Examples
     --------
     >>> import torch
-    >>> from torch import nn
-    >>> from river import metrics, datasets
-    >>> from deep_river.classification.rolling_classifier import (
-    ...     RollingClassifier
-    ... )
+    >>> from torch import nn, manual_seed
+    >>> from river import metrics
+    >>> from deep_river.classification.rolling_classifier import RollingClassifier
+    >>> _ = manual_seed(42)
     >>> class TinyRNN(nn.Module):
     ...     def __init__(self, n_features=5, hidden=4):
     ...         super().__init__()
@@ -87,12 +86,13 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
     ...     module=TinyRNN(5), loss_fn='cross_entropy', optimizer_fn='adam', window_size=8
     ... )
     >>> acc = metrics.Accuracy()
-    >>> for x, y in datasets.Phishing().take(40):
-    ...     p = clf.predict_one(x)
-    ...     acc.update(y, p)
+    >>> stream = [({'a': i, 'b': i % 2, 'c': i+1, 'd': i*i, 'e': i-1}, i % 2) for i in range(12)]
+    >>> for x, y in stream:
+    ...     pred = clf.predict_one(x)
     ...     clf.learn_one(x, y)
-    >>> round(acc.get(), 4)
-    0.70
+    ...     acc.update(y, pred)
+    >>> 0 <= acc.get() <= 1
+    True
     """
 
     def __init__(

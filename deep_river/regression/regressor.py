@@ -56,23 +56,27 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
 
     Examples
     --------
-    >>> from river import datasets, metrics
-    >>> from deep_river.regression import Regressor
+    Deterministisches Beispiel mit festen Gewichten zur Überprüfung des
+    Vorhersagewertes (keine Trainingsschritte nötig)::
+
+    >>> import torch
     >>> from torch import nn
-    >>> class TinyReg(nn.Module):
-    ...     def __init__(self, n_features=4):
+    >>> from deep_river.regression import Regressor
+    >>> class FixedReg(nn.Module):
+    ...     def __init__(self):
     ...         super().__init__()
-    ...         self.fc = nn.Linear(n_features, 1)
+    ...         self.fc = nn.Linear(4, 1)
+    ...         with torch.no_grad():
+    ...             # Gewichtsmatrix: alle 0.1, Bias: 0.2
+    ...             self.fc.weight[:] = torch.tensor([[0.1, 0.1, 0.1, 0.1]])
+    ...             self.fc.bias[:] = torch.tensor([0.2])
     ...     def forward(self, x):
     ...         return self.fc(x)
-    >>> model = Regressor(module=TinyReg(4), loss_fn='mse', optimizer_fn='sgd')  # doctest: +SKIP
-    >>> metric = metrics.MAE()  # doctest: +SKIP
-    >>> for x, y in datasets.Bikes().take(30):  # doctest: +SKIP
-    ...     yp = model.predict_one(x)
-    ...     metric.update(y, yp)
-    ...     model.learn_one(x, y)
-    >>> round(metric.get(), 2)  # doctest: +SKIP
-    7.50
+    >>> model = Regressor(module=FixedReg(), loss_fn='mse', optimizer_fn='sgd', lr=0.0)
+    >>> x = {'a': 1.0, 'b': 2.0, 'c': 3.0, 'd': 4.0}
+    >>> # Erwarteter Wert: 0.1*(1+2+3+4) + 0.2 = 1.2
+    >>> round(model.predict_one(x), 2)
+    1.2
     """
 
     def __init__(

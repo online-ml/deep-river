@@ -70,31 +70,27 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
     Examples
     --------
-    Basic usage with a custom module::
+    Deterministisches Beispiel mit festen Logits zur exakten Prüfung der
+    vorhergesagten Klasse (keine effektive Gewichtsänderung durch lr=0)::
 
-        >>> from river import metrics, datasets, preprocessing, compose
-        >>> from deep_river.classification import Classifier
-        >>> from torch import nn, manual_seed
-        >>> _ = manual_seed(42)
-        >>> class MyModule(nn.Module):
-        ...     def __init__(self):
-        ...         super().__init__()
-        ...         self.fc1 = nn.Linear(10, 5)
-        ...         self.act = nn.ReLU()
-        ...         self.fc2 = nn.Linear(5, 2)
-        ...     def forward(self, x):
-        ...         return self.fc2(self.act(self.fc1(x)))  # logits
-        >>> pipeline = compose.Pipeline(
-        ...     preprocessing.StandardScaler(),
-        ...     Classifier(module=MyModule(), loss_fn='cross_entropy', optimizer_fn='adam')
-        ... )
-        >>> metric = metrics.Accuracy()
-        >>> for x, y in datasets.Phishing().take(50):
-        ...     y_pred = pipeline.predict_one(x)
-        ...     metric.update(y, y_pred)
-        ...     pipeline.learn_one(x, y)
-        >>> round(metric.get(), 4)  # doctest: +SKIP
-        0.70
+    >>> import torch
+    >>> from torch import nn
+    >>> from deep_river.classification import Classifier
+    >>> class FixedLogits(nn.Module):
+    ...     def __init__(self):
+    ...         super().__init__()
+    ...         self.fc = nn.Linear(4, 2)
+    ...         with torch.no_grad():
+    ...             self.fc.weight.zero_()
+    ...             self.fc.bias[:] = torch.tensor([2.5, -1.0])  # Klasse 0 gewinnt
+    ...     def forward(self, x):
+    ...         return self.fc(x)  # konstante Logits
+    >>> clf = Classifier(module=FixedLogits(), loss_fn='cross_entropy', optimizer_fn='sgd', lr=0.0)
+    >>> # Zwei Klassen zuerst beobachten, damit Ordnung stabil ist
+    >>> clf.learn_one({'a':0,'b':0,'c':0,'d':0}, 0)
+    >>> clf.learn_one({'a':1,'b':1,'c':1,'d':1}, 1)
+    >>> clf.predict_one({'a':2,'b':3,'c':4,'d':5})
+    0
     """
 
     def __init__(

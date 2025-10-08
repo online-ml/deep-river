@@ -92,6 +92,13 @@ ignore_missing_imports = true
 [tool.isort]
 profile = "black"
 
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --doctest-continue-on-failure -q"
+testpaths = ["deep_river", "tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]
+
 [dependency-groups]
 dev = [
     "black>=25.1.0",

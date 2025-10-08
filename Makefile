@@ -27,5 +27,6 @@ rebase:
 	git fetch && git rebase origin/master
 
 clean:
-	rm -rf .venv/
-	rm -f uv.lock
+	 rm -rf .venv/
+	 rm -f uv.lock
+	 rm -rf htmlcov .coverage coverage.xml

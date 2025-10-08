@@ -59,9 +59,10 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
     Examples
     --------
     >>> import torch
-    >>> from torch import nn
-    >>> from deep_river.regression.rolling_regressor import RollingRegressor  # doctest: +SKIP
-    >>> class TinySeq(nn.Module):  # doctest: +SKIP
+    >>> from torch import nn, manual_seed
+    >>> from deep_river.regression.rolling_regressor import RollingRegressor
+    >>> manual_seed(42)
+    >>> class TinySeq(nn.Module):
     ...     def __init__(self, n_features=4):
     ...         super().__init__()
     ...         self.rnn = nn.GRU(n_features, 8)
@@ -69,7 +70,10 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
     ...     def forward(self, x):  # x: (seq_len, batch, features)
     ...         out, _ = self.rnn(x)
     ...         return self.head(out[-1])
-    >>> rr = RollingRegressor(module=TinySeq(4), window_size=5)  # doctest: +SKIP
+    >>> rr = RollingRegressor(module=TinySeq(4), window_size=5)
+    >>> stream = [({'a': i, 'b': i+1, 'c': i+2, 'd': i+3}, float(i)) for i in range(6)]
+    >>> for x, y in stream:  # basic usage without asserting output
+    ...     rr.learn_one(x, y)
     """
 
     def __init__(
