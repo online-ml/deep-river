@@ -70,31 +70,44 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
 
     Examples
     --------
-    Basic usage with a custom module::
+        Online binary classification on the Phishing dataset from :mod:`river`.
+        We build a tiny MLP and maintain an online Accuracy metric. The exact value
+        may vary depending on library version and hardware::
 
-        >>> from river import metrics, datasets, preprocessing, compose
-        >>> from deep_river.classification import Classifier
+        >>> import random, numpy as np
+        >>> import torch
         >>> from torch import nn, manual_seed
-        >>> _ = manual_seed(42)
-        >>> class MyModule(nn.Module):
-        ...     def __init__(self):
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification import Classifier
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> n_features = len(first_x)
+        >>> class SmallMLP(nn.Module):
+        ...     def __init__(self, n_features):
         ...         super().__init__()
-        ...         self.fc1 = nn.Linear(10, 5)
-        ...         self.act = nn.ReLU()
-        ...         self.fc2 = nn.Linear(5, 2)
+        ...         self.net = nn.Sequential(
+        ...             nn.Linear(n_features, 16),
+        ...             nn.ReLU(),
+        ...             nn.Linear(16, 2)
+        ...         )
         ...     def forward(self, x):
-        ...         return self.fc2(self.act(self.fc1(x)))  # logits
-        >>> pipeline = compose.Pipeline(
-        ...     preprocessing.StandardScaler(),
-        ...     Classifier(module=MyModule(), loss_fn='cross_entropy', optimizer_fn='adam')
+        ...         return self.net(x)  # raw logits
+        >>> clf = Classifier(
+        ...     module=SmallMLP(n_features),
+        ...     loss_fn='cross_entropy',
+        ...     optimizer_fn='sgd',
+        ...     lr=1e-2,
+        ...     is_class_incremental=True
         ... )
-        >>> metric = metrics.Accuracy()
-        >>> for x, y in datasets.Phishing().take(50):
-        ...     y_pred = pipeline.predict_one(x)
-        ...     metric.update(y, y_pred)
-        ...     pipeline.learn_one(x, y)
-        >>> round(metric.get(), 4)  # doctest: +SKIP
-        0.70
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
+        ...     if i > 0:  # only predict after first sample is seen
+        ...         y_pred = clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        ...     clf.learn_one(x, y)
+        >>> print(f"Accuracy: {acc.get():.4f}")  # doctest: +ELLIPSIS
+        Accuracy: ...
+
     """
 
     def __init__(

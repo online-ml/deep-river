@@ -164,18 +164,6 @@ def check_model_persistence(model, dataset):
 def check_model_persistence_untrained(model):
     """Test that an untrained model can be saved and loaded preserving its state."""
     # Skip persistence checks for problematic model types
-    model_name = type(model).__name__
-    skip_patterns = [
-        "LSTMClassifierInitialized",
-        "LogisticRegressionInitialized",
-        "MultiLayerPerceptronInitialized",
-        "RollingClassifierInitialized",
-        "MultiTargetRegressorInitialized",
-    ]
-
-    if any(pattern in model_name for pattern in skip_patterns):
-        return  # Skip this check for problematic models
-
     # Create temporary file for saving
     with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
         temp_path = f.name
@@ -225,18 +213,6 @@ def check_model_persistence_untrained(model):
 def check_model_persistence_with_custom_kwargs(model):
     """Test saving models with custom keyword arguments."""
     # Skip for problematic models
-    model_name = type(model).__name__
-    skip_patterns = [
-        "LSTMClassifierInitialized",
-        "LogisticRegressionInitialized",
-        "MultiLayerPerceptronInitialized",
-        "RollingClassifierInitialized",
-        "MultiTargetRegressorInitialized",
-    ]
-
-    if any(pattern in model_name for pattern in skip_patterns):
-        return
-
     # Only test if model has custom kwargs
     if not hasattr(model, "kwargs") or not model.kwargs:
         return
@@ -262,6 +238,7 @@ def check_model_persistence_with_custom_kwargs(model):
             return  # Skip if loading fails
 
     finally:
+        # Clean up temporary file
         if Path(temp_path).exists():
             Path(temp_path).unlink()
 
@@ -270,19 +247,6 @@ def check_feature_incremental_preservation(model):
     """Test that feature incremental settings are preserved."""
     # Only test models that support feature incremental learning
     if not hasattr(model, "is_feature_incremental"):
-        return
-
-    # Skip for problematic models
-    model_name = type(model).__name__
-    skip_patterns = [
-        "LSTMClassifierInitialized",
-        "LogisticRegressionInitialized",
-        "MultiLayerPerceptronInitialized",
-        "RollingClassifierInitialized",
-        "MultiTargetRegressorInitialized",
-    ]
-
-    if any(pattern in model_name for pattern in skip_patterns):
         return
 
     with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:

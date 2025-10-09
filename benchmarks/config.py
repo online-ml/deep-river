@@ -1,8 +1,8 @@
 from river import (dummy, linear_model, neural_net, optim,
                    preprocessing, stats)
 
-from deep_river.classification.zoo import LogisticRegressionInitialized, MultiLayerPerceptronInitialized as ClassificationMLP, LSTMClassifier, RNNClassifier
-from deep_river.regression.zoo import LinearRegressionInitialized, MultiLayerPerceptron as RegressionMLP, LSTMRegressor, RNNRegressor
+from deep_river.classification.zoo import LogisticRegression, MultiLayerPerceptron as ClassificationMLP, LSTMClassifier, RNNClassifier
+from deep_river.regression.zoo import LinearRegression, MultiLayerPerceptron as RegressionMLP, LSTMRegressor, RNNRegressor
 from tracks import BinaryClassificationTrack, MultiClassClassificationTrack, RegressionTrack
 
 N_CHECKPOINTS = 50
@@ -25,8 +25,8 @@ MODELS = {
             )
         ),
         "Deep River Logistic": (
-            preprocessing.StandardScaler()
-            | LogisticRegressionInitialized(
+                preprocessing.StandardScaler()
+                | LogisticRegression(
                 loss_fn="cross_entropy",
                 optimizer_fn="sgd",
                 is_class_incremental=True,
@@ -80,8 +80,8 @@ MODELS = {
             )
         ),
         "Deep River Logistic": (
-            preprocessing.StandardScaler()
-            | LogisticRegressionInitialized(
+                preprocessing.StandardScaler()
+                | LogisticRegression(
                 loss_fn="cross_entropy",
                 optimizer_fn="sgd",
                 is_class_incremental=True,
@@ -135,8 +135,8 @@ MODELS = {
             )
         ),
         "Deep River Linear": (
-            preprocessing.StandardScaler()
-            | LinearRegressionInitialized(
+                preprocessing.StandardScaler()
+                | LinearRegression(
                 loss_fn="mse",
                 optimizer_fn="sgd",
                 lr=LEARNING_RATE,

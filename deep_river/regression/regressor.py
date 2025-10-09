@@ -56,23 +56,40 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
 
     Examples
     --------
+        Real-world streaming regression on the Bikes dataset from :mod:`river`.
+        We retain only numeric features (discarding timestamps/strings) to build
+        dense tensors. We maintain an online MAE; the exact value may vary depending
+        on library version and hardware.
+
+    >>> import random, numpy as np
+    >>> import torch
+    >>> from torch import nn, manual_seed
     >>> from river import datasets, metrics
     >>> from deep_river.regression import Regressor
-    >>> from torch import nn
-    >>> class TinyReg(nn.Module):
-    ...     def __init__(self, n_features=4):
+    >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+    >>> first_x, _ = next(iter(datasets.Bikes()))
+    >>> numeric_keys = sorted([k for k, v in first_x.items() if isinstance(v, (int, float))])
+    >>> class SmallNet(nn.Module):
+    ...     def __init__(self, n_features):
     ...         super().__init__()
-    ...         self.fc = nn.Linear(n_features, 1)
+    ...         self.net = nn.Sequential(
+    ...             nn.Linear(n_features, 8),
+    ...             nn.ReLU(),
+    ...             nn.Linear(8, 1)
+    ...         )
     ...     def forward(self, x):
-    ...         return self.fc(x)
-    >>> model = Regressor(module=TinyReg(4), loss_fn='mse', optimizer_fn='sgd')  # doctest: +SKIP
-    >>> metric = metrics.MAE()  # doctest: +SKIP
-    >>> for x, y in datasets.Bikes().take(30):  # doctest: +SKIP
-    ...     yp = model.predict_one(x)
-    ...     metric.update(y, yp)
-    ...     model.learn_one(x, y)
-    >>> round(metric.get(), 2)  # doctest: +SKIP
-    7.50
+    ...         return self.net(x)
+    >>> model = Regressor(module=SmallNet(len(numeric_keys)), loss_fn='mse',
+    ...                     optimizer_fn='sgd', lr=1e-2)
+    >>> mae = metrics.MAE()
+    >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
+    ...     x_num = {k: x[k] for k in numeric_keys}
+    ...     y_pred = model.predict_one(x_num)
+    ...     model.learn_one(x_num, y)
+    ...     mae.update(y, y_pred)
+    >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
+    MAE: ...
+
     """
 
     def __init__(

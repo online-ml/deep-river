@@ -20,7 +20,7 @@ jobs:
       matrix:
         python: ['3.10', '3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
-        river: ['0.21.1', '0.22.0']
+        river: ['0.22.0']
 
     steps:
       - uses: actions/checkout@v4
@@ -49,7 +49,7 @@ jobs:
           uv sync --all-extras
 
       - name: Download datasets
-        run: uv run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+        run: uv run python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
       - name: Run tests (generate coverage.xml)
         run: |

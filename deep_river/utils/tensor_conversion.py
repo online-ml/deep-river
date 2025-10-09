@@ -1,3 +1,4 @@
+import math
 from typing import Deque, Dict, Hashable, List, Optional, Union
 
 import numpy as np
@@ -11,7 +12,7 @@ from sortedcontainers import SortedSet
 def dict2tensor(
     x: dict,
     features: SortedSet,
-    default_value: float = 0,
+    default_value: float = 0.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float32,
 ) -> torch.Tensor:
@@ -35,11 +36,16 @@ def dict2tensor(
     -------
         torch.Tensor
     """
-    return torch.tensor(
-        [[x.get(feature, default_value) for feature in features]],
-        device=device,
-        dtype=dtype,
-    )
+    row = []
+    for feature in features:
+        val = x.get(feature, default_value)
+        # Replace None/NaN with default_value to prevent NaNs propagating
+        if val is None:
+            val = default_value
+        elif isinstance(val, float) and math.isnan(val):
+            val = default_value
+        row.append(val)
+    return torch.tensor([row], device=device, dtype=dtype)
 
 
 def float2tensor(
@@ -95,7 +101,7 @@ def deque2rolling_tensor(
 def df2tensor(
     X: pd.DataFrame,
     features: SortedSet,
-    default_value: float = 0,
+    default_value: float = 0.0,
     device="cpu",
     dtype=torch.float32,
 ) -> torch.Tensor:
@@ -118,15 +124,21 @@ def df2tensor(
     -------
         torch.Tensor
     """
+    # Work on a shallow copy to avoid mutating caller's DataFrame
+    X_local = X.copy()
     for feature in features:
-        if feature not in X.columns:
-            X[feature] = default_value
-    return torch.tensor(X[list(features)].values, device=device, dtype=dtype)
+        if feature not in X_local.columns:
+            X_local[feature] = default_value
+    cols = list(features)
+    # Replace NaNs in selected columns by default_value
+    if len(cols) > 0:
+        X_local[cols] = X_local[cols].fillna(default_value)
+    return torch.tensor(X_local[cols].values, device=device, dtype=dtype)
 
 
 def labels2onehot(
     y: Union[base.typing.ClfTarget, pd.Series],
-    classes: SortedSet[base.typing.ClfTarget],
+    classes: SortedSet,
     n_classes: Optional[int] = None,
     device="cpu",
     dtype=torch.float32,
@@ -226,7 +238,7 @@ def output2proba(
         if n_classes == 0:
             labels: List[Hashable] = [0, 1]
         else:
-            primary = list(classes)[0]
+            primary = next(iter(classes))
             labels = [primary, "Unobserved0"]  # mixed types intentional
         return [dict(zip(labels, row.astype("float64"))) for row in probs]
 

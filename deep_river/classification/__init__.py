@@ -3,9 +3,9 @@ from deep_river.classification.rolling_classifier import (
     RollingClassifier,
 )
 from deep_river.classification.zoo import (
-    LogisticRegressionInitialized,
+    LogisticRegression,
     LSTMClassifier,
-    MultiLayerPerceptronInitialized,
+    MultiLayerPerceptron,
     RNNClassifier,
 )
 
@@ -15,8 +15,8 @@ This module contains the classifiers for the deep_river package.
 __all__ = [
     "Classifier",
     "RollingClassifier",
-    "LogisticRegressionInitialized",
-    "MultiLayerPerceptronInitialized",
+    "LogisticRegression",
+    "MultiLayerPerceptron",
     "LSTMClassifier",
     "RNNClassifier",
 ]

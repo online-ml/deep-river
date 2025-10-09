@@ -58,18 +58,41 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
 
     Examples
     --------
-    >>> import torch
-    >>> from torch import nn
-    >>> from deep_river.regression.rolling_regressor import RollingRegressor  # doctest: +SKIP
-    >>> class TinySeq(nn.Module):  # doctest: +SKIP
-    ...     def __init__(self, n_features=4):
+        Real-world regression example using the Bikes dataset from river. We keep only
+        the numeric features so the rolling tensor construction succeeds. A small GRU
+        is trained online and we track a running MAE. The exact value may vary across
+        library versions and hardware.
+
+    >>> import random, numpy as np
+    >>> from torch import nn, manual_seed
+    >>> from river import datasets, metrics
+    >>> from deep_river.regression.rolling_regressor import RollingRegressor
+    >>> _ = manual_seed(42)
+    >>> random.seed(42)
+    >>> np.random.seed(42)
+    >>> first_x, _ = next(iter(datasets.Bikes()))
+    >>> numeric_keys = sorted([k for k, v in first_x.items() if isinstance(v, (int, float))])
+    >>> class TinySeq(nn.Module):
+    ...     def __init__(self, n_features):
     ...         super().__init__()
     ...         self.rnn = nn.GRU(n_features, 8)
     ...         self.head = nn.Linear(8, 1)
-    ...     def forward(self, x):  # x: (seq_len, batch, features)
+    ...     def forward(self, x):
     ...         out, _ = self.rnn(x)
     ...         return self.head(out[-1])
-    >>> rr = RollingRegressor(module=TinySeq(4), window_size=5)  # doctest: +SKIP
+    >>> model = RollingRegressor(module=TinySeq(len(numeric_keys)), window_size=8)
+    >>> mae = metrics.MAE()
+    >>> window_size = 8
+    >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
+    ...     x_num = {k: x[k] for k in numeric_keys}
+    ...     if i >= window_size:
+    ...         y_pred = model.predict_one(x_num)
+    ...         mae.update(y, y_pred)
+    ...     model.learn_one(x_num, y)
+    >>> assert 0.0 <= mae.get() < 15.0
+    >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
+    MAE: ...
+
     """
 
     def __init__(

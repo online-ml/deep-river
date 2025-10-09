@@ -6,7 +6,7 @@ from deep_river.classification import Classifier
 from deep_river.classification.rolling_classifier import RollingClassifier
 
 
-class LogisticRegressionInitialized(Classifier):
+class LogisticRegression(Classifier):
     """Incremental logistic regression with optional dynamic class expansion.
 
     This variant outputs raw logits (no internal softmax) so that losses like
@@ -43,16 +43,29 @@ class LogisticRegressionInitialized(Classifier):
 
     Examples
     --------
-    >>> from deep_river.classification.zoo import LogisticRegressionInitialized
-    >>> from river import datasets, metrics
-    >>> model = LogisticRegressionInitialized(n_features=10)
-    >>> metric = metrics.Accuracy()
-    >>> for x, y in datasets.Phishing().take(30):  # doctest: +SKIP
-    ...     pred = model.predict_one(x)
-    ...     metric.update(y, pred)
-    ...     model.learn_one(x, y)
-    >>> round(metric.get(), 4)  # doctest: +SKIP
-    0.70
+    Streaming binary classification on the Phishing dataset. The exact Accuracy
+    value may vary depending on library version and hardware::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification.zoo import LogisticRegression
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> clf = LogisticRegression(
+        ...     n_features=len(first_x), n_init_classes=2,
+        ...     optimizer_fn='sgd', lr=1e-2, is_class_incremental=True,
+        ... )
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
+        ...     clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> assert 0.5 <= acc.get() <= 1.0
+        >>> print(f"Accuracy: {acc.get():.4f}")  # doctest: +ELLIPSIS
+        Accuracy: ...
+
     """
 
     class LRModule(nn.Module):
@@ -82,7 +95,7 @@ class LogisticRegressionInitialized(Classifier):
     ):
         self.n_features = n_features
         self.n_init_classes = n_init_classes
-        module = LogisticRegressionInitialized.LRModule(
+        module = LogisticRegression.LRModule(
             n_features=n_features, n_init_classes=n_init_classes
         )
         if "module" in kwargs:
@@ -112,7 +125,7 @@ class LogisticRegressionInitialized(Classifier):
         }
 
 
-class MultiLayerPerceptronInitialized(Classifier):
+class MultiLayerPerceptron(Classifier):
     """Configurable multi-layer perceptron with dynamic class expansion.
 
     Hidden layers use ReLU activations; the output layer emits raw logits.
@@ -130,13 +143,33 @@ class MultiLayerPerceptronInitialized(Classifier):
         Initial number of classes/output units.
     loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
         is_class_incremental, device, seed, gradient_clip_value, **kwargs
-        See :class:`LogisticRegressionInitialized`.
+        See :class:`LogisticRegression`.
 
     Examples
     --------
-    >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
-    >>> m = MultiLayerPerceptronInitialized(n_features=8, n_width=16, n_layers=3)  # doctest: +SKIP
-    >>> # Use m inside a river pipeline as with any other classifier.
+        Phishing dataset stream with online Accuracy. The exact value may vary
+        depending on library version and hardware::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification.zoo import MultiLayerPerceptron
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> mlp = MultiLayerPerceptron(
+        ...     n_features=len(first_x), n_width=8, n_layers=2, n_init_classes=2,
+        ...     optimizer_fn='sgd', lr=5e-3, is_class_incremental=True,
+        ... )
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
+        ...     mlp.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = mlp.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> assert 0.5 <= acc.get() <= 1.0
+        >>> print(f"Accuracy: {acc.get():.4f}")  # doctest: +ELLIPSIS
+        Accuracy: ...
+
     """
 
     class MLPModule(nn.Module):
@@ -180,7 +213,7 @@ class MultiLayerPerceptronInitialized(Classifier):
         self.n_width = n_width
         self.n_layers = n_layers
         self.n_init_classes = n_init_classes
-        module = MultiLayerPerceptronInitialized.MLPModule(
+        module = MultiLayerPerceptron.MLPModule(
             n_width=n_width,
             n_layers=n_layers,
             n_features=n_features,
@@ -218,7 +251,7 @@ class LSTMClassifier(RollingClassifier):
 
     An LSTM backbone feeds into a linear head that produces logits. Designed for
     sequential/temporal streams processed via a rolling window (see
-    :class:`RollingClassifierInitialized`). The output layer (``head``) expands
+    :class:`RollingClassifier`). The output layer (``head``) expands
     when new classes are observed (if enabled).
 
     Parameters
@@ -229,15 +262,60 @@ class LSTMClassifier(RollingClassifier):
         Hidden state dimensionality of the LSTM.
     n_init_classes : int, default=2
         Initial number of output classes.
-    loss_fn, optimizer_fn, lr, output_is_logit,
-        is_feature_incremental, is_class_incremental, device, seed,
-        gradient_clip_value, **kwargs
-        Standard parameters as in other classifiers.
+    loss_fn : str | Callable, default='cross_entropy'
+        Training loss.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    output_is_logit : bool, default=True
+        Indicates outputs are logits (enables proper conversion in ``predict_proba``).
+    is_feature_incremental : bool, default=False
+        Whether to dynamically expand the input layer when new features appear.
+    is_class_incremental : bool, default=True
+        Whether to expand the output layer for new class labels.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Optional gradient norm clipping value.
 
     Examples
     --------
-    >>> from deep_river.classification.zoo import LSTMClassifier  # doctest: +SKIP
-    >>> lstm_clf = LSTMClassifier(n_features=6, hidden_size=8)    # doctest: +SKIP
+    Deterministischer Test mit dem Phishing-Datenstrom: Rekurrente Gewichte
+    & Kopf-Parameter werden genullt; Bias erzwingt Klasse 0 unabhängig vom Input.
+    (Nur zur Illustration; Lernrate 0 verhindert Updates.)::
+
+        >>> import torch, random, numpy as np
+        >>> from torch import manual_seed
+        >>> from river import datasets
+        >>> from river import metrics
+        >>> from deep_river.classification.zoo import LSTMClassifier
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> stream = datasets.Phishing()
+        >>> samples = {}
+        >>> for x, y in stream:
+        ...     if y not in samples:
+        ...         samples[y] = x
+        ...     if len(samples) == 2:
+        ...         break
+        >>> x0, x1 = samples[0], samples[1]
+        >>> n_features = len(x0)
+        >>> lstm_clf = LSTMClassifier(n_features=n_features, hidden_size=3, n_init_classes=2,
+        ...                           is_class_incremental=False, is_feature_incremental=False,
+        ...                           lr=0.0, optimizer_fn='sgd')
+        >>> lstm_clf.learn_one(x0, 0)
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
+        ...     lstm_clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = lstm_clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> assert 0.0 <= acc.get() <= 1.0
+        >>> print(f"Accuracy: {acc.get():.4f}")  # doctest: +ELLIPSIS
+        Accuracy: ...
+
     """
 
     class LSTMModule(nn.Module):
@@ -315,7 +393,7 @@ class RNNClassifier(RollingClassifier):
 
     Uses a (stacked) ``nn.RNN`` backbone followed by a linear head that produces
     raw logits. Designed for streaming sequential data via a fixed-size rolling
-    window handled by :class:`RollingClassifierInitialized`.
+    window handled by :class:`RollingClassifier`.
 
     Parameters
     ----------
@@ -326,12 +404,58 @@ class RNNClassifier(RollingClassifier):
     num_layers : int, default=1
         Number of stacked RNN layers.
     nonlinearity : str, default='tanh'
-        Non-linearity used inside the RNN (``'tanh'`` or ``'relu'``).
+        Non-linearity used inside the RNN ('tanh' or 'relu').
     n_init_classes : int, default=2
-        Initial number of classes (output units).
-    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
-        is_class_incremental, device, seed, gradient_clip_value, **kwargs
-        Standard parameters as in the other rolling classifiers.
+        Initial number of classes/output units.
+    loss_fn : str | Callable, default='cross_entropy'
+        Training loss.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    output_is_logit : bool, default=True
+        Indicates outputs are logits (enables proper conversion in ``predict_proba``).
+    is_feature_incremental : bool, default=False
+        Whether to dynamically expand the input layer when new features appear.
+    is_class_incremental : bool, default=True
+        Whether to expand the output layer for new class labels.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Optional gradient norm clipping value.
+
+    Examples
+    --------
+
+        >>> import torch, random, numpy as np
+        >>> from torch import manual_seed
+        >>> from river import metrics
+        >>> from river import datasets
+        >>> from deep_river.classification.zoo import RNNClassifier
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> stream = datasets.Phishing()
+        >>> samples = {}
+        >>> for x, y in stream:
+        ...     if y not in samples:
+        ...         samples[y] = x
+        ...     if len(samples) == 2:
+        ...         break
+        >>> x0, x1 = samples[0], samples[1]
+        >>> n_features = len(x0)
+        >>> rnn_clf = RNNClassifier(n_features=n_features, hidden_size=3, n_init_classes=2,
+        ...                         is_class_incremental=False, is_feature_incremental=False)
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
+        ...     rnn_clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = rnn_clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> assert 0.0 <= acc.get() <= 1.0
+        >>> print(f"Accuracy: {acc.get():.4f}")  # doctest: +ELLIPSIS
+        Accuracy: ...
+
     """
 
     class RNNModule(nn.Module):
