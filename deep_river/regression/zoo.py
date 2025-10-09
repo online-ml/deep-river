@@ -57,9 +57,9 @@ class LinearRegression(Regressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
-        >>> print(f"MAE: {mae.get():.4f}")
-        ...
-        MAE: ...
+        >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
+        MAE: 6.9567
+
     """
 
     class LRModule(nn.Module):
@@ -79,7 +79,7 @@ class LinearRegression(Regressor):
         is_feature_incremental: bool = False,
         device: str = "cpu",
         seed: int = 42,
-        gradient_clip_value: float | None = None,
+        gradient_clip_value: float | None = 1.0,
         **kwargs,
     ):
         self.n_features = n_features
