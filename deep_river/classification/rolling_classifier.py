@@ -28,7 +28,7 @@ class _TestLSTM(torch.nn.Module):
         return torch.nn.functional.softmax(x, dim=-1)
 
 
-class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
+class RollingClassifier(Classifier, RollingDeepEstimator):
     """Rolling window variant of :class:`Classifier`.
 
     Maintains a fixed-size deque of the most recent observations (``window_size``)
@@ -72,10 +72,10 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
     >>> import torch
     >>> from torch import nn
     >>> from river import metrics, datasets
-    >>> from deep_river.classification.rolling_classifier import (  # doctest: +SKIP
-    ...     RollingClassifierInitialized
+    >>> from deep_river.classification.rolling_classifier import (
+    ...     RollingClassifier
     ... )
-    >>> class TinyRNN(nn.Module):  # doctest: +SKIP
+    >>> class TinyRNN(nn.Module):
     ...     def __init__(self, n_features=5, hidden=4):
     ...         super().__init__()
     ...         self.rnn = nn.RNN(n_features, hidden)
@@ -83,15 +83,15 @@ class RollingClassifierInitialized(Classifier, RollingDeepEstimator):
     ...     def forward(self, x):
     ...         out, _ = self.rnn(x)
     ...         return self.head(out[-1])  # logits
-    >>> clf = RollingClassifierInitialized(  # doctest: +SKIP
+    >>> clf = RollingClassifier(
     ...     module=TinyRNN(5), loss_fn='cross_entropy', optimizer_fn='adam', window_size=8
     ... )
-    >>> acc = metrics.Accuracy()  # doctest: +SKIP
-    >>> for x, y in datasets.Phishing().take(40):  # doctest: +SKIP
+    >>> acc = metrics.Accuracy()
+    >>> for x, y in datasets.Phishing().take(40):
     ...     p = clf.predict_one(x)
     ...     acc.update(y, p)
     ...     clf.learn_one(x, y)
-    >>> round(acc.get(), 4)  # doctest: +SKIP
+    >>> round(acc.get(), 4)
     0.70
     """
 

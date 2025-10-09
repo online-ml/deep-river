@@ -1,11 +1,12 @@
 from deep_river.classification.classifier import Classifier
 from deep_river.classification.rolling_classifier import (
-    RollingClassifierInitialized,
+    RollingClassifier,
 )
 from deep_river.classification.zoo import (
     LogisticRegressionInitialized,
-    LSTMClassifierInitialized,
+    LSTMClassifier,
     MultiLayerPerceptronInitialized,
+    RNNClassifier,
 )
 
 """
@@ -13,8 +14,9 @@ This module contains the classifiers for the deep_river package.
 """
 __all__ = [
     "Classifier",
-    "RollingClassifierInitialized",
+    "RollingClassifier",
     "LogisticRegressionInitialized",
     "MultiLayerPerceptronInitialized",
-    "LSTMClassifierInitialized",
+    "LSTMClassifier",
+    "RNNClassifier",
 ]
