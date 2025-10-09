@@ -6,7 +6,7 @@ from deep_river.classification import Classifier
 from deep_river.classification.rolling_classifier import RollingClassifier
 
 
-class LogisticRegressionInitialized(Classifier):
+class LogisticRegressionIn(Classifier):
     """Incremental logistic regression with optional dynamic class expansion.
 
     This variant outputs raw logits (no internal softmax) so that losses like
@@ -48,10 +48,10 @@ class LogisticRegressionInitialized(Classifier):
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
         >>> from river import datasets, metrics
-        >>> from deep_river.classification.zoo import LogisticRegressionInitialized
+        >>> from deep_river.classification.zoo import LogisticRegressionIn
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Phishing()))
-        >>> clf = LogisticRegressionInitialized(n_features=len(first_x), n_init_classes=2, optimizer_fn='sgd', lr=1e-2, is_class_incremental=True)
+        >>> clf = LogisticRegressionIn(n_features=len(first_x), n_init_classes=2, optimizer_fn='sgd', lr=1e-2, is_class_incremental=True)
         >>> acc = metrics.Accuracy()
         >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
         ...     clf.learn_one(x, y)
@@ -89,7 +89,7 @@ class LogisticRegressionInitialized(Classifier):
     ):
         self.n_features = n_features
         self.n_init_classes = n_init_classes
-        module = LogisticRegressionInitialized.LRModule(
+        module = LogisticRegressionIn.LRModule(
             n_features=n_features, n_init_classes=n_init_classes
         )
         if "module" in kwargs:
@@ -119,7 +119,7 @@ class LogisticRegressionInitialized(Classifier):
         }
 
 
-class MultiLayerPerceptronInitialized(Classifier):
+class MultiLayerPerceptron(Classifier):
     """Configurable multi-layer perceptron with dynamic class expansion.
 
     Hidden layers use ReLU activations; the output layer emits raw logits.
@@ -146,10 +146,10 @@ class MultiLayerPerceptronInitialized(Classifier):
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
         >>> from river import datasets, metrics
-        >>> from deep_river.classification.zoo import MultiLayerPerceptronInitialized
+        >>> from deep_river.classification.zoo import MultiLayerPerceptron
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Phishing()))
-        >>> mlp = MultiLayerPerceptronInitialized(n_features=len(first_x), n_width=8, n_layers=2, n_init_classes=2, optimizer_fn='sgd', lr=5e-3, is_class_incremental=True)
+        >>> mlp = MultiLayerPerceptron(n_features=len(first_x), n_width=8, n_layers=2, n_init_classes=2, optimizer_fn='sgd', lr=5e-3, is_class_incremental=True)
         >>> acc = metrics.Accuracy()
         >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
         ...     mlp.learn_one(x, y)
@@ -157,7 +157,8 @@ class MultiLayerPerceptronInitialized(Classifier):
         ...         y_pred = mlp.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: ...
+        ...
+        Accuracy:
     """
 
     class MLPModule(nn.Module):
@@ -201,7 +202,7 @@ class MultiLayerPerceptronInitialized(Classifier):
         self.n_width = n_width
         self.n_layers = n_layers
         self.n_init_classes = n_init_classes
-        module = MultiLayerPerceptronInitialized.MLPModule(
+        module = MultiLayerPerceptron.MLPModule(
             n_width=n_width,
             n_layers=n_layers,
             n_features=n_features,
@@ -257,21 +258,39 @@ class LSTMClassifier(RollingClassifier):
 
     Examples
     --------
-    Deterministic test: zero out recurrent weights; bias enforces class 0::
+    Deterministischer Test mit dem Phishing-Datenstrom: Rekurrente Gewichte
+    & Kopf-Parameter werden genullt; Bias erzwingt Klasse 0 unabhängig vom Input.
+    (Nur zur Illustration; Lernrate 0 verhindert Updates.)::
 
-        >>> import torch
+        >>> import torch, random, numpy as np
+        >>> from torch import manual_seed
+        >>> from river import datasets
         >>> from deep_river.classification.zoo import LSTMClassifier
-        >>> lstm_clf = LSTMClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
-        >>> lstm_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
-        >>> lstm_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
-        >>> def _prep_lstm(m):
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> stream = datasets.Phishing()
+        >>> # Zwei Beispiele mit Labels 0 und 1 sammeln
+        >>> samples = {}
+        >>> for x, y in stream:  # stream ist deterministisch
+        ...     if y not in samples:
+        ...         samples[y] = x
+        ...     if len(samples) == 2:
+        ...         break
+        >>> x0, x1 = samples[0], samples[1]
+        >>> n_features = len(x0)
+        >>> lstm_clf = LSTMClassifier(n_features=n_features, hidden_size=3, n_init_classes=2,
+        ...                           is_class_incremental=False, is_feature_incremental=False,
+        ...                           lr=0.0, optimizer_fn='sgd')
+        >>> lstm_clf.learn_one(x0, 0)
+        >>> lstm_clf.learn_one(x1, 1)
+        >>> def _prep_lstm(m):  # Parameter nullen & Bias fix setzen
         ...     with torch.no_grad():
         ...         for p in m.lstm.parameters():
         ...             p.data.zero_()
         ...         m.head.weight.data.zero_()
         ...         m.head.bias.data[:] = torch.tensor([2.2, -0.7])
         >>> _prep_lstm(lstm_clf.module)
-        >>> lstm_clf.predict_one({'f0':2,'f1':3,'f2':4,'f3':5})
+        >>> any_x, _ = next(iter(datasets.Phishing().take(1)))  # beliebiges Beispiel
+        >>> lstm_clf.predict_one(any_x)
         0
     """
 
@@ -370,13 +389,28 @@ class RNNClassifier(RollingClassifier):
 
     Examples
     --------
-    Deterministic test with zeroed weights & fixed bias -> class 0::
+    Deterministischer Test mit Phishing-Datenstrom: Gewichte nullen & Bias
+    setzt Entscheidung auf Klasse 0::
 
-        >>> import torch
+        >>> import torch, random, numpy as np
+        >>> from torch import manual_seed
+        >>> from river import datasets
         >>> from deep_river.classification.zoo import RNNClassifier
-        >>> rnn_clf = RNNClassifier(n_features=4, hidden_size=3, n_init_classes=2, is_class_incremental=False, is_feature_incremental=False, lr=0.0, optimizer_fn='sgd')
-        >>> rnn_clf.learn_one({'f0':0,'f1':0,'f2':0,'f3':0}, 0)
-        >>> rnn_clf.learn_one({'f0':1,'f1':1,'f2':1,'f3':1}, 1)
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> stream = datasets.Phishing()
+        >>> samples = {}
+        >>> for x, y in stream:
+        ...     if y not in samples:
+        ...         samples[y] = x
+        ...     if len(samples) == 2:
+        ...         break
+        >>> x0, x1 = samples[0], samples[1]
+        >>> n_features = len(x0)
+        >>> rnn_clf = RNNClassifier(n_features=n_features, hidden_size=3, n_init_classes=2,
+        ...                         is_class_incremental=False, is_feature_incremental=False,
+        ...                         lr=0.0, optimizer_fn='sgd')
+        >>> rnn_clf.learn_one(x0, 0)
+        >>> rnn_clf.learn_one(x1, 1)
         >>> def _prep_rnn(m):
         ...     with torch.no_grad():
         ...         for p in m.rnn.parameters():
@@ -384,7 +418,8 @@ class RNNClassifier(RollingClassifier):
         ...         m.head.weight.data.zero_()
         ...         m.head.bias.data[:] = torch.tensor([3.0, -2.0])
         >>> _prep_rnn(rnn_clf.module)
-        >>> rnn_clf.predict_one({'f0':9,'f1':8,'f2':7,'f3':6})
+        >>> any_x, _ = next(iter(datasets.Phishing().take(1)))
+        >>> rnn_clf.predict_one(any_x)
         0
     """
 
