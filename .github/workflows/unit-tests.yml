@@ -49,7 +49,7 @@ jobs:
           uv sync --all-extras
 
       - name: Download datasets
-        run: uv run python -c "from river import datasets; datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+        run: uv run python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
       - name: Run tests (generate coverage.xml)
         run: |
