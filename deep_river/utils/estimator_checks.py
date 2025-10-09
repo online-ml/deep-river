@@ -213,7 +213,6 @@ def check_model_persistence_untrained(model):
 def check_model_persistence_with_custom_kwargs(model):
     """Test saving models with custom keyword arguments."""
     # Skip for problematic models
-    model_name = type(model).__name__
     # Only test if model has custom kwargs
     if not hasattr(model, "kwargs") or not model.kwargs:
         return
@@ -239,6 +238,7 @@ def check_model_persistence_with_custom_kwargs(model):
             return  # Skip if loading fails
 
     finally:
+        # Clean up temporary file
         if Path(temp_path).exists():
             Path(temp_path).unlink()
 

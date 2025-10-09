@@ -79,7 +79,8 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
     ...         )
     ...     def forward(self, x):
     ...         return self.net(x)
-    >>> model = Regressor(module=SmallNet(len(numeric_keys)), loss_fn='mse', optimizer_fn='sgd', lr=1e-2)
+    >>> model = Regressor(module=SmallNet(len(numeric_keys)), loss_fn='mse',
+    ...                     optimizer_fn='sgd', lr=1e-2)
     >>> mae = metrics.MAE()
     >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
     ...     x_num = {k: x[k] for k in numeric_keys}

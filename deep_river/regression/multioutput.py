@@ -1,4 +1,4 @@
-from typing import Callable, Union, Iterable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence, SupportsFloat, Union, cast
 
 import pandas as pd
 import torch
@@ -126,15 +126,15 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             **kwargs,
         )
         self.is_target_incremental = is_target_incremental
-        self.observed_targets: SortedSet = SortedSet()
+        self.observed_targets: SortedSet[FeatureName] = SortedSet()
 
     # ---------------------------------------------------------------------
     # Public API
     # ---------------------------------------------------------------------
     def learn_one(
         self,
-        x: Mapping[FeatureName, float],
-        y: Mapping[FeatureName, RegTarget],
+        x: dict,
+        y: dict[FeatureName, RegTarget],
         **kwargs,
     ) -> None:
         """Learn from a single multi-target instance.
@@ -150,7 +150,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         """
         self._update_observed_features(x)
         self._update_observed_targets(y)
-        x_t = self._dict2tensor(x)
+        x_t = self._dict2tensor(dict(x))
         y_t = self._single_target_dict_to_tensor(y)
         self._learn(x_t, y_t)
 
@@ -178,10 +178,10 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         y_t = self._multi_target_frame_to_tensor(y_df)
         self._learn(x_t, y_t)
 
-    def predict_one(self, x: Mapping[FeatureName, float]) -> dict[FeatureName, RegTarget]:
+    def predict_one(self, x: dict) -> dict[FeatureName, RegTarget]:
         """Predict a dictionary of target values for a single instance."""
         self._update_observed_features(x)
-        x_t = self._dict2tensor(x)
+        x_t = self._dict2tensor(dict(x))
         self.module.eval()
         with torch.inference_mode():
             y_pred_t = self.module(x_t).squeeze(0)
@@ -189,9 +189,11 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
                 y_pred_t = y_pred_t.view(1)
             if y_pred_t.is_cuda:
                 y_pred_t = y_pred_t.cpu()
-            y_list = y_pred_t.tolist()
+            y_list: list[float] = [float(v) for v in y_pred_t.tolist()]
         return {
-            t: (y_list[i] if i < len(y_list) else float("nan"))
+            cast(FeatureName, t): cast(
+                RegTarget, (y_list[i] if i < len(y_list) else float("nan"))
+            )
             for i, t in enumerate(self.observed_targets)
         }
 
@@ -222,14 +224,15 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             )
             y_pred = torch.cat([y_pred, pad], dim=1)
         elif y_pred.shape[1] > len(cols):
-            cols = cols + [f"__extra_{i}" for i in range(y_pred.shape[1] - len(cols))]
+            extra = [f"__extra_{i}" for i in range(y_pred.shape[1] - len(cols))]
+            cols = cols + extra
         return pd.DataFrame(y_pred.numpy(), columns=cols)
 
     # ---------------------------------------------------------------------
     # Internal helpers
     # ---------------------------------------------------------------------
     def _update_observed_targets(
-        self, y: Union[Mapping[str, RegTarget], pd.Series, pd.DataFrame]
+        self, y: Union[Mapping[FeatureName, RegTarget], pd.Series, pd.DataFrame]
     ) -> bool:
         """Update the ordered set of observed target names and expand output layer.
 
@@ -244,11 +247,12 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             True if the output layer was expanded.
         """
         if isinstance(y, Mapping):
-            new_targets: Iterable[str] = y.keys()
+            new_targets: Iterable[FeatureName] = y.keys()
         elif isinstance(y, pd.Series):
-            new_targets = [y.name] if y.name is not None else []
+            new_targets = [cast(FeatureName, y.name)] if y.name is not None else []
         elif isinstance(y, pd.DataFrame):
-            new_targets = list(y.columns)
+            # DataFrame columns can be any hashable type
+            new_targets = list(cast(Iterable[FeatureName], y.columns))
         else:
             return False
 
@@ -271,16 +275,18 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         return False
 
     def _single_target_dict_to_tensor(
-        self, y: Mapping[str, RegTarget]
+        self, y: Mapping[FeatureName, RegTarget]
     ) -> torch.Tensor:
         """Convert a single-sample target dict into a 2D tensor (shape (1, T))."""
-        # Ensure ordering per observed_targets (which was just updated)
-        vector = [float(y.get(t, 0.0)) for t in self.observed_targets]
+        vector = [
+            float(cast(SupportsFloat, y.get(t, 0.0)))  # type: ignore[arg-type]
+            for t in self.observed_targets
+        ]
         return torch.tensor([vector], dtype=torch.float32, device=self.device)
 
     def _coerce_targets_to_frame(
         self,
-        y: Union[pd.DataFrame, pd.Series, Mapping[str, Sequence[RegTarget]]],
+        y: Union[pd.DataFrame, pd.Series, Mapping[FeatureName, Sequence[RegTarget]]],
     ) -> pd.DataFrame:
         """Coerce assorted multi-target representations into a DataFrame."""
         if isinstance(y, pd.DataFrame):
@@ -292,7 +298,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         if isinstance(y, Mapping):
             return pd.DataFrame(y)
         raise TypeError(
-            "Unsupported multi-target type. Expect DataFrame, Series or mapping of lists."  # noqa: TRY003
+            "Unsupported multi-target type. Expect DataFrame, Series or mapping of lists."
         )
 
     def _multi_target_frame_to_tensor(self, y_df: pd.DataFrame) -> torch.Tensor:

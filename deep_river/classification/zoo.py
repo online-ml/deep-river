@@ -43,7 +43,8 @@ class LogisticRegression(Classifier):
 
     Examples
     --------
-    Streaming binary classification on the Phishing dataset. The exact Accuracy value may vary depending on library version and hardware::
+    Streaming binary classification on the Phishing dataset. The exact Accuracy
+    value may vary depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
@@ -51,7 +52,10 @@ class LogisticRegression(Classifier):
         >>> from deep_river.classification.zoo import LogisticRegression
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Phishing()))
-        >>> clf = LogisticRegression(n_features=len(first_x), n_init_classes=2, optimizer_fn='sgd', lr=1e-2, is_class_incremental=True)
+        >>> clf = LogisticRegression(
+        ...     n_features=len(first_x), n_init_classes=2,
+        ...     optimizer_fn='sgd', lr=1e-2, is_class_incremental=True,
+        ... )
         >>> acc = metrics.Accuracy()
         >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
         ...     clf.learn_one(x, y)
@@ -143,7 +147,8 @@ class MultiLayerPerceptron(Classifier):
 
     Examples
     --------
-        Phishing dataset stream with online Accuracy. The exact value may vary depending on library version and hardware::
+        Phishing dataset stream with online Accuracy. The exact value may vary
+        depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
@@ -151,7 +156,10 @@ class MultiLayerPerceptron(Classifier):
         >>> from deep_river.classification.zoo import MultiLayerPerceptron
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Phishing()))
-        >>> mlp = MultiLayerPerceptron(n_features=len(first_x), n_width=8, n_layers=2, n_init_classes=2, optimizer_fn='sgd', lr=5e-3, is_class_incremental=True)
+        >>> mlp = MultiLayerPerceptron(
+        ...     n_features=len(first_x), n_width=8, n_layers=2, n_init_classes=2,
+        ...     optimizer_fn='sgd', lr=5e-3, is_class_incremental=True,
+        ... )
         >>> acc = metrics.Accuracy()
         >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
         ...     mlp.learn_one(x, y)

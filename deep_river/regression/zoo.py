@@ -47,7 +47,9 @@ class LinearRegression(Regressor):
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Bikes()))
         >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
-        >>> reg = LinearRegression(n_features=len(numeric_keys), optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> reg = LinearRegression(n_features=len(numeric_keys),
+        ...                        loss_fn='mse', lr=1e-2,
+        ...                        is_feature_incremental=True)
         >>> mae = metrics.MAE()
         >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
         ...     x_num = {k: x[k] for k in numeric_keys}
@@ -141,7 +143,10 @@ class MultiLayerPerceptron(Regressor):
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Bikes()))
         >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
-        >>> reg = MultiLayerPerceptron(n_features=len(numeric_keys), n_width=8, n_layers=2, optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> reg = MultiLayerPerceptron(
+        ...     n_features=len(numeric_keys), n_width=8, n_layers=2,
+        ...     optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True,
+        ... )
         >>> mae = metrics.MAE()
         >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
         ...     x_num = {k: x[k] for k in numeric_keys}
@@ -248,7 +253,10 @@ class LSTMRegressor(RollingRegressor):
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Bikes()))
         >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
-        >>> reg = LSTMRegressor(n_features=len(numeric_keys), hidden_size=8, num_layers=1, optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> reg = LSTMRegressor(
+        ...     n_features=len(numeric_keys), hidden_size=8, num_layers=1,
+        ...     optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True,
+        ... )
         >>> mae = metrics.MAE()
         >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
         ...     x_num = {k: x[k] for k in numeric_keys}
@@ -378,7 +386,10 @@ class RNNRegressor(RollingRegressor):
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Bikes()))
         >>> numeric_keys = sorted([k for k,v in first_x.items() if isinstance(v,(int,float))])
-        >>> reg = RNNRegressor(n_features=len(numeric_keys), hidden_size=8, num_layers=1, optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True)
+        >>> reg = RNNRegressor(
+        ...     n_features=len(numeric_keys), hidden_size=8, num_layers=1,
+        ...     optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True,
+        ... )
         >>> mae = metrics.MAE()
         >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
         ...     x_num = {k: x[k] for k in numeric_keys}
