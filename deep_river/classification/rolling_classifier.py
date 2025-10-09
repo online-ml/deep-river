@@ -97,14 +97,13 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         ...     is_class_incremental=True
         ... )
         >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
         ...     if i > 0:
         ...         y_pred = rclf.predict_one(x)
         ...         acc.update(y, y_pred)
         ...     rclf.learn_one(x, y)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        ...
-        Accuracy: 0.5641
+        Accuracy: 0.5176
 
     """
 

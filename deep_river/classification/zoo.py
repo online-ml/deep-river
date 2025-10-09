@@ -57,14 +57,13 @@ class LogisticRegression(Classifier):
         ...     optimizer_fn='sgd', lr=1e-2, is_class_incremental=True,
         ... )
         >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
         ...     clf.learn_one(x, y)
         ...     if i > 0:
         ...         y_pred = clf.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        ...
-        Accuracy: 0.6667
+        Accuracy: 0.6985
 
     """
 
@@ -161,13 +160,13 @@ class MultiLayerPerceptron(Classifier):
         ...     optimizer_fn='sgd', lr=5e-3, is_class_incremental=True,
         ... )
         >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
         ...     mlp.learn_one(x, y)
         ...     if i > 0:
         ...         y_pred = mlp.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: 0.5641
+        Accuracy: 0.5276
 
     """
 
@@ -306,13 +305,13 @@ class LSTMClassifier(RollingClassifier):
         ...                           lr=0.0, optimizer_fn='sgd')
         >>> lstm_clf.learn_one(x0, 0)
         >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
         ...     lstm_clf.learn_one(x, y)
         ...     if i > 0:
         ...         y_pred = lstm_clf.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: 0.5641
+        Accuracy: 0.5276
 
     """
 
@@ -445,13 +444,13 @@ class RNNClassifier(RollingClassifier):
         >>> rnn_clf = RNNClassifier(n_features=n_features, hidden_size=3, n_init_classes=2,
         ...                         is_class_incremental=False, is_feature_incremental=False)
         >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
         ...     rnn_clf.learn_one(x, y)
         ...     if i > 0:
         ...         y_pred = rnn_clf.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: 0.5641
+        Accuracy: 0.5276
 
     """
 

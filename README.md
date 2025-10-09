@@ -102,7 +102,7 @@ For further examples check out the <a href="https://online-ml.github.io/deep-riv
 ...     )
 ... )
 >>> metric = metrics.Accuracy()
->>> for i, (x, y) in enumerate(datasets.Phishing().take(80)):
+>>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
 ...     if i > 0:
 ...         y_pred = model.predict_one(x)
 ...         metric.update(y, y_pred)

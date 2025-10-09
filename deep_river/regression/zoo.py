@@ -148,14 +148,14 @@ class MultiLayerPerceptron(Regressor):
         ...     optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True,
         ... )
         >>> mae = metrics.MAE()
-        >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
         ...     x_num = {k: x[k] for k in numeric_keys}
         ...     if i > 0:
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 2.5162
+        MAE: 2.8532
 
     """
 
@@ -258,14 +258,14 @@ class LSTMRegressor(RollingRegressor):
         ...     optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True,
         ... )
         >>> mae = metrics.MAE()
-        >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
         ...     x_num = {k: x[k] for k in numeric_keys}
         ...     if i > 0:
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 3.0120
+        MAE: 2.5911
 
     """
 
@@ -391,14 +391,14 @@ class RNNRegressor(RollingRegressor):
         ...     optimizer_fn='sgd', lr=1e-2, is_feature_incremental=True,
         ... )
         >>> mae = metrics.MAE()
-        >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+        >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
         ...     x_num = {k: x[k] for k in numeric_keys}
         ...     if i > 0:
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 3.2066
+        MAE: 2.6158
 
     """
 

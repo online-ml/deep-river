@@ -82,14 +82,14 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
     >>> model = Regressor(module=SmallNet(len(numeric_keys)), loss_fn='mse',
     ...                     optimizer_fn='sgd', lr=1e-2)
     >>> mae = metrics.MAE()
-    >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+    >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
     ...     x_num = {k: x[k] for k in numeric_keys}
     ...     y_pred = model.predict_one(x_num)
     ...     model.learn_one(x_num, y)
     ...     mae.update(y, y_pred)
     >>> print(f"MAE: {mae.get():.4f}")
     ...
-    MAE: 21049214.0912
+    MAE: 4369300.7099
 
     """
 

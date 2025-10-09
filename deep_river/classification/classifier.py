@@ -100,14 +100,13 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         ...     is_class_incremental=True
         ... )
         >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(50)):
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(200)):
         ...     if i > 0:  # only predict after first sample is seen
         ...         y_pred = clf.predict_one(x)
         ...         acc.update(y, y_pred)
         ...     clf.learn_one(x, y)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        ...
-        Accuracy: 0.5306
+        Accuracy: 0.6231
 
     """
 

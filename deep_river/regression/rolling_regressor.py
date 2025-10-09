@@ -83,7 +83,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
     >>> model = RollingRegressor(module=TinySeq(len(numeric_keys)), window_size=8)
     >>> mae = metrics.MAE()
     >>> window_size = 8
-    >>> for i, (x, y) in enumerate(datasets.Bikes().take(30)):
+    >>> for i, (x, y) in enumerate(datasets.Bikes().take(200)):
     ...     x_num = {k: x[k] for k in numeric_keys}
     ...     if i >= window_size:
     ...         y_pred = model.predict_one(x_num)
@@ -91,7 +91,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
     ...     model.learn_one(x_num, y)
     >>> print(f"MAE: {mae.get():.4f}")
     ...
-    MAE: 3.1301
+    MAE: 2.7261
 
     """
 
