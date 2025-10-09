@@ -253,10 +253,24 @@ class LSTMClassifier(RollingClassifier):
         Hidden state dimensionality of the LSTM.
     n_init_classes : int, default=2
         Initial number of output classes.
-    loss_fn, optimizer_fn, lr, output_is_logit,
-        is_feature_incremental, is_class_incremental, device, seed,
-        gradient_clip_value, **kwargs
-        Standard parameters as in other classifiers.
+    loss_fn : str | Callable, default='cross_entropy'
+        Training loss.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    output_is_logit : bool, default=True
+        Indicates outputs are logits (enables proper conversion in ``predict_proba``).
+    is_feature_incremental : bool, default=False
+        Whether to dynamically expand the input layer when new features appear.
+    is_class_incremental : bool, default=True
+        Whether to expand the output layer for new class labels.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Optional gradient norm clipping value.
 
     Examples
     --------
@@ -383,9 +397,24 @@ class RNNClassifier(RollingClassifier):
         Non-linearity used inside the RNN ('tanh' or 'relu').
     n_init_classes : int, default=2
         Initial number of classes/output units.
-    loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
-        is_class_incremental, device, seed, gradient_clip_value, **kwargs
-        Standard parameters as in the other rolling classifiers.
+    loss_fn : str | Callable, default='cross_entropy'
+        Training loss.
+    optimizer_fn : str | type, default='sgd'
+        Optimizer specification.
+    lr : float, default=1e-3
+        Learning rate.
+    output_is_logit : bool, default=True
+        Indicates outputs are logits (enables proper conversion in ``predict_proba``).
+    is_feature_incremental : bool, default=False
+        Whether to dynamically expand the input layer when new features appear.
+    is_class_incremental : bool, default=True
+        Whether to expand the output layer for new class labels.
+    device : str, default='cpu'
+        Torch device.
+    seed : int, default=42
+        Random seed.
+    gradient_clip_value : float | None, default=None
+        Optional gradient norm clipping value.
 
     Examples
     --------
