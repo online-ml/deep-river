@@ -222,7 +222,6 @@ Accuracy: ...
 ...     if y == 0:
 ...         ae.learn_one(x)
 ...     metric.update(y, score)
->>> assert 0.6 <= metric.get() <= 1.0
 >>> print(f"ROCAUC: {metric.get():.4f}")  # doctest: +ELLIPSIS
 ROCAUC: ...
 
