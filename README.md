@@ -116,7 +116,7 @@ Accuracy: 0.8101
 
 ```python
 >>> import random, numpy as np
->>> from river import stream, metrics
+>>> from river import stream, metrics, preprocessing, compose
 >>> from sklearn import datasets as sk_datasets
 >>> from deep_river.regression import MultiTargetRegressor
 >>> from torch import nn, manual_seed
@@ -128,26 +128,39 @@ Accuracy: 0.8101
 ...     def __init__(self, n_features, n_outputs):
 ...         super().__init__()
 ...         self.net = nn.Sequential(
-...             nn.Linear(n_features, 8),
+...             nn.Linear(n_features, 16),
 ...             nn.ReLU(),
-...             nn.Linear(8, n_outputs)
+...             nn.Linear(16, n_outputs)
 ...         )
 ...     def forward(self, x):
 ...         return self.net(x)
->>> model = MultiTargetRegressor(
-...     module=TinyNet(n_features, n_outputs),
-...     loss_fn='mse', optimizer_fn='sgd', lr=1e-3,
-...     is_feature_incremental=False, is_target_incremental=False
+>>> model = compose.Pipeline(
+...     preprocessing.StandardScaler(),  # feature scaling stabilizes training
+...     MultiTargetRegressor(
+...         module=TinyNet(n_features, n_outputs),
+...         loss_fn='mse', optimizer_fn='adam', lr=5e-3,
+...         is_feature_incremental=False, is_target_incremental=False,
+...         gradient_clip_value=1.0,
+...     )
 ... )
->>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
+>>> mae_micro = metrics.multioutput.MicroAverage(metrics.MAE())
+>>> mae_macro = metrics.multioutput.MacroAverage(metrics.MAE())
+>>> rmse_micro = metrics.multioutput.MicroAverage(metrics.RMSE())
+>>> # Recreate the iterator (the first sample was consumed to infer shapes)
 >>> linnerud_stream = stream.iter_sklearn_dataset(sk_datasets.load_linnerud(), shuffle=True, seed=42)
 >>> for i, (x, y_dict) in enumerate(linnerud_stream):
 ...     if i > 0:
 ...         y_pred = model.predict_one(x)
-...         metric.update(y_dict, y_pred)
+...         mae_micro.update(y_dict, y_pred)
+...         mae_macro.update(y_dict, y_pred)
+...         rmse_micro.update(y_dict, y_pred)
 ...     model.learn_one(x, y_dict)
->>> print(f"MAE: {metric.get():.4f}")
-MAE: 1410.5710
+>>> print({
+...     'MAE_micro': round(mae_micro.get(), 4),
+...     'MAE_macro': round(mae_macro.get(), 4),
+...     'RMSE_micro': round(rmse_micro.get(), 4)
+... })
+{'MAE_micro': 90.1613, 'MAE_macro': 90.1613, 'RMSE_micro': 111.2223}
 
 ```
 
@@ -157,15 +170,34 @@ MAE: 1410.5710
 >>> import random, numpy as np
 >>> from torch import nn, manual_seed
 >>> from river import metrics
->>> from river.datasets import CreditCard
->>> from river.compose import Pipeline
->>> from river.preprocessing import MinMaxScaler
 >>> from deep_river.anomaly import Autoencoder
 >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
->>> first_x, _ = next(iter(CreditCard()))
->>> n_features = len(first_x)
+>>> # Create a deterministic synthetic stream: normals (y=0) vs. anomalies (y=1)
+>>> def synthetic_stream(n_norm=2000, n_anom=200, n_features=8, seed=42):
+...     rng = np.random.default_rng(seed)
+...     # Normals around 0, anomalies shifted
+...     X_norm = rng.normal(loc=0.0, scale=1.0, size=(n_norm, n_features))
+...     y_norm = np.zeros(n_norm, dtype=int)
+...     X_anom = rng.normal(loc=5.0, scale=1.0, size=(n_anom, n_features))
+...     y_anom = np.ones(n_anom, dtype=int)
+...     # Interleave anomalies every k steps to keep streaming flavour
+...     k = max(1, n_norm // n_anom)
+...     X, Y = [], []
+...     i_norm = i_anom = 0
+...     for t in range(n_norm + n_anom):
+...         take_anom = (t % k == 0) and (i_anom < n_anom)
+...         if take_anom:
+...             X.append(X_anom[i_anom]); Y.append(y_anom[i_anom]); i_anom += 1
+...         else:
+...             if i_norm < n_norm:
+...                 X.append(X_norm[i_norm]); Y.append(y_norm[i_norm]); i_norm += 1
+...             elif i_anom < n_anom:
+...                 X.append(X_anom[i_anom]); Y.append(y_anom[i_anom]); i_anom += 1
+...     for row, label in zip(X, Y):
+...         yield {f"f{i}": float(v) for i, v in enumerate(row)}, int(label)
+>>> n_features = 8
 >>> class MyAutoEncoder(nn.Module):
-...     def __init__(self, n_features, latent_dim=5):
+...     def __init__(self, n_features, latent_dim=4):
 ...         super().__init__()
 ...         self.encoder = nn.Sequential(
 ...             nn.Linear(n_features, latent_dim),
@@ -179,14 +211,15 @@ MAE: 1410.5710
 ...         z = self.encoder(x)
 ...         return self.decoder(z)
 >>> ae = Autoencoder(module=MyAutoEncoder(n_features), lr=5e-3, optimizer_fn='adam')
->>> model = Pipeline(MinMaxScaler(), ae)
->>> metric = metrics.RollingROCAUC(window_size=500)
->>> for i, (x, y) in enumerate(CreditCard().take(300)):
-...     score = model.score_one(x)
-...     model.learn_one(x)
+>>> metric = metrics.ROCAUC()
+>>> # Train only on normal samples to keep the model focused on the normal manifold
+>>> for x, y in synthetic_stream(n_norm=2000, n_anom=200, n_features=n_features, seed=42):
+...     score = ae.score_one(x)
+...     if y == 0:
+...         ae.learn_one(x)
 ...     metric.update(y, score)
->>> print(f"ROCAUC(500): {metric.get():.4f}")
-
+>>> print(f"ROCAUC: {metric.get():.4f}")
+ROCAUC: 0.6765
 
 ```
 
