@@ -9,7 +9,7 @@ from deep_river.regression.zoo import (
     LinearRegression,
     LSTMRegressor,
     MultiLayerPerceptron,
-    RNNRegressor,
+    RNNRegressor
 )
 
 """

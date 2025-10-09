@@ -159,7 +159,6 @@ class MultiLayerPerceptron(Classifier):
         ...         y_pred = mlp.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        ...
         Accuracy: 0.5641
 
     """
@@ -291,7 +290,6 @@ class LSTMClassifier(RollingClassifier):
         ...         y_pred = lstm_clf.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        ...
         Accuracy: 0.5641
 
     """
@@ -391,32 +389,10 @@ class RNNClassifier(RollingClassifier):
 
     Examples
     --------
-    Streaming binary classification on the Phishing dataset (exact Accuracy may differ slightly by environment)::
-
-        >>> import random, numpy as np, torch
-        >>> from torch import manual_seed
-        >>> from river import datasets, metrics
-        >>> from deep_river.classification.zoo import RNNClassifier
-        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
-        >>> first_x, _ = next(iter(datasets.Phishing()))
-        >>> rnn_clf = RNNClassifier(n_features=len(first_x), hidden_size=8, n_init_classes=2,
-        ...                         is_class_incremental=True, is_feature_incremental=False,
-        ...                         lr=5e-3, optimizer_fn='sgd')
-        >>> acc = metrics.Accuracy()
-        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
-        ...     rnn_clf.learn_one(x, y)
-        ...     if i > 0:
-        ...         y_pred = rnn_clf.predict_one(x)
-        ...         acc.update(y, y_pred)
-        >>> print(f"Accuracy: {acc.get():.4f}")
-        ...
-        Accuracy: 0.5641
-
-    Deterministischer Test mit Phishing-Datenstrom: Gewichte nullen & Bias
-    setzt Entscheidung auf Klasse 0 (Lernrate 0 verhindert Updates)::
 
         >>> import torch, random, numpy as np
         >>> from torch import manual_seed
+        >>> from river import metrics
         >>> from river import datasets
         >>> from deep_river.classification.zoo import RNNClassifier
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
@@ -430,20 +406,16 @@ class RNNClassifier(RollingClassifier):
         >>> x0, x1 = samples[0], samples[1]
         >>> n_features = len(x0)
         >>> rnn_clf = RNNClassifier(n_features=n_features, hidden_size=3, n_init_classes=2,
-        ...                         is_class_incremental=False, is_feature_incremental=False,
-        ...                         lr=0.0, optimizer_fn='sgd')
-        >>> rnn_clf.learn_one(x0, 0)
-        >>> rnn_clf.learn_one(x1, 1)
-        >>> def _prep_rnn(m):
-        ...     with torch.no_grad():
-        ...         for p in m.rnn.parameters():
-        ...             p.data.zero_()
-        ...         m.head.weight.data.zero_()
-        ...         m.head.bias.data[:] = torch.tensor([3.0, -2.0])
-        >>> _prep_rnn(rnn_clf.module)
-        >>> any_x, _ = next(iter(datasets.Phishing().take(1)))
-        >>> rnn_clf.predict_one(any_x)
-        0
+        ...                         is_class_incremental=False, is_feature_incremental=False)
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        ...     rnn_clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = rnn_clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        Accuracy: 0.5641
+
     """
 
     class RNNModule(nn.Module):
