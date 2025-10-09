@@ -108,6 +108,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         >>> print(f"Accuracy: {acc.get():.4f}")
         ...
         Accuracy: 0.5306
+
     """
 
     def __init__(

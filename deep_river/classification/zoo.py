@@ -43,15 +43,15 @@ class LogisticRegression(Classifier):
 
     Examples
     --------
-´       Streaming binary classification on the Phishing dataset. The exact Accuracy value may vary depending on library version and hardware::
+    Streaming binary classification on the Phishing dataset. The exact Accuracy value may vary depending on library version and hardware::
 
         >>> import random, numpy as np, torch
         >>> from torch import manual_seed
         >>> from river import datasets, metrics
-        >>> from deep_river.classification.zoo import LogisticRegressionIn
+        >>> from deep_river.classification.zoo import LogisticRegression
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> first_x, _ = next(iter(datasets.Phishing()))
-        >>> clf = LogisticRegressionIn(n_features=len(first_x), n_init_classes=2, optimizer_fn='sgd', lr=1e-2, is_class_incremental=True)
+        >>> clf = LogisticRegression(n_features=len(first_x), n_init_classes=2, optimizer_fn='sgd', lr=1e-2, is_class_incremental=True)
         >>> acc = metrics.Accuracy()
         >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
         ...     clf.learn_one(x, y)
@@ -59,7 +59,9 @@ class LogisticRegression(Classifier):
         ...         y_pred = clf.predict_one(x)
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: ...
+        ...
+        Accuracy: 0.6667
+
     """
 
     class LRModule(nn.Module):
@@ -89,7 +91,7 @@ class LogisticRegression(Classifier):
     ):
         self.n_features = n_features
         self.n_init_classes = n_init_classes
-        module = LogisticRegressionIn.LRModule(
+        module = LogisticRegression.LRModule(
             n_features=n_features, n_init_classes=n_init_classes
         )
         if "module" in kwargs:
@@ -137,7 +139,7 @@ class MultiLayerPerceptron(Classifier):
         Initial number of classes/output units.
     loss_fn, optimizer_fn, lr, output_is_logit, is_feature_incremental,
         is_class_incremental, device, seed, gradient_clip_value, **kwargs
-        See :class:`LogisticRegressionInitialized`.
+        See :class:`LogisticRegression`.
 
     Examples
     --------
@@ -158,7 +160,8 @@ class MultiLayerPerceptron(Classifier):
         ...         acc.update(y, y_pred)
         >>> print(f"Accuracy: {acc.get():.4f}")
         ...
-        Accuracy:
+        Accuracy: 0.5641
+
     """
 
     class MLPModule(nn.Module):
@@ -265,12 +268,12 @@ class LSTMClassifier(RollingClassifier):
         >>> import torch, random, numpy as np
         >>> from torch import manual_seed
         >>> from river import datasets
+        >>> from river import metrics
         >>> from deep_river.classification.zoo import LSTMClassifier
         >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
         >>> stream = datasets.Phishing()
-        >>> # Zwei Beispiele mit Labels 0 und 1 sammeln
         >>> samples = {}
-        >>> for x, y in stream:  # stream ist deterministisch
+        >>> for x, y in stream:
         ...     if y not in samples:
         ...         samples[y] = x
         ...     if len(samples) == 2:
@@ -281,17 +284,16 @@ class LSTMClassifier(RollingClassifier):
         ...                           is_class_incremental=False, is_feature_incremental=False,
         ...                           lr=0.0, optimizer_fn='sgd')
         >>> lstm_clf.learn_one(x0, 0)
-        >>> lstm_clf.learn_one(x1, 1)
-        >>> def _prep_lstm(m):  # Parameter nullen & Bias fix setzen
-        ...     with torch.no_grad():
-        ...         for p in m.lstm.parameters():
-        ...             p.data.zero_()
-        ...         m.head.weight.data.zero_()
-        ...         m.head.bias.data[:] = torch.tensor([2.2, -0.7])
-        >>> _prep_lstm(lstm_clf.module)
-        >>> any_x, _ = next(iter(datasets.Phishing().take(1)))  # beliebiges Beispiel
-        >>> lstm_clf.predict_one(any_x)
-        0
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        ...     lstm_clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = lstm_clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        ...
+        Accuracy: 0.5641
+
     """
 
     class LSTMModule(nn.Module):
@@ -389,8 +391,29 @@ class RNNClassifier(RollingClassifier):
 
     Examples
     --------
+    Streaming binary classification on the Phishing dataset (exact Accuracy may differ slightly by environment)::
+
+        >>> import random, numpy as np, torch
+        >>> from torch import manual_seed
+        >>> from river import datasets, metrics
+        >>> from deep_river.classification.zoo import RNNClassifier
+        >>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+        >>> first_x, _ = next(iter(datasets.Phishing()))
+        >>> rnn_clf = RNNClassifier(n_features=len(first_x), hidden_size=8, n_init_classes=2,
+        ...                         is_class_incremental=True, is_feature_incremental=False,
+        ...                         lr=5e-3, optimizer_fn='sgd')
+        >>> acc = metrics.Accuracy()
+        >>> for i, (x, y) in enumerate(datasets.Phishing().take(40)):
+        ...     rnn_clf.learn_one(x, y)
+        ...     if i > 0:
+        ...         y_pred = rnn_clf.predict_one(x)
+        ...         acc.update(y, y_pred)
+        >>> print(f"Accuracy: {acc.get():.4f}")
+        ...
+        Accuracy: 0.5641
+
     Deterministischer Test mit Phishing-Datenstrom: Gewichte nullen & Bias
-    setzt Entscheidung auf Klasse 0::
+    setzt Entscheidung auf Klasse 0 (Lernrate 0 verhindert Updates)::
 
         >>> import torch, random, numpy as np
         >>> from torch import manual_seed

@@ -105,6 +105,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         >>> print(f"Accuracy: {acc.get():.4f}")
         ...
         Accuracy: 0.5641
+
     """
 
     def __init__(
