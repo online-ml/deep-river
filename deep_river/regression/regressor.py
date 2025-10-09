@@ -89,6 +89,7 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
     >>> print(f"MAE: {mae.get():.4f}")
     ...
     MAE: 21049214.0912
+
     """
 
     def __init__(

@@ -99,10 +99,10 @@ class LinearRegression(Regressor):
     @classmethod
     def _unit_test_params(cls):
         yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
+            "loss_fn": "mse",  # Use MSE for regression consistency
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
-            "gradient_clip_value": None,
+            "gradient_clip_value": 1.0,  # enable clipping to avoid potential NaNs in generic checks
         }
 
 
@@ -150,7 +150,8 @@ class MultiLayerPerceptron(Regressor):
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: ...
+        MAE: 2.5162
+
     """
 
     class MLPModule(nn.Module):
@@ -204,7 +205,7 @@ class MultiLayerPerceptron(Regressor):
     @classmethod
     def _unit_test_params(cls):
         yield {
-            "loss_fn": "binary_cross_entropy_with_logits",
+            "loss_fn": "mse",  # Use MSE for regression consistency
             "optimizer_fn": "sgd",
             "is_feature_incremental": False,
             "gradient_clip_value": None,
@@ -256,7 +257,8 @@ class LSTMRegressor(RollingRegressor):
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: ...
+        MAE: 3.0120
+
     """
 
     class LSTMModule(nn.Module):
@@ -385,7 +387,8 @@ class RNNRegressor(RollingRegressor):
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: ...
+        MAE: 3.2066
+
     """
 
     class RNNModule(nn.Module):

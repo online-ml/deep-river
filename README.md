@@ -70,209 +70,123 @@ We build the development of neural networks on top of the <a href="https://www.r
 The following example creates a simple MLP architecture based on PyTorch and incrementally predicts and trains on the website phishing dataset.
 For further examples check out the <a href="https://online-ml.github.io/deep-river">Documentation</a>.
 
+
 ### Classification
 
 ```python
->> > from river import metrics, datasets, preprocessing, compose
->> > from deep_river import classification
->> > from torch import nn
->> > from torch import optim
->> > from torch import manual_seed
-
->> > _ = manual_seed(42)
-
->> >
-
-class MyModule(nn.Module):
-
-
-    ...
-
-
-def __init__(self, n_features):
-
-
-    ...
-super(MyModule, self).__init__()
-...
-self.dense0 = nn.Linear(n_features, 5)
-...
-self.nonlin = nn.ReLU()
-...
-self.dense1 = nn.Linear(5, 2)
-...
-self.softmax = nn.Softmax(dim=-1)
-...
-...
-
-
-def forward(self, X, **kwargs):
-
-
-    ...
-X = self.nonlin(self.dense0(X))
-...
-X = self.nonlin(self.dense1(X))
-...
-X = self.softmax(X)
-...
-return X
-
->> > model_pipeline = compose.Pipeline(
-    ...
-preprocessing.StandardScaler(),
-...
-classification.Classifier(module=MyModule(10), loss_fn='binary_cross_entropy',
-                          optimizer_fn='adam')
+>>> import random, numpy as np
+>>> from river import metrics, datasets, preprocessing, compose
+>>> from deep_river.classification import Classifier
+>>> from torch import nn, manual_seed
+>>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+>>> first_x, _ = next(iter(datasets.Phishing()))
+>>> n_features = len(first_x)
+>>> class MyModule(nn.Module):
+...     def __init__(self, n_features):
+...         super().__init__()
+...         self.net = nn.Sequential(
+...             nn.Linear(n_features, 16),
+...             nn.ReLU(),
+...             nn.Linear(16, 2)
+...         )
+...     def forward(self, x):
+...         return self.net(x)
+>>> model = compose.Pipeline(
+...     preprocessing.StandardScaler(),
+...     Classifier(
+...         module=MyModule(n_features),
+...         loss_fn='cross_entropy',
+...         optimizer_fn='adam',
+...         lr=1e-3,
+...         is_class_incremental=True
+...     )
 ... )
-
->> > dataset = datasets.Phishing()
->> > metric = metrics.Accuracy()
-
->> > for x, y in dataset:
-    ...
-y_pred = model_pipeline.predict_one(x)  # make a prediction
-...
-metric.update(y, y_pred)  # update the metric
-...
-model_pipeline.learn_one(x, y)  # make the model learn
->> > print(f"Accuracy: {metric.get():.4f}")
-Accuracy: 0.7264
+>>> metric = metrics.Accuracy()
+>>> for i, (x, y) in enumerate(datasets.Phishing().take(80)):
+...     if i > 0:
+...         y_pred = model.predict_one(x)
+...         metric.update(y, y_pred)
+...     model.learn_one(x, y)
+>>> print(f"Accuracy: {metric.get():.4f}")
+Accuracy: 0.8101
 
 ```
+
 ### Multi Target Regression
 
 ```python
->> > from river import evaluate, compose
->> > from river import metrics
->> > from river import preprocessing
->> > from river import stream
->> > from sklearn import datasets
->> > from torch import nn
->> > from deep_river.regression.multioutput import MultiTargetRegressor
-
->> >
-
-class MyModule(nn.Module):
-
-
-    ...
-
-
-def __init__(self, n_features):
-
-
-    ...
-super(MyModule, self).__init__()
-...
-self.dense0 = nn.Linear(n_features, 3)
-...
-...
-
-
-def forward(self, X, **kwargs):
-
-
-    ...
-X = self.dense0(X)
-...
-return X
-
->> > dataset = stream.iter_sklearn_dataset(
-    ...
-dataset = datasets.load_linnerud(),
-...
-shuffle = True,
-...
-seed = 42
-...     )
->> > model = compose.Pipeline(
-    ...
-preprocessing.StandardScaler(),
-...
-MultiTargetRegressorInitialized(
-    ...
-module = MyModule(10),
-...
-loss_fn = 'mse',
-...
-lr = 0.3,
-...
-optimizer_fn = 'sgd',
-...     ))
->> > metric = metrics.multioutput.MicroAverage(metrics.MAE())
->> > ev = evaluate.progressive_val_score(dataset, model, metric)
->> > print(f"MicroAverage(MAE): {metric.get():.2f}")
-MicroAverage(MAE): 34.31
+>>> import random, numpy as np
+>>> from river import stream, metrics
+>>> from sklearn import datasets as sk_datasets
+>>> from deep_river.regression import MultiTargetRegressor
+>>> from torch import nn, manual_seed
+>>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+>>> linnerud_stream = stream.iter_sklearn_dataset(sk_datasets.load_linnerud(), shuffle=True, seed=42)
+>>> first_x, first_y = next(iter(linnerud_stream))
+>>> n_features, n_outputs = len(first_x), len(first_y)
+>>> class TinyNet(nn.Module):
+...     def __init__(self, n_features, n_outputs):
+...         super().__init__()
+...         self.net = nn.Sequential(
+...             nn.Linear(n_features, 8),
+...             nn.ReLU(),
+...             nn.Linear(8, n_outputs)
+...         )
+...     def forward(self, x):
+...         return self.net(x)
+>>> model = MultiTargetRegressor(
+...     module=TinyNet(n_features, n_outputs),
+...     loss_fn='mse', optimizer_fn='sgd', lr=1e-3,
+...     is_feature_incremental=False, is_target_incremental=False
+... )
+>>> metric = metrics.multioutput.MicroAverage(metrics.MAE())
+>>> linnerud_stream = stream.iter_sklearn_dataset(sk_datasets.load_linnerud(), shuffle=True, seed=42)
+>>> for i, (x, y_dict) in enumerate(linnerud_stream):
+...     if i > 0:
+...         y_pred = model.predict_one(x)
+...         metric.update(y_dict, y_pred)
+...     model.learn_one(x, y_dict)
+>>> print(f"MAE: {metric.get():.4f}")
+MAE: 1410.5710
 
 ```
 
 ### Anomaly Detection
 
 ```python
->> > from deep_river.anomaly import Autoencoder
->> > from river import metrics
->> > from river.datasets import CreditCard
->> > from torch import nn
->> > import math
->> > from river.compose import Pipeline
->> > from river.preprocessing import MinMaxScaler
+>>> import random, numpy as np
+>>> from torch import nn, manual_seed
+>>> from river import metrics
+>>> from river.datasets import CreditCard
+>>> from river.compose import Pipeline
+>>> from river.preprocessing import MinMaxScaler
+>>> from deep_river.anomaly import Autoencoder
+>>> _ = manual_seed(42); random.seed(42); np.random.seed(42)
+>>> first_x, _ = next(iter(CreditCard()))
+>>> n_features = len(first_x)
+>>> class MyAutoEncoder(nn.Module):
+...     def __init__(self, n_features, latent_dim=5):
+...         super().__init__()
+...         self.encoder = nn.Sequential(
+...             nn.Linear(n_features, latent_dim),
+...             nn.LeakyReLU()
+...         )
+...         self.decoder = nn.Sequential(
+...             nn.Linear(latent_dim, n_features),
+...             nn.Sigmoid()
+...         )
+...     def forward(self, x):
+...         z = self.encoder(x)
+...         return self.decoder(z)
+>>> ae = Autoencoder(module=MyAutoEncoder(n_features), lr=5e-3, optimizer_fn='adam')
+>>> model = Pipeline(MinMaxScaler(), ae)
+>>> metric = metrics.RollingROCAUC(window_size=500)
+>>> for i, (x, y) in enumerate(CreditCard().take(300)):
+...     score = model.score_one(x)
+...     model.learn_one(x)
+...     metric.update(y, score)
+>>> print(f"ROCAUC(500): {metric.get():.4f}")
 
->> > dataset = CreditCard().take(5000)
->> > metric = metrics.RollingROCAUC(window_size=5000)
-
->> >
-
-class MyAutoEncoder(nn.Module):
-
-
-    ...
-
-
-def __init__(self, n_features, latent_dim=3):
-
-
-    ...
-super(MyAutoEncoder, self).__init__()
-...
-self.linear1 = nn.Linear(n_features, latent_dim)
-...
-self.nonlin = nn.LeakyReLU()
-...
-self.linear2 = nn.Linear(latent_dim, n_features)
-...
-self.sigmoid = nn.Sigmoid()
-...
-...
-
-
-def forward(self, X, **kwargs):
-
-
-    ...
-X = self.linear1(X)
-...
-X = self.nonlin(X)
-...
-X = self.linear2(X)
-...
-return self.sigmoid(X)
-
->> > ae = AutoencoderInitialized(module=MyAutoEncoder(10), lr=0.005)
->> > scaler = MinMaxScaler()
->> > model = Pipeline(scaler, ae)
-
->> > for x, y in dataset:
-    ...
-score = model.score_one(x)
-...
-model.learn_one(x=x)
-...
-metric.update(y, score)
-...
->> > print(f"Rolling ROCAUC: {metric.get():.4f}")
-Rolling
-ROCAUC: 0.8901
 
 ```
 
@@ -294,7 +208,6 @@ To acknowledge the use of the `DeepRiver` library in your research, please refer
     journal = {Journal of Open Source Software} 
 }
 ```
-
 
 ## 🏫 Affiliations
 

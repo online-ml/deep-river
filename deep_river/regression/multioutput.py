@@ -305,9 +305,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         y_df = y_df[list(self.observed_targets)]
         return torch.tensor(y_df.values, dtype=torch.float32, device=self.device)
 
-    # ---------------------------------------------------------------------
-    # Persistence / cloning overrides
-    # ---------------------------------------------------------------------
     def _get_runtime_state(self) -> dict:
         """Extend base runtime state with observed target names."""
         state = super()._get_runtime_state()

@@ -91,7 +91,8 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
     ...     model.learn_one(x_num, y)
     >>> print(f"MAE: {mae.get():.4f}")
     ...
-    MAE: ...
+    MAE: 3.1301
+
     """
 
     def __init__(

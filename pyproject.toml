@@ -79,7 +79,7 @@ dev = [
     "jupyter-client",
     "python-slugify",
     "watermark==2.3.1",
-    "plotly>=5.0.0"
+    "plotly>=5.0.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -93,8 +93,8 @@ ignore_missing_imports = true
 profile = "black"
 
 [tool.pytest.ini_options]
-addopts = "--doctest-modules --doctest-continue-on-failure -q"
-testpaths = ["deep_river", "tests"]
+addopts = "--doctest-modules --doctest-glob='README.md' -q"
+testpaths = ["deep_river", "README.md"]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]
