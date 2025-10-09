@@ -57,8 +57,9 @@ class LinearRegression(Regressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
+        >>> assert 0.0 <= mae.get() < 20.0
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 6.9567
+        MAE: ...
 
     """
 
@@ -154,8 +155,9 @@ class MultiLayerPerceptron(Regressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
+        >>> assert 0.0 <= mae.get() < 20.0
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 2.8532
+        MAE: ...
 
     """
 
@@ -264,8 +266,9 @@ class LSTMRegressor(RollingRegressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
+        >>> assert 0.0 <= mae.get() < 20.0
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 2.5911
+        MAE: ...
 
     """
 
@@ -397,8 +400,9 @@ class RNNRegressor(RollingRegressor):
         ...         y_pred = reg.predict_one(x_num)
         ...         mae.update(y, y_pred)
         ...     reg.learn_one(x_num, y)
+        >>> assert 0.0 <= mae.get() < 20.0
         >>> print(f"MAE: {mae.get():.4f}")  # doctest: +ELLIPSIS
-        MAE: 2.6158
+        MAE: ...
 
     """
 

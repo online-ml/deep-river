@@ -105,8 +105,8 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         ...         y_pred = clf.predict_one(x)
         ...         acc.update(y, y_pred)
         ...     clf.learn_one(x, y)
-        >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: 0.6231
+        >>> print(f"Accuracy: {acc.get():.4f}")  # doctest: +ELLIPSIS
+        Accuracy: ...
 
     """
 

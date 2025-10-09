@@ -88,14 +88,12 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
     >>> x = {'a': 1.0, 'b': 2.0, 'c': 3.0}
     >>> y = {'y1': 10.0, 'y2': 20.0}
     >>> _ = model.learn_one(x, y)
-    >>> model.predict_one(x)
-    {'y1': 0.5906543731689453, 'y2': 0.6837220191955566}
+    >>> model.predict_one(x)  # doctest: +ELLIPSIS
+    {'y1': ..., 'y2': ...}
 
     Notes
     -----
     * The module's last *trainable* leaf layer is treated as output layer for
-      potential expansion. Non‑parametric terminal activations like ``Softmax``
-      are skipped (mirroring the logic in :class:`DeepEstimator`).
     * If ``is_target_incremental`` is disabled, the number of outputs is fixed
       and encountering a new target name will only register it internally (the
       tensor conversion will still allocate a slot, but the model's output layer

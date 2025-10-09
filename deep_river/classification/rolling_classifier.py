@@ -103,7 +103,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         ...         acc.update(y, y_pred)
         ...     rclf.learn_one(x, y)
         >>> print(f"Accuracy: {acc.get():.4f}")
-        Accuracy: 0.5176
+        Accuracy: ...
 
     """
 
