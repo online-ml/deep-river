@@ -6,7 +6,7 @@ from deep_river.classification import Classifier
 from deep_river.classification.rolling_classifier import RollingClassifier
 
 
-class LogisticRegressionIn(Classifier):
+class LogisticRegression(Classifier):
     """Incremental logistic regression with optional dynamic class expansion.
 
     This variant outputs raw logits (no internal softmax) so that losses like
