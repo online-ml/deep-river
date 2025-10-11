@@ -1,10 +1,9 @@
 [build-system]
-requires = ["setuptools>=64", "wheel"]
+requires = ["setuptools>=64", "wheel", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "deep_river"
-version = "0.3.1"
 description = "Online Deep Learning for river"
 authors = [
     {name = "Cedric Kulbach", email = "cedric.kulbach@googlemail.com"},
@@ -26,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
+dynamic = ["version"]
 dependencies = [
     "scikit-learn~=1.5.0",
     "torch==2.2.2",
@@ -119,3 +119,7 @@ dev = [
     "pyupgrade>=3.17.0",
     "watermark>=2.3.1",
 ]
+
+[tool.setuptools_scm]
+# Optional: you can customize here. Keeping defaults uses Git tags as the single source of truth.
+# fallback_version = "0.0.0"
