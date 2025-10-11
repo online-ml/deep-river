@@ -1,0 +1,125 @@
+:root > * {
+    --md-primary-fg-color:#FF8F00;
+}
+
+.md-typeset h1,
+.md-typeset h2 {
+  font-weight: 1000;
+  letter-spacing: 0;
+}
+
+.md-typeset h2 {
+  margin: 1.5em 0;
+  padding-bottom: 0.4rem;
+  border-bottom: 0.04rem solid var(--md-default-fg-color--lighter);
+}
+
+.md-footer {
+  margin-top: 2em;
+}
+
+.md-tabs__link {
+  font-weight: bold;
+}
+
+/* Landing page container: center hero vertically & horizontally */
+.tx-container {
+  /* fill viewport height without relying on absolute positioning */
+  min-height: 100vh;
+  /* modern viewport units for mobile browsers */
+  min-height: 100svh;
+  min-height: 100dvh;
+
+  /* center children */
+  display: grid;
+  place-items: center;
+
+  /* full width + no extra spacing */
+  width: 100%;
+  margin: 0;
+  /* horizontal padding + safe-area on notched devices */
+  padding: max(env(safe-area-inset-top, 0px), 0.5rem) 1rem max(env(safe-area-inset-bottom, 0px), 0.75rem);
+
+  background: linear-gradient(
+    to bottom,
+    var(--md-primary-fg-color),
+    hsla(280, 67%, 55%, 1) 100%,
+    var(--md-default-bg-color) 100%
+  );
+}
+
+/* Ensure inner hero and text are nicely centered */
+.tx-hero { 
+  width: 100%;
+}
+
+.tx-hero__content {
+  text-align: center;
+  margin: 0 auto;
+}
+
+/* Hero logo sizing */
+.tx-hero__title { 
+  margin: 0 0 0.5rem 0;
+}
+
+.tx-hero__logo {
+  display: inline-block;
+  max-width: 280px;
+  width: 40vw;
+  height: auto;
+}
+
+/* Subheadline responsive sizing */
+.tx-hero__content h3 {
+  margin: 0.25rem 0 0.75rem;
+  font-weight: 400;
+  font-size: clamp(1rem, 2.6vw, 1.2rem);
+}
+
+/* Button spacing and mobile-friendly stacking */
+.tx-hero__content .md-button {
+  margin: 0.25rem 0.4rem;
+}
+
+@media (max-width: 600px) {
+  .tx-hero__logo {
+    max-width: 240px;
+    width: 55vw;
+  }
+
+  .tx-hero__content .md-button {
+    display: block;
+    width: 100%;
+    max-width: 320px;
+    margin: 0.3rem auto;
+  }
+}
+
+.md-content__button {
+    display: none;
+  }
+
+.feature-item-underline {
+    display: inline-block;
+    vertical-align: middle;
+    -webkit-transform: perspective(1px) translateZ(0);
+    transform: perspective(1px) translateZ(0);
+    /* Black, with 10% opacity */
+    box-shadow: 0px 8px 15px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
+}
+
+
+.text-center {
+    text-align: center;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+    margin-top: 15px;
+    font-size: 23px;
+    font-weight: 300;
+    padding-bottom: 10px;
+}
