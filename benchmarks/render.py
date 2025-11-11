@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from dominate.tags import pre
 from watermark import watermark
+import textwrap
 
 
 # ---------- Paths & helpers ----------
@@ -225,11 +226,6 @@ def render_df_blocks(df_path: Path, id_prefix: str | None = None) -> List[tuple[
 
 def _page_header() -> str:
         return """---
-hide:
-    - navigation
----
-
-# Benchmarks
 """
 
 
@@ -248,25 +244,48 @@ def _render_track(track_name: str, track_details: Dict, csv_dir: Path) -> str:
         df_path = target
 
     if df_path and df_path.exists():
+        df_md = (
+            pd.read_csv(str(df_path))
+            .groupby(["model", "dataset"])
+            .last()
+            .drop(columns=["track", "step"])
+            .reset_index()
+            .rename(columns={"model": "Model", "dataset": "Dataset"})
+            .to_markdown(index=False)
+        )
+
+        out.append("")
+        out.append("=== \"Table\"")
+        out.append("")
+        out.append(textwrap.indent(df_md, "    "))
+        out.append("")
+        out.append("=== \"Chart\"")
+        out.append("")
+
+        # Collect chart content and indent as a single block so it stays inside the tab
+        chart_parts: List[str] = []
         for dataset_name, html_block in render_df_blocks(df_path, id_prefix=slugify(track_name)):
             if dataset_name:
-                # Insert explicit blank lines to ensure Markdown parsing after HTML blocks
-                out.append("")
-                out.append(f"### {dataset_name}")
-                out.append("")
-            out.append(html_block)
+                chart_parts.append(f"### {dataset_name}")
+            chart_parts.append(html_block.strip())
+
+        if chart_parts:
+            chart_md = "\n\n".join(chart_parts)
+            out.append(textwrap.indent(chart_md, "    "))
+        else:
+            out.append(textwrap.indent("_No charts available_", "    "))
     else:
         out.append(f"<div class='admonition note'>CSV {csv_name} not found. Skipping visualization.</div>")
 
     # Collapsible metadata
-    out.append("### Datasets")
+    out.append("## Datasets")
     for dataset_name, dataset_details in track_details.get("Dataset", {}).items():
         out.append("<details class=\"bench-details\">")
         out.append(f"<summary class=\"bench-summary\">{dataset_name}</summary>")
         out.append(str(pre(dataset_details, _class="bench-pre dataset-pre")))
         out.append("</details>")
 
-    out.append("### Models")
+    out.append("## Models")
     for model_name, model_details in track_details.get("Model", {}).items():
         out.append("<details class=\"bench-details\">")
         out.append(f"<summary class=\"bench-summary\">{model_name}</summary>")
@@ -309,7 +328,7 @@ def main() -> int:
             print_(_render_track(track_name, track_details, DOCS_BENCH_DIR))
 
         # Environment
-        print_("# Environment")
+        print_("## Environment")
         print_(
             str(
                 pre(
