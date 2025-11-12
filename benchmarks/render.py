@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import shutil
+import textwrap
 from pathlib import Path
 from typing import Dict, Iterable, List
 
@@ -32,7 +33,7 @@ def ensure_dir(path: Path) -> None:
     path.mkdir(parents=True, exist_ok=True)
 
 
-def safe_move(src: Path, dst: Path) -> None:
+def safe_copy(src: Path, dst: Path) -> None:
     ensure_dir(dst.parent)
     shutil.copy(str(src), str(dst))
 
@@ -108,6 +109,7 @@ def render_df_blocks(df_path: Path, id_prefix: str | None = None) -> List[tuple[
 
     palette = _palette(unique_models)
     blocks: List[tuple[str, str]] = []
+    first_block = True
 
     for dataset in unique_datasets:
         dataset_df = df[df["dataset"] == dataset]
@@ -163,7 +165,7 @@ def render_df_blocks(df_path: Path, id_prefix: str | None = None) -> List[tuple[
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
             font=dict(family="Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif"),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
+            legend=dict(orientation="h", yanchor="top", y=-0.15, xanchor="center", x=0.5),
         )
 
         # Axes and empty-state annotation
@@ -202,68 +204,24 @@ def render_df_blocks(df_path: Path, id_prefix: str | None = None) -> List[tuple[
             "staticPlot": False,
         }
 
+        # Only include plotly.js in the first block to avoid loading it multiple times
+        include_plotlyjs = "cdn" if first_block else False
+        first_block = False
+
         html = fig.to_html(
-            include_plotlyjs="cdn",
+            include_plotlyjs=include_plotlyjs,
             full_html=False,
             config=config,
             div_id=fig_div_id,
             validate=False,
         )
 
-        blocks.append(
-            (
-                dataset,
-                f"""
-<div class=\"benchmark-plot\" id=\"{fig_div_id}-container\">\n  {html}\n</div>\n""",
-            )
-        )
+        blocks.append((dataset,html))
 
     return blocks
 
-
-def _render_track(track_name: str, track_details: Dict, csv_dir: Path) -> str:
-    out: List[str] = []
-    out.append(f"## {track_name}")
-
-    csv_name = track_name.replace(" ", "_").lower() + ".csv"
-    df_path = find_first_existing([Path.cwd() / csv_name, csv_dir / csv_name])
-
-    # If CSV is in CWD, move it to docs so MkDocs can serve it from a stable place
-    if df_path and df_path.parent == Path.cwd():
-        target = csv_dir / csv_name
-        print(f"Moving {df_path} -> {target}")
-        safe_move(df_path, target)
-        df_path = target
-
-    if df_path and df_path.exists():
-        for dataset_name, html_block in render_df_blocks(df_path, id_prefix=slugify(track_name)):
-            if dataset_name:
-                # Insert explicit blank lines to ensure Markdown parsing after HTML blocks
-                out.append("")
-                out.append(f"### {dataset_name}")
-                out.append("")
-            out.append(html_block)
-    else:
-        out.append(f"<div class='admonition note'>CSV {csv_name} not found. Skipping visualization.</div>")
-
-    # Collapsible metadata
-    out.append("### Datasets")
-    for dataset_name, dataset_details in track_details.get("Dataset", {}).items():
-        out.append("<details class=\"bench-details\">")
-        out.append(f"<summary class=\"bench-summary\">{dataset_name}</summary>")
-        out.append(str(pre(dataset_details, _class="bench-pre dataset-pre")))
-        out.append("</details>")
-
-    out.append("### Models")
-    for model_name, model_details in track_details.get("Model", {}).items():
-        out.append("<details class=\"bench-details\">")
-        out.append(f"<summary class=\"bench-summary\">{model_name}</summary>")
-        out.append(str(pre(model_details, _class="bench-pre model-pre")))
-        out.append("</details>")
-    return "\n\n".join(out)
-
-
 if __name__ == '__main__':
+
     print("Starting benchmarks render...")
     print(f"CWD: {os.getcwd()}")
 
@@ -271,7 +229,12 @@ if __name__ == '__main__':
 
     # Locate and ensure details.json is in docs/benchmarks
     details_src = find_first_existing([Path.cwd() / "details.json", DOCS_BENCH_DIR / "details.json"])
-    safe_move(details_src, DOCS_BENCH_DIR / "details.json")
+    if details_src is None:
+        print("ERROR: details.json not found in current directory or docs/benchmarks/")
+    if details_src.parent != DOCS_BENCH_DIR:
+        print("Moving details.json into docs/benchmarks/")
+        safe_copy(details_src, DOCS_BENCH_DIR / "details.json")
+
     details_path = DOCS_BENCH_DIR / "details.json"
     try:
         details: Dict = json.loads(details_path.read_text())
@@ -285,7 +248,40 @@ if __name__ == '__main__':
 
         # Tracks
         for track_name, track_details in details.items():
-            print_(_render_track(track_name, track_details, DOCS_BENCH_DIR))
+            print_(f"# {track_name}")
+            df_path = DOCS_BENCH_DIR / (track_name.replace(" ", "_").lower() + ".csv")
+
+            df_md = (
+                pd.read_csv(str(df_path))
+                .groupby(["model", "dataset"])
+                .last()
+                .drop(columns=["track", "step"])
+                .reset_index()
+                .rename(columns={"model": "Model", "dataset": "Dataset"})
+                .to_markdown(index=False)
+            )
+            print_(df_md)
+
+            for dataset_name, html_block in render_df_blocks(df_path,id_prefix=slugify(track_name)):
+                print_(f"### {dataset_name}")
+                print_(html_block)
+
+            print_("### Datasets")
+            for dataset_name, dataset_details in track_details.get(
+                    "Dataset", {}).items():
+                print_("<details class=\"bench-details\">")
+                print_(f"<summary class=\"bench-summary\">{dataset_name}</summary>")
+                print_(str(pre(dataset_details,
+                                   _class="bench-pre dataset-pre")))
+                print_("</details>")
+
+            print_("### Models")
+            for model_name, model_details in track_details.get("Model",
+                                                               {}).items():
+                print_("<details class=\"bench-details\">")
+                print_(f"<summary class=\"bench-summary\">{model_name}</summary>")
+                print_(str(pre(model_details, _class="bench-pre model-pre")))
+                print_("</details>")
 
         # Environment
         print_("# Environment")
@@ -300,3 +296,4 @@ if __name__ == '__main__':
         )
 
     print(f"Wrote {index_md_path.relative_to(REPO_ROOT)}")
+
