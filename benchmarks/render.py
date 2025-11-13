@@ -10,7 +10,7 @@ import plotly.graph_objects as go
 
 import pandas as pd
 from dominate.tags import pre
-from slugify.slugify import slugify
+from slugify import slugify
 from watermark import watermark
 
 # Professional color palette for models (Material Design inspired)
