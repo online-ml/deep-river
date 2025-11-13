@@ -10,7 +10,11 @@ permissions:
 jobs:
   pypi-publish:
     name: Publish release to PyPI
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python: ['3.10', '3.11', '3.12']
+        os: [ubuntu-latest, macos-latest, windows-latest]
     environment:
       name: pypi
       url: https://pypi.org/p/deep-river/
@@ -24,16 +28,16 @@ jobs:
         with:
           version: "latest"
 
-      - name: Set up Python
-        run: uv python install 3.12
+      - name: Set up Python ${{ matrix.python }}
+        run: uv python install ${{ matrix.python }}
 
       - name: Cache uv dependencies
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: uv-${{ runner.os }}-3.12-${{ hashFiles('**/uv.lock') }}
+          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
-            uv-${{ runner.os }}-3.12-
+            uv-${{ runner.os }}-${{ matrix.python }}-
             uv-${{ runner.os }}-
 
       - name: Install dependencies and build
