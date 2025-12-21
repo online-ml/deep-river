@@ -20,18 +20,7 @@ jobs:
       matrix:
         python: ['3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
-        river: ['0.20.0', '0.22.0']
-        include:
-          # Test with minimum supported versions on Ubuntu/Python 3.10
-          - python: '3.10'
-            os: ubuntu-latest
-            river: '0.10.0'
-            deps-variant: 'minimum'
-          # Test with latest compatible versions on Ubuntu/Python 3.13
-          - python: '3.13'
-            os: ubuntu-latest
-            river: '0.22.0'
-            deps-variant: 'latest'
+        dependency-set: ['minimum', 'maximum']
 
     steps:
       - uses: actions/checkout@v4
@@ -48,30 +37,21 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/uv
-          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ matrix.deps-variant }}-${{ hashFiles('**/uv.lock') }}
+          key: uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.dependency-set }}-${{ hashFiles('**/uv.lock') }}
           restore-keys: |
-            uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-
+            uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.dependency-set }}-
             uv-${{ runner.os }}-${{ matrix.python }}-
             uv-${{ runner.os }}-
 
-      - name: Install dependencies with river ${{ matrix.river }} (minimum versions)
-        if: matrix.deps-variant == 'minimum'
+      - name: Install dependencies (minimum versions)
+        if: matrix.dependency-set == 'minimum'
         run: |
-          uv add river==${{ matrix.river }}
-          uv add --upgrade numpy==1.24.0 pandas==2.0.0 scikit-learn==1.3.0 torch==2.2.0 tqdm==4.66.0
-          uv sync --all-extras
+          uv sync --resolution=lowest --all-extras
 
-      - name: Install dependencies with river ${{ matrix.river }} (latest compatible)
-        if: matrix.deps-variant == 'latest'
+      - name: Install dependencies (maximum versions)
+        if: matrix.dependency-set == 'maximum'
         run: |
-          uv add river==${{ matrix.river }}
-          uv sync --all-extras
-
-      - name: Install dependencies with river ${{ matrix.river }} (default)
-        if: matrix.deps-variant == ''
-        run: |
-          uv add river==${{ matrix.river }}
-          uv sync --all-extras
+          uv sync --resolution=highest --all-extras
 
       - name: Download datasets
         run: uv run python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
@@ -86,18 +66,18 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-            name: coverage-${{ matrix.os }}-py${{ matrix.python }}-river${{ matrix.river }}-${{ matrix.deps-variant }}
+            name: coverage-${{ matrix.os }}-py${{ matrix.python }}-${{ matrix.dependency-set }}
             path: coverage.xml
             if-no-files-found: warn
 
       - name: Upload coverage report to Codecov (aggregate project)
-        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.13' && matrix.river == '0.22.0'
+        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.13' && matrix.dependency-set == 'maximum'
         uses: codecov/codecov-action@v4
         with:
           use_oidc: true
           token: ${{ secrets.CODECOV_TOKEN }}
           files: coverage.xml
-          name: ${{ matrix.os }}-py${{ matrix.python }}-river${{ matrix.river }}
+          name: ${{ matrix.os }}-py${{ matrix.python }}-${{ matrix.dependency-set }}
           fail_ci_if_error: true
           verbose: true
           disable_search: true
