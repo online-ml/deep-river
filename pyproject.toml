@@ -36,6 +36,7 @@ dependencies = [
     "tqdm>=4.66.0,<5.0",
     "torchviz>=0.0.2,<1.0",
     "networkx>=2.6.0",
+    "sympy>=1.10.0",
 ]
 
 [project.urls]
