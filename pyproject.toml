@@ -47,6 +47,11 @@ Documentation = "https://github.com/online-ml/deep-river"
 include = ["deep_river*"]
 exclude = ["site*", "paper*"]
 
+[tool.uv]
+required-environments = [
+    "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
 [tool.mypy]
 
 platforms = ["linux-x86_64", "macosx-aarch64", "win-amd64"]
