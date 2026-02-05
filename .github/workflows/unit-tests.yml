@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies (minimum versions)
         if: matrix.dependency-set == 'minimum'
         run: |
-          uv sync --resolution=lowest --all-extras
+          uv sync --resolution=lowest-direct --all-extras
 
       - name: Install dependencies (maximum versions)
         if: matrix.dependency-set == 'maximum'
