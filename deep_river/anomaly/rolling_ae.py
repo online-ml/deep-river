@@ -7,7 +7,6 @@ from river import anomaly
 from torch import nn
 
 from deep_river.base import RollingDeepEstimator
-from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 
 class _TestLSTMAutoencoder(nn.Module):
@@ -130,7 +129,6 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             "optimizer_fn": "sgd",
         }
 
-    @classmethod
     def _unit_test_skips(self) -> set:
         """Specify unit test cases to skip for this estimator."""
         return {
@@ -154,9 +152,9 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             Additional keyword arguments.
         """
         self._update_observed_features(x)
-        self._x_window.append(list(x.values()))
+        self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
 
-        x_t = deque2rolling_tensor(self._x_window, device=self.device)
+        x_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=x_t)
 
     def learn_many(self, X: pd.DataFrame, y=None) -> None:
@@ -171,9 +169,10 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         """
         self._update_observed_features(X)
 
-        self._x_window.append(X.values.tolist())
+        X = X.loc[:, list(self.observed_features)]
+        self._x_window.extend(X.values.tolist())
         if len(self._x_window) == self.window_size:
-            X_t = deque2rolling_tensor(self._x_window, device=self.device)
+            X_t = self._deque2rolling_tensor(self._x_window)
             self._learn(x=X_t)
 
     def score_one(self, x: dict) -> float:
@@ -193,8 +192,8 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         self._update_observed_features(x)
         if len(self._x_window) == self.window_size:
             x_win = self._x_window.copy()
-            x_win.append(list(x.values()))
-            x_t = deque2rolling_tensor(x_win, device=self.device)
+            x_win.append([x.get(feature, 0) for feature in self.observed_features])
+            x_t = self._deque2rolling_tensor(x_win)
             self.module.eval()
             with torch.inference_mode():
                 x_pred = self.module(x_t)
@@ -202,7 +201,9 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             res = loss.item()
 
         if self.append_predict:
-            self._x_window.append(list(x.values()))
+            self._x_window.append(
+                [x.get(feature, 0) for feature in self.observed_features]
+            )
         return res
 
     def score_many(self, X: pd.DataFrame) -> List[Any]:
@@ -221,13 +222,14 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             List of computed anomaly scores (reconstruction errors) for each sample in X.
         """
         self._update_observed_features(X)
+        X = X.loc[:, list(self.observed_features)]
         x_win = self._x_window.copy()
-        x_win.append(X.values.tolist())
+        x_win.extend(X.values.tolist())
         if self.append_predict:
-            self._x_window.append(X.values.tolist())
+            self._x_window.extend(X.values.tolist())
 
         if len(self._x_window) == self.window_size:
-            X_t = deque2rolling_tensor(x_win, device=self.device)
+            X_t = self._deque2rolling_tensor(x_win)
             self.module.eval()
             with torch.inference_mode():
                 x_pred = self.module(X_t)
