@@ -49,8 +49,14 @@ exclude = ["site*", "paper*"]
 
 
 [tool.mypy]
-
+ignore_missing_imports = true
 platforms = ["linux-x86_64", "macosx-aarch64", "win-amd64"]
+
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+addopts = "--doctest-modules --doctest-glob='README.md' -q"
 testpaths = ["deep_river", "README.md"]
 filterwarnings = [
     "ignore::DeprecationWarning",
