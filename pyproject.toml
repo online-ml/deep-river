@@ -51,7 +51,7 @@ exclude = ["site*", "paper*"]
 
 [tool.mypy]
 ignore_missing_imports = true
-platforms = ["linux-x86_64", "macosx-aarch64", "win-amd64"]
+platform = "linux"
 
 [tool.isort]
 profile = "black"

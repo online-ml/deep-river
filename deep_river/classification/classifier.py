@@ -1,4 +1,4 @@
-from typing import Callable, Union, cast
+from typing import Any, Callable, Hashable, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -252,7 +252,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
     # ------------------------------------------------------------------
     # Prediction
     # ------------------------------------------------------------------
-    def predict_proba_one(self, x: dict) -> dict[base.typing.ClfTarget, float]:
+    def predict_proba_one(
+        self, x: dict[Hashable, Any], **kwargs: Any
+    ) -> dict[base.typing.ClfTarget, float]:
         """Predict class membership probabilities for one instance.
 
         Parameters
@@ -333,8 +335,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             "is_class_incremental": True,
         }
 
-    @classmethod
-    def _unit_test_skips(cls) -> set:
+    def _unit_test_skips(self) -> set:
         """Return names of test checks to skip for this estimator."""
         return {
             "check_shuffle_features_no_impact",

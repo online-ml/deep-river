@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type, Union, cast
+from typing import Any, Callable, Dict, Hashable, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -153,8 +153,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             "is_class_incremental": False,
         }
 
-    @classmethod
-    def _unit_test_skips(cls) -> set:
+    def _unit_test_skips(self) -> set:
         return {
             "check_predict_proba_one",
         }
@@ -167,7 +166,9 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         x_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=x_t, y=y)
 
-    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
+    def predict_proba_one(
+        self, x: dict[Hashable, Any], **kwargs: Any
+    ) -> Dict[ClfTarget, float]:
         """Return class probability mapping for one sample using rolling context."""
         self._update_observed_features(x)
         x_win = self._x_window.copy()
@@ -185,7 +186,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         """Batch update: extend window with rows of X and perform a step."""
         self._update_observed_targets(y)
         self._update_observed_features(X)
-        X = X[list(self.observed_features)]
+        X = X.loc[:, list(self.observed_features)]
         self._x_window.extend(X.values.tolist())
         X_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=X_t, y=y)
@@ -193,7 +194,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Return probability DataFrame for multiple samples with rolling context."""
         self._update_observed_features(X)
-        X = X[list(self.observed_features)]
+        X = X.loc[:, list(self.observed_features)]
         x_win = self._x_window.copy()
         x_win.extend(X.values.tolist())
         if self.append_predict:
