@@ -27,6 +27,7 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
+    "networkx>=2.8,<4",
     "numpy>=1.26,<3",
     "pandas>=2.0,<3",
     "river>=0.22,<1",
