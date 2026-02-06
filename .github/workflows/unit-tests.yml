@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.10', '3.11', '3.12']
+        python: ['3.10', '3.11', '3.12', '3.13']
         os: [ubuntu-latest, macos-latest, windows-latest]
         river: ['0.22.0']
         deps: ['default']
@@ -84,7 +84,7 @@ jobs:
             if-no-files-found: warn
 
       - name: Upload coverage report to Codecov (aggregate project)
-        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.22.0' && matrix.deps == 'default'
+        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.13' && matrix.river == '0.22.0' && matrix.deps == 'default'
         uses: codecov/codecov-action@v4
         with:
           use_oidc: true
