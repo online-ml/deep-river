@@ -27,13 +27,12 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    "networkx>=2.8,<4",
     "numpy>=1.26,<3",
     "pandas>=2.0,<3",
     "river>=0.22,<1",
     "scikit-learn>=1.3,<2",
     "sortedcontainers>=2.4.0",
-    "torch>=2.1,<3",
+    "torch>=2.1.1,<3",
     "tqdm>=4.64,<5",
     "torchviz>=0.0.2,<0.1",
 ]
