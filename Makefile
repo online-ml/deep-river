@@ -13,6 +13,14 @@ format: check-uv
 test: check-uv
 	uv run pytest
 
+test-min: check-uv
+	uv sync --all-extras --resolution=lowest
+	uv run pytest
+
+test-max: check-uv
+	uv sync --all-extras --upgrade
+	uv run pytest
+
 execute-notebooks: check-uv
 	uv run jupyter nbconvert --execute --to notebook --inplace docs/*/*/*.ipynb --ExecutePreprocessor.timeout=-1
 
