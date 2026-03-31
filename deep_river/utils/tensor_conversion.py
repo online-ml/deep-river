@@ -1,7 +1,6 @@
 import math
 from typing import Deque, Dict, Hashable, List, Optional, Union
 
-import numpy as np
 import pandas as pd
 import torch
 from river import base
@@ -202,14 +201,14 @@ def output2proba(
         else:
             preds = torch.sigmoid(preds)
 
-    preds_np = preds.detach().cpu().numpy()
-    n_outputs = preds_np.shape[-1]
+    preds_t = preds.detach().cpu()
+    n_outputs = preds_t.shape[-1]
     n_classes = len(classes)
 
-    def renorm_rows(arr):
-        sums = arr.sum(axis=1, keepdims=True)
-        sums[sums == 0] = 1.0
-        return arr / sums
+    def renorm_rows(tensor):
+        sums = tensor.sum(dim=1, keepdim=True)
+        sums = torch.where(sums == 0, torch.ones_like(sums), sums)
+        return tensor / sums
 
     # Boolean mode (binary classification) – always {False, True}
     boolean_mode = (
@@ -217,22 +216,22 @@ def output2proba(
     ) or (n_classes == 0 and n_outputs in (1, 2))
     if boolean_mode:
         if n_outputs == 1:
-            p_true = preds_np[:, 0].astype("float64")
-            p_false = (1.0 - p_true).astype("float64")
-            probs = np.stack([p_true, p_false], axis=1)
+            p_true = preds_t[:, 0].to(dtype=torch.float64)
+            p_false = (1.0 - p_true).to(dtype=torch.float64)
+            probs = torch.stack([p_true, p_false], dim=1)
             probs = renorm_rows(probs)
-            return [dict(zip([True, False], row.astype("float64"))) for row in probs]
+            return [dict(zip([True, False], row)) for row in probs.tolist()]
         else:  # n_outputs == 2
-            probs = preds_np.astype("float64")
+            probs = preds_t.to(dtype=torch.float64)
             if is_probabilistic:
                 probs = renorm_rows(probs)
-            return [dict(zip([False, True], row.astype("float64"))) for row in probs]
+            return [dict(zip([False, True], row)) for row in probs.tolist()]
 
     # Single-output (non-boolean) -> observed class + Unobserved0
     if n_outputs == 1:
-        p_obs = preds_np[:, 0].astype("float64")
-        p_un = (1.0 - p_obs).astype("float64")
-        probs = np.stack([p_obs, p_un], axis=1)
+        p_obs = preds_t[:, 0].to(dtype=torch.float64)
+        p_un = (1.0 - p_obs).to(dtype=torch.float64)
+        probs = torch.stack([p_obs, p_un], dim=1)
         if is_probabilistic:
             probs = renorm_rows(probs)
         if n_classes == 0:
@@ -240,15 +239,15 @@ def output2proba(
         else:
             primary = next(iter(classes))
             labels = [primary, "Unobserved0"]  # mixed types intentional
-        return [dict(zip(labels, row.astype("float64"))) for row in probs]
+        return [dict(zip(labels, row)) for row in probs.tolist()]
 
     # Multi-output handling (n_outputs > 1, non-boolean)
     if n_classes == 0:
         labels2: List[Hashable] = list(range(n_outputs))
-        rows = preds_np
+        rows = preds_t.to(dtype=torch.float64)
         if is_probabilistic:
-            rows = renorm_rows(rows.astype("float64")).astype(rows.dtype)
-        return [dict(zip(labels2, row)) for row in rows]
+            rows = renorm_rows(rows)
+        return [dict(zip(labels2, row)) for row in rows.tolist()]
 
     labels3: List[Hashable] = list(classes)
     if len(labels3) < n_outputs:
@@ -257,7 +256,7 @@ def output2proba(
     else:
         labels3 = labels3[:n_outputs]
 
-    rows = preds_np
+    rows = preds_t.to(dtype=torch.float64)
     if is_probabilistic:
-        rows = renorm_rows(rows.astype("float64")).astype(rows.dtype)
-    return [dict(zip(labels3, row)) for row in rows]
+        rows = renorm_rows(rows)
+    return [dict(zip(labels3, row)) for row in rows.tolist()]
