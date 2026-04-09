@@ -249,7 +249,7 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
+# generated documentation site
 /site
 
 # mypy
@@ -289,3 +289,4 @@ cython_debug/
 !/build/
 /IncrementalTorch.egg-info/
 docs/benchmarks/index.md
+docs/generated/

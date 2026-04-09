@@ -100,14 +100,13 @@ model = Regressor(module=MyModule)
 
 If you're adding a class or a function, then you'll need to add a docstring. We follow the [Google docstring convention](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html), so please do too.
 
-To build the documentation, you need to install some extra dependencies:
+To build the documentation, install the development dependencies:
 
 ```sh
-poetry install --with docs
-pip install git+https://github.com/MaxHalford/yamp
+uv sync --group dev
 ```
 
-From the root of the repository, you can then run the `make livedoc` command to take a look at the documentation in your browser. This will run a custom script which parses all the docstrings and generate MarkDown files that [MkDocs](https://www.mkdocs.org/) can render.
+From the root of the repository, run `make livedoc` to preview docs in your browser. This runs the benchmark and API generation scripts and then serves the Zensical site.
 
 ## Build Cython and Rust extensions
 

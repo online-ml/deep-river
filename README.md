@@ -52,7 +52,7 @@ git clone https://github.com/online-ml/deep-river.git
 cd deep-river
 
 # Install all dependencies (including dev dependencies)
-uv sync --extra dev
+uv sync --group dev
 
 # Run tests
 make test

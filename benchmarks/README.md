@@ -1,17 +1,23 @@
 # Benchmarks
 
-## Installation 
-```sh
-pip install ".[benchmarks]"
-```
+Run benchmark commands with `uv` from the repository root.
 
 ## Usage
-The `run.py` executes the benchmarks and creates the necessary .csv files for rendering the plots.
+
+The `run.py` script executes benchmarks and creates the CSV inputs for rendering:
+
 ```sh
-cd benchmarks
-python run.py
+uv run python benchmarks/run.py
 ```
-The `render.py` renders the plots from the .csv files and moves them to the `docs/benchmarks` folder.
+
+The `render.py` script renders benchmark pages into `docs/benchmarks`:
+
 ```sh
-python render.py
+uv run python benchmarks/render.py
+```
+
+Or generate everything via:
+
+```sh
+make doc
 ```

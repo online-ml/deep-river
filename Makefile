@@ -5,7 +5,7 @@ check-uv:
 	@which uv > /dev/null || (echo "uv is not installed. Please install it from https://github.com/astral-sh/uv" && exit 1)
 
 install: check-uv
-	uv sync --extra dev
+	uv sync --group dev
 
 format: check-uv
 	uv run pre-commit run --all-files
@@ -18,10 +18,11 @@ execute-notebooks: check-uv
 
 doc: check-uv
 	(cd benchmarks && uv run python render.py)
-	uv run mkdocs build
+	uv run python docs/scripts/build_docs_assets.py
+	uv run zensical build --clean
 
 livedoc: doc
-	uv run mkdocs serve --dirtyreload
+	uv run zensical serve
 
 rebase:
 	git fetch && git rebase origin/master

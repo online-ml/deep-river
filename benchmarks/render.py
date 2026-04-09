@@ -5,6 +5,7 @@ import shutil
 import textwrap
 from pathlib import Path
 from typing import List
+
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 
@@ -13,29 +14,65 @@ from dominate.tags import pre
 from slugify import slugify
 from watermark import watermark
 
+
+BENCHMARKS_DIR = Path(__file__).resolve().parent
+DOCS_BENCHMARKS_DIR = BENCHMARKS_DIR.parent / "docs" / "benchmarks"
+
 # Professional color palette for models (Material Design inspired)
 COLOR_PALETTE = [
-    "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b", "#e377c2",
-    "#7f7f7f", "#bcbd22", "#17becf", "#aec7e8", "#ffbb78", "#98df8a", "#ff9896",
-    "#c5b0d5", "#c49c94", "#f7b6d2", "#c7c7c7", "#dbdb8d", "#9edae5",
+    "#1f77b4",
+    "#ff7f0e",
+    "#2ca02c",
+    "#d62728",
+    "#9467bd",
+    "#8c564b",
+    "#e377c2",
+    "#7f7f7f",
+    "#bcbd22",
+    "#17becf",
+    "#aec7e8",
+    "#ffbb78",
+    "#98df8a",
+    "#ff9896",
+    "#c5b0d5",
+    "#c49c94",
+    "#f7b6d2",
+    "#c7c7c7",
+    "#dbdb8d",
+    "#9edae5",
 ]
 
 
-def render_df(dataset_df: pd.DataFrame, measures: List[str], models: List[str],
-              dataset: str, include_plotlyjs: bool = True) -> str:
+def _track_slug(track_name: str) -> str:
+    return slugify(track_name)
+
+
+def _track_csv_name(track_name: str) -> str:
+    return track_name.replace(" ", "_").lower()
+
+
+def render_df(
+    dataset_df: pd.DataFrame,
+    measures: List[str],
+    models: List[str],
+    dataset: str,
+    include_plotlyjs: bool = True,
+) -> str:
     nrows = max(1, len(measures))
     fig = make_subplots(
         rows=nrows,
         cols=1,
-        subplot_titles=[m.replace("_", " ").title() for m in
-                        measures] if measures else None,
+        subplot_titles=[m.replace("_", " ").title() for m in measures]
+        if measures
+        else None,
         shared_xaxes=True,
         vertical_spacing=0.06,
     )
 
     # Assign colors to models based on their index
-    model_colors = {model: COLOR_PALETTE[i % len(COLOR_PALETTE)] for i, model in
-                    enumerate(models)}
+    model_colors = {
+        model: COLOR_PALETTE[i % len(COLOR_PALETTE)] for i, model in enumerate(models)
+    }
 
     for model in models:
         model_df = dataset_df[dataset_df["model"] == model]
@@ -81,7 +118,8 @@ def render_df(dataset_df: pd.DataFrame, measures: List[str], models: List[str],
         font=dict(
             family="Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif",
             size=12,
-            color="#424242"),
+            color="#424242",
+        ),
         legend=dict(
             orientation="h",
             yanchor="top",
@@ -96,8 +134,9 @@ def render_df(dataset_df: pd.DataFrame, measures: List[str], models: List[str],
     if measures:
         fig.update_xaxes(title_text="Instance", row=nrows, col=1)
         for i, measure in enumerate(measures):
-            fig.update_yaxes(title_text=measure.replace("_", " ").title(),
-                             row=i + 1, col=1)
+            fig.update_yaxes(
+                title_text=measure.replace("_", " ").title(), row=i + 1, col=1
+            )
     else:
         fig.add_annotation(
             text="No numeric metrics found in CSV.",
@@ -116,8 +155,7 @@ def render_df(dataset_df: pd.DataFrame, measures: List[str], models: List[str],
         "responsive": True,
         "displayModeBar": True,
         "displaylogo": False,
-        "modeBarButtonsToRemove": ["pan2d", "lasso2d", "select2d",
-                                   "autoScale2d"],
+        "modeBarButtonsToRemove": ["pan2d", "lasso2d", "select2d", "autoScale2d"],
         "toImageButtonOptions": {
             "format": "png",
             "filename": f"{dataset_slug}_benchmark",
@@ -128,7 +166,7 @@ def render_df(dataset_df: pd.DataFrame, measures: List[str], models: List[str],
         "scrollZoom": False,
         "staticPlot": False,
     }
-    plotlyjs_setting = "require" if include_plotlyjs else False
+    plotlyjs_setting = "cdn" if include_plotlyjs else False
 
     html = fig.to_html(
         include_plotlyjs=plotlyjs_setting,
@@ -138,32 +176,60 @@ def render_df(dataset_df: pd.DataFrame, measures: List[str], models: List[str],
         validate=False,
     )
 
-    return (
-        f"""<div class=\"benchmark-plot\" id=\"{fig_div_id}-container\">\n  {html}\n</div>\n""")
+    return f"""<div class=\"benchmark-plot\" id=\"{fig_div_id}-container\">\n  {html}\n</div>\n"""
 
 
 if __name__ == "__main__":
-    with open("details.json") as f:
+    with open(BENCHMARKS_DIR / "details.json", encoding="utf-8") as f:
         details = json.load(f)
 
+    docs_benchmarks_dir = DOCS_BENCHMARKS_DIR
+    docs_benchmarks_dir.mkdir(parents=True, exist_ok=True)
+
+    benchmark_index_lines = [
+        "# Benchmarks",
+        "",
+        "Benchmarks are generated from CSV outputs in `benchmarks/`.",
+        "",
+        "## Tracks",
+        "",
+    ]
+
     for track_name, track_details in details.items():
-        track_dir = Path(f"../docs/benchmarks/{track_name}")
-        track_dir.mkdir(exist_ok=True)
-        with open(f"../docs/benchmarks/{track_name}/index.md", "w",
-                  encoding="utf-8") as f:
+        track_slug = _track_slug(track_name)
+        track_dir = docs_benchmarks_dir / track_slug
+        legacy_track_dir = docs_benchmarks_dir / track_name
+
+        if legacy_track_dir.exists() and legacy_track_dir != track_dir:
+            shutil.rmtree(legacy_track_dir)
+
+        track_dir.mkdir(parents=True, exist_ok=True)
+
+        benchmark_index_lines.append(f"- [{track_name}]({track_slug}/index.md)")
+
+        with open(track_dir / "index.md", "w", encoding="utf-8") as f:
 
             def print_(x):
                 return print(x, file=f, end="\n\n")
 
-
             print_(f"# {track_name}")
+            print_("[Back to benchmarks overview](../index.md)")
 
             # Move the dataset from the benchmarks folder to the docs folder
-            csv_name = track_name.replace(" ", "_").lower()
-            shutil.copy(f"{csv_name}.csv",
-                        f"../docs/benchmarks/{track_name}/{csv_name}.csv")
+            csv_name = _track_csv_name(track_name)
+            source_csv = BENCHMARKS_DIR / f"{csv_name}.csv"
+            target_csv = track_dir / f"{csv_name}.csv"
 
-            df_path = Path(f"../docs/benchmarks/{track_name}/{csv_name}.csv")
+            if not source_csv.exists():
+                print_(
+                    f"> Missing benchmark data: `{source_csv.as_posix()}`. "
+                    "Run `python benchmarks/run.py` first."
+                )
+                continue
+
+            shutil.copy(source_csv, target_csv)
+
+            df_path = target_csv
 
             df = pd.read_csv(str(df_path))
 
@@ -180,8 +246,7 @@ if __name__ == "__main__":
 
                 print_(f"### Summary")
                 df_md = (
-                    dataset_df
-                    .groupby(["model"])
+                    dataset_df.groupby(["model"])
                     .last()
                     .drop(columns=["track", "step", "dataset"])
                     .reset_index()
@@ -190,20 +255,25 @@ if __name__ == "__main__":
                 )
                 print_(df_md)
                 print_(f"### Charts")
-                print_(render_df(dataset_df=dataset_df, measures=measures,
-                                 models=unique_models, dataset=dataset,
-                                 include_plotlyjs=first_plot))
+                print_(
+                    render_df(
+                        dataset_df=dataset_df,
+                        measures=measures,
+                        models=unique_models,
+                        dataset=dataset,
+                        include_plotlyjs=first_plot,
+                    )
+                )
                 first_plot = False
 
             print_("## Datasets")
-            for dataset_name, dataset_details in track_details[
-                "Dataset"].items():
-                print_(f'???- abstract "{dataset_name}"')
+            for dataset_name, dataset_details in track_details["Dataset"].items():
+                print_(f'??? abstract "{dataset_name}"')
                 print_(textwrap.indent(dataset_details, "    "))
                 print_("<span />")
             print_("## Models")
             for model_name, model_details in track_details["Model"].items():
-                print_(f'???- example "{model_name}"')
+                print_(f'??? example "{model_name}"')
                 print_(
                     f"    <pre>{textwrap.indent(model_details, '    ').replace('    ', '', 1)}</pre>"
                 )
@@ -215,7 +285,12 @@ if __name__ == "__main__":
                     watermark(
                         python=True,
                         packages="river,numpy,scikit-learn,pandas,scipy",
-                        machine=True
+                        machine=True,
                     )
                 )
             )
+
+    (docs_benchmarks_dir / "index.md").write_text(
+        "\n".join(benchmark_index_lines).rstrip() + "\n",
+        encoding="utf-8",
+    )

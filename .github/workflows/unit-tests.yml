@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies with river ${{ matrix.river }}
         run: |
           uv add river==${{ matrix.river }}
-          uv sync --all-extras
+          uv sync --group dev
 
       - name: Download datasets
         run: uv run python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
