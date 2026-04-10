@@ -10,7 +10,11 @@ from deep_river.anomaly import ae
 
 
 class ProbabilityWeightedAutoencoder(ae.Autoencoder):
-    """ """
+    """Autoencoder that down-weights loss for likely outliers.
+
+    The loss is scaled using a rolling mean/variance of reconstruction
+    errors, so examples that look anomalous contribute less to updates.
+    """
 
     def __init__(
         self,
