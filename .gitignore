@@ -1,6 +1,7 @@
 # Own directories
 .vscode
 .build
+.secrets
 
 # Created by https://www.toptal.com/developers/gitignore/api/visualstudiocode,pycharm,jupyternotebooks,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=visualstudiocode,pycharm,jupyternotebooks,python
