@@ -30,6 +30,20 @@ def copy_site(source: Path, destination: Path) -> None:
     shutil.copytree(source, destination)
 
 
+def remove_stale_root_site(
+    source: Path,
+    target: Path,
+    protected_names: set[str],
+) -> None:
+    stale_names = {path.name for path in source.iterdir()} - protected_names
+    for name in stale_names:
+        path = target / name
+        if path.is_dir():
+            shutil.rmtree(path)
+        elif path.exists():
+            path.unlink()
+
+
 def write_redirect(path: Path, target: str) -> None:
     path.write_text(
         """<!doctype html>
@@ -116,6 +130,11 @@ def main() -> None:
         raise SystemExit(f"Source directory does not exist: {source_dir}")
     if not target_dir.is_dir():
         raise SystemExit(f"Target directory does not exist: {target_dir}")
+
+    protected_names = {".git", ".nojekyll", "versions.json", args.version, *args.alias}
+    if args.default_target:
+        protected_names.add(args.default_target)
+    remove_stale_root_site(source_dir, target_dir, protected_names)
 
     copy_site(source_dir, target_dir / args.version)
     for alias in args.alias:
