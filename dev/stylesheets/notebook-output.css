@@ -1,0 +1,48 @@
+.notebook-content {
+  display: block;
+}
+
+.notebook-content .river-pipeline {
+  position: relative;
+  background: none !important;
+  padding: 0.5rem 0;
+}
+
+.notebook-content .river-pipeline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  background: #b0b0b0;
+  transform: translateX(-50%);
+  z-index: 0;
+}
+
+.notebook-content .river-estimator,
+.notebook-content .river-wrapper,
+.notebook-content .river-union {
+  position: relative;
+  z-index: 1;
+  background: #fff !important;
+  border-color: #c9c9c9;
+}
+
+.notebook-content .river-estimator-params {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.notebook-content details.river-component > summary {
+  position: relative;
+  z-index: 1;
+}
+
+.notebook-content .river-component + .river-component {
+  margin-top: 2.25em;
+}
+
+.notebook-content .river-union > .river-component + .river-component {
+  margin-left: 1.5em;
+}
