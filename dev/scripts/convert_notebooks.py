@@ -21,7 +21,7 @@ DOCS_DIR = ROOT / "docs"
 EXAMPLES_DIR = DOCS_DIR / "examples"
 GENERATED_DIR = DOCS_DIR / "generated" / "examples"
 REPO_URL = "https://github.com/online-ml/deep-river"
-DEFAULT_BRANCH = "master"
+DEFAULT_BRANCH = "main"
 
 
 def notebook_title(path: Path) -> str:
