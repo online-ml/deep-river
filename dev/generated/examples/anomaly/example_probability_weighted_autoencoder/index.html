@@ -76,7 +76,8 @@
     <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
-        <a href="#__skip" class="md-skip">
+        
+        <a href="#analyse" class="md-skip">
           Skip to content
         </a>
       
@@ -2935,6 +2936,11 @@
                     
                     
                     
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -2946,6 +2952,58 @@
   
   
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#analyse" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Analyse
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#model-creation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Model Creation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run-the-datastream" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run the Datastream
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hyperparameter-optimization" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hyperparameter Optimization
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -2963,14 +3021,9 @@
   
 
 
-<h1 id="example-probability-weighted-autoencoder">Example Probability Weighted Autoencoder<a class="headerlink" href="#example-probability-weighted-autoencoder" title="Permanent link">&para;</a></h1>
+<h1 id="probability-weighted-autoencoder">Probability weighted Autoencoder<a class="headerlink" href="#probability-weighted-autoencoder" title="Permanent link">&para;</a></h1>
 <p><a href="https://colab.research.google.com/github/online-ml/deep-river/blob/main/docs/examples/anomaly/example_probability_weighted_autoencoder.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> <a href="https://mybinder.org/v2/gh/online-ml/deep-river/main?filepath=docs/examples/anomaly/example_probability_weighted_autoencoder.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
-<div class="notebook-content">
-
-# Probability weighted Autoencoder
-A Probability-Weighted Autoencoder (PWAE) is a variant of the traditional autoencoder designed to incorporate probabilistic weighting into the reconstruction process. Unlike standard autoencoders that treat all inputs equally, a PWAE assigns different importance to each data point based on its probability distribution, enhancing its ability to detect anomalies and rare events. The model minimizes a weighted reconstruction loss, ensuring that more critical samples (e.g., minority class instances like fraud) contribute more to learning.
-
-
+<p>A Probability-Weighted Autoencoder (PWAE) is a variant of the traditional autoencoder designed to incorporate probabilistic weighting into the reconstruction process. Unlike standard autoencoders that treat all inputs equally, a PWAE assigns different importance to each data point based on its probability distribution, enhancing its ability to detect anomalies and rare events. The model minimizes a weighted reconstruction loss, ensuring that more critical samples (e.g., minority class instances like fraud) contribute more to learning.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river</span><span class="w"> </span><span class="kn">import</span> <span class="n">compose</span><span class="p">,</span> <span class="n">preprocessing</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">datasets</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">deep_river.anomaly</span><span class="w"> </span><span class="kn">import</span> <span class="n">ProbabilityWeightedAutoencoder</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">manual_seed</span>
@@ -2978,19 +3031,13 @@ A Probability-Weighted Autoencoder (PWAE) is a variant of the traditional autoen
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
 </span></code></pre></div>
-
-## Analyse
-This code initializes a reproducible environment and loads a subset of the CreditCard dataset, selecting 5000 transactions for analysis. It then converts the dataset into a Pandas DataFrame and generates a summary report using TableReport(), which provides an overview of the dataset's structure, feature distributions, and potential missing values. This step helps to understand the data before applying preprocessing or modeling techniques.
-
-
+<h3 id="analyse">Analyse<a class="headerlink" href="#analyse" title="Permanent link">&para;</a></h3>
+<p>This code initializes a reproducible environment and loads a subset of the CreditCard dataset, selecting 5000 transactions for analysis. It then converts the dataset into a Pandas DataFrame and generates a summary report using TableReport(), which provides an overview of the dataset's structure, feature distributions, and potential missing values. This step helps to understand the data before applying preprocessing or modeling techniques.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">_</span> <span class="o">=</span> <span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">CreditCard</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
 </span></code></pre></div>
-
-## Model Creation
-While the model stays the same as the fully connected autoencoder, the wrapper class changes to the probability weighted autoencoder. 
-
-
+<h3 id="model-creation">Model Creation<a class="headerlink" href="#model-creation" title="Permanent link">&para;</a></h3>
+<p>While the model stays the same as the fully connected autoencoder, the wrapper class changes to the probability weighted autoencoder. </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">CreditCard</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">RollingROCAUC</span><span class="p">(</span><span class="n">window_size</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyAutoEncoder</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
@@ -3014,10 +3061,6 @@ While the model stays the same as the fully connected autoencoder, the wrapper c
 </span><span id="__span-2-21"><a id="__codelineno-2-21" name="__codelineno-2-21" href="#__codelineno-2-21"></a><span class="p">)</span>
 </span><span id="__span-2-22"><a id="__codelineno-2-22" name="__codelineno-2-22" href="#__codelineno-2-22"></a><span class="n">model_pipeline</span>
 </span></code></pre></div>
-
-
-
-
 <div><div class="river-component river-pipeline"><details class="river-component river-estimator"><summary class="river-summary"><pre class="river-estimator-name">MinMaxScaler</pre></summary><code class="river-estimator-params">MinMaxScaler ()
 </code></details><details class="river-component river-estimator"><summary class="river-summary"><pre class="river-estimator-name">ProbabilityWeightedAutoencoder</pre></summary><code class="river-estimator-params">ProbabilityWeightedAutoencoder (
   module=MyAutoEncoder(
@@ -3134,31 +3177,21 @@ While the model stays the same as the fully connected autoencoder, the wrapper c
 }
 </style></div>
 
-
-
-## Run the Datastream
-This block performs hyperparameter optimization by evaluating the impact of different latent dimensions on the model's performance. It iterates over a predefined set of `latent_dim` values, initializing a fresh dataset and rolling ROC AUC metric for each experiment. A pipeline is created for each latent dimension, consisting of a `MinMaxScaler` for normalization and an autoencoder trained using online learning. The model is then trained and evaluated sequentially on the dataset, updating the metric with its predictions. After processing all data points, the final ROC AUC score is recorded for the current latent dimension. Once all experiments are completed, the results are stored in a DataFrame and visualized using a line plot, where the x-axis represents the latent dimension values and the y-axis represents the corresponding ROC AUC scores. This visualization helps identify the optimal latent dimension for anomaly detection.
-
-
+<h3 id="run-the-datastream">Run the Datastream<a class="headerlink" href="#run-the-datastream" title="Permanent link">&para;</a></h3>
+<p>This block performs hyperparameter optimization by evaluating the impact of different latent dimensions on the model's performance. It iterates over a predefined set of <code>latent_dim</code> values, initializing a fresh dataset and rolling ROC AUC metric for each experiment. A pipeline is created for each latent dimension, consisting of a <code>MinMaxScaler</code> for normalization and an autoencoder trained using online learning. The model is then trained and evaluated sequentially on the dataset, updating the metric with its predictions. After processing all data points, the final ROC AUC score is recorded for the current latent dimension. Once all experiments are completed, the results are stored in a DataFrame and visualized using a line plot, where the x-axis represents the latent dimension values and the y-axis represents the corresponding ROC AUC scores. This visualization helps identify the optimal latent dimension for anomaly detection.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">score</span> <span class="o">=</span> <span class="n">model_pipeline</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">metric</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">y_true</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">y_pred</span><span class="o">=</span><span class="n">score</span><span class="p">)</span>
 </span><span id="__span-3-4"><a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">model_pipeline</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">)</span>
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ROCAUC: </span><span class="si">{</span><span class="n">metric</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-    ROCAUC: 0.8530
-
-
-## Hyperparameter Optimization
-This block processes the dataset sequentially, evaluating and updating the model in an online learning manner. For each data point, the model generates an anomaly score using `score_one(x)`, which is then used to update the rolling ROC AUC metric by comparing it to the true label `y`. After scoring, the model is trained incrementally using `learn_one(x)`, allowing it to adapt continuously as new data arrives. Once all data points have been processed, the final ROC AUC score is printed, providing a performance measure of the model's ability to distinguish between fraudulent and non-fraudulent transactions.
-
-
+<div class="language-text highlight"><pre><span></span><code>ROCAUC: 0.8530
+</code></pre></div>
+<h3 id="hyperparameter-optimization">Hyperparameter Optimization<a class="headerlink" href="#hyperparameter-optimization" title="Permanent link">&para;</a></h3>
+<p>This block processes the dataset sequentially, evaluating and updating the model in an online learning manner. For each data point, the model generates an anomaly score using <code>score_one(x)</code>, which is then used to update the rolling ROC AUC metric by comparing it to the true label <code>y</code>. After scoring, the model is trained incrementally using <code>learn_one(x)</code>, allowing it to adapt continuously as new data arrives. Once all data points have been processed, the final ROC AUC score is printed, providing a performance measure of the model's ability to distinguish between fraudulent and non-fraudulent transactions.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">latent_dims</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">40</span><span class="p">]</span>  <span class="c1"># You can adjust this range</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
 </span></code></pre></div>
-
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="k">for</span> <span class="n">latent_dim</span> <span class="ow">in</span> <span class="n">latent_dims</span><span class="p">:</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>    <span class="c1"># Initialize a fresh metric</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">CreditCard</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
@@ -3191,19 +3224,9 @@ This block processes the dataset sequentially, evaluating and updating the model
 </span><span id="__span-5-30"><a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="n">plt</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="__span-5-31"><a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a><span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </span></code></pre></div>
-
-
-
-![png](example_probability_weighted_autoencoder_files/output_10_0.png)
-
-
-
-
+<p><img alt="png" src="example_probability_weighted_autoencoder_files/output_10_0.png" /></p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>
 </span></code></pre></div>
-
-
-</div>
 
 
 

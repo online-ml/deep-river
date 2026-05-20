@@ -2963,13 +2963,8 @@
   
 
 
-<h1 id="example-regression">Example Regression<a class="headerlink" href="#example-regression" title="Permanent link">&para;</a></h1>
+<h1 id="simple-regression-model">Simple Regression Model<a class="headerlink" href="#simple-regression-model" title="Permanent link">&para;</a></h1>
 <p><a href="https://colab.research.google.com/github/online-ml/deep-river/blob/main/docs/examples/regression/example_regression.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> <a href="https://mybinder.org/v2/gh/online-ml/deep-river/main?filepath=docs/examples/regression/example_regression.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
-<div class="notebook-content">
-
-# Simple Regression Model
-
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">metrics</span><span class="p">,</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">compose</span><span class="p">,</span>
@@ -2983,8 +2978,6 @@
 </span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pprint</span><span class="w"> </span><span class="kn">import</span> <span class="n">pprint</span>
 </span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="kn">from</span><span class="w"> </span><span class="nn">tqdm</span><span class="w"> </span><span class="kn">import</span> <span class="n">tqdm</span>
 </span></code></pre></div>
-
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Bikes</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">dataset</span><span class="p">:</span>
@@ -2992,19 +2985,16 @@
 </span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of available bikes: </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="k">break</span>
 </span></code></pre></div>
-
-    {'clouds': 75,
-     'description': 'light rain',
-     'humidity': 81,
-     'moment': datetime.datetime(2016, 4, 1, 0, 0, 7),
-     'pressure': 1017.0,
-     'station': 'metro-canal-du-midi',
-     'temperature': 6.54,
-     'wind': 9.3}
-    Number of available bikes: 1
-
-
-
+<div class="language-text highlight"><pre><span></span><code>{&#39;clouds&#39;: 75,
+ &#39;description&#39;: &#39;light rain&#39;,
+ &#39;humidity&#39;: 81,
+ &#39;moment&#39;: datetime.datetime(2016, 4, 1, 0, 0, 7),
+ &#39;pressure&#39;: 1017.0,
+ &#39;station&#39;: &#39;metro-canal-du-midi&#39;,
+ &#39;temperature&#39;: 6.54,
+ &#39;wind&#39;: 9.3}
+Number of available bikes: 1
+</code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyModule</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">):</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        <span class="nb">super</span><span class="p">(</span><span class="n">MyModule</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -3024,8 +3014,6 @@
 </span><span id="__span-2-17"><a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>    <span class="n">x</span><span class="p">[</span><span class="s2">&quot;hour&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="s2">&quot;moment&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">hour</span>
 </span><span id="__span-2-18"><a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="k">return</span> <span class="n">x</span>
 </span></code></pre></div>
-
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MAE</span><span class="p">()</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">model_pipeline</span> <span class="o">=</span> <span class="n">compose</span><span class="o">.</span><span class="n">Select</span><span class="p">(</span>
@@ -3038,10 +3026,6 @@
 </span><span id="__span-3-10"><a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">model_pipeline</span> <span class="o">|=</span> <span class="n">Regressor</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">MyModule</span><span class="p">(</span><span class="mi">10</span><span class="p">),</span> <span class="n">loss_fn</span><span class="o">=</span><span class="s2">&quot;mse&quot;</span><span class="p">,</span> <span class="n">optimizer_fn</span><span class="o">=</span><span class="s2">&quot;sgd&quot;</span><span class="p">)</span>
 </span><span id="__span-3-11"><a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a><span class="n">model_pipeline</span>
 </span></code></pre></div>
-
-
-
-
 <div><div class="river-component river-pipeline"><div class="river-component river-union"><details class="river-component river-estimator"><summary class="river-summary"><pre class="river-estimator-name">['clouds', [...]</pre></summary><code class="river-estimator-params">Select (
   clouds
   humidity
@@ -3176,165 +3160,61 @@ def get_hour(x):
 }
 </style></div>
 
-
-
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5000</span><span class="p">)):</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model_pipeline</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">metric</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">y_true</span><span class="o">=</span><span class="n">y</span><span class="p">,</span> <span class="n">y_pred</span><span class="o">=</span><span class="n">y_pred</span><span class="p">)</span>
 </span><span id="__span-4-4"><a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">model_pipeline</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
 </span><span id="__span-4-5"><a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;MAE: </span><span class="si">{</span><span class="n">metric</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-
-0it [00:00, ?it/s]
-
-
-53it [00:00, 525.82it/s]
-
-
-157it [00:00, 821.97it/s]
-
-
-258it [00:00, 906.00it/s]
-
-
-365it [00:00, 969.28it/s]
-
-
-474it [00:00, 1010.64it/s]
-
-
-585it [00:00, 1041.72it/s]
-
-
-695it [00:00, 1059.12it/s]
-
-
-806it [00:00, 1072.91it/s]
-
-
-914it [00:00, 1074.63it/s]
-
-
-1028it [00:01, 1091.78it/s]
-
-
-1147it [00:01, 1118.35it/s]
-
-
-1259it [00:01, 1106.12it/s]
-
-
-1370it [00:01, 1066.01it/s]
-
-
-1479it [00:01, 1072.76it/s]
-
-
-1587it [00:01, 1073.15it/s]
-
-
-1698it [00:01, 1083.37it/s]
-
-
-1808it [00:01, 1087.79it/s]
-
-
-1918it [00:01, 1090.43it/s]
-
-
-2028it [00:01, 1088.89it/s]
-
-
-2138it [00:02, 1092.02it/s]
-
-
-2251it [00:02, 1103.27it/s]
-
-
-2365it [00:02, 1113.66it/s]
-
-
-2477it [00:02, 1108.26it/s]
-
-
-2591it [00:02, 1115.86it/s]
-
-
-2703it [00:02, 1102.41it/s]
-
-
-2814it [00:02, 1095.06it/s]
-
-
-2934it [00:02, 1123.38it/s]
-
-
-3047it [00:02, 1123.59it/s]
-
-
-3160it [00:02, 1114.18it/s]
-
-
-3272it [00:03, 1067.75it/s]
-
-
-3380it [00:03, 1063.18it/s]
-
-
-3487it [00:03, 1064.14it/s]
-
-
-3594it [00:03, 1052.28it/s]
-
-
-3700it [00:03, 1048.48it/s]
-
-
-3808it [00:03, 1054.64it/s]
-
-
-3916it [00:03, 1059.51it/s]
-
-
-4023it [00:03, 1045.39it/s]
-
-
-4129it [00:03, 1048.36it/s]
-
-
-4239it [00:03, 1061.50it/s]
-
-
-4350it [00:04, 1074.71it/s]
-
-
-4458it [00:04, 1072.10it/s]
-
-
-4566it [00:04, 1073.53it/s]
-
-
-4675it [00:04, 1077.60it/s]
-
-
-4784it [00:04, 1079.27it/s]
-
-
-4897it [00:04, 1092.86it/s]
-
-
-5000it [00:04, 1070.85it/s]
-
-    MAE: 6.83
-
-
-
-
-
-
-</div>
+<p>0it [00:00, ?it/s]</p>
+<p>53it [00:00, 525.82it/s]</p>
+<p>157it [00:00, 821.97it/s]</p>
+<p>258it [00:00, 906.00it/s]</p>
+<p>365it [00:00, 969.28it/s]</p>
+<p>474it [00:00, 1010.64it/s]</p>
+<p>585it [00:00, 1041.72it/s]</p>
+<p>695it [00:00, 1059.12it/s]</p>
+<p>806it [00:00, 1072.91it/s]</p>
+<p>914it [00:00, 1074.63it/s]</p>
+<p>1028it [00:01, 1091.78it/s]</p>
+<p>1147it [00:01, 1118.35it/s]</p>
+<p>1259it [00:01, 1106.12it/s]</p>
+<p>1370it [00:01, 1066.01it/s]</p>
+<p>1479it [00:01, 1072.76it/s]</p>
+<p>1587it [00:01, 1073.15it/s]</p>
+<p>1698it [00:01, 1083.37it/s]</p>
+<p>1808it [00:01, 1087.79it/s]</p>
+<p>1918it [00:01, 1090.43it/s]</p>
+<p>2028it [00:01, 1088.89it/s]</p>
+<p>2138it [00:02, 1092.02it/s]</p>
+<p>2251it [00:02, 1103.27it/s]</p>
+<p>2365it [00:02, 1113.66it/s]</p>
+<p>2477it [00:02, 1108.26it/s]</p>
+<p>2591it [00:02, 1115.86it/s]</p>
+<p>2703it [00:02, 1102.41it/s]</p>
+<p>2814it [00:02, 1095.06it/s]</p>
+<p>2934it [00:02, 1123.38it/s]</p>
+<p>3047it [00:02, 1123.59it/s]</p>
+<p>3160it [00:02, 1114.18it/s]</p>
+<p>3272it [00:03, 1067.75it/s]</p>
+<p>3380it [00:03, 1063.18it/s]</p>
+<p>3487it [00:03, 1064.14it/s]</p>
+<p>3594it [00:03, 1052.28it/s]</p>
+<p>3700it [00:03, 1048.48it/s]</p>
+<p>3808it [00:03, 1054.64it/s]</p>
+<p>3916it [00:03, 1059.51it/s]</p>
+<p>4023it [00:03, 1045.39it/s]</p>
+<p>4129it [00:03, 1048.36it/s]</p>
+<p>4239it [00:03, 1061.50it/s]</p>
+<p>4350it [00:04, 1074.71it/s]</p>
+<p>4458it [00:04, 1072.10it/s]</p>
+<p>4566it [00:04, 1073.53it/s]</p>
+<p>4675it [00:04, 1077.60it/s]</p>
+<p>4784it [00:04, 1079.27it/s]</p>
+<p>4897it [00:04, 1092.86it/s]</p>
+<p>5000it [00:04, 1070.85it/s]</p>
+<div class="language-text highlight"><pre><span></span><code>MAE: 6.83
+</code></pre></div>
 
 
 

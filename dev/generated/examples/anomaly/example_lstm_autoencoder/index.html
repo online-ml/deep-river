@@ -76,7 +76,8 @@
     <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
-        <a href="#__skip" class="md-skip">
+        
+        <a href="#models" class="md-skip">
           Skip to content
         </a>
       
@@ -2935,6 +2936,11 @@
                     
                     
                     
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -2946,6 +2952,36 @@
   
   
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#models" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Models
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Testing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -2963,29 +2999,18 @@
   
 
 
-<h1 id="example-lstm-autoencoder">Example Lstm Autoencoder<a class="headerlink" href="#example-lstm-autoencoder" title="Permanent link">&para;</a></h1>
+<h1 id="example-for-anomaly-detection-with-lstm-autoencoder-architectures">Example for anomaly detection with LSTM autoencoder architectures<a class="headerlink" href="#example-for-anomaly-detection-with-lstm-autoencoder-architectures" title="Permanent link">&para;</a></h1>
 <p><a href="https://colab.research.google.com/github/online-ml/deep-river/blob/main/docs/examples/anomaly/example_lstm_autoencoder.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> <a href="https://mybinder.org/v2/gh/online-ml/deep-river/main?filepath=docs/examples/anomaly/example_lstm_autoencoder.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
-<div class="notebook-content">
-
-# Example for anomaly detection with LSTM autoencoder architectures
-
-There is a multitude of successful architecture. In the following we demonstrate the implementation of 3 possible architecture types.
-
-## Models
-
-
+<p>There is a multitude of successful architecture. In the following we demonstrate the implementation of 3 possible architecture types.</p>
+<h3 id="models">Models<a class="headerlink" href="#models" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river</span><span class="w"> </span><span class="kn">import</span> <span class="n">preprocessing</span><span class="p">,</span> <span class="n">metrics</span><span class="p">,</span> <span class="n">datasets</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">deep_river.anomaly</span><span class="w"> </span><span class="kn">import</span> <span class="n">RollingAutoencoder</span>
 </span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">nn</span><span class="p">,</span> <span class="n">manual_seed</span>
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 </span></code></pre></div>
-
-![](sutskever_ae.png)
-
-LSTM Encoder-Decoder architecture by Sutskever et al. 2014 (https://arxiv.org/abs/1409.3215). The decoder only gets access to its own prediction of the previous timestep. Decoding also takes performed backwards.
-
-
+<p><img alt="" src="sutskever_ae.png" /></p>
+<p>LSTM Encoder-Decoder architecture by Sutskever et al. 2014 (https://arxiv.org/abs/1409.3215). The decoder only gets access to its own prediction of the previous timestep. Decoding also takes performed backwards.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">LSTMDecoder</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>        <span class="bp">self</span><span class="p">,</span>
@@ -3071,12 +3096,8 @@ LSTM Encoder-Decoder architecture by Sutskever et al. 2014 (https://arxiv.org/ab
 </span><span id="__span-1-83"><a id="__codelineno-1-83" name="__codelineno-1-83" href="#__codelineno-1-83"></a>        <span class="n">x_hat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoder</span><span class="p">(</span><span class="n">h</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </span><span id="__span-1-84"><a id="__codelineno-1-84" name="__codelineno-1-84" href="#__codelineno-1-84"></a>        <span class="k">return</span> <span class="n">x_hat</span>
 </span></code></pre></div>
-
-## Testing
-
-The models can be tested with the code in the following cells. Since River currently does not feature any anomaly detection datasets with temporal dependencies, the results should be expected to be somewhat inaccurate.  
-
-
+<h3 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h3>
+<p>The models can be tested with the code in the following cells. Since River currently does not feature any anomaly detection datasets with temporal dependencies, the results should be expected to be somewhat inaccurate.  </p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">_</span> <span class="o">=</span> <span class="n">manual_seed</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">CreditCard</span><span class="p">()</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">5000</span><span class="p">)</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">RollingROCAUC</span><span class="p">(</span><span class="n">window_size</span><span class="o">=</span><span class="mi">5000</span><span class="p">)</span>
@@ -3085,8 +3106,6 @@ The models can be tested with the code in the following cells. Since River curre
 </span><span id="__span-2-6"><a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">ae</span> <span class="o">=</span> <span class="n">RollingAutoencoder</span><span class="p">(</span><span class="n">module</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="n">lr</span><span class="o">=</span><span class="mf">0.005</span><span class="p">)</span>
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">scaler</span> <span class="o">=</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">StandardScaler</span><span class="p">()</span>
 </span></code></pre></div>
-
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">dataset</span><span class="p">):</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">scaler</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">x</span> <span class="o">=</span> <span class="n">scaler</span><span class="o">.</span><span class="n">transform_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -3095,16 +3114,10 @@ The models can be tested with the code in the following cells. Since River curre
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>    <span class="n">ae</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </span><span id="__span-3-7"><a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;ROCAUC: </span><span class="si">{</span><span class="n">metric</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-    ROCAUC: 0.6839
-
-
-
+<div class="language-text highlight"><pre><span></span><code>ROCAUC: 0.6839
+</code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>
 </span></code></pre></div>
-
-
-</div>
 
 
 

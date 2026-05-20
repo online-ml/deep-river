@@ -76,7 +76,8 @@
     <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
-        <a href="#__skip" class="md-skip">
+        
+        <a href="#evaluate-classifiers" class="md-skip">
           Skip to content
         </a>
       
@@ -2935,6 +2936,11 @@
                     
                     
                     
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -2946,6 +2952,25 @@
   
   
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#evaluate-classifiers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Evaluate Classifiers
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -2965,8 +2990,6 @@
 
 <h1 id="label-shift">Label Shift<a class="headerlink" href="#label-shift" title="Permanent link">&para;</a></h1>
 <p><a href="https://colab.research.google.com/github/online-ml/deep-river/blob/main/docs/examples/catastrophic_forgetting/label_shift.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> <a href="https://mybinder.org/v2/gh/online-ml/deep-river/main?filepath=docs/examples/catastrophic_forgetting/label_shift.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
-<div class="notebook-content">
-
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">ImageSegments</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river.preprocessing</span><span class="w"> </span><span class="kn">import</span> <span class="n">MinMaxScaler</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river.tree</span><span class="w"> </span><span class="kn">import</span> <span class="n">HoeffdingTreeClassifier</span>
@@ -2984,10 +3007,7 @@
 </span><span id="__span-0-15"><a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
 </span><span id="__span-0-16"><a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
 </span></code></pre></div>
-
-### Create Stream
-
-
+<h4 id="create-stream">Create Stream<a class="headerlink" href="#create-stream" title="Permanent link">&para;</a></h4>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">stream_size</span> <span class="o">=</span> <span class="mi">10_000</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">ImageSegments</span><span class="p">()))</span>
@@ -3017,29 +3037,23 @@
 </span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
 </span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="n">data_train</span> <span class="o">=</span> <span class="n">data_train</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">data_train</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 </span></code></pre></div>
-
-### Visualize Data
-
-
+<h4 id="visualize-data">Visualize Data<a class="headerlink" href="#visualize-data" title="Permanent link">&para;</a></h4>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">classnames</span> <span class="o">=</span> <span class="n">task_classes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">task_classes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="n">tsne</span> <span class="o">=</span> <span class="n">TSNE</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="s2">&quot;pca&quot;</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">x_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">list</span><span class="p">(</span><span class="n">x_i</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">for</span> <span class="n">x_i</span> <span class="ow">in</span> <span class="n">x</span><span class="p">])</span>
 </span><span id="__span-2-4"><a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">x_viz</span> <span class="o">=</span> <span class="n">tsne</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">x_array</span><span class="p">)</span>
 </span></code></pre></div>
+<div class="language-text highlight"><pre><span></span><code>/Users/cedrickulbach/Documents/Projects/deep-river/.venv/lib/python3.10/site-packages/threadpoolctl.py:1226: RuntimeWarning: 
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
 
-    /Users/cedrickulbach/Documents/Projects/deep-river/.venv/lib/python3.10/site-packages/threadpoolctl.py:1226: RuntimeWarning: 
-    Found Intel OpenMP ('libiomp') and LLVM OpenMP ('libomp') loaded at
-    the same time. Both libraries are known to be incompatible and this
-    can cause random crashes or deadlocks on Linux when loaded in the
-    same Python program.
-    Using threadpoolctl may cause crashes or deadlocks. For more
-    information and possible workarounds, please see
-        https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
-
-      warnings.warn(msg, RuntimeWarning)
-
-
-
+  warnings.warn(msg, RuntimeWarning)
+</code></pre></div>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">()</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">cm</span> <span class="o">=</span> <span class="p">[</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="s2">&quot;goldenrod&quot;</span><span class="p">,</span>
@@ -3062,23 +3076,10 @@
 </span><span id="__span-3-20"><a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
 </span><span id="__span-3-21"><a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mf">1.04</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 </span></code></pre></div>
-
-
-
-
-    <matplotlib.legend.Legend at 0x12a0473a0>
-
-
-
-
-
-![png](label_shift_files/output_5_1.png)
-
-
-
-### Define evaluation procedure
-
-
+<div class="language-text highlight"><pre><span></span><code>&lt;matplotlib.legend.Legend at 0x12a0473a0&gt;
+</code></pre></div>
+<p><img alt="png" src="label_shift_files/output_5_1.png" /></p>
+<h4 id="define-evaluation-procedure">Define evaluation procedure<a class="headerlink" href="#define-evaluation-procedure" title="Permanent link">&para;</a></h4>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Define function to calculate accuracy on testing data for each task</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="k">def</span><span class="w"> </span><span class="nf">get_test_accuracy</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">data_test</span><span class="p">):</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3112,10 +3113,7 @@
 </span><span id="__span-4-31"><a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>            <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step</span><span class="p">)</span>
 </span><span id="__span-4-32"><a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>    <span class="k">return</span> <span class="n">steps</span><span class="p">,</span> <span class="n">results</span>
 </span></code></pre></div>
-
-## Evaluate Classifiers
-
-
+<h3 id="evaluate-classifiers">Evaluate Classifiers<a class="headerlink" href="#evaluate-classifiers" title="Permanent link">&para;</a></h3>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Evaluate a simple MLP classifier</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">SimpleMLP</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_features</span><span class="p">):</span>
@@ -3141,559 +3139,190 @@
 </span><span id="__span-5-23"><a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a><span class="p">)</span>
 </span><span id="__span-5-24"><a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="n">steps</span><span class="p">,</span> <span class="n">results_mlp</span> <span class="o">=</span> <span class="n">eval_separate_testing</span><span class="p">(</span><span class="n">mlp</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_test</span><span class="p">)</span>
 </span></code></pre></div>
-
-
-  0%|                                                                                                                                                                                                                                                                                             | 0/10000 [00:00<?, ?it/s]
-
-
-  1%|█▉                                                                                                                                                                                                                                                                                 | 69/10000 [00:00<00:14, 685.95it/s]
-
-
-  1%|███▊                                                                                                                                                                                                                                                                              | 138/10000 [00:00<00:17, 570.05it/s]
-
-
-  2%|█████▍                                                                                                                                                                                                                                                                            | 200/10000 [00:00<00:17, 545.43it/s]
-
-
-  3%|████████▏                                                                                                                                                                                                                                                                         | 300/10000 [00:00<00:15, 612.60it/s]
-
-
-  4%|██████████▉                                                                                                                                                                                                                                                                       | 400/10000 [00:00<00:14, 652.04it/s]
-
-
-  5%|█████████████▋                                                                                                                                                                                                                                                                    | 500/10000 [00:00<00:14, 677.48it/s]
-
-
-  6%|████████████████▍                                                                                                                                                                                                                                                                 | 600/10000 [00:00<00:13, 697.60it/s]
-
-
-  7%|███████████████████▏                                                                                                                                                                                                                                                              | 700/10000 [00:01<00:13, 706.66it/s]
-
-
-  8%|█████████████████████▉                                                                                                                                                                                                                                                            | 800/10000 [00:01<00:12, 707.89it/s]
-
-
-  9%|████████████████████████▋                                                                                                                                                                                                                                                         | 900/10000 [00:01<00:12, 710.96it/s]
-
-
- 10%|███████████████████████████▎                                                                                                                                                                                                                                                     | 1000/10000 [00:01<00:12, 715.83it/s]
-
-
- 11%|██████████████████████████████                                                                                                                                                                                                                                                   | 1100/10000 [00:01<00:12, 719.11it/s]
-
-
- 12%|████████████████████████████████▊                                                                                                                                                                                                                                                | 1200/10000 [00:01<00:12, 714.52it/s]
-
-
- 13%|███████████████████████████████████▍                                                                                                                                                                                                                                             | 1300/10000 [00:01<00:12, 720.39it/s]
-
-
- 14%|██████████████████████████████████████▏                                                                                                                                                                                                                                          | 1400/10000 [00:02<00:11, 725.33it/s]
-
-
- 15%|████████████████████████████████████████▉                                                                                                                                                                                                                                        | 1500/10000 [00:02<00:11, 729.43it/s]
-
-
- 16%|███████████████████████████████████████████▋                                                                                                                                                                                                                                     | 1600/10000 [00:02<00:11, 724.98it/s]
-
-
- 17%|██████████████████████████████████████████████▍                                                                                                                                                                                                                                  | 1700/10000 [00:02<00:11, 730.61it/s]
-
-
- 18%|█████████████████████████████████████████████████▏                                                                                                                                                                                                                               | 1800/10000 [00:02<00:11, 731.66it/s]
-
-
- 19%|███████████████████████████████████████████████████▊                                                                                                                                                                                                                             | 1900/10000 [00:02<00:11, 731.59it/s]
-
-
- 20%|██████████████████████████████████████████████████████▌                                                                                                                                                                                                                          | 2000/10000 [00:02<00:11, 724.02it/s]
-
-
- 21%|█████████████████████████████████████████████████████████▎                                                                                                                                                                                                                       | 2100/10000 [00:02<00:10, 725.22it/s]
-
-
- 22%|████████████████████████████████████████████████████████████                                                                                                                                                                                                                     | 2200/10000 [00:03<00:10, 727.33it/s]
-
-
- 23%|██████████████████████████████████████████████████████████████▊                                                                                                                                                                                                                  | 2300/10000 [00:03<00:10, 723.26it/s]
-
-
- 24%|█████████████████████████████████████████████████████████████████▌                                                                                                                                                                                                               | 2400/10000 [00:03<00:10, 724.41it/s]
-
-
- 25%|████████████████████████████████████████████████████████████████████▎                                                                                                                                                                                                            | 2500/10000 [00:03<00:10, 724.99it/s]
-
-
- 26%|██████████████████████████████████████████████████████████████████████▉                                                                                                                                                                                                          | 2600/10000 [00:03<00:10, 718.48it/s]
-
-
- 27%|█████████████████████████████████████████████████████████████████████████▋                                                                                                                                                                                                       | 2700/10000 [00:03<00:10, 715.51it/s]
-
-
- 28%|████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                                                                    | 2800/10000 [00:03<00:10, 711.16it/s]
-
-
- 29%|███████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                                                                 | 2900/10000 [00:04<00:10, 707.47it/s]
-
-
- 30%|█████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                                                               | 3000/10000 [00:04<00:09, 711.05it/s]
-
-
- 31%|████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                                                            | 3100/10000 [00:04<00:09, 720.73it/s]
-
-
- 32%|███████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                                                         | 3200/10000 [00:04<00:09, 726.98it/s]
-
-
- 33%|██████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                                                       | 3300/10000 [00:04<00:09, 725.48it/s]
-
-
- 34%|████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                                                                    | 3400/10000 [00:04<00:09, 723.70it/s]
-
-
- 35%|███████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                                                                 | 3500/10000 [00:04<00:08, 723.37it/s]
-
-
- 36%|██████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                                              | 3600/10000 [00:05<00:08, 726.41it/s]
-
-
- 37%|█████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                                            | 3700/10000 [00:05<00:08, 725.35it/s]
-
-
- 38%|███████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                                         | 3800/10000 [00:05<00:08, 725.04it/s]
-
-
- 39%|██████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                                      | 3900/10000 [00:05<00:08, 726.09it/s]
-
-
- 40%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                                   | 4000/10000 [00:05<00:08, 727.37it/s]
-
-
- 41%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                                 | 4100/10000 [00:05<00:08, 718.48it/s]
-
-
- 42%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                              | 4200/10000 [00:05<00:08, 718.17it/s]
-
-
- 43%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                           | 4300/10000 [00:06<00:07, 714.67it/s]
-
-
- 44%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                         | 4400/10000 [00:06<00:07, 714.03it/s]
-
-
- 45%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                                      | 4500/10000 [00:06<00:07, 715.29it/s]
-
-
- 46%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                                   | 4600/10000 [00:06<00:07, 717.06it/s]
-
-
- 47%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                | 4700/10000 [00:06<00:07, 718.95it/s]
-
-
- 48%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                              | 4800/10000 [00:06<00:07, 717.98it/s]
-
-
- 49%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                           | 4900/10000 [00:06<00:07, 721.21it/s]
-
-
- 50%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                        | 5000/10000 [00:07<00:06, 718.23it/s]
-
-
- 51%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                     | 5100/10000 [00:07<00:06, 720.99it/s]
-
-
- 52%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                   | 5200/10000 [00:07<00:06, 727.76it/s]
-
-
- 53%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                | 5300/10000 [00:07<00:06, 733.60it/s]
-
-
- 54%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                             | 5400/10000 [00:07<00:06, 730.01it/s]
-
-
- 55%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                          | 5500/10000 [00:07<00:06, 728.19it/s]
-
-
- 56%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                        | 5600/10000 [00:07<00:06, 728.66it/s]
-
-
- 57%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                     | 5700/10000 [00:07<00:05, 734.48it/s]
-
-
- 58%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                  | 5800/10000 [00:08<00:05, 736.69it/s]
-
-
- 59%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                | 5900/10000 [00:08<00:05, 734.05it/s]
-
-
- 60%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                             | 6000/10000 [00:08<00:05, 726.54it/s]
-
-
- 61%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                          | 6100/10000 [00:08<00:05, 729.96it/s]
-
-
- 62%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                       | 6200/10000 [00:08<00:05, 727.93it/s]
-
-
- 63%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                     | 6300/10000 [00:08<00:05, 725.29it/s]
-
-
- 64%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                  | 6400/10000 [00:08<00:04, 720.41it/s]
-
-
- 65%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                               | 6500/10000 [00:09<00:04, 716.23it/s]
-
-
- 66%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                            | 6600/10000 [00:09<00:04, 714.90it/s]
-
-
- 67%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                          | 6700/10000 [00:09<00:04, 719.91it/s]
-
-
- 68%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                       | 6800/10000 [00:09<00:04, 711.00it/s]
-
-
- 69%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                    | 6900/10000 [00:09<00:04, 714.57it/s]
-
-
- 70%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                  | 7000/10000 [00:09<00:04, 713.78it/s]
-
-
- 71%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                               | 7100/10000 [00:09<00:04, 715.64it/s]
-
-
- 72%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                            | 7200/10000 [00:10<00:03, 720.31it/s]
-
-
- 73%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                         | 7300/10000 [00:10<00:03, 720.78it/s]
-
-
- 74%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                       | 7400/10000 [00:10<00:03, 724.48it/s]
-
-
- 75%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                    | 7500/10000 [00:10<00:03, 731.97it/s]
-
-
- 76%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                 | 7600/10000 [00:10<00:03, 733.21it/s]
-
-
- 77%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                              | 7700/10000 [00:10<00:03, 728.36it/s]
-
-
- 78%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                            | 7800/10000 [00:10<00:03, 725.22it/s]
-
-
- 79%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                         | 7900/10000 [00:11<00:02, 730.16it/s]
-
-
- 80%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                      | 8000/10000 [00:11<00:02, 730.76it/s]
-
-
- 81%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                   | 8100/10000 [00:11<00:02, 726.85it/s]
-
-
- 82%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                 | 8200/10000 [00:11<00:02, 729.65it/s]
-
-
- 83%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                              | 8300/10000 [00:11<00:02, 731.08it/s]
-
-
- 84%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                           | 8400/10000 [00:11<00:02, 728.56it/s]
-
-
- 85%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                         | 8500/10000 [00:11<00:02, 726.54it/s]
-
-
- 86%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                      | 8600/10000 [00:11<00:01, 726.78it/s]
-
-
- 87%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                   | 8700/10000 [00:12<00:01, 722.58it/s]
-
-
- 88%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                | 8800/10000 [00:12<00:01, 722.56it/s]
-
-
- 89%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                              | 8900/10000 [00:12<00:01, 729.12it/s]
-
-
- 90%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                           | 9000/10000 [00:12<00:01, 730.73it/s]
-
-
- 91%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                        | 9100/10000 [00:12<00:01, 724.52it/s]
-
-
- 92%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                     | 9200/10000 [00:12<00:01, 727.33it/s]
-
-
- 93%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                   | 9300/10000 [00:12<00:00, 732.37it/s]
-
-
- 94%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                | 9400/10000 [00:13<00:00, 724.89it/s]
-
-
- 95%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎             | 9500/10000 [00:13<00:00, 724.31it/s]
-
-
- 96%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████           | 9600/10000 [00:13<00:00, 725.36it/s]
-
-
- 97%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊        | 9700/10000 [00:13<00:00, 734.79it/s]
-
-
- 98%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌     | 9800/10000 [00:13<00:00, 732.25it/s]
-
-
- 99%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎  | 9900/10000 [00:13<00:00, 723.37it/s]
-
-
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:13<00:00, 725.18it/s]
-
-
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:13<00:00, 719.72it/s]
-
-
-
-
-
+<p>0%|                                                                                                                                                                                                                                                                                             | 0/10000 [00:00&lt;?, ?it/s]</p>
+<p>1%|█▉                                                                                                                                                                                                                                                                                 | 69/10000 [00:00&lt;00:14, 685.95it/s]</p>
+<p>1%|███▊                                                                                                                                                                                                                                                                              | 138/10000 [00:00&lt;00:17, 570.05it/s]</p>
+<p>2%|█████▍                                                                                                                                                                                                                                                                            | 200/10000 [00:00&lt;00:17, 545.43it/s]</p>
+<p>3%|████████▏                                                                                                                                                                                                                                                                         | 300/10000 [00:00&lt;00:15, 612.60it/s]</p>
+<p>4%|██████████▉                                                                                                                                                                                                                                                                       | 400/10000 [00:00&lt;00:14, 652.04it/s]</p>
+<p>5%|█████████████▋                                                                                                                                                                                                                                                                    | 500/10000 [00:00&lt;00:14, 677.48it/s]</p>
+<p>6%|████████████████▍                                                                                                                                                                                                                                                                 | 600/10000 [00:00&lt;00:13, 697.60it/s]</p>
+<p>7%|███████████████████▏                                                                                                                                                                                                                                                              | 700/10000 [00:01&lt;00:13, 706.66it/s]</p>
+<p>8%|█████████████████████▉                                                                                                                                                                                                                                                            | 800/10000 [00:01&lt;00:12, 707.89it/s]</p>
+<p>9%|████████████████████████▋                                                                                                                                                                                                                                                         | 900/10000 [00:01&lt;00:12, 710.96it/s]</p>
+<p>10%|███████████████████████████▎                                                                                                                                                                                                                                                     | 1000/10000 [00:01&lt;00:12, 715.83it/s]</p>
+<p>11%|██████████████████████████████                                                                                                                                                                                                                                                   | 1100/10000 [00:01&lt;00:12, 719.11it/s]</p>
+<p>12%|████████████████████████████████▊                                                                                                                                                                                                                                                | 1200/10000 [00:01&lt;00:12, 714.52it/s]</p>
+<p>13%|███████████████████████████████████▍                                                                                                                                                                                                                                             | 1300/10000 [00:01&lt;00:12, 720.39it/s]</p>
+<p>14%|██████████████████████████████████████▏                                                                                                                                                                                                                                          | 1400/10000 [00:02&lt;00:11, 725.33it/s]</p>
+<p>15%|████████████████████████████████████████▉                                                                                                                                                                                                                                        | 1500/10000 [00:02&lt;00:11, 729.43it/s]</p>
+<p>16%|███████████████████████████████████████████▋                                                                                                                                                                                                                                     | 1600/10000 [00:02&lt;00:11, 724.98it/s]</p>
+<p>17%|██████████████████████████████████████████████▍                                                                                                                                                                                                                                  | 1700/10000 [00:02&lt;00:11, 730.61it/s]</p>
+<p>18%|█████████████████████████████████████████████████▏                                                                                                                                                                                                                               | 1800/10000 [00:02&lt;00:11, 731.66it/s]</p>
+<p>19%|███████████████████████████████████████████████████▊                                                                                                                                                                                                                             | 1900/10000 [00:02&lt;00:11, 731.59it/s]</p>
+<p>20%|██████████████████████████████████████████████████████▌                                                                                                                                                                                                                          | 2000/10000 [00:02&lt;00:11, 724.02it/s]</p>
+<p>21%|█████████████████████████████████████████████████████████▎                                                                                                                                                                                                                       | 2100/10000 [00:02&lt;00:10, 725.22it/s]</p>
+<p>22%|████████████████████████████████████████████████████████████                                                                                                                                                                                                                     | 2200/10000 [00:03&lt;00:10, 727.33it/s]</p>
+<p>23%|██████████████████████████████████████████████████████████████▊                                                                                                                                                                                                                  | 2300/10000 [00:03&lt;00:10, 723.26it/s]</p>
+<p>24%|█████████████████████████████████████████████████████████████████▌                                                                                                                                                                                                               | 2400/10000 [00:03&lt;00:10, 724.41it/s]</p>
+<p>25%|████████████████████████████████████████████████████████████████████▎                                                                                                                                                                                                            | 2500/10000 [00:03&lt;00:10, 724.99it/s]</p>
+<p>26%|██████████████████████████████████████████████████████████████████████▉                                                                                                                                                                                                          | 2600/10000 [00:03&lt;00:10, 718.48it/s]</p>
+<p>27%|█████████████████████████████████████████████████████████████████████████▋                                                                                                                                                                                                       | 2700/10000 [00:03&lt;00:10, 715.51it/s]</p>
+<p>28%|████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                                                                    | 2800/10000 [00:03&lt;00:10, 711.16it/s]</p>
+<p>29%|███████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                                                                 | 2900/10000 [00:04&lt;00:10, 707.47it/s]</p>
+<p>30%|█████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                                                               | 3000/10000 [00:04&lt;00:09, 711.05it/s]</p>
+<p>31%|████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                                                            | 3100/10000 [00:04&lt;00:09, 720.73it/s]</p>
+<p>32%|███████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                                                         | 3200/10000 [00:04&lt;00:09, 726.98it/s]</p>
+<p>33%|██████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                                                       | 3300/10000 [00:04&lt;00:09, 725.48it/s]</p>
+<p>34%|████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                                                                    | 3400/10000 [00:04&lt;00:09, 723.70it/s]</p>
+<p>35%|███████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                                                                 | 3500/10000 [00:04&lt;00:08, 723.37it/s]</p>
+<p>36%|██████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                                              | 3600/10000 [00:05&lt;00:08, 726.41it/s]</p>
+<p>37%|█████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                                            | 3700/10000 [00:05&lt;00:08, 725.35it/s]</p>
+<p>38%|███████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                                         | 3800/10000 [00:05&lt;00:08, 725.04it/s]</p>
+<p>39%|██████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                                      | 3900/10000 [00:05&lt;00:08, 726.09it/s]</p>
+<p>40%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                                   | 4000/10000 [00:05&lt;00:08, 727.37it/s]</p>
+<p>41%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                                 | 4100/10000 [00:05&lt;00:08, 718.48it/s]</p>
+<p>42%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                              | 4200/10000 [00:05&lt;00:08, 718.17it/s]</p>
+<p>43%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                           | 4300/10000 [00:06&lt;00:07, 714.67it/s]</p>
+<p>44%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                         | 4400/10000 [00:06&lt;00:07, 714.03it/s]</p>
+<p>45%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                                      | 4500/10000 [00:06&lt;00:07, 715.29it/s]</p>
+<p>46%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                                   | 4600/10000 [00:06&lt;00:07, 717.06it/s]</p>
+<p>47%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                | 4700/10000 [00:06&lt;00:07, 718.95it/s]</p>
+<p>48%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                              | 4800/10000 [00:06&lt;00:07, 717.98it/s]</p>
+<p>49%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                           | 4900/10000 [00:06&lt;00:07, 721.21it/s]</p>
+<p>50%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                        | 5000/10000 [00:07&lt;00:06, 718.23it/s]</p>
+<p>51%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                     | 5100/10000 [00:07&lt;00:06, 720.99it/s]</p>
+<p>52%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                   | 5200/10000 [00:07&lt;00:06, 727.76it/s]</p>
+<p>53%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                | 5300/10000 [00:07&lt;00:06, 733.60it/s]</p>
+<p>54%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                             | 5400/10000 [00:07&lt;00:06, 730.01it/s]</p>
+<p>55%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                          | 5500/10000 [00:07&lt;00:06, 728.19it/s]</p>
+<p>56%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                        | 5600/10000 [00:07&lt;00:06, 728.66it/s]</p>
+<p>57%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                     | 5700/10000 [00:07&lt;00:05, 734.48it/s]</p>
+<p>58%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                  | 5800/10000 [00:08&lt;00:05, 736.69it/s]</p>
+<p>59%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                | 5900/10000 [00:08&lt;00:05, 734.05it/s]</p>
+<p>60%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                             | 6000/10000 [00:08&lt;00:05, 726.54it/s]</p>
+<p>61%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                          | 6100/10000 [00:08&lt;00:05, 729.96it/s]</p>
+<p>62%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                       | 6200/10000 [00:08&lt;00:05, 727.93it/s]</p>
+<p>63%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                     | 6300/10000 [00:08&lt;00:05, 725.29it/s]</p>
+<p>64%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                  | 6400/10000 [00:08&lt;00:04, 720.41it/s]</p>
+<p>65%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                               | 6500/10000 [00:09&lt;00:04, 716.23it/s]</p>
+<p>66%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                            | 6600/10000 [00:09&lt;00:04, 714.90it/s]</p>
+<p>67%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                          | 6700/10000 [00:09&lt;00:04, 719.91it/s]</p>
+<p>68%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                       | 6800/10000 [00:09&lt;00:04, 711.00it/s]</p>
+<p>69%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                    | 6900/10000 [00:09&lt;00:04, 714.57it/s]</p>
+<p>70%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                  | 7000/10000 [00:09&lt;00:04, 713.78it/s]</p>
+<p>71%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                               | 7100/10000 [00:09&lt;00:04, 715.64it/s]</p>
+<p>72%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                            | 7200/10000 [00:10&lt;00:03, 720.31it/s]</p>
+<p>73%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                         | 7300/10000 [00:10&lt;00:03, 720.78it/s]</p>
+<p>74%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                       | 7400/10000 [00:10&lt;00:03, 724.48it/s]</p>
+<p>75%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                    | 7500/10000 [00:10&lt;00:03, 731.97it/s]</p>
+<p>76%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                 | 7600/10000 [00:10&lt;00:03, 733.21it/s]</p>
+<p>77%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                              | 7700/10000 [00:10&lt;00:03, 728.36it/s]</p>
+<p>78%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                            | 7800/10000 [00:10&lt;00:03, 725.22it/s]</p>
+<p>79%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                         | 7900/10000 [00:11&lt;00:02, 730.16it/s]</p>
+<p>80%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                      | 8000/10000 [00:11&lt;00:02, 730.76it/s]</p>
+<p>81%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                   | 8100/10000 [00:11&lt;00:02, 726.85it/s]</p>
+<p>82%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                 | 8200/10000 [00:11&lt;00:02, 729.65it/s]</p>
+<p>83%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                              | 8300/10000 [00:11&lt;00:02, 731.08it/s]</p>
+<p>84%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                           | 8400/10000 [00:11&lt;00:02, 728.56it/s]</p>
+<p>85%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                         | 8500/10000 [00:11&lt;00:02, 726.54it/s]</p>
+<p>86%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                      | 8600/10000 [00:11&lt;00:01, 726.78it/s]</p>
+<p>87%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                   | 8700/10000 [00:12&lt;00:01, 722.58it/s]</p>
+<p>88%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                | 8800/10000 [00:12&lt;00:01, 722.56it/s]</p>
+<p>89%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                              | 8900/10000 [00:12&lt;00:01, 729.12it/s]</p>
+<p>90%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                           | 9000/10000 [00:12&lt;00:01, 730.73it/s]</p>
+<p>91%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                        | 9100/10000 [00:12&lt;00:01, 724.52it/s]</p>
+<p>92%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                     | 9200/10000 [00:12&lt;00:01, 727.33it/s]</p>
+<p>93%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                   | 9300/10000 [00:12&lt;00:00, 732.37it/s]</p>
+<p>94%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                | 9400/10000 [00:13&lt;00:00, 724.89it/s]</p>
+<p>95%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎             | 9500/10000 [00:13&lt;00:00, 724.31it/s]</p>
+<p>96%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████           | 9600/10000 [00:13&lt;00:00, 725.36it/s]</p>
+<p>97%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊        | 9700/10000 [00:13&lt;00:00, 734.79it/s]</p>
+<p>98%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌     | 9800/10000 [00:13&lt;00:00, 732.25it/s]</p>
+<p>99%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎  | 9900/10000 [00:13&lt;00:00, 723.37it/s]</p>
+<p>100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:13&lt;00:00, 725.18it/s]</p>
+<p>100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:13&lt;00:00, 719.72it/s]</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-6-1"><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="c1"># Evaluate a Hoeffding Tree classifier</span>
 </span><span id="__span-6-2"><a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="n">tree</span> <span class="o">=</span> <span class="n">HoeffdingTreeClassifier</span><span class="p">(</span><span class="n">tau</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
 </span><span id="__span-6-3"><a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">steps</span><span class="p">,</span> <span class="n">results_tree</span> <span class="o">=</span> <span class="n">eval_separate_testing</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">data_train</span><span class="p">,</span> <span class="n">data_test</span><span class="p">)</span>
 </span></code></pre></div>
-
-
-  0%|                                                                                                                                                                                                                                                                                             | 0/10000 [00:00<?, ?it/s]
-
-
-  2%|█████▍                                                                                                                                                                                                                                                                           | 200/10000 [00:00<00:06, 1401.48it/s]
-
-
-  4%|██████████▉                                                                                                                                                                                                                                                                      | 400/10000 [00:00<00:06, 1413.79it/s]
-
-
-  6%|████████████████▍                                                                                                                                                                                                                                                                | 600/10000 [00:00<00:06, 1417.47it/s]
-
-
-  8%|█████████████████████▊                                                                                                                                                                                                                                                           | 800/10000 [00:00<00:06, 1408.06it/s]
-
-
- 10%|███████████████████████████▏                                                                                                                                                                                                                                                    | 1000/10000 [00:00<00:06, 1410.37it/s]
-
-
- 12%|████████████████████████████████▋                                                                                                                                                                                                                                               | 1200/10000 [00:00<00:06, 1426.35it/s]
-
-
- 14%|██████████████████████████████████████                                                                                                                                                                                                                                          | 1400/10000 [00:00<00:05, 1449.83it/s]
-
-
- 16%|███████████████████████████████████████████▌                                                                                                                                                                                                                                    | 1600/10000 [00:01<00:05, 1470.42it/s]
-
-
- 18%|████████████████████████████████████████████████▉                                                                                                                                                                                                                               | 1800/10000 [00:01<00:05, 1461.60it/s]
-
-
- 20%|██████████████████████████████████████████████████████▍                                                                                                                                                                                                                         | 2000/10000 [00:01<00:05, 1465.54it/s]
-
-
- 22%|███████████████████████████████████████████████████████████▊                                                                                                                                                                                                                    | 2200/10000 [00:01<00:05, 1467.96it/s]
-
-
- 24%|█████████████████████████████████████████████████████████████████▎                                                                                                                                                                                                              | 2400/10000 [00:01<00:05, 1458.74it/s]
-
-
- 26%|██████████████████████████████████████████████████████████████████████▋                                                                                                                                                                                                         | 2600/10000 [00:01<00:05, 1438.14it/s]
-
-
- 28%|████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                                                                   | 2800/10000 [00:01<00:05, 1439.49it/s]
-
-
- 30%|█████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                                                                              | 3000/10000 [00:02<00:04, 1455.77it/s]
-
-
- 32%|███████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                                                         | 3200/10000 [00:02<00:04, 1460.67it/s]
-
-
- 34%|████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                                                   | 3400/10000 [00:02<00:04, 1459.35it/s]
-
-
- 36%|█████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                                              | 3600/10000 [00:02<00:04, 1462.91it/s]
-
-
- 38%|███████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                                        | 3800/10000 [00:02<00:04, 1474.20it/s]
-
-
- 40%|████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                                                   | 4000/10000 [00:02<00:04, 1471.10it/s]
-
-
- 42%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                             | 4200/10000 [00:02<00:03, 1474.92it/s]
-
-
- 44%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                        | 4400/10000 [00:03<00:03, 1481.42it/s]
-
-
- 46%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                   | 4600/10000 [00:03<00:03, 1482.57it/s]
-
-
- 48%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                             | 4800/10000 [00:03<00:03, 1471.34it/s]
-
-
- 50%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                        | 5000/10000 [00:03<00:03, 1473.30it/s]
-
-
- 51%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                    | 5148/10000 [00:03<00:03, 1310.80it/s]
-
-
- 53%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                | 5281/10000 [00:03<00:04, 1171.86it/s]
-
-
- 54%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                             | 5400/10000 [00:04<00:05, 852.98it/s]
-
-
- 55%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                          | 5500/10000 [00:04<00:05, 806.85it/s]
-
-
- 56%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                        | 5600/10000 [00:04<00:05, 774.61it/s]
-
-
- 57%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                     | 5700/10000 [00:04<00:05, 755.04it/s]
-
-
- 58%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                  | 5800/10000 [00:04<00:05, 737.85it/s]
-
-
- 59%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                | 5900/10000 [00:04<00:05, 727.15it/s]
-
-
- 60%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                             | 6000/10000 [00:04<00:05, 717.58it/s]
-
-
- 61%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                          | 6100/10000 [00:05<00:05, 722.86it/s]
-
-
- 62%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                       | 6200/10000 [00:05<00:05, 715.20it/s]
-
-
- 63%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                     | 6300/10000 [00:05<00:05, 714.08it/s]
-
-
- 64%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                  | 6400/10000 [00:05<00:05, 709.24it/s]
-
-
- 65%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                               | 6500/10000 [00:05<00:04, 712.84it/s]
-
-
- 66%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                            | 6600/10000 [00:05<00:04, 709.04it/s]
-
-
- 67%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                          | 6700/10000 [00:05<00:04, 704.78it/s]
-
-
- 68%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                       | 6800/10000 [00:06<00:04, 691.27it/s]
-
-
- 69%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                    | 6900/10000 [00:06<00:04, 691.39it/s]
-
-
- 70%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                  | 7000/10000 [00:06<00:04, 689.06it/s]
-
-
- 71%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                               | 7100/10000 [00:06<00:04, 695.43it/s]
-
-
- 72%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                            | 7200/10000 [00:06<00:04, 699.39it/s]
-
-
- 73%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                         | 7300/10000 [00:06<00:03, 703.98it/s]
-
-
- 74%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                       | 7400/10000 [00:06<00:03, 697.86it/s]
-
-
- 75%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                    | 7500/10000 [00:07<00:03, 704.38it/s]
-
-
- 76%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                 | 7600/10000 [00:07<00:03, 704.23it/s]
-
-
- 77%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                              | 7700/10000 [00:07<00:03, 709.88it/s]
-
-
- 78%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                            | 7800/10000 [00:07<00:03, 709.48it/s]
-
-
- 79%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                         | 7900/10000 [00:07<00:02, 713.03it/s]
-
-
- 80%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                      | 8000/10000 [00:07<00:02, 710.40it/s]
-
-
- 81%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                   | 8100/10000 [00:07<00:02, 704.92it/s]
-
-
- 82%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                 | 8200/10000 [00:07<00:02, 699.53it/s]
-
-
- 83%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                              | 8300/10000 [00:08<00:02, 696.32it/s]
-
-
- 84%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                           | 8400/10000 [00:08<00:02, 695.14it/s]
-
-
- 85%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                         | 8500/10000 [00:08<00:02, 691.13it/s]
-
-
- 86%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                      | 8600/10000 [00:08<00:02, 690.11it/s]
-
-
- 87%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                   | 8700/10000 [00:08<00:01, 688.53it/s]
-
-
- 88%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                | 8800/10000 [00:08<00:01, 685.43it/s]
-
-
- 89%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                              | 8900/10000 [00:09<00:01, 695.61it/s]
-
-
- 90%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                           | 9000/10000 [00:09<00:01, 699.90it/s]
-
-
- 91%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                        | 9100/10000 [00:09<00:01, 703.52it/s]
-
-
- 92%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                     | 9200/10000 [00:09<00:01, 701.34it/s]
-
-
- 93%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                   | 9300/10000 [00:09<00:00, 708.38it/s]
-
-
- 94%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                | 9400/10000 [00:09<00:00, 706.90it/s]
-
-
- 95%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎             | 9500/10000 [00:09<00:00, 702.33it/s]
-
-
- 96%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████           | 9600/10000 [00:10<00:00, 697.37it/s]
-
-
- 97%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊        | 9700/10000 [00:10<00:00, 703.23it/s]
-
-
- 98%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌     | 9800/10000 [00:10<00:00, 699.77it/s]
-
-
- 99%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎  | 9900/10000 [00:10<00:00, 706.80it/s]
-
-
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:10<00:00, 705.44it/s]
-
-
-100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:10<00:00, 945.89it/s]
-
-
-
-
-### Visualize Accuracy over Timesteps
-
-
+<p>0%|                                                                                                                                                                                                                                                                                             | 0/10000 [00:00&lt;?, ?it/s]</p>
+<p>2%|█████▍                                                                                                                                                                                                                                                                           | 200/10000 [00:00&lt;00:06, 1401.48it/s]</p>
+<p>4%|██████████▉                                                                                                                                                                                                                                                                      | 400/10000 [00:00&lt;00:06, 1413.79it/s]</p>
+<p>6%|████████████████▍                                                                                                                                                                                                                                                                | 600/10000 [00:00&lt;00:06, 1417.47it/s]</p>
+<p>8%|█████████████████████▊                                                                                                                                                                                                                                                           | 800/10000 [00:00&lt;00:06, 1408.06it/s]</p>
+<p>10%|███████████████████████████▏                                                                                                                                                                                                                                                    | 1000/10000 [00:00&lt;00:06, 1410.37it/s]</p>
+<p>12%|████████████████████████████████▋                                                                                                                                                                                                                                               | 1200/10000 [00:00&lt;00:06, 1426.35it/s]</p>
+<p>14%|██████████████████████████████████████                                                                                                                                                                                                                                          | 1400/10000 [00:00&lt;00:05, 1449.83it/s]</p>
+<p>16%|███████████████████████████████████████████▌                                                                                                                                                                                                                                    | 1600/10000 [00:01&lt;00:05, 1470.42it/s]</p>
+<p>18%|████████████████████████████████████████████████▉                                                                                                                                                                                                                               | 1800/10000 [00:01&lt;00:05, 1461.60it/s]</p>
+<p>20%|██████████████████████████████████████████████████████▍                                                                                                                                                                                                                         | 2000/10000 [00:01&lt;00:05, 1465.54it/s]</p>
+<p>22%|███████████████████████████████████████████████████████████▊                                                                                                                                                                                                                    | 2200/10000 [00:01&lt;00:05, 1467.96it/s]</p>
+<p>24%|█████████████████████████████████████████████████████████████████▎                                                                                                                                                                                                              | 2400/10000 [00:01&lt;00:05, 1458.74it/s]</p>
+<p>26%|██████████████████████████████████████████████████████████████████████▋                                                                                                                                                                                                         | 2600/10000 [00:01&lt;00:05, 1438.14it/s]</p>
+<p>28%|████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                                                                   | 2800/10000 [00:01&lt;00:05, 1439.49it/s]</p>
+<p>30%|█████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                                                                              | 3000/10000 [00:02&lt;00:04, 1455.77it/s]</p>
+<p>32%|███████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                                                         | 3200/10000 [00:02&lt;00:04, 1460.67it/s]</p>
+<p>34%|████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                                                                                   | 3400/10000 [00:02&lt;00:04, 1459.35it/s]</p>
+<p>36%|█████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                                                                              | 3600/10000 [00:02&lt;00:04, 1462.91it/s]</p>
+<p>38%|███████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                                                                        | 3800/10000 [00:02&lt;00:04, 1474.20it/s]</p>
+<p>40%|████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                                                                                   | 4000/10000 [00:02&lt;00:04, 1471.10it/s]</p>
+<p>42%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                                                             | 4200/10000 [00:02&lt;00:03, 1474.92it/s]</p>
+<p>44%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                                        | 4400/10000 [00:03&lt;00:03, 1481.42it/s]</p>
+<p>46%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                                   | 4600/10000 [00:03&lt;00:03, 1482.57it/s]</p>
+<p>48%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                                             | 4800/10000 [00:03&lt;00:03, 1471.34it/s]</p>
+<p>50%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                        | 5000/10000 [00:03&lt;00:03, 1473.30it/s]</p>
+<p>51%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                                    | 5148/10000 [00:03&lt;00:03, 1310.80it/s]</p>
+<p>53%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                                                | 5281/10000 [00:03&lt;00:04, 1171.86it/s]</p>
+<p>54%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                                                             | 5400/10000 [00:04&lt;00:05, 852.98it/s]</p>
+<p>55%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                                                          | 5500/10000 [00:04&lt;00:05, 806.85it/s]</p>
+<p>56%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                                        | 5600/10000 [00:04&lt;00:05, 774.61it/s]</p>
+<p>57%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                                     | 5700/10000 [00:04&lt;00:05, 755.04it/s]</p>
+<p>58%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                                  | 5800/10000 [00:04&lt;00:05, 737.85it/s]</p>
+<p>59%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                                                | 5900/10000 [00:04&lt;00:05, 727.15it/s]</p>
+<p>60%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                                                             | 6000/10000 [00:04&lt;00:05, 717.58it/s]</p>
+<p>61%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                                                          | 6100/10000 [00:05&lt;00:05, 722.86it/s]</p>
+<p>62%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                                       | 6200/10000 [00:05&lt;00:05, 715.20it/s]</p>
+<p>63%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                                     | 6300/10000 [00:05&lt;00:05, 714.08it/s]</p>
+<p>64%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                                  | 6400/10000 [00:05&lt;00:05, 709.24it/s]</p>
+<p>65%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                                               | 6500/10000 [00:05&lt;00:04, 712.84it/s]</p>
+<p>66%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                                                            | 6600/10000 [00:05&lt;00:04, 709.04it/s]</p>
+<p>67%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                                                          | 6700/10000 [00:05&lt;00:04, 704.78it/s]</p>
+<p>68%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                                                       | 6800/10000 [00:06&lt;00:04, 691.27it/s]</p>
+<p>69%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                                    | 6900/10000 [00:06&lt;00:04, 691.39it/s]</p>
+<p>70%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                                  | 7000/10000 [00:06&lt;00:04, 689.06it/s]</p>
+<p>71%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                               | 7100/10000 [00:06&lt;00:04, 695.43it/s]</p>
+<p>72%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                                                            | 7200/10000 [00:06&lt;00:04, 699.39it/s]</p>
+<p>73%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                                                         | 7300/10000 [00:06&lt;00:03, 703.98it/s]</p>
+<p>74%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                                                       | 7400/10000 [00:06&lt;00:03, 697.86it/s]</p>
+<p>75%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                                    | 7500/10000 [00:07&lt;00:03, 704.38it/s]</p>
+<p>76%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                                 | 7600/10000 [00:07&lt;00:03, 704.23it/s]</p>
+<p>77%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                              | 7700/10000 [00:07&lt;00:03, 709.88it/s]</p>
+<p>78%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                                                            | 7800/10000 [00:07&lt;00:03, 709.48it/s]</p>
+<p>79%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                                                         | 7900/10000 [00:07&lt;00:02, 713.03it/s]</p>
+<p>80%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                                                      | 8000/10000 [00:07&lt;00:02, 710.40it/s]</p>
+<p>81%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                                   | 8100/10000 [00:07&lt;00:02, 704.92it/s]</p>
+<p>82%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                                 | 8200/10000 [00:07&lt;00:02, 699.53it/s]</p>
+<p>83%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                              | 8300/10000 [00:08&lt;00:02, 696.32it/s]</p>
+<p>84%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎                                           | 8400/10000 [00:08&lt;00:02, 695.14it/s]</p>
+<p>85%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████                                         | 8500/10000 [00:08&lt;00:02, 691.13it/s]</p>
+<p>86%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊                                      | 8600/10000 [00:08&lt;00:02, 690.11it/s]</p>
+<p>87%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                                   | 8700/10000 [00:08&lt;00:01, 688.53it/s]</p>
+<p>88%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                                | 8800/10000 [00:08&lt;00:01, 685.43it/s]</p>
+<p>89%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                              | 8900/10000 [00:09&lt;00:01, 695.61it/s]</p>
+<p>90%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▋                           | 9000/10000 [00:09&lt;00:01, 699.90it/s]</p>
+<p>91%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▍                        | 9100/10000 [00:09&lt;00:01, 703.52it/s]</p>
+<p>92%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▏                     | 9200/10000 [00:09&lt;00:01, 701.34it/s]</p>
+<p>93%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▉                   | 9300/10000 [00:09&lt;00:00, 708.38it/s]</p>
+<p>94%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌                | 9400/10000 [00:09&lt;00:00, 706.90it/s]</p>
+<p>95%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎             | 9500/10000 [00:09&lt;00:00, 702.33it/s]</p>
+<p>96%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████           | 9600/10000 [00:10&lt;00:00, 697.37it/s]</p>
+<p>97%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▊        | 9700/10000 [00:10&lt;00:00, 703.23it/s]</p>
+<p>98%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▌     | 9800/10000 [00:10&lt;00:00, 699.77it/s]</p>
+<p>99%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████▎  | 9900/10000 [00:10&lt;00:00, 706.80it/s]</p>
+<p>100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:10&lt;00:00, 705.44it/s]</p>
+<p>100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 10000/10000 [00:10&lt;00:00, 945.89it/s]</p>
+<h4 id="visualize-accuracy-over-timesteps">Visualize Accuracy over Timesteps<a class="headerlink" href="#visualize-accuracy-over-timesteps" title="Permanent link">&para;</a></h4>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-7-1"><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </span><span id="__span-7-2"><a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a><span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;MLP&quot;</span><span class="p">:</span> <span class="n">results_mlp</span><span class="p">,</span> <span class="s2">&quot;Hoeffding Tree&quot;</span><span class="p">:</span> <span class="n">results_tree</span><span class="p">}</span>
 </span><span id="__span-7-3"><a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="k">for</span> <span class="n">model_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">model_name</span><span class="p">,</span> <span class="n">model_results</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
@@ -3707,22 +3336,9 @@
 </span><span id="__span-7-11"><a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="n">axs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">)</span>
 </span><span id="__span-7-12"><a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a><span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="p">(</span><span class="mf">1.04</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 </span></code></pre></div>
-
-
-
-
-    <matplotlib.legend.Legend at 0x12c439a50>
-
-
-
-
-
-![png](label_shift_files/output_12_1.png)
-
-
-
-
-</div>
+<div class="language-text highlight"><pre><span></span><code>&lt;matplotlib.legend.Legend at 0x12c439a50&gt;
+</code></pre></div>
+<p><img alt="png" src="label_shift_files/output_12_1.png" /></p>
 
 
 

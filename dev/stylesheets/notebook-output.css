@@ -1,14 +1,43 @@
-.notebook-content {
-  display: block;
+.md-typeset .language-python.highlight + .language-text.highlight,
+.md-typeset p:has(> img[src*="_files/output_"]) {
+  position: relative;
+  margin-top: -0.35rem;
+  padding: 1.6rem 0.85rem 0.85rem;
+  border-left: 0.18rem solid var(--md-accent-fg-color);
+  border-radius: 0.2rem;
+  background: color-mix(in srgb, var(--md-accent-fg-color) 7%, transparent);
 }
 
-.notebook-content .river-pipeline {
+.md-typeset .language-python.highlight + .language-text.highlight::before,
+.md-typeset p:has(> img[src*="_files/output_"])::before {
+  content: "Output";
+  position: absolute;
+  top: 0.35rem;
+  left: 0.85rem;
+  color: var(--md-accent-fg-color);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.md-typeset .language-python.highlight + .language-text.highlight pre {
+  margin: 0;
+  background: transparent !important;
+}
+
+.md-typeset p:has(> img[src*="_files/output_"]) > img {
+  display: block;
+  margin: 0 auto;
+}
+
+.md-typeset .river-pipeline {
   position: relative;
   background: none !important;
   padding: 0.5rem 0;
 }
 
-.notebook-content .river-pipeline::before {
+.md-typeset .river-pipeline::before {
   content: "";
   position: absolute;
   top: 0;
@@ -20,29 +49,29 @@
   z-index: 0;
 }
 
-.notebook-content .river-estimator,
-.notebook-content .river-wrapper,
-.notebook-content .river-union {
+.md-typeset .river-estimator,
+.md-typeset .river-wrapper,
+.md-typeset .river-union {
   position: relative;
   z-index: 1;
   background: #fff !important;
   border-color: #c9c9c9;
 }
 
-.notebook-content .river-estimator-params {
+.md-typeset .river-estimator-params {
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-.notebook-content details.river-component > summary {
+.md-typeset details.river-component > summary {
   position: relative;
   z-index: 1;
 }
 
-.notebook-content .river-component + .river-component {
+.md-typeset .river-component + .river-component {
   margin-top: 2.25em;
 }
 
-.notebook-content .river-union > .river-component + .river-component {
+.md-typeset .river-union > .river-component + .river-component {
   margin-left: 1.5em;
 }

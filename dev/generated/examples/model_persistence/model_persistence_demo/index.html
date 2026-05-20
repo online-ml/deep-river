@@ -76,7 +76,8 @@
     <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
-        <a href="#__skip" class="md-skip">
+        
+        <a href="#create-and-train-a-classification-model" class="md-skip">
           Skip to content
         </a>
       
@@ -2935,6 +2936,11 @@
                     
                     
                     
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -2946,6 +2952,58 @@
   
   
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#create-and-train-a-classification-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Create and Train a Classification Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#save-the-trained-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Save the Trained Model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#load-the-model-and-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Load the Model and Test
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cleanup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cleanup
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -2963,16 +3021,10 @@
   
 
 
-<h1 id="model-persistence-demo">Model Persistence Demo<a class="headerlink" href="#model-persistence-demo" title="Permanent link">&para;</a></h1>
+<h1 id="model-persistence">Model Persistence<a class="headerlink" href="#model-persistence" title="Permanent link">&para;</a></h1>
 <p><a href="https://colab.research.google.com/github/online-ml/deep-river/blob/main/docs/examples/model_persistence/model_persistence_demo.ipynb"><img alt="Open in Colab" src="https://colab.research.google.com/assets/colab-badge.svg" /></a> <a href="https://mybinder.org/v2/gh/online-ml/deep-river/main?filepath=docs/examples/model_persistence/model_persistence_demo.ipynb"><img alt="Binder" src="https://mybinder.org/badge_logo.svg" /></a></p>
-<div class="notebook-content">
-
-# Model Persistence
-Save and load pre-trained models
-
-This example demonstrates how to save trained deep-river models to disk and load them later for continued training or inference.
-
-
+<p>Save and load pre-trained models</p>
+<p>This example demonstrates how to save trained deep-river models to disk and load them later for continued training or inference.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch.nn</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">nn</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">river</span><span class="w"> </span><span class="kn">import</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">metrics</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
@@ -2980,12 +3032,8 @@ This example demonstrates how to save trained deep-river models to disk and load
 </span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">deep_river.classification</span><span class="w"> </span><span class="kn">import</span> <span class="n">Classifier</span>
 </span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">deep_river</span><span class="w"> </span><span class="kn">import</span> <span class="n">base</span>
 </span></code></pre></div>
-
-## Create and Train a Classification Model
-
-We will create a simple neural network for phishing detection and train it on some data.
-
-
+<h3 id="create-and-train-a-classification-model">Create and Train a Classification Model<a class="headerlink" href="#create-and-train-a-classification-model" title="Permanent link">&para;</a></h3>
+<p>We will create a simple neural network for phishing detection and train it on some data.</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">Phishing</span><span class="p">()</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Accuracy</span><span class="p">()</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
@@ -3010,10 +3058,6 @@ We will create a simple neural network for phishing detection and train it on so
 </span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a><span class="p">)</span>
 </span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="n">model</span>
 </span></code></pre></div>
-
-
-
-
 <div><details class="river-component river-estimator"><summary class="river-summary"><pre class="river-estimator-name">Classifier</pre></summary><code class="river-estimator-params">Classifier (
   module=SimpleNet(
   (dense0): Linear(in_features=9, out_features=5, bias=True)
@@ -3130,11 +3174,7 @@ We will create a simple neural network for phishing detection and train it on so
 }
 </style></div>
 
-
-
-Train the model on 1000 samples from the phishing dataset:
-
-
+<p>Train the model on 1000 samples from the phishing dataset:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-2-1"><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="c1"># Train the model</span>
 </span><span id="__span-2-2"><a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="k">for</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">dataset</span><span class="o">.</span><span class="n">take</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
 </span><span id="__span-2-3"><a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">y_pred</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">predict_one</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
@@ -3144,15 +3184,10 @@ Train the model on 1000 samples from the phishing dataset:
 </span><span id="__span-2-7"><a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
 </span><span id="__span-2-8"><a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Accuracy: </span><span class="si">{</span><span class="n">metric</span><span class="o">.</span><span class="n">get</span><span class="p">()</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-    Accuracy: 0.725
-
-
-## Save the Trained Model
-
-Now we will save the trained model to disk using the built-in save functionality:
-
-
+<div class="language-text highlight"><pre><span></span><code>Accuracy: 0.725
+</code></pre></div>
+<h3 id="save-the-trained-model">Save the Trained Model<a class="headerlink" href="#save-the-trained-model" title="Permanent link">&para;</a></h3>
+<p>Now we will save the trained model to disk using the built-in save functionality:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-3-1"><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Save the model</span>
 </span><span id="__span-3-2"><a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="n">temp_dir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">mkdtemp</span><span class="p">()</span>
 </span><span id="__span-3-3"><a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">model_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">,</span> <span class="s2">&quot;classifier.pkl&quot;</span><span class="p">)</span>
@@ -3160,15 +3195,10 @@ Now we will save the trained model to disk using the built-in save functionality
 </span><span id="__span-3-5"><a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
 </span><span id="__span-3-6"><a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model saved to: </span><span class="si">{</span><span class="n">model_path</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-    Model saved to: /var/folders/z7/fzv5wnys4hl1pny_xr6c0g5c0000gn/T/tmpp2azp9sr/classifier.pkl
-
-
-## Load the Model and Test
-
-Load the saved model and verify it works correctly:
-
-
+<div class="language-text highlight"><pre><span></span><code>Model saved to: /var/folders/z7/fzv5wnys4hl1pny_xr6c0g5c0000gn/T/tmpp2azp9sr/classifier.pkl
+</code></pre></div>
+<h3 id="load-the-model-and-test">Load the Model and Test<a class="headerlink" href="#load-the-model-and-test" title="Permanent link">&para;</a></h3>
+<p>Load the saved model and verify it works correctly:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Load the model</span>
 </span><span id="__span-4-2"><a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">loaded_model</span> <span class="o">=</span> <span class="n">Classifier</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
 </span><span id="__span-4-3"><a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Model loaded: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">loaded_model</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -3179,27 +3209,18 @@ Load the saved model and verify it works correctly:
 </span><span id="__span-4-8"><a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
 </span><span id="__span-4-9"><a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Prediction: </span><span class="si">{</span><span class="n">y_pred</span><span class="si">}</span><span class="s2">, Expected: </span><span class="si">{</span><span class="n">y</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-    Model loaded: Classifier
-    Prediction: True, Expected: True
-
-
-## Cleanup
-
-Clean up temporary files:
-
-
+<div class="language-text highlight"><pre><span></span><code>Model loaded: Classifier
+Prediction: True, Expected: True
+</code></pre></div>
+<h3 id="cleanup">Cleanup<a class="headerlink" href="#cleanup" title="Permanent link">&para;</a></h3>
+<p>Clean up temporary files:</p>
 <div class="language-python highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Clean up</span>
 </span><span id="__span-5-2"><a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">shutil</span>
 </span><span id="__span-5-3"><a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">temp_dir</span><span class="p">)</span>
 </span><span id="__span-5-4"><a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Cleanup completed&quot;</span><span class="p">)</span>
 </span></code></pre></div>
-
-    Cleanup completed
-
-
-
-</div>
+<div class="language-text highlight"><pre><span></span><code>Cleanup completed
+</code></pre></div>
 
 
 

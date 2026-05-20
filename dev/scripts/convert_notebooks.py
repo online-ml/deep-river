@@ -1,19 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
+import re
 import shutil
 
 import nbformat
 from nbconvert.exporters import MarkdownExporter
-
-
-@dataclass(frozen=True)
-class NotebookPage:
-    source_path: Path
-    output_path: Path
-    title: str
-    category: str
+from nbconvert.writers import FilesWriter
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +15,8 @@ EXAMPLES_DIR = DOCS_DIR / "examples"
 GENERATED_DIR = DOCS_DIR / "generated" / "examples"
 REPO_URL = "https://github.com/online-ml/deep-river"
 DEFAULT_BRANCH = "main"
+HEADING_RE = re.compile(r"^(#{1,6})(\s+.+)$")
+TITLE_RE = re.compile(r"^#\s+(.+?)\s*#*\s*$")
 
 
 def notebook_title(path: Path) -> str:
@@ -29,21 +24,8 @@ def notebook_title(path: Path) -> str:
     return " ".join(word.capitalize() for word in stem.split())
 
 
-def find_notebooks() -> list[NotebookPage]:
-    pages: list[NotebookPage] = []
-    for notebook_path in sorted(EXAMPLES_DIR.rglob("*.ipynb")):
-        rel_path = notebook_path.relative_to(EXAMPLES_DIR)
-        category = rel_path.parts[0] if len(rel_path.parts) > 1 else "examples"
-        output_path = GENERATED_DIR / rel_path.with_suffix("") / "index.md"
-        pages.append(
-            NotebookPage(
-                source_path=notebook_path,
-                output_path=output_path,
-                title=notebook_title(notebook_path),
-                category=category,
-            )
-        )
-    return pages
+def find_notebooks() -> list[Path]:
+    return sorted(EXAMPLES_DIR.rglob("*.ipynb"))
 
 
 def colab_link(notebook_path: Path) -> str:
@@ -59,13 +41,78 @@ def binder_link(notebook_path: Path) -> str:
     )
 
 
-def write_markdown(page: NotebookPage) -> None:
-    page.output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_files_dir = f"{page.source_path.stem}_files"
+def split_title(source: str) -> tuple[str | None, str]:
+    lines = source.splitlines()
+    for index, line in enumerate(lines):
+        if not line.strip():
+            continue
 
-    with page.source_path.open("r", encoding="utf-8") as handle:
+        match = TITLE_RE.match(line)
+        if match:
+            return match.group(1), "\n".join([*lines[:index], *lines[index + 1 :]])
+
+        break
+
+    return None, source
+
+
+def demote_headings(source: str) -> str:
+    lines: list[str] = []
+    in_fence = False
+
+    for line in source.splitlines():
+        stripped = line.lstrip()
+        if stripped.startswith("```") or stripped.startswith("~~~"):
+            in_fence = not in_fence
+
+        if in_fence:
+            lines.append(line)
+            continue
+
+        match = HEADING_RE.match(line)
+        if match and len(match.group(1)) < 6:
+            line = f"#{match.group(1)}{match.group(2)}"
+
+        lines.append(line)
+
+    return "\n".join(lines)
+
+
+def prepare_notebook(notebook: nbformat.NotebookNode, fallback_title: str) -> str:
+    title = fallback_title
+    found_title = False
+    cells = []
+
+    for cell in notebook.cells:
+        if cell.cell_type != "markdown":
+            cells.append(cell)
+            continue
+
+        source = cell.source
+        if not found_title:
+            notebook_title, source = split_title(source)
+            if notebook_title:
+                title = notebook_title
+                found_title = True
+
+        cell.source = demote_headings(source)
+        if cell.source.strip():
+            cells.append(cell)
+
+    notebook.cells = cells
+    return title
+
+
+def write_markdown(notebook_path: Path) -> str:
+    rel_path = notebook_path.relative_to(EXAMPLES_DIR)
+    output_dir = GENERATED_DIR / rel_path.with_suffix("")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_files_dir = f"{notebook_path.stem}_files"
+
+    with notebook_path.open("r", encoding="utf-8") as handle:
         notebook = nbformat.read(handle, as_version=4)
 
+    title = prepare_notebook(notebook, notebook_title(notebook_path))
     exporter = MarkdownExporter()
     body, resources = exporter.from_notebook_node(
         notebook,
@@ -74,36 +121,30 @@ def write_markdown(page: NotebookPage) -> None:
 
     links = (
         f"[![Open in Colab](https://colab.research.google.com/assets/colab-badge.svg)]"
-        f"({colab_link(page.source_path)})"
+        f"({colab_link(notebook_path)})"
         f" "
         f"[![Binder](https://mybinder.org/badge_logo.svg)]"
-        f"({binder_link(page.source_path)})"
+        f"({binder_link(notebook_path)})"
     )
-    header = f"# {page.title}\n\n{links}\n\n"
-    content = f'{header}<div class="notebook-content">\n\n{body}\n\n</div>\n'
-
-    page.output_path.write_text(content, encoding="utf-8")
-
-    if resources.get("outputs"):
-        for name, data in resources["outputs"].items():
-            target = page.output_path.parent / name
-            target.parent.mkdir(parents=True, exist_ok=True)
-            if isinstance(data, str):
-                target.write_text(data, encoding="utf-8")
-            else:
-                target.write_bytes(data)
+    content = f"# {title}\n\n{links}\n\n{body.strip()}\n"
+    FilesWriter(build_directory=str(output_dir)).write(
+        content,
+        resources,
+        notebook_name="index",
+    )
+    return title
 
 
 def category_label(category: str) -> str:
     return " ".join(word.capitalize() for word in category.replace("_", " ").split())
 
 
-def write_category_index(category: str, pages: list[NotebookPage]) -> None:
+def write_category_index(category: str, notebooks: list[tuple[Path, str]]) -> None:
     index_path = EXAMPLES_DIR / category / "index.md"
     links = [
-        f"- [{page.title}](../../generated/examples/{page.source_path.relative_to(EXAMPLES_DIR).with_suffix('').as_posix()}/)"
-        for page in pages
-        if page.category == category
+        f"- [{title}](../../generated/examples/{notebook.relative_to(EXAMPLES_DIR).with_suffix('').as_posix()}/)"
+        for notebook, title in notebooks
+        if notebook.relative_to(EXAMPLES_DIR).parts[0] == category
     ]
     title = category_label(category)
     intro = (
@@ -124,7 +165,9 @@ def write_examples_index(categories: list[str]) -> None:
         "model_persistence",
     ]
     known = [category for category in preferred_order if category in categories]
-    unknown = sorted(category for category in categories if category not in preferred_order)
+    unknown = sorted(
+        category for category in categories if category not in preferred_order
+    )
     ordered_categories = [*known, *unknown]
     links = [
         f"- [{category_label(category)}]({category}/index.md)"
@@ -139,19 +182,19 @@ def write_examples_index(categories: list[str]) -> None:
 
 
 def main() -> None:
-    pages = find_notebooks()
+    notebooks = find_notebooks()
 
     if GENERATED_DIR.exists():
         shutil.rmtree(GENERATED_DIR)
     GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
-    categories = sorted({page.category for page in pages})
-
-    for page in pages:
-        write_markdown(page)
+    titles = [(notebook, write_markdown(notebook)) for notebook in notebooks]
+    categories = sorted(
+        {notebook.relative_to(EXAMPLES_DIR).parts[0] for notebook in notebooks}
+    )
 
     for category in categories:
-        write_category_index(category, pages)
+        write_category_index(category, titles)
 
     write_examples_index(categories)
 
