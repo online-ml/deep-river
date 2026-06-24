@@ -21,7 +21,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         self.anomaly_detector = anomaly_detector
 
     @classmethod
-    def _unit_test_params(self) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.
@@ -32,7 +32,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             Dictionary of parameters to be used for unit testing the
             respective class.
         """
-        return {"anomaly_detector": HalfSpaceTrees()}
+        yield {"anomaly_detector": HalfSpaceTrees()}
 
     @classmethod
     def _unit_test_skips(self) -> set:

@@ -167,7 +167,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         x_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=x_t, y=y)
 
-    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
+    def predict_proba_one(self, x: dict, **kwargs) -> Dict[ClfTarget, float]:
         """Return class probability mapping for one sample using rolling context."""
         self._update_observed_features(x)
         x_win = self._x_window.copy()
@@ -192,14 +192,5 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Return probability DataFrame for multiple samples with rolling context."""
-        self._update_observed_features(X)
-        X = X[list(self.observed_features)]
-        x_win = self._x_window.copy()
-        x_win.extend(X.values.tolist())
-        if self.append_predict:
-            self._x_window = x_win
-        self.module.eval()
-        with torch.inference_mode():
-            x_t = self._deque2rolling_tensor(x_win)
-            probas = self.module(x_t).detach().tolist()
-        return pd.DataFrame(probas)
+        probas = [self.predict_proba_one(row) for row in X.to_dict(orient="records")]
+        return pd.DataFrame(probas, index=X.index)

@@ -224,7 +224,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         elif y_pred.shape[1] > len(cols):
             extra = [f"__extra_{i}" for i in range(y_pred.shape[1] - len(cols))]
             cols = cols + extra
-        return pd.DataFrame(y_pred.numpy(), columns=cols)
+        return pd.DataFrame(y_pred.tolist(), columns=cols, index=X.index)
 
     # ---------------------------------------------------------------------
     # Internal helpers
