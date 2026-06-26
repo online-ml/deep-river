@@ -388,8 +388,8 @@ class DeepEstimator(base.Estimator):
             }
         if hasattr(layer, "bias") and layer.bias is not None:
             instructions["bias"] = {"output": [{"axis": 0, "n_subparams": 1}]}
-        # LSTM special case
-        if isinstance(layer, torch.nn.LSTM):
+        # Recurrent layer special case
+        if isinstance(layer, (torch.nn.LSTM, torch.nn.GRU, torch.nn.RNN)):
             instructions["input_size"] = "input_attribute"
             if hasattr(layer, "weight_ih_l0"):
                 instructions["weight_ih_l0"] = {
