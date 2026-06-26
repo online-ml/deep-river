@@ -188,5 +188,5 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
             self.loss_func(x_pred, x_t, reduction="none"),
             dim=list(range(1, x_t.dim())),
         )
-        score = loss.cpu().detach().numpy()
+        score = np.asarray(loss.cpu().detach().tolist())
         return score

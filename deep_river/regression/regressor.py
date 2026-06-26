@@ -136,14 +136,14 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             y_pred = self.module(x_t).item()
         return y_pred
 
-    def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
-        """Predict target values for multiple instances (returns single-column DataFrame)."""
+    def predict_many(self, X: pd.DataFrame) -> pd.Series:
+        """Predict target values for multiple instances."""
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
         self.module.eval()
         with torch.inference_mode():
-            y_preds = self.module(x_t)
-        return pd.DataFrame(y_preds if not y_preds.is_cuda else y_preds.cpu().numpy())
+            y_preds = self.module(x_t).detach().cpu().view(-1).tolist()
+        return pd.Series(y_preds, index=X.index)
 
     @classmethod
     def _unit_test_params(cls):

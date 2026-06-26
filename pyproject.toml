@@ -15,15 +15,16 @@ authors = [
 ]
 license = {text = "BSD-3-Clause"}
 readme = "README.md"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11,<3.13"
 keywords = ["online-learning", "deep-learning", "data-streams"]
 dependencies = [
-    "numpy~=1.26.4",
-    "pandas~=2.2.2",
-    "river",
-    "scikit-learn~=1.5.0",
+    "numpy>=2.3.4,<3",
+    "pandas>=2.2,<3",
+    "river>=0.25,<0.26",
+    "scikit-learn>=1.5.1,<2",
     "sortedcontainers>=2.4.0",
-    "torch==2.2.2",
+    "torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "torch>=2.5,<2.6; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "tqdm~=4.66.5",
     "torchviz~=0.0.2",
 ]

@@ -101,7 +101,7 @@ def test_output2proba():
 
     preds = torch.tensor([[2.0, 1.0, 0.1]])
     classes = SortedSet(["class1", "class2", "class3"])
-    softmaxed_preds = torch.softmax(preds, dim=-1).numpy().flatten()
+    softmaxed_preds = np.asarray(torch.softmax(preds, dim=-1).tolist()).flatten()
     expected_output = {
         "class1": softmaxed_preds[0],
         "class2": softmaxed_preds[1],
@@ -114,7 +114,7 @@ def test_output2proba():
 
     preds = torch.tensor([[0.8]])
     classes = SortedSet(["positive"])
-    sigmoid_pred = torch.sigmoid(preds).numpy().flatten()
+    sigmoid_pred = np.asarray(torch.sigmoid(preds).tolist()).flatten()
     expected_output = {
         "positive": sigmoid_pred[0],
         "Unobserved0": 1 - sigmoid_pred[0],

@@ -1,6 +1,7 @@
 import math
 from typing import Any, Callable, Union
 
+import numpy as np
 import pandas as pd
 import torch
 from river import stats, utils
@@ -65,7 +66,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         self._apply_loss(loss)
 
     def _apply_loss(self, loss):
-        losses_numpy = loss.detach().numpy()
+        losses_numpy = np.asarray(loss.detach().cpu().tolist())
         mean = self.rolling_mean.get()
         var = self.rolling_var.get() if self.rolling_var.get() > 0 else 1
         if losses_numpy.ndim == 0:
