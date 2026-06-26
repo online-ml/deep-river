@@ -92,7 +92,9 @@ class DeepForecaster(DeepEstimator, time_series_base.Forecaster):
         if xs is None:
             xs = [{} for _ in range(horizon)]
         if len(xs) != horizon:
-            raise ValueError("the length of xs should be equal to the specified horizon")
+            raise ValueError(
+                "the length of xs should be equal to the specified horizon"
+            )
 
         y_window = collections.deque(self._y_window, maxlen=self.window_size)
         forecasts = []
@@ -124,7 +126,9 @@ class DeepForecaster(DeepEstimator, time_series_base.Forecaster):
         if self.is_feature_incremental and self.input_layer:
             target_size = self._target_input_size()
             if self._get_input_size() < target_size:
-                self._expand_layer(self.input_layer, target_size=target_size, output=False)
+                self._expand_layer(
+                    self.input_layer, target_size=target_size, output=False
+                )
 
         return len(self.observed_features) > prev_feature_count
 
@@ -141,7 +145,9 @@ class DeepForecaster(DeepEstimator, time_series_base.Forecaster):
         return [0.0] * (self.window_size - len(values)) + values
 
     def _exogenous_values(self, x: dict) -> list[float]:
-        values = [float(x.get(feature, 0.0) or 0.0) for feature in self.observed_features]
+        values = [
+            float(x.get(feature, 0.0) or 0.0) for feature in self.observed_features
+        ]
         n_exogenous_inputs = self._n_exogenous_inputs()
         if len(values) < n_exogenous_inputs:
             values.extend([0.0] * (n_exogenous_inputs - len(values)))
@@ -153,7 +159,9 @@ class DeepForecaster(DeepEstimator, time_series_base.Forecaster):
 
         if self.is_sequence_model:
             rows = [[lag, *exogenous] for lag in lags]
-            return torch.tensor(rows, dtype=torch.float32, device=self.device).unsqueeze(1)
+            return torch.tensor(
+                rows, dtype=torch.float32, device=self.device
+            ).unsqueeze(1)
 
         row = [*lags, *exogenous]
         return torch.tensor([row], dtype=torch.float32, device=self.device)
