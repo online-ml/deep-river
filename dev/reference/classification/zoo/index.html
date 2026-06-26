@@ -4827,28 +4827,10 @@ state and runtime information (feature names, buffers, etc.).</p>
               <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-193">193</a></span>
 <span class="normal"><a href="#__codelineno-0-194">194</a></span>
 <span class="normal"><a href="#__codelineno-0-195">195</a></span>
-<span class="normal"><a href="#__codelineno-0-196">196</a></span>
-<span class="normal"><a href="#__codelineno-0-197">197</a></span>
-<span class="normal"><a href="#__codelineno-0-198">198</a></span>
-<span class="normal"><a href="#__codelineno-0-199">199</a></span>
-<span class="normal"><a href="#__codelineno-0-200">200</a></span>
-<span class="normal"><a href="#__codelineno-0-201">201</a></span>
-<span class="normal"><a href="#__codelineno-0-202">202</a></span>
-<span class="normal"><a href="#__codelineno-0-203">203</a></span>
-<span class="normal"><a href="#__codelineno-0-204">204</a></span>
-<span class="normal"><a href="#__codelineno-0-205">205</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-196">196</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 </span><span id="__span-0-194"><a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return probability DataFrame for multiple samples with rolling context.&quot;&quot;&quot;</span>
-</span><span id="__span-0-195"><a id="__codelineno-0-195" name="__codelineno-0-195"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed_features</span><span class="p">)]</span>
-</span><span id="__span-0-197"><a id="__codelineno-0-197" name="__codelineno-0-197"></a>    <span class="n">x_win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x_window</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-</span><span id="__span-0-198"><a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="n">x_win</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-</span><span id="__span-0-199"><a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_predict</span><span class="p">:</span>
-</span><span id="__span-0-200"><a id="__codelineno-0-200" name="__codelineno-0-200"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_x_window</span> <span class="o">=</span> <span class="n">x_win</span>
-</span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
-</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deque2rolling_tensor</span><span class="p">(</span><span class="n">x_win</span><span class="p">)</span>
-</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">probas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-</span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">probas</span><span class="p">)</span>
+</span><span id="__span-0-195"><a id="__codelineno-0-195" name="__codelineno-0-195"></a>    <span class="n">probas</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">predict_proba_one</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)]</span>
+</span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">probas</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4863,7 +4845,9 @@ state and runtime information (feature names, buffers, etc.).</p>
 
 
 <a href="#deep_river.classification.zoo.LSTMClassifier.predict_proba_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4885,7 +4869,7 @@ state and runtime information (feature names, buffers, etc.).</p>
 <span class="normal"><a href="#__codelineno-0-179">179</a></span>
 <span class="normal"><a href="#__codelineno-0-180">180</a></span>
 <span class="normal"><a href="#__codelineno-0-181">181</a></span>
-<span class="normal"><a href="#__codelineno-0-182">182</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="normal"><a href="#__codelineno-0-182">182</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 </span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return class probability mapping for one sample using rolling context.&quot;&quot;&quot;</span>
 </span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </span><span id="__span-0-173"><a id="__codelineno-0-173" name="__codelineno-0-173"></a>    <span class="n">x_win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x_window</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
@@ -6060,9 +6044,7 @@ state and runtime information (feature names, buffers, etc.).</p>
 
             <details class="quote">
               <summary>Source code in <code>deep_river/classification/classifier.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-276">276</a></span>
-<span class="normal"><a href="#__codelineno-0-277">277</a></span>
-<span class="normal"><a href="#__codelineno-0-278">278</a></span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-278">278</a></span>
 <span class="normal"><a href="#__codelineno-0-279">279</a></span>
 <span class="normal"><a href="#__codelineno-0-280">280</a></span>
 <span class="normal"><a href="#__codelineno-0-281">281</a></span>
@@ -6080,27 +6062,29 @@ state and runtime information (feature names, buffers, etc.).</p>
 <span class="normal"><a href="#__codelineno-0-293">293</a></span>
 <span class="normal"><a href="#__codelineno-0-294">294</a></span>
 <span class="normal"><a href="#__codelineno-0-295">295</a></span>
-<span class="normal"><a href="#__codelineno-0-296">296</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-276"><a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-</span><span id="__span-0-277"><a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict probabilities for a batch of instances.</span>
-</span><span id="__span-0-278"><a id="__codelineno-0-278" name="__codelineno-0-278"></a>
-</span><span id="__span-0-279"><a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="sd">    Parameters</span>
-</span><span id="__span-0-280"><a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="sd">    ----------</span>
-</span><span id="__span-0-281"><a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="sd">    X : pandas.DataFrame</span>
-</span><span id="__span-0-282"><a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">        Feature matrix.</span>
-</span><span id="__span-0-283"><a id="__codelineno-0-283" name="__codelineno-0-283"></a>
-</span><span id="__span-0-284"><a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">    Returns</span>
-</span><span id="__span-0-285"><a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">    -------</span>
-</span><span id="__span-0-286"><a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">    pandas.DataFrame</span>
-</span><span id="__span-0-287"><a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">        Each row sums to 1 (multi-class) or has two columns for binary.</span>
-</span><span id="__span-0-288"><a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-289"><a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="__span-0-290"><a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df2tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="__span-0-291"><a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="__span-0-292"><a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
-</span><span id="__span-0-293"><a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="n">y_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
-</span><span id="__span-0-294"><a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-</span><span id="__span-0-295"><a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="n">output2proba</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)</span>
-</span><span id="__span-0-296"><a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-278"><a id="__codelineno-0-278" name="__codelineno-0-278"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+</span><span id="__span-0-279"><a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict probabilities for a batch of instances.</span>
+</span><span id="__span-0-280"><a id="__codelineno-0-280" name="__codelineno-0-280"></a>
+</span><span id="__span-0-281"><a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-282"><a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-283"><a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">    X : pandas.DataFrame</span>
+</span><span id="__span-0-284"><a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">        Feature matrix.</span>
+</span><span id="__span-0-285"><a id="__codelineno-0-285" name="__codelineno-0-285"></a>
+</span><span id="__span-0-286"><a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">    Returns</span>
+</span><span id="__span-0-287"><a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">    -------</span>
+</span><span id="__span-0-288"><a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">    pandas.DataFrame</span>
+</span><span id="__span-0-289"><a id="__codelineno-0-289" name="__codelineno-0-289"></a><span class="sd">        Each row sums to 1 (multi-class) or has two columns for binary.</span>
+</span><span id="__span-0-290"><a id="__codelineno-0-290" name="__codelineno-0-290"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-291"><a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="__span-0-292"><a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df2tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="__span-0-293"><a id="__codelineno-0-293" name="__codelineno-0-293"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="__span-0-294"><a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
+</span><span id="__span-0-295"><a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="n">y_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
+</span><span id="__span-0-296"><a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-297"><a id="__codelineno-0-297" name="__codelineno-0-297"></a>        <span class="n">output2proba</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)</span>
+</span><span id="__span-0-298"><a id="__codelineno-0-298" name="__codelineno-0-298"></a>    <span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -6115,7 +6099,9 @@ state and runtime information (feature names, buffers, etc.).</p>
 
 
 <a href="#deep_river.classification.zoo.LogisticRegression.predict_proba_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -6198,26 +6184,30 @@ state and runtime information (feature names, buffers, etc.).</p>
 <span class="normal"><a href="#__codelineno-0-271">271</a></span>
 <span class="normal"><a href="#__codelineno-0-272">272</a></span>
 <span class="normal"><a href="#__codelineno-0-273">273</a></span>
-<span class="normal"><a href="#__codelineno-0-274">274</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict class membership probabilities for one instance.</span>
-</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a>
-</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">    Parameters</span>
-</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">    ----------</span>
-</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">    x : dict</span>
-</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">        Feature dictionary.</span>
-</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a>
-</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">    Returns</span>
-</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">    -------</span>
-</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    dict</span>
-</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">        Mapping from label -&gt; probability.</span>
-</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
-</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a>        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
-</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="n">raw</span> <span class="o">=</span> <span class="n">output2proba</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a>    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">raw</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-274">274</a></span>
+<span class="normal"><a href="#__codelineno-0-275">275</a></span>
+<span class="normal"><a href="#__codelineno-0-276">276</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span>
+</span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict class membership probabilities for one instance.</span>
+</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a>
+</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">    x : dict</span>
+</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">        Feature dictionary.</span>
+</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a>
+</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    Returns</span>
+</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">    -------</span>
+</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">    dict</span>
+</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">        Mapping from label -&gt; probability.</span>
+</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
+</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a>        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
+</span><span id="__span-0-275"><a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="n">raw</span> <span class="o">=</span> <span class="n">output2proba</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-0-276"><a id="__codelineno-0-276" name="__codelineno-0-276"></a>    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">raw</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7353,9 +7343,7 @@ state and runtime information (feature names, buffers, etc.).</p>
 
             <details class="quote">
               <summary>Source code in <code>deep_river/classification/classifier.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-276">276</a></span>
-<span class="normal"><a href="#__codelineno-0-277">277</a></span>
-<span class="normal"><a href="#__codelineno-0-278">278</a></span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-278">278</a></span>
 <span class="normal"><a href="#__codelineno-0-279">279</a></span>
 <span class="normal"><a href="#__codelineno-0-280">280</a></span>
 <span class="normal"><a href="#__codelineno-0-281">281</a></span>
@@ -7373,27 +7361,29 @@ state and runtime information (feature names, buffers, etc.).</p>
 <span class="normal"><a href="#__codelineno-0-293">293</a></span>
 <span class="normal"><a href="#__codelineno-0-294">294</a></span>
 <span class="normal"><a href="#__codelineno-0-295">295</a></span>
-<span class="normal"><a href="#__codelineno-0-296">296</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-276"><a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-</span><span id="__span-0-277"><a id="__codelineno-0-277" name="__codelineno-0-277"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict probabilities for a batch of instances.</span>
-</span><span id="__span-0-278"><a id="__codelineno-0-278" name="__codelineno-0-278"></a>
-</span><span id="__span-0-279"><a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="sd">    Parameters</span>
-</span><span id="__span-0-280"><a id="__codelineno-0-280" name="__codelineno-0-280"></a><span class="sd">    ----------</span>
-</span><span id="__span-0-281"><a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="sd">    X : pandas.DataFrame</span>
-</span><span id="__span-0-282"><a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">        Feature matrix.</span>
-</span><span id="__span-0-283"><a id="__codelineno-0-283" name="__codelineno-0-283"></a>
-</span><span id="__span-0-284"><a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">    Returns</span>
-</span><span id="__span-0-285"><a id="__codelineno-0-285" name="__codelineno-0-285"></a><span class="sd">    -------</span>
-</span><span id="__span-0-286"><a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">    pandas.DataFrame</span>
-</span><span id="__span-0-287"><a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">        Each row sums to 1 (multi-class) or has two columns for binary.</span>
-</span><span id="__span-0-288"><a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-289"><a id="__codelineno-0-289" name="__codelineno-0-289"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="__span-0-290"><a id="__codelineno-0-290" name="__codelineno-0-290"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df2tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="__span-0-291"><a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="__span-0-292"><a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
-</span><span id="__span-0-293"><a id="__codelineno-0-293" name="__codelineno-0-293"></a>        <span class="n">y_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
-</span><span id="__span-0-294"><a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-</span><span id="__span-0-295"><a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="n">output2proba</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)</span>
-</span><span id="__span-0-296"><a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-296">296</a></span>
+<span class="normal"><a href="#__codelineno-0-297">297</a></span>
+<span class="normal"><a href="#__codelineno-0-298">298</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-278"><a id="__codelineno-0-278" name="__codelineno-0-278"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+</span><span id="__span-0-279"><a id="__codelineno-0-279" name="__codelineno-0-279"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict probabilities for a batch of instances.</span>
+</span><span id="__span-0-280"><a id="__codelineno-0-280" name="__codelineno-0-280"></a>
+</span><span id="__span-0-281"><a id="__codelineno-0-281" name="__codelineno-0-281"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-282"><a id="__codelineno-0-282" name="__codelineno-0-282"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-283"><a id="__codelineno-0-283" name="__codelineno-0-283"></a><span class="sd">    X : pandas.DataFrame</span>
+</span><span id="__span-0-284"><a id="__codelineno-0-284" name="__codelineno-0-284"></a><span class="sd">        Feature matrix.</span>
+</span><span id="__span-0-285"><a id="__codelineno-0-285" name="__codelineno-0-285"></a>
+</span><span id="__span-0-286"><a id="__codelineno-0-286" name="__codelineno-0-286"></a><span class="sd">    Returns</span>
+</span><span id="__span-0-287"><a id="__codelineno-0-287" name="__codelineno-0-287"></a><span class="sd">    -------</span>
+</span><span id="__span-0-288"><a id="__codelineno-0-288" name="__codelineno-0-288"></a><span class="sd">    pandas.DataFrame</span>
+</span><span id="__span-0-289"><a id="__codelineno-0-289" name="__codelineno-0-289"></a><span class="sd">        Each row sums to 1 (multi-class) or has two columns for binary.</span>
+</span><span id="__span-0-290"><a id="__codelineno-0-290" name="__codelineno-0-290"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-291"><a id="__codelineno-0-291" name="__codelineno-0-291"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="__span-0-292"><a id="__codelineno-0-292" name="__codelineno-0-292"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_df2tensor</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+</span><span id="__span-0-293"><a id="__codelineno-0-293" name="__codelineno-0-293"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="__span-0-294"><a id="__codelineno-0-294" name="__codelineno-0-294"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
+</span><span id="__span-0-295"><a id="__codelineno-0-295" name="__codelineno-0-295"></a>        <span class="n">y_preds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
+</span><span id="__span-0-296"><a id="__codelineno-0-296" name="__codelineno-0-296"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+</span><span id="__span-0-297"><a id="__codelineno-0-297" name="__codelineno-0-297"></a>        <span class="n">output2proba</span><span class="p">(</span><span class="n">y_preds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)</span>
+</span><span id="__span-0-298"><a id="__codelineno-0-298" name="__codelineno-0-298"></a>    <span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -7408,7 +7398,9 @@ state and runtime information (feature names, buffers, etc.).</p>
 
 
 <a href="#deep_river.classification.zoo.MultiLayerPerceptron.predict_proba_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="dict">dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -7491,26 +7483,30 @@ state and runtime information (feature names, buffers, etc.).</p>
 <span class="normal"><a href="#__codelineno-0-271">271</a></span>
 <span class="normal"><a href="#__codelineno-0-272">272</a></span>
 <span class="normal"><a href="#__codelineno-0-273">273</a></span>
-<span class="normal"><a href="#__codelineno-0-274">274</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
-</span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict class membership probabilities for one instance.</span>
-</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a>
-</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="sd">    Parameters</span>
-</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a><span class="sd">    ----------</span>
-</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">    x : dict</span>
-</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">        Feature dictionary.</span>
-</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a>
-</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">    Returns</span>
-</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a><span class="sd">    -------</span>
-</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    dict</span>
-</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">        Mapping from label -&gt; probability.</span>
-</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
-</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a>        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
-</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="n">raw</span> <span class="o">=</span> <span class="n">output2proba</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a>    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">raw</span><span class="p">)</span>
+<span class="normal"><a href="#__codelineno-0-274">274</a></span>
+<span class="normal"><a href="#__codelineno-0-275">275</a></span>
+<span class="normal"><a href="#__codelineno-0-276">276</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-255"><a id="__codelineno-0-255" name="__codelineno-0-255"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span>
+</span><span id="__span-0-256"><a id="__codelineno-0-256" name="__codelineno-0-256"></a>    <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="__span-0-257"><a id="__codelineno-0-257" name="__codelineno-0-257"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+</span><span id="__span-0-258"><a id="__codelineno-0-258" name="__codelineno-0-258"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Predict class membership probabilities for one instance.</span>
+</span><span id="__span-0-259"><a id="__codelineno-0-259" name="__codelineno-0-259"></a>
+</span><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">    x : dict</span>
+</span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">        Feature dictionary.</span>
+</span><span id="__span-0-264"><a id="__codelineno-0-264" name="__codelineno-0-264"></a>
+</span><span id="__span-0-265"><a id="__codelineno-0-265" name="__codelineno-0-265"></a><span class="sd">    Returns</span>
+</span><span id="__span-0-266"><a id="__codelineno-0-266" name="__codelineno-0-266"></a><span class="sd">    -------</span>
+</span><span id="__span-0-267"><a id="__codelineno-0-267" name="__codelineno-0-267"></a><span class="sd">    dict</span>
+</span><span id="__span-0-268"><a id="__codelineno-0-268" name="__codelineno-0-268"></a><span class="sd">        Mapping from label -&gt; probability.</span>
+</span><span id="__span-0-269"><a id="__codelineno-0-269" name="__codelineno-0-269"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-270"><a id="__codelineno-0-270" name="__codelineno-0-270"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="__span-0-271"><a id="__codelineno-0-271" name="__codelineno-0-271"></a>    <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="__span-0-272"><a id="__codelineno-0-272" name="__codelineno-0-272"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="__span-0-273"><a id="__codelineno-0-273" name="__codelineno-0-273"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
+</span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a>        <span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span>
+</span><span id="__span-0-275"><a id="__codelineno-0-275" name="__codelineno-0-275"></a>    <span class="n">raw</span> <span class="o">=</span> <span class="n">output2proba</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">observed_classes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_is_logit</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="__span-0-276"><a id="__codelineno-0-276" name="__codelineno-0-276"></a>    <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="nb">dict</span><span class="p">[</span><span class="n">base</span><span class="o">.</span><span class="n">typing</span><span class="o">.</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">raw</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8548,28 +8544,10 @@ state and runtime information (feature names, buffers, etc.).</p>
               <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-193">193</a></span>
 <span class="normal"><a href="#__codelineno-0-194">194</a></span>
 <span class="normal"><a href="#__codelineno-0-195">195</a></span>
-<span class="normal"><a href="#__codelineno-0-196">196</a></span>
-<span class="normal"><a href="#__codelineno-0-197">197</a></span>
-<span class="normal"><a href="#__codelineno-0-198">198</a></span>
-<span class="normal"><a href="#__codelineno-0-199">199</a></span>
-<span class="normal"><a href="#__codelineno-0-200">200</a></span>
-<span class="normal"><a href="#__codelineno-0-201">201</a></span>
-<span class="normal"><a href="#__codelineno-0-202">202</a></span>
-<span class="normal"><a href="#__codelineno-0-203">203</a></span>
-<span class="normal"><a href="#__codelineno-0-204">204</a></span>
-<span class="normal"><a href="#__codelineno-0-205">205</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-196">196</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-193"><a id="__codelineno-0-193" name="__codelineno-0-193"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 </span><span id="__span-0-194"><a id="__codelineno-0-194" name="__codelineno-0-194"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return probability DataFrame for multiple samples with rolling context.&quot;&quot;&quot;</span>
-</span><span id="__span-0-195"><a id="__codelineno-0-195" name="__codelineno-0-195"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-</span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">observed_features</span><span class="p">)]</span>
-</span><span id="__span-0-197"><a id="__codelineno-0-197" name="__codelineno-0-197"></a>    <span class="n">x_win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x_window</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-</span><span id="__span-0-198"><a id="__codelineno-0-198" name="__codelineno-0-198"></a>    <span class="n">x_win</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
-</span><span id="__span-0-199"><a id="__codelineno-0-199" name="__codelineno-0-199"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">append_predict</span><span class="p">:</span>
-</span><span id="__span-0-200"><a id="__codelineno-0-200" name="__codelineno-0-200"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_x_window</span> <span class="o">=</span> <span class="n">x_win</span>
-</span><span id="__span-0-201"><a id="__codelineno-0-201" name="__codelineno-0-201"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="__span-0-202"><a id="__codelineno-0-202" name="__codelineno-0-202"></a>    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">inference_mode</span><span class="p">():</span>
-</span><span id="__span-0-203"><a id="__codelineno-0-203" name="__codelineno-0-203"></a>        <span class="n">x_t</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deque2rolling_tensor</span><span class="p">(</span><span class="n">x_win</span><span class="p">)</span>
-</span><span id="__span-0-204"><a id="__codelineno-0-204" name="__codelineno-0-204"></a>        <span class="n">probas</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">module</span><span class="p">(</span><span class="n">x_t</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
-</span><span id="__span-0-205"><a id="__codelineno-0-205" name="__codelineno-0-205"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">probas</span><span class="p">)</span>
+</span><span id="__span-0-195"><a id="__codelineno-0-195" name="__codelineno-0-195"></a>    <span class="n">probas</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">predict_proba_one</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">X</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s2">&quot;records&quot;</span><span class="p">)]</span>
+</span><span id="__span-0-196"><a id="__codelineno-0-196" name="__codelineno-0-196"></a>    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">probas</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">X</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -8584,7 +8562,9 @@ state and runtime information (feature names, buffers, etc.).</p>
 
 
 <a href="#deep_river.classification.zoo.RNNClassifier.predict_proba_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">predict_proba_one</span><span class="p">(</span>
+</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">x</span><span class="p">:</span> <span class="n"><span title="dict">dict</span></span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="typing.Dict">Dict</span></span><span class="p">[</span><span class="n"><span title="river.base.typing.ClfTarget">ClfTarget</span></span><span class="p">,</span> <span class="n"><span title="float">float</span></span><span class="p">]</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -8606,7 +8586,7 @@ state and runtime information (feature names, buffers, etc.).</p>
 <span class="normal"><a href="#__codelineno-0-179">179</a></span>
 <span class="normal"><a href="#__codelineno-0-180">180</a></span>
 <span class="normal"><a href="#__codelineno-0-181">181</a></span>
-<span class="normal"><a href="#__codelineno-0-182">182</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="normal"><a href="#__codelineno-0-182">182</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a><span class="k">def</span><span class="w"> </span><span class="nf">predict_proba_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="n">ClfTarget</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 </span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return class probability mapping for one sample using rolling context.&quot;&quot;&quot;</span>
 </span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">_update_observed_features</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 </span><span id="__span-0-173"><a id="__codelineno-0-173" name="__codelineno-0-173"></a>    <span class="n">x_win</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_x_window</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>

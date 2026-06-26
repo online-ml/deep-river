@@ -3700,7 +3700,7 @@ by the incremental mean of previous scores.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyMeanScaler.learn_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3780,7 +3780,7 @@ is supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-95">95</a></span>
 <span class="normal"><a href="#__codelineno-0-96">96</a></span>
 <span class="normal"><a href="#__codelineno-0-97">97</a></span>
-<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    Update the scaler and the underlying anomaly scaler.</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
@@ -3796,7 +3796,7 @@ is supervised or not.</p>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">        The model itself.</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -3815,7 +3815,7 @@ is supervised or not.</p>
   </span>
 
 <a href="#deep_river.anomaly.scaler.AnomalyMeanScaler.score_many" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -3900,7 +3900,7 @@ supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return scaled anomaly scores based on raw score provided by</span>
 </span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">    the wrapped anomaly detector.</span>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>
@@ -3931,7 +3931,7 @@ supervised or not.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyMeanScaler.score_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4028,7 +4028,7 @@ supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-228">228</a></span>
 <span class="normal"><a href="#__codelineno-0-229">229</a></span>
 <span class="normal"><a href="#__codelineno-0-230">230</a></span>
-<span class="normal"><a href="#__codelineno-0-231">231</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-210"><a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-231">231</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-210"><a id="__codelineno-0-210" name="__codelineno-0-210"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 </span><span id="__span-0-211"><a id="__codelineno-0-211" name="__codelineno-0-211"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-212"><a id="__codelineno-0-212" name="__codelineno-0-212"></a><span class="sd">    Return a scaled anomaly score based on raw score provided by the</span>
 </span><span id="__span-0-213"><a id="__codelineno-0-213" name="__codelineno-0-213"></a><span class="sd">    wrapped anomaly detector. Larger values indicate more</span>
@@ -4045,7 +4045,7 @@ supervised or not.</p>
 </span><span id="__span-0-224"><a id="__codelineno-0-224" name="__codelineno-0-224"></a><span class="sd">    An scaled anomaly score. Larger values indicate more</span>
 </span><span id="__span-0-225"><a id="__codelineno-0-225" name="__codelineno-0-225"></a><span class="sd">    anomalous examples.</span>
 </span><span id="__span-0-226"><a id="__codelineno-0-226" name="__codelineno-0-226"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-227"><a id="__codelineno-0-227" name="__codelineno-0-227"></a>    <span class="n">raw_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-227"><a id="__codelineno-0-227" name="__codelineno-0-227"></a>    <span class="n">raw_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span><span id="__span-0-228"><a id="__codelineno-0-228" name="__codelineno-0-228"></a>    <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </span><span id="__span-0-229"><a id="__codelineno-0-229" name="__codelineno-0-229"></a>    <span class="n">score</span> <span class="o">=</span> <span class="n">raw_score</span> <span class="o">/</span> <span class="n">mean</span>
 </span><span id="__span-0-230"><a id="__codelineno-0-230" name="__codelineno-0-230"></a>
@@ -4252,7 +4252,7 @@ supervised or not.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyMinMaxScaler.learn_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4332,7 +4332,7 @@ is supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-95">95</a></span>
 <span class="normal"><a href="#__codelineno-0-96">96</a></span>
 <span class="normal"><a href="#__codelineno-0-97">97</a></span>
-<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    Update the scaler and the underlying anomaly scaler.</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
@@ -4348,7 +4348,7 @@ is supervised or not.</p>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">        The model itself.</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4367,7 +4367,7 @@ is supervised or not.</p>
   </span>
 
 <a href="#deep_river.anomaly.scaler.AnomalyMinMaxScaler.score_many" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4452,7 +4452,7 @@ supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return scaled anomaly scores based on raw score provided by</span>
 </span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">    the wrapped anomaly detector.</span>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>
@@ -4483,7 +4483,7 @@ supervised or not.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyMinMaxScaler.score_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4581,7 +4581,7 @@ supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-279">279</a></span>
 <span class="normal"><a href="#__codelineno-0-280">280</a></span>
 <span class="normal"><a href="#__codelineno-0-281">281</a></span>
-<span class="normal"><a href="#__codelineno-0-282">282</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-282">282</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-260"><a id="__codelineno-0-260" name="__codelineno-0-260"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 </span><span id="__span-0-261"><a id="__codelineno-0-261" name="__codelineno-0-261"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-262"><a id="__codelineno-0-262" name="__codelineno-0-262"></a><span class="sd">    Return a scaled anomaly score based on raw score provided by the</span>
 </span><span id="__span-0-263"><a id="__codelineno-0-263" name="__codelineno-0-263"></a><span class="sd">    wrapped anomaly detector. Larger values indicate more</span>
@@ -4598,7 +4598,7 @@ supervised or not.</p>
 </span><span id="__span-0-274"><a id="__codelineno-0-274" name="__codelineno-0-274"></a><span class="sd">    An scaled anomaly score. Larger values indicate more</span>
 </span><span id="__span-0-275"><a id="__codelineno-0-275" name="__codelineno-0-275"></a><span class="sd">    anomalous examples.</span>
 </span><span id="__span-0-276"><a id="__codelineno-0-276" name="__codelineno-0-276"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-277"><a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="n">raw_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-277"><a id="__codelineno-0-277" name="__codelineno-0-277"></a>    <span class="n">raw_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span><span id="__span-0-278"><a id="__codelineno-0-278" name="__codelineno-0-278"></a>    <span class="nb">min</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">min</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </span><span id="__span-0-279"><a id="__codelineno-0-279" name="__codelineno-0-279"></a>    <span class="nb">max</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">max</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </span><span id="__span-0-280"><a id="__codelineno-0-280" name="__codelineno-0-280"></a>    <span class="n">score</span> <span class="o">=</span> <span class="p">(</span><span class="n">raw_score</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="nb">max</span> <span class="o">-</span> <span class="nb">min</span><span class="p">)</span>
@@ -4757,7 +4757,7 @@ to account for drift in the wrapped model's anomaly scores.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyScaler.learn_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4837,7 +4837,7 @@ is supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-95">95</a></span>
 <span class="normal"><a href="#__codelineno-0-96">96</a></span>
 <span class="normal"><a href="#__codelineno-0-97">97</a></span>
-<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    Update the scaler and the underlying anomaly scaler.</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
@@ -4853,7 +4853,7 @@ is supervised or not.</p>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">        The model itself.</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -4872,7 +4872,7 @@ is supervised or not.</p>
   </span>
 
 <a href="#deep_river.anomaly.scaler.AnomalyScaler.score_many" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -4957,7 +4957,7 @@ supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return scaled anomaly scores based on raw score provided by</span>
 </span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">    the wrapped anomaly detector.</span>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>
@@ -4992,7 +4992,7 @@ supervised or not.</p>
   </span>
 
 <a href="#deep_river.anomaly.scaler.AnomalyScaler.score_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="float">float</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5088,7 +5088,7 @@ is supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-78">78</a></span>
 <span class="normal"><a href="#__codelineno-0-79">79</a></span>
 <span class="normal"><a href="#__codelineno-0-80">80</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-62"><a id="__codelineno-0-62" name="__codelineno-0-62"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+</span><span id="__span-0-63"><a id="__codelineno-0-63" name="__codelineno-0-63"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
 </span><span id="__span-0-64"><a id="__codelineno-0-64" name="__codelineno-0-64"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a scaled anomaly score based on raw score provided by</span>
 </span><span id="__span-0-65"><a id="__codelineno-0-65" name="__codelineno-0-65"></a><span class="sd">    the wrapped anomaly detector.</span>
 </span><span id="__span-0-66"><a id="__codelineno-0-66" name="__codelineno-0-66"></a>
@@ -5333,7 +5333,7 @@ using incremental mean and variance metrics.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyStandardScaler.learn_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5413,7 +5413,7 @@ is supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-95">95</a></span>
 <span class="normal"><a href="#__codelineno-0-96">96</a></span>
 <span class="normal"><a href="#__codelineno-0-97">97</a></span>
-<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="normal"><a href="#__codelineno-0-98">98</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-82"><a id="__codelineno-0-82" name="__codelineno-0-82"></a><span class="k">def</span><span class="w"> </span><span class="nf">learn_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 </span><span id="__span-0-83"><a id="__codelineno-0-83" name="__codelineno-0-83"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-84"><a id="__codelineno-0-84" name="__codelineno-0-84"></a><span class="sd">    Update the scaler and the underlying anomaly scaler.</span>
 </span><span id="__span-0-85"><a id="__codelineno-0-85" name="__codelineno-0-85"></a>
@@ -5429,7 +5429,7 @@ is supervised or not.</p>
 </span><span id="__span-0-95"><a id="__codelineno-0-95" name="__codelineno-0-95"></a><span class="sd">        The model itself.</span>
 </span><span id="__span-0-96"><a id="__codelineno-0-96" name="__codelineno-0-96"></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="__span-0-97"><a id="__codelineno-0-97" name="__codelineno-0-97"></a>
-</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-98"><a id="__codelineno-0-98" name="__codelineno-0-98"></a>    <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">learn_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
@@ -5448,7 +5448,7 @@ is supervised or not.</p>
   </span>
 
 <a href="#deep_river.anomaly.scaler.AnomalyStandardScaler.score_many" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_many</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n"><span title="numpy.ndarray">ndarray</span></span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5533,7 +5533,7 @@ supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-115">115</a></span>
 <span class="normal"><a href="#__codelineno-0-116">116</a></span>
 <span class="normal"><a href="#__codelineno-0-117">117</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-100"><a id="__codelineno-0-100" name="__codelineno-0-100"></a><span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
-</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+</span><span id="__span-0-101"><a id="__codelineno-0-101" name="__codelineno-0-101"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_many</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 </span><span id="__span-0-102"><a id="__codelineno-0-102" name="__codelineno-0-102"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Return scaled anomaly scores based on raw score provided by</span>
 </span><span id="__span-0-103"><a id="__codelineno-0-103" name="__codelineno-0-103"></a><span class="sd">    the wrapped anomaly detector.</span>
 </span><span id="__span-0-104"><a id="__codelineno-0-104" name="__codelineno-0-104"></a>
@@ -5564,7 +5564,7 @@ supervised or not.</p>
 
 
 <a href="#deep_river.anomaly.scaler.AnomalyStandardScaler.score_one" class="headerlink" title="Permanent link">&para;</a></h3>
-<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+<div class="language-python doc-signature highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nf">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span></code></pre></div>
 
     <div class="doc doc-contents ">
@@ -5667,7 +5667,7 @@ is supervised or not.</p>
 <span class="normal"><a href="#__codelineno-0-177">177</a></span>
 <span class="normal"><a href="#__codelineno-0-178">178</a></span>
 <span class="normal"><a href="#__codelineno-0-179">179</a></span>
-<span class="normal"><a href="#__codelineno-0-180">180</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-153"><a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<span class="normal"><a href="#__codelineno-0-180">180</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-153"><a id="__codelineno-0-153" name="__codelineno-0-153"></a><span class="k">def</span><span class="w"> </span><span class="nf">score_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 </span><span id="__span-0-154"><a id="__codelineno-0-154" name="__codelineno-0-154"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 </span><span id="__span-0-155"><a id="__codelineno-0-155" name="__codelineno-0-155"></a><span class="sd">    Return a scaled anomaly score based on raw score provided by the</span>
 </span><span id="__span-0-156"><a id="__codelineno-0-156" name="__codelineno-0-156"></a><span class="sd">    wrapped anomaly detector. Larger values indicate more</span>
@@ -5684,7 +5684,7 @@ is supervised or not.</p>
 </span><span id="__span-0-167"><a id="__codelineno-0-167" name="__codelineno-0-167"></a><span class="sd">    An scaled anomaly score. Larger values indicate more</span>
 </span><span id="__span-0-168"><a id="__codelineno-0-168" name="__codelineno-0-168"></a><span class="sd">    anomalous examples.</span>
 </span><span id="__span-0-169"><a id="__codelineno-0-169" name="__codelineno-0-169"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a>    <span class="n">raw_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+</span><span id="__span-0-170"><a id="__codelineno-0-170" name="__codelineno-0-170"></a>    <span class="n">raw_score</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_detector</span><span class="o">.</span><span class="n">score_one</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 </span><span id="__span-0-171"><a id="__codelineno-0-171" name="__codelineno-0-171"></a>    <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">raw_score</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
 </span><span id="__span-0-172"><a id="__codelineno-0-172" name="__codelineno-0-172"></a>    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">with_std</span><span class="p">:</span>
 </span><span id="__span-0-173"><a id="__codelineno-0-173" name="__codelineno-0-173"></a>        <span class="n">var</span> <span class="o">=</span> <span class="p">(</span>

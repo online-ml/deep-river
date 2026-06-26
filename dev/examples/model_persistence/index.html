@@ -29,7 +29,7 @@
     
     
       
-        <title>Index - deep-river</title>
+        <title>README - deep-river</title>
       
     
     
@@ -76,7 +76,8 @@
     <label class="md-overlay" for="__drawer" aria-label="Navigation"></label>
     <div data-md-component="skip">
       
-        <a href="#__skip" class="md-skip">
+        
+        <a href="#files" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Index
+              README
             
           </span>
         </div>
@@ -2931,6 +2932,11 @@
                     
                     
                     
+                      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+                      <div class="md-sidebar-button__wrapper">
+                        <label class="md-sidebar-button" for="__toc"></label>
+                      </div>
+                    
                   
                   <div class="md-sidebar__inner">
                     
@@ -2942,6 +2948,58 @@
   
   
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Page contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Files
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-youll-learn" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What you'll learn
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features-demonstrated" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Key Features Demonstrated
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Usage
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -2959,11 +3017,33 @@
   
 
 
-<h1 id="model-persistence">Model Persistence<a class="headerlink" href="#model-persistence" title="Permanent link">&para;</a></h1>
-<p>Hands-on notebooks that walk through core workflows and real datasets, with ready-to-run code and model outputs.</p>
+<h1 id="model-persistence-examples">Model Persistence Examples<a class="headerlink" href="#model-persistence-examples" title="Permanent link">&para;</a></h1>
+<p>This directory contains examples demonstrating the model persistence functionality in deep-river.</p>
+<h2 id="files">Files<a class="headerlink" href="#files" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../generated/examples/model_persistence/model_persistence_demo/">Model Persistence</a></li>
+<li><code>model_persistence_demo.ipynb</code> - Comprehensive demonstration of saving and loading models</li>
 </ul>
+<h2 id="what-youll-learn">What you'll learn<a class="headerlink" href="#what-youll-learn" title="Permanent link">&para;</a></h2>
+<p>The notebook covers:</p>
+<ol>
+<li><strong>Basic Model Persistence</strong> - Save and load classification and regression models</li>
+<li><strong>Model Information</strong> - Inspect saved models before loading</li>
+<li><strong>Continued Training</strong> - Resume training from saved checkpoints</li>
+<li><strong>Error Handling</strong> - Robust error handling and best practices</li>
+<li><strong>Model Comparison</strong> - Verify model integrity after loading</li>
+</ol>
+<h2 id="key-features-demonstrated">Key Features Demonstrated<a class="headerlink" href="#key-features-demonstrated" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Saving PyTorch model weights and architecture</li>
+<li>Preserving River model state for incremental learning</li>
+<li>Storing model configuration and hyperparameters</li>
+<li>Training metadata and statistics preservation</li>
+<li>Cross-session model persistence</li>
+<li>Production deployment readiness</li>
+</ul>
+<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
+<p>Open the notebook in Jupyter Lab or VS Code and run the cells sequentially to see the complete persistence workflow in action.</p>
+<p>The examples use standard datasets from the River library and demonstrate realistic training scenarios.</p>
 
 
 
