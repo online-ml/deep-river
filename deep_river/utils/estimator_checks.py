@@ -10,8 +10,8 @@ import typing
 
 import pytest
 import torch
+from river import base
 from river.checks import _wrapped_partial, _yield_datasets, yield_checks
-from river.utils import inspect as river_inspect
 
 
 def check_deep_learn_one(model, dataset):
@@ -118,7 +118,7 @@ def check_model_persistence(model, dataset):
             assert loaded_model.lr == model.lr, "Learning rate should be preserved"
 
         # Check model type specific attributes
-        if river_inspect.isclassifier(model) and hasattr(model, "observed_classes"):
+        if isinstance(model, base.Classifier) and hasattr(model, "observed_classes"):
             assert (
                 loaded_model.observed_classes == model.observed_classes
             ), "Observed classes should be preserved"
@@ -126,7 +126,7 @@ def check_model_persistence(model, dataset):
         # Test that both models produce similar predictions on the last seen example
         if last_x is not None:
             try:
-                if river_inspect.isclassifier(model):
+                if isinstance(model, base.Classifier):
                     pred_original = model.predict_proba_one(last_x)
                     pred_loaded = loaded_model.predict_proba_one(last_x)
 
@@ -143,7 +143,7 @@ def check_model_persistence(model, dataset):
                                 assert (
                                     diff < 1e-4
                                 ), f"Prediction difference too large for class {class_label}:{diff}"
-                elif river_inspect.isregressor(model):
+                elif isinstance(model, base.Regressor):
                     pred_original = model.predict_one(last_x)
                     pred_loaded = loaded_model.predict_one(last_x)
 
@@ -290,7 +290,9 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_feature_incremental_preservation
 
     # Classifier checks
-    if river_inspect.isclassifier(model) and not river_inspect.ismoclassifier(model):
+    if isinstance(model, base.Classifier) and not isinstance(
+        model, base.MultiLabelClassifier
+    ):
         yield check_dict2tensor
 
         if not model._multiclass:

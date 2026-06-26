@@ -205,7 +205,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             x_t = self._deque2rolling_tensor(x_win)
             y_pred = self.module(x_t)
             if isinstance(y_pred, torch.Tensor):
-                y_pred = y_pred.detach().view(-1)[-1].cpu().numpy().item()
+                y_pred = y_pred.detach().view(-1)[-1].cpu().item()
             else:
                 y_pred = float(y_pred)
 
@@ -232,24 +232,11 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
 
             self._learn(x=X_t, y=y_t)
 
-    def predict_many(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict_many(self, X: pd.DataFrame) -> pd.Series:
         """Predict targets for multiple samples (appends to a copy of the window).
 
-        Returns a single-column DataFrame named ``'y_pred'``.
+        Returns a series of predictions.
         """
 
-        self._update_observed_features(X)
-        X = X[list(self.observed_features)]
-        x_win = self._x_window.copy()
-        x_win.extend(X.values.tolist())
-        if self.append_predict:
-            self._x_window = x_win
-
-        self.module.eval()
-        with torch.inference_mode():
-            x_t = self._deque2rolling_tensor(x_win)
-            y_preds = self.module(x_t)
-            if isinstance(y_preds, torch.Tensor):
-                y_preds = y_preds.detach().cpu().view(-1).numpy().tolist()
-
-        return pd.DataFrame({"y_pred": y_preds})
+        y_preds = [self.predict_one(row) for row in X.to_dict(orient="records")]
+        return pd.Series(y_preds, index=X.index)

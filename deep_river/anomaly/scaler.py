@@ -21,7 +21,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         self.anomaly_detector = anomaly_detector
 
     @classmethod
-    def _unit_test_params(self) -> dict:
+    def _unit_test_params(cls):
         """
         Returns a dictionary of parameters to be used for unit testing
         the respective class.
@@ -32,7 +32,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             Dictionary of parameters to be used for unit testing the
             respective class.
         """
-        return {"anomaly_detector": HalfSpaceTrees()}
+        yield {"anomaly_detector": HalfSpaceTrees()}
 
     @classmethod
     def _unit_test_skips(self) -> set:
@@ -60,7 +60,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         return self.anomaly_detector
 
     @abc.abstractmethod
-    def score_one(self, *args) -> float:
+    def score_one(self, *args, **kwargs) -> float:
         """Return a scaled anomaly score based on raw score provided by
         the wrapped anomaly detector.
 
@@ -79,7 +79,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
         more anomalous examples.
         """
 
-    def learn_one(self, *args) -> None:
+    def learn_one(self, *args, **kwargs) -> None:
         """
         Update the scaler and the underlying anomaly scaler.
 
@@ -95,10 +95,10 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             The model itself.
         """
 
-        self.anomaly_detector.learn_one(*args)
+        self.anomaly_detector.learn_one(*args, **kwargs)
 
     @abc.abstractmethod
-    def score_many(self, *args) -> np.ndarray:
+    def score_many(self, *args, **kwargs) -> np.ndarray:
         """Return scaled anomaly scores based on raw score provided by
         the wrapped anomaly detector.
 
@@ -150,7 +150,7 @@ class AnomalyStandardScaler(AnomalyScaler):
         )
         self.with_std = with_std
 
-    def score_one(self, *args):
+    def score_one(self, *args, **kwargs):
         """
         Return a scaled anomaly score based on raw score provided by the
         wrapped anomaly detector. Larger values indicate more
@@ -167,7 +167,7 @@ class AnomalyStandardScaler(AnomalyScaler):
         An scaled anomaly score. Larger values indicate more
         anomalous examples.
         """
-        raw_score = self.anomaly_detector.score_one(*args)
+        raw_score = self.anomaly_detector.score_one(*args, **kwargs)
         mean = self.mean.update(raw_score).get()
         if self.with_std:
             var = (
@@ -207,7 +207,7 @@ class AnomalyMeanScaler(AnomalyScaler):
         self.window_size = window_size
         self.mean = utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
 
-    def score_one(self, *args):
+    def score_one(self, *args, **kwargs):
         """
         Return a scaled anomaly score based on raw score provided by the
         wrapped anomaly detector. Larger values indicate more
@@ -224,7 +224,7 @@ class AnomalyMeanScaler(AnomalyScaler):
         An scaled anomaly score. Larger values indicate more
         anomalous examples.
         """
-        raw_score = self.anomaly_detector.score_one(*args)
+        raw_score = self.anomaly_detector.score_one(*args, **kwargs)
         mean = self.mean.update(raw_score).get()
         score = raw_score / mean
 
@@ -257,7 +257,7 @@ class AnomalyMinMaxScaler(AnomalyScaler):
         self.min = RollingMin(self.window_size) if self.rolling else Min()
         self.max = RollingMin(self.window_size) if self.rolling else Min()
 
-    def score_one(self, *args):
+    def score_one(self, *args, **kwargs):
         """
         Return a scaled anomaly score based on raw score provided by the
         wrapped anomaly detector. Larger values indicate more
@@ -274,7 +274,7 @@ class AnomalyMinMaxScaler(AnomalyScaler):
         An scaled anomaly score. Larger values indicate more
         anomalous examples.
         """
-        raw_score = self.anomaly_detector.score_one(*args)
+        raw_score = self.anomaly_detector.score_one(*args, **kwargs)
         min = self.min.update(raw_score).get()
         max = self.max.update(raw_score).get()
         score = (raw_score - min) / (max - min)

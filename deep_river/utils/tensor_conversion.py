@@ -202,7 +202,7 @@ def output2proba(
         else:
             preds = torch.sigmoid(preds)
 
-    preds_np = preds.detach().cpu().numpy()
+    preds_np = np.asarray(preds.detach().cpu().tolist())
     n_outputs = preds_np.shape[-1]
     n_classes = len(classes)
 

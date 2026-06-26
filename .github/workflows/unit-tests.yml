@@ -18,9 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ['3.10', '3.11', '3.12']
+        python: ['3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
-        river: ['0.22.0']
+        river: ['0.25.0']
 
     steps:
       - uses: actions/checkout@v4
@@ -45,8 +45,8 @@ jobs:
 
       - name: Install dependencies with river ${{ matrix.river }}
         run: |
-          uv add river==${{ matrix.river }}
           uv sync --all-extras
+          uv pip install "river==${{ matrix.river }}"
 
       - name: Download datasets
         run: uv run python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
@@ -57,6 +57,10 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
 
+      - name: Build package
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.25.0'
+        run: uv build
+
       - name: Upload coverage artifact (diagnostic)
         uses: actions/upload-artifact@v4
         if: always()
@@ -66,7 +70,7 @@ jobs:
             if-no-files-found: warn
 
       - name: Upload coverage report to Codecov (aggregate project)
-        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.22.0'
+        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.25.0'
         uses: codecov/codecov-action@v4
         with:
           use_oidc: true
