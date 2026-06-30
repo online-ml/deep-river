@@ -8,7 +8,7 @@ install: check-uv
 	uv sync --extra dev
 
 format: check-uv
-	uv run pre-commit run --all-files
+	uv run prek run --all-files
 
 test: check-uv
 	uv run pytest
