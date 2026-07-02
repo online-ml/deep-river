@@ -421,7 +421,8 @@ class LiquidForecaster(DeepForecaster):
         def forward(self, x, **kwargs):
             batch_size = x.shape[1]
             states = [
-                x.new_zeros(batch_size, self.hidden_size) for _ in range(self.num_layers)
+                x.new_zeros(batch_size, self.hidden_size)
+                for _ in range(self.num_layers)
             ]
             for x_t in x:
                 layer_input = x_t
