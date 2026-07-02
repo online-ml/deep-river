@@ -2,6 +2,7 @@ from deep_river.forecasting.forecaster import DeepForecaster
 from deep_river.forecasting.zoo import (
     GRUForecaster,
     LinearForecaster,
+    LiquidForecaster,
     LSTMForecaster,
     MLPForecaster,
     NBEATSForecaster,
@@ -16,6 +17,7 @@ __all__ = [
     "MLPForecaster",
     "RNNForecaster",
     "GRUForecaster",
+    "LiquidForecaster",
     "LSTMForecaster",
     "NBEATSForecaster",
 ]
