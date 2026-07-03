@@ -2,8 +2,8 @@ import itertools
 import json
 import logging
 import multiprocessing
-import copy
-from typing import List, Dict, Any
+import numbers
+from typing import List
 
 import pandas as pd
 from config import MODELS, N_CHECKPOINTS, TRACKS
@@ -36,14 +36,14 @@ def run_dataset(model_str: str, no_dataset: int, no_track: int) -> List[dict]:
     dataset = track.datasets[no_dataset]
 
     # Fallback: Falls dataset.n_samples fehlt oder None ist (z.B. endloser Stream), kappen.
-    n_s = getattr(dataset, 'n_samples', None)
+    n_s = getattr(dataset, "n_samples", None)
     if (n_s is None or not isinstance(n_s, int)) and limit_dataset is not None:
         # Standardlimit analog MultiClassClassificationTrack
         dataset = limit_dataset(dataset, 5000)
         # Ersetze im Track-Datasets-Array, damit spätere Ausgaben konsistent sind
         track.datasets[no_dataset] = dataset
 
-    ds_name = getattr(dataset, 'dataset_name', dataset.__class__.__name__)
+    ds_name = getattr(dataset, "dataset_name", dataset.__class__.__name__)
 
     # Get a fresh model instance for this run
     model = MODELS[track.name][model_name].clone()
@@ -71,6 +71,10 @@ def run_dataset(model_str: str, no_dataset: int, no_track: int) -> List[dict]:
             for k, v in i.items():
                 if isinstance(v, metrics.base.Metric):
                     res[k] = v.get()
+                elif hasattr(v, "get") and callable(v.get):
+                    value = v.get()
+                    if isinstance(value, numbers.Real):
+                        res[k] = value
 
             res["Memory in Mb"] = i["Memory"] / 1024**2
             res["Time in s"] = time
@@ -98,9 +102,7 @@ def run_track(models: List[str], no_track: int, n_workers: int = 1) -> None:
         n_workers: Number of parallel workers to use
     """
     track = TRACKS[no_track]
-    runs = list(
-        itertools.product(models, range(len(track.datasets)), [no_track])
-    )
+    runs = list(itertools.product(models, range(len(track.datasets)), [no_track]))
     results = []
 
     if n_workers > 1:
@@ -132,7 +134,7 @@ def create_details_json() -> None:
     for track in TRACKS:
         details[track.name] = {"Dataset": {}, "Model": {}}
         for dataset in track.datasets:
-            ds_name = getattr(dataset, 'dataset_name', dataset.__class__.__name__)
+            ds_name = getattr(dataset, "dataset_name", dataset.__class__.__name__)
             details[track.name]["Dataset"][ds_name] = repr(dataset)
         for model_name, model in MODELS[track.name].items():
             details[track.name]["Model"][model_name] = repr(model)

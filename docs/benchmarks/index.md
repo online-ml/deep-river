@@ -15,3 +15,4 @@ Each benchmark chapter includes dataset context, model configurations, and visua
 - [Binary Classification](binary-classification/index.md)
 - [Multiclass Classification](multiclass-classification/index.md)
 - [Regression](regression/index.md)
+- [Forecasting](forecasting/index.md)
