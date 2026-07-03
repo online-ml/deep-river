@@ -12,6 +12,7 @@ import pytest
 import torch
 from river import base
 from river.checks import _wrapped_partial, _yield_datasets, yield_checks
+from river.time_series.base import Forecaster
 
 
 def check_deep_learn_one(model, dataset):
@@ -28,7 +29,9 @@ def check_deep_learn_one(model, dataset):
         try:
             # First learn_one call - will raise exception after computing gradients
             with pytest.raises(RuntimeError):
-                if model._supervised:
+                if isinstance(model, Forecaster):
+                    model.learn_one(y, x)
+                elif model._supervised:
                     model.learn_one(x, y)
                 else:
                     model.learn_one(x)
@@ -79,7 +82,9 @@ def check_model_persistence(model, dataset):
     last_x = None
 
     for x, y in dataset:
-        if model._supervised:
+        if isinstance(model, Forecaster):
+            model.learn_one(y, x)
+        elif model._supervised:
             model.learn_one(x, y)
         else:
             model.learn_one(x)
@@ -126,7 +131,15 @@ def check_model_persistence(model, dataset):
         # Test that both models produce similar predictions on the last seen example
         if last_x is not None:
             try:
-                if isinstance(model, base.Classifier):
+                if isinstance(model, Forecaster):
+                    xs = [last_x] * 3
+                    pred_original = model.forecast(horizon=3, xs=xs)
+                    pred_loaded = loaded_model.forecast(horizon=3, xs=xs)
+
+                    for original, loaded in zip(pred_original, pred_loaded):
+                        diff = abs(original - loaded)
+                        assert diff < 1e-4, f"Forecast difference too large: {diff}"
+                elif isinstance(model, base.Classifier):
                     pred_original = model.predict_proba_one(last_x)
                     pred_loaded = loaded_model.predict_proba_one(last_x)
 
