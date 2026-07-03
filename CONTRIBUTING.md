@@ -41,16 +41,16 @@ poetry install
 poetry shell
 ```
 
-Finally, install the [pre-commit](https://pre-commit.com/) push hooks. This will run some code quality checks every time you push to GitHub.
+Finally, install the [prek](https://prek.j178.dev/) push hooks. This will run some code quality checks every time you push to GitHub.
 
 ```sh
-pre-commit install --hook-type pre-push
+prek install --hook-type pre-push --overwrite
 ```
 
-You can optionally run `pre-commit` at any time as so:
+You can optionally run `prek` at any time as so:
 
 ```sh
-pre-commit run --all-files
+prek run --all-files
 ```
 
 ## Making changes
