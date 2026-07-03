@@ -74,16 +74,16 @@ Now you're set to install deep-river and its development dependencies:
 uv sync --extra dev
 ```
 
-Finally, install the [pre-commit](https://pre-commit.com/) push hooks. This will run some code quality checks every time you push to GitHub.
+Finally, install the [prek](https://prek.j178.dev/) push hooks. This will run some code quality checks every time you push to GitHub.
 
 ```sh
-uv run pre-commit install --hook-type pre-push
+prek install --hook-type pre-push --overwrite
 ```
 
-You can optionally run `pre-commit` at any time as so:
+You can optionally run `prek` at any time as so:
 
 ```sh
-uv run pre-commit run --all-files
+prek run --all-files
 ```
 
 ## Making changes
