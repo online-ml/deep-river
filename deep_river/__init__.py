@@ -1,4 +1,7 @@
+from importlib.metadata import version as _version
+
 from . import anomaly, classification, forecasting, regression, utils
-from .__version__ import __version__  # noqa: F401
+
+__version__ = _version("deep-river")
 
 __all__ = ["anomaly", "classification", "forecasting", "regression", "utils"]
