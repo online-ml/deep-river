@@ -23,10 +23,10 @@ jobs:
         river: ['0.25.0']
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@v8.2.0
         with:
           version: "latest"
 
@@ -34,7 +34,7 @@ jobs:
         run: uv python install ${{ matrix.python }}
 
       - name: Cache uv dependencies
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/uv
           key: uv-${{ runner.os }}-${{ matrix.python }}-${{ matrix.river }}-${{ hashFiles('**/uv.lock') }}
@@ -62,7 +62,7 @@ jobs:
         run: uv build
 
       - name: Upload coverage artifact (diagnostic)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         if: always()
         with:
             name: coverage-${{ matrix.os }}-py${{ matrix.python }}-river${{ matrix.river }}
