@@ -12,6 +12,8 @@
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
 
+.opencode
+
 
 # IPython
 profile_default/
