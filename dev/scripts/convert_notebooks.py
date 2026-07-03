@@ -160,6 +160,7 @@ def write_examples_index(categories: list[str]) -> None:
     preferred_order = [
         "classification",
         "regression",
+        "forecasting",
         "anomaly",
         "catastrophic_forgetting",
         "model_persistence",

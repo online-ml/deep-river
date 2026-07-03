@@ -13,6 +13,9 @@
         <loc>https://online-ml.github.io/deep-river/dev/benchmarks/binary-classification/</loc>
       </url>
       <url>
+        <loc>https://online-ml.github.io/deep-river/dev/benchmarks/forecasting/</loc>
+      </url>
+      <url>
         <loc>https://online-ml.github.io/deep-river/dev/benchmarks/multiclass-classification/</loc>
       </url>
       <url>
@@ -29,6 +32,9 @@
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/examples/classification/</loc>
+      </url>
+      <url>
+        <loc>https://online-ml.github.io/deep-river/dev/examples/forecasting/</loc>
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/examples/model_persistence/</loc>
@@ -62,6 +68,9 @@
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/generated/examples/classification/example_rnn_classification/</loc>
+      </url>
+      <url>
+        <loc>https://online-ml.github.io/deep-river/dev/generated/examples/forecasting/nbeats_forecaster/</loc>
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/generated/examples/model_persistence/model_persistence_demo/</loc>
@@ -110,6 +119,12 @@
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/classification/zoo/</loc>
+      </url>
+      <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/forecasting/forecaster/</loc>
+      </url>
+      <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/forecasting/zoo/</loc>
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/regression/multioutput/</loc>
