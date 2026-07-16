@@ -45,15 +45,15 @@ jobs:
 
       - name: Install dependencies with river ${{ matrix.river }}
         run: |
-          uv sync --all-extras
-          uv pip install "river==${{ matrix.river }}"
+          uv sync --python ${{ matrix.python }} --all-extras --upgrade-package torch
+          uv pip install --python ${{ matrix.python }} "river==${{ matrix.river }}"
 
       - name: Download datasets
-        run: uv run python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+        run: uv run --no-sync --python ${{ matrix.python }} python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
 
       - name: Run tests (generate coverage.xml)
         run: |
-          uv run pytest -v --cov=deep_river --cov-report=term-missing --cov-report=xml:coverage.xml -m "not datasets"
+          uv run --no-sync --python ${{ matrix.python }} pytest -v --cov=deep_river --cov-report=term-missing --cov-report=xml:coverage.xml -m "not datasets"
         env:
           PYTHONPATH: ${{ github.workspace }}
 
@@ -82,3 +82,34 @@ jobs:
           disable_search: true
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  minimum-direct-dependencies:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          version: "latest"
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install minimum direct dependencies
+        run: |
+          uv sync --python 3.12 --all-extras --no-dev --resolution lowest-direct --upgrade
+          uv pip install --python 3.12 pytest pytest-cov
+
+      - name: Print dependency versions
+        run: uv run --no-sync --python 3.12 python -c "import importlib.metadata as m, platform; print(f'python=={platform.python_version()}'); [print(f'{name}=={m.version(name)}') for name in ('numpy', 'pandas', 'river', 'scikit-learn', 'scipy', 'sortedcontainers', 'torch', 'torchviz', 'tqdm')]"
+
+      - name: Download datasets
+        run: uv run --no-sync --python 3.12 python -c "from river import datasets; datasets.Bikes().download(); datasets.CreditCard().download(); datasets.Elec2().download(); datasets.Keystroke().download()"
+
+      - name: Run tests (generate coverage.xml)
+        run: |
+          uv run --no-sync --python 3.12 pytest -v --cov=deep_river --cov-report=term-missing --cov-report=xml:coverage.xml -m "not datasets"
+        env:
+          PYTHONPATH: ${{ github.workspace }}
