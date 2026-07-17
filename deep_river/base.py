@@ -761,3 +761,14 @@ class RollingDeepEstimator(DeepEstimator):
         """Convert the internal deque to a tensor (with padding logic)."""
         tensor_data = deque2rolling_tensor(x_win, device=self.device)
         return self._pad_tensor_if_needed(tensor_data, len(x_win))
+
+    def _rolling_prediction(self, x: dict):
+        self._update_observed_features(x)
+        x_win = self._x_window.copy()
+        x_win.append([x.get(feature, 0) for feature in self.observed_features])
+        if self.append_predict:
+            self._x_window = x_win
+
+        self.module.eval()
+        with torch.inference_mode():
+            return self.module(self._deque2rolling_tensor(x_win))
