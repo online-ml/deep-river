@@ -8,6 +8,8 @@ __all__ = ["check_estimator"]
 
 import typing
 
+import numpy as np
+import pandas as pd
 import pytest
 import torch
 from river import base
@@ -283,6 +285,195 @@ def check_feature_incremental_preservation(model):
     finally:
         if Path(temp_path).exists():
             Path(temp_path).unlink()
+
+
+BENCHMARK_N_FEATURES = 6
+BENCHMARK_N_ONLINE = 32
+BENCHMARK_N_BATCH = 64
+
+
+def _benchmark_frame(
+    n_samples: int = BENCHMARK_N_BATCH,
+    n_features: int = BENCHMARK_N_FEATURES,
+) -> pd.DataFrame:
+    values = np.arange(n_samples * n_features, dtype=np.float32).reshape(
+        n_samples, n_features
+    )
+    values = (values % 17) / 17
+    return pd.DataFrame(values, columns=[f"f{i}" for i in range(n_features)])
+
+
+def _benchmark_rows(n_samples: int = BENCHMARK_N_ONLINE) -> list[dict[str, float]]:
+    return _benchmark_frame(n_samples).to_dict(orient="records")
+
+
+def _classification_targets(n_samples: int) -> pd.Series:
+    return pd.Series([i % 2 for i in range(n_samples)])
+
+
+def _regression_targets(n_samples: int) -> pd.Series:
+    return pd.Series(np.linspace(0.0, 1.0, n_samples, dtype=np.float32))
+
+
+def _expansion_stream() -> list[tuple[dict[str, float], int]]:
+    return [
+        ({"f0": 0.0, "f1": 0.1, "f2": 0.2, "f3": 0.3, "f4": 0.4, "f5": 0.5}, 0),
+        ({"f0": 0.1, "f1": 0.2, "f2": 0.3, "f3": 0.4, "f4": 0.5, "f5": 0.6}, 1),
+        (
+            {
+                "f0": 0.6,
+                "f1": 0.7,
+                "f2": 0.8,
+                "f3": 0.9,
+                "f4": 1.0,
+                "f5": 1.1,
+                "f6": 1.2,
+            },
+            2,
+        ),
+    ]
+
+
+def _learn_one_for_benchmark(model, x, y=None) -> None:
+    if isinstance(model, base.Classifier) or isinstance(model, base.Regressor):
+        model.learn_one(x, y)
+    else:
+        model.learn_one(x)
+
+
+def _learn_many_for_benchmark(model, X, y=None) -> None:
+    if isinstance(model, base.Classifier) or isinstance(model, base.Regressor):
+        model.learn_many(X, y)
+    else:
+        model.learn_many(X)
+
+
+def _benchmark_targets_for(model, n_samples: int):
+    if isinstance(model, base.Classifier):
+        return _classification_targets(n_samples)
+    if isinstance(model, base.Regressor):
+        return _regression_targets(n_samples)
+    return None
+
+
+def _fit_for_benchmark(model):
+    rows = _benchmark_rows()
+    y = _benchmark_targets_for(model, len(rows))
+    if y is None:
+        for x in rows:
+            _learn_one_for_benchmark(model, x)
+    else:
+        for x, target in zip(rows, y):
+            _learn_one_for_benchmark(model, x, target)
+    return model
+
+
+def check_benchmark_learn_one(model, benchmark):
+    rows = _benchmark_rows()
+    y = _benchmark_targets_for(model, len(rows))
+
+    def run():
+        estimator = copy.deepcopy(model)
+        if y is None:
+            for x in rows:
+                _learn_one_for_benchmark(estimator, x)
+        else:
+            for x, target in zip(rows, y):
+                _learn_one_for_benchmark(estimator, x, target)
+        return len(estimator.observed_features)
+
+    assert benchmark(run) == len(rows[0])
+
+
+def check_benchmark_predict_one(model, benchmark):
+    rows = _benchmark_rows()
+    estimator = _fit_for_benchmark(copy.deepcopy(model))
+
+    def run():
+        result = None
+        for x in rows:
+            if isinstance(estimator, base.Classifier):
+                result = estimator.predict_proba_one(x)
+            elif isinstance(estimator, base.Regressor):
+                result = estimator.predict_one(x)
+            else:
+                result = estimator.score_one(x)
+        return result
+
+    result = benchmark(run)
+    if isinstance(estimator, base.Classifier):
+        assert result
+    elif isinstance(estimator, base.Regressor):
+        assert isinstance(result, float)
+    else:
+        assert result >= 0.0
+
+
+def check_benchmark_learn_many(model, benchmark):
+    X = _benchmark_frame()
+    y = _benchmark_targets_for(model, len(X))
+
+    def run():
+        estimator = copy.deepcopy(model)
+        _learn_many_for_benchmark(estimator, X, y)
+        return len(estimator.observed_features)
+
+    assert benchmark(run) == X.shape[1]
+
+
+def check_benchmark_predict_many(model, benchmark):
+    X = _benchmark_frame()
+    estimator = copy.deepcopy(model)
+    _learn_many_for_benchmark(estimator, X, _benchmark_targets_for(estimator, len(X)))
+
+    def run():
+        if isinstance(estimator, base.Classifier):
+            return estimator.predict_proba_many(X).shape
+        if isinstance(estimator, base.Regressor):
+            return len(estimator.predict_many(X))
+        return len(estimator.score_many(X))
+
+    result = benchmark(run)
+    if isinstance(estimator, base.Classifier):
+        assert result[0] == len(X)
+    else:
+        assert result == len(X)
+
+
+def check_benchmark_incremental_expansion(model, benchmark):
+    stream = _expansion_stream()
+
+    def run():
+        estimator = copy.deepcopy(model)
+        for x, y in stream:
+            estimator.learn_one(x, y)
+        return estimator._get_input_size(), estimator._get_output_size()
+
+    n_features, n_outputs = benchmark(run)
+    assert n_features >= 7
+    assert n_outputs >= 3
+
+
+def yield_benchmark_checks(model) -> typing.Iterator[typing.Callable]:
+    if isinstance(model, base.Classifier):
+        yield check_benchmark_learn_one
+        yield check_benchmark_predict_one
+        yield check_benchmark_learn_many
+        yield check_benchmark_predict_many
+        if getattr(model, "is_feature_incremental", False) and getattr(
+            model, "is_class_incremental", False
+        ):
+            yield check_benchmark_incremental_expansion
+    elif isinstance(model, base.Regressor):
+        yield check_benchmark_learn_one
+        yield check_benchmark_predict_one
+        yield check_benchmark_learn_many
+        yield check_benchmark_predict_many
+    elif hasattr(model, "score_one"):
+        yield check_benchmark_learn_one
+        yield check_benchmark_predict_one
+        yield check_benchmark_learn_many
+        yield check_benchmark_predict_many
 
 
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
