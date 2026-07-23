@@ -1,12 +1,11 @@
 from typing import Any, Callable, Hashable, Union, cast
 
-import numpy as np
-import pandas as pd
 import torch
 from river import base
 
 from deep_river.base import DeepEstimator
 from deep_river.utils.ordered_set import OrderedSet
+from deep_river.utils.dataframe import to_native_frame, values_list
 from deep_river.utils.tensor_conversion import (
     output2proba,
 )
@@ -161,7 +160,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             # One-hot pathway / other losses
             self._learn(x_t, y)
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
+    def learn_many(self, X: Any, y: Any) -> None:
         """Learn from a batch of instances.
 
         Parameters
@@ -189,11 +188,10 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
            ``is_class_incremental`` is enabled.
         3. Forward pass and backprop.
         """
-        if not isinstance(y, (pd.Series, list, tuple, np.ndarray)):
-            class_indices = [self.observed_classes.index(y)]
-        else:
-            labels_iter = y.values if isinstance(y, pd.Series) else y
-            class_indices = [self.observed_classes.index(lbl) for lbl in labels_iter]
+        labels = values_list(y)
+        if labels is None:
+            labels = [y]
+        class_indices = [self.observed_classes.index(lbl) for lbl in labels]
 
         max_idx = max(class_indices)
         current_out = self._get_output_size()
@@ -234,17 +232,18 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             True if new classes were added.
         """
         n_existing = len(self.observed_classes)
-        values = [y] if isinstance(y, (bool, int, str, np.bool_)) else list(y)
+        labels = values_list(y)
+        values = [y] if labels is None else labels
         if (
             not self.observed_classes
             and values
             and all(isinstance(value, (bool, np.bool_)) for value in values)
         ):
             self.observed_classes.update([False, True])
-        if isinstance(y, (base.typing.ClfTarget, np.bool_)):  # type: ignore[arg-type]
+        if labels is None:
             self.observed_classes.add(y)
         else:
-            self.observed_classes.update(y)
+            self.observed_classes.update(labels)
 
         if len(self.observed_classes) > n_existing:
             if self.is_class_incremental and self.output_layer:
@@ -282,7 +281,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         raw = output2proba(y_pred, self.observed_classes, self.output_is_logit)[0]
         return cast(dict[base.typing.ClfTarget, float], raw)
 
-    def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
+    def predict_proba_many(self, X: Any) -> Any:
         """Predict probabilities for a batch of instances.
 
         Parameters
@@ -300,9 +299,10 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(x_t)
-        return pd.DataFrame(
-            output2proba(y_preds, self.observed_classes, self.output_is_logit)
-        )
+        probas = output2proba(y_preds, self.observed_classes, self.output_is_logit)
+        columns = list(probas[0]) if probas else list(self.observed_classes)
+        data = {column: [row[column] for row in probas] for column in columns}
+        return to_native_frame(data, like=X)
 
     # ------------------------------------------------------------------
     # Test utilities

@@ -1,14 +1,13 @@
 import math
-from typing import Deque, Dict, Hashable, List, Optional, Union
+from typing import Any, Deque, Dict, Hashable, List, Optional, Union
 
 import numpy as np
-import pandas as pd
 import torch
-from river import base
 from river.base.typing import RegTarget
 from sortedcontainers import SortedSet
 
 from deep_river.utils.ordered_set import OrderedSet
+from deep_river.utils.dataframe import frame_to_numpy, values_list
 
 
 def dict2tensor(
@@ -101,7 +100,7 @@ def deque2rolling_tensor(
 
 
 def df2tensor(
-    X: pd.DataFrame,
+    X: Any,
     features: Union[SortedSet, OrderedSet],
     default_value: float = 0.0,
     device="cpu",
@@ -126,20 +125,12 @@ def df2tensor(
     -------
         torch.Tensor
     """
-    # Work on a shallow copy to avoid mutating caller's DataFrame
-    X_local = X.copy()
-    for feature in features:
-        if feature not in X_local.columns:
-            X_local[feature] = default_value
-    cols = list(features)
-    # Replace NaNs in selected columns by default_value
-    if len(cols) > 0:
-        X_local[cols] = X_local[cols].fillna(default_value)
-    return torch.tensor(X_local[cols].values, device=device, dtype=dtype)
+    values = frame_to_numpy(X, list(features), default_value=default_value)
+    return torch.tensor(values, device=device, dtype=dtype)
 
 
 def labels2onehot(
-    y: Union[base.typing.ClfTarget, pd.Series],
+    y: Any,
     classes: Union[SortedSet, OrderedSet],
     n_classes: Optional[int] = None,
     device="cpu",
@@ -179,15 +170,16 @@ def labels2onehot(
 
     if n_classes is None:
         n_classes = len(classes)
+    y_values = values_list(y)
     if n_classes == 1 and all(isinstance(c, (bool, np.bool_)) for c in classes):
-        values = y.tolist() if isinstance(y, pd.Series) else [y]
+        values = [y] if y_values is None else y_values
         if all(isinstance(value, (bool, np.bool_)) for value in values):
             return torch.tensor(
                 [[float(value)] for value in values], device=device, dtype=dtype
             )
-    if isinstance(y, pd.Series):
-        onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
-        pos_idcs = [get_class_index(y_i) for y_i in y]
+    if y_values is not None:
+        onehot = torch.zeros(len(y_values), n_classes, device=device, dtype=dtype)
+        pos_idcs = [get_class_index(y_i) for y_i in y_values]
         for i, pos_idx in enumerate(pos_idcs):
             if isinstance(pos_idx, int) and pos_idx < n_classes:
                 onehot[i, pos_idx] = 1
