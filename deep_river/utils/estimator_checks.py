@@ -299,8 +299,8 @@ def _benchmark_frame(
     values = np.arange(n_samples * n_features, dtype=np.float32).reshape(
         n_samples, n_features
     )
-    values = (values % 17) / 17
-    return pd.DataFrame(values, columns=[f"f{i}" for i in range(n_features)])
+    scaled_values = ((values % 17) / 17).astype(np.float32)
+    return pd.DataFrame(scaled_values, columns=[f"f{i}" for i in range(n_features)])
 
 
 def _benchmark_rows(n_samples: int = BENCHMARK_N_ONLINE) -> list[dict[str, float]]:
@@ -342,10 +342,11 @@ def _learn_one_for_benchmark(model, x, y=None) -> None:
 
 
 def _learn_many_for_benchmark(model, X, y=None) -> None:
+    learn_many = getattr(model, "learn_many")
     if isinstance(model, base.Classifier) or isinstance(model, base.Regressor):
-        model.learn_many(X, y)
+        learn_many(X, y)
     else:
-        model.learn_many(X)
+        learn_many(X)
 
 
 def _benchmark_targets_for(model, n_samples: int):
