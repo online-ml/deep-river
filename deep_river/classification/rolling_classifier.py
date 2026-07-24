@@ -159,7 +159,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             "check_predict_proba_one",
         }
 
-    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> None:
+    def learn_one(self, x: dict, y: ClfTarget) -> None:
         """Learn from a single (x, y) updating the rolling window."""
         self._update_observed_features(x)
         self._update_observed_targets(y)
@@ -167,7 +167,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         x_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=x_t, y=y)
 
-    def predict_proba_one(self, x: dict, **kwargs) -> Dict[ClfTarget, float]:
+    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
         """Return class probability mapping for one sample using rolling context."""
         self._update_observed_features(x)
         x_win = self._x_window.copy()

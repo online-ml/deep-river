@@ -133,7 +133,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         self,
         x: dict,
         y: dict[FeatureName, RegTarget],
-        **kwargs,
     ) -> None:
         """Learn from a single multi-target instance.
 
@@ -143,8 +142,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             Feature mapping.
         y : dict[str, float]
             Mapping of target name -> target value.
-        **kwargs
-            Ignored (kept for signature compatibility / future hooks).
         """
         self._update_observed_features(x)
         self._update_observed_targets(y)

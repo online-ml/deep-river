@@ -252,9 +252,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
     # ------------------------------------------------------------------
     # Prediction
     # ------------------------------------------------------------------
-    def predict_proba_one(
-        self, x: dict, **kwargs
-    ) -> dict[base.typing.ClfTarget, float]:
+    def predict_proba_one(self, x: dict) -> dict[base.typing.ClfTarget, float]:
         """Predict class membership probabilities for one instance.
 
         Parameters
