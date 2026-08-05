@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type, Union, cast
+from typing import Any, Callable, Dict, Hashable, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -167,7 +167,9 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         x_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=x_t, y=y)
 
-    def predict_proba_one(self, x: dict) -> Dict[ClfTarget, float]:
+    def predict_proba_one(
+        self, x: dict[Hashable, Any], **kwargs: Any
+    ) -> Dict[ClfTarget, float]:
         """Return class probability mapping for one sample using rolling context."""
         self._update_observed_features(x)
         x_win = self._x_window.copy()

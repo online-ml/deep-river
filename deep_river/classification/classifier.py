@@ -1,4 +1,4 @@
-from typing import Callable, Union, cast
+from typing import Any, Callable, Hashable, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -252,7 +252,9 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
     # ------------------------------------------------------------------
     # Prediction
     # ------------------------------------------------------------------
-    def predict_proba_one(self, x: dict) -> dict[base.typing.ClfTarget, float]:
+    def predict_proba_one(
+        self, x: dict[Hashable, Any], **kwargs: Any
+    ) -> dict[base.typing.ClfTarget, float]:
         """Predict class membership probabilities for one instance.
 
         Parameters
