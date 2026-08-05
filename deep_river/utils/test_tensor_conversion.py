@@ -64,6 +64,11 @@ def test_df2tensor():
     assert df2tensor(x, features=features).tolist() == [[0, 0, 0], [0, 0, 0]]
     x2 = pd.DataFrame(np.zeros((2, 2)), columns=["b", "c"])
     assert df2tensor(x2, features=features).tolist() == [[0, 0, 0], [0, 0, 0]]
+    int_features = SortedSet([1, 2, 3])
+    x3 = pd.DataFrame({2: [2.0], 1: [1.0]})
+    assert df2tensor(x3, features=int_features).tolist() == [[1, 2, 0]]
+    x4 = pd.DataFrame({"a": [np.inf], "b": [-np.inf], "c": [np.nan]})
+    assert df2tensor(x4, features=features).tolist() == [[np.inf, -np.inf, 0.0]]
 
 
 def test_labels2onehot():

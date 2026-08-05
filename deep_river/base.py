@@ -6,7 +6,6 @@ import pickle
 from pathlib import Path
 from typing import Any, Callable, Deque, Dict, Optional, Union
 
-import pandas as pd
 import torch
 from river import base
 from sortedcontainers import SortedSet
@@ -20,6 +19,7 @@ from deep_river.utils import (
     get_optim_fn,
     labels2onehot,
 )
+from deep_river.utils.dataframe import frame_columns
 
 
 class DeepEstimator(base.Estimator):
@@ -206,7 +206,7 @@ class DeepEstimator(base.Estimator):
             True if previously unseen feature names were added.
         """
         prev_feature_count = len(self.observed_features)
-        new_features = x.keys() if isinstance(x, dict) else x.columns
+        new_features = x.keys() if isinstance(x, dict) else frame_columns(x)
         self.observed_features.update(new_features)
         if (
             self.is_feature_incremental
@@ -236,7 +236,7 @@ class DeepEstimator(base.Estimator):
         )
         return self._pad_tensor_if_needed(tensor_data, 1)
 
-    def _df2tensor(self, X: pd.DataFrame):
+    def _df2tensor(self, X: Any):
         """Convert a feature DataFrame into a dense float tensor.
 
         See :meth:`_dict2tensor` for handling of missing features and padding.
@@ -249,7 +249,7 @@ class DeepEstimator(base.Estimator):
             device=self.device,
             dtype=torch.float32,
         )
-        return self._pad_tensor_if_needed(tensor_data, X.shape[0])
+        return self._pad_tensor_if_needed(tensor_data, tensor_data.shape[0])
 
     def draw(self):  # type: ignore[override]
         """Render a (partial) computational graph of the wrapped model.

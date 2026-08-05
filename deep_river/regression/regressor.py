@@ -1,12 +1,12 @@
-from typing import Callable, Type, Union
+from typing import Any, Callable, Type, Union
 
-import pandas as pd
 import torch
 from river import base
 from river.base.typing import RegTarget
 from torch import nn, optim
 
 from deep_river.base import DeepEstimator
+from deep_river.utils.dataframe import to_native_series, values_to_numpy
 
 
 class _TestModule(torch.nn.Module):
@@ -119,12 +119,12 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         x_t = self._dict2tensor(x)
         self._learn(x_t, y)
 
-    def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
+    def learn_many(self, X: Any, y: Any) -> None:
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
-        y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
-            -1, 1
-        )
+        y_t = torch.tensor(
+            values_to_numpy(y), dtype=torch.float32, device=self.device
+        ).view(-1, 1)
         self._learn(x_t, y_t)
 
     def predict_one(self, x: dict) -> RegTarget:
@@ -136,14 +136,14 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
             y_pred = self.module(x_t).item()
         return y_pred
 
-    def predict_many(self, X: pd.DataFrame) -> pd.Series:
+    def predict_many(self, X: Any) -> Any:
         """Predict target values for multiple instances."""
         self._update_observed_features(X)
         x_t = self._df2tensor(X)
         self.module.eval()
         with torch.inference_mode():
             y_preds = self.module(x_t).detach().cpu().view(-1).tolist()
-        return pd.Series(y_preds, index=X.index)
+        return to_native_series(y_preds, name=None, like=X)
 
     @classmethod
     def _unit_test_params(cls):
