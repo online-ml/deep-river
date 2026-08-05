@@ -1,4 +1,4 @@
-from typing import Callable, Iterable, Mapping, Sequence, SupportsFloat, Union, cast
+from typing import Any, Callable, Hashable, Iterable, Mapping, Sequence, SupportsFloat, Union, cast
 
 import pandas as pd
 import torch
@@ -128,8 +128,9 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
 
     def learn_one(
         self,
-        x: dict,
-        y: dict[FeatureName, RegTarget],
+        x: dict[Hashable, Any],
+        y: dict[Hashable, RegTarget],
+        **kwargs: Any,
     ) -> None:
         """Learn from a single multi-target instance.
 
