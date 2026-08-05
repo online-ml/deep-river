@@ -1,4 +1,14 @@
-from typing import Any, Callable, Hashable, Iterable, Mapping, Sequence, SupportsFloat, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Hashable,
+    Iterable,
+    Mapping,
+    Sequence,
+    SupportsFloat,
+    Union,
+    cast,
+)
 
 import pandas as pd
 import torch
