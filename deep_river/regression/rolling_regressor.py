@@ -159,7 +159,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             "check_predict_proba_one",
         }
 
-    def learn_one(self, x: dict, y: base.typing.RegTarget, **kwargs) -> None:
+    def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
         """Update model using a single (x, y) and current rolling window.
 
         Parameters

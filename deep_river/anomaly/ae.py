@@ -108,7 +108,7 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         """
         return set()
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
+    def learn_one(self, x: dict, y: Any = None) -> None:
         """
         Performs one step of training with a single example.
 
@@ -116,8 +116,6 @@ class Autoencoder(DeepEstimator, AnomalyDetector):
         ----------
         x
             Input example.
-
-        **kwargs
         """
         self._update_observed_features(x)
         self._learn(self._dict2tensor(x))

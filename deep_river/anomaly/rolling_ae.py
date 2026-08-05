@@ -141,7 +141,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
+    def learn_one(self, x: dict, y: Any = None) -> None:
         """Update model using a single sample appended to the rolling window.
 
         Parameters
@@ -150,8 +150,6 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             Dictionary containing feature name-value pairs for the sample.
         y : Any, optional
             Target value (not used in autoencoder training).
-        **kwargs
-            Additional keyword arguments.
         """
         self._update_observed_features(x)
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
