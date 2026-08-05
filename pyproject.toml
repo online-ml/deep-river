@@ -47,7 +47,7 @@ profile = "black"
 
 [tool.pytest.ini_options]
 addopts = "--doctest-modules --doctest-glob='README.md' -q"
-testpaths = ["deep_river", "README.md"]
+testpaths = ["tests", "deep_river", "README.md"]
 filterwarnings = [
     "ignore::DeprecationWarning",
 ]

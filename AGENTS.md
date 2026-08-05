@@ -24,7 +24,7 @@ uv run pytest
 make test
 
 # Run a single test file
-uv run pytest deep_river/utils/test_tensor_conversion.py
+uv run pytest tests/utils/test_tensor_conversion.py
 
 # Lint and format via pre-commit hooks
 make format
@@ -69,7 +69,7 @@ Key modules:
 ### Estimator testing framework (`deep_river/utils/`)
 
 - `utils.check_estimator(MyEstimator)` runs River's estimator checks together with deep-river checks for tensor conversion, learning, and persistence.
-- `deep_river/utils/test_estimators.py` discovers estimators and runs the project-wide estimator checks.
+- `tests/utils/test_estimators.py` discovers estimators and runs the project-wide estimator checks.
 - Pytest is configured with `--doctest-modules` and `--doctest-glob='README.md'`, so docstring examples and README examples are executed as tests.
 
 ### Documentation and benchmarks
