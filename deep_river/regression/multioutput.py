@@ -265,8 +265,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
     ) -> torch.Tensor:
         """Convert a single-sample target dict into a 2D tensor (shape (1, T))."""
         vector = [
-            float(cast(SupportsFloat, y.get(t, 0.0)))
-            for t in self.observed_targets
+            float(cast(SupportsFloat, y.get(t, 0.0))) for t in self.observed_targets
         ]
         return torch.tensor([vector], dtype=torch.float32, device=self.device)
 
