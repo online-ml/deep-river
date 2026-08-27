@@ -11,21 +11,30 @@ def iter_reference_targets():
         module_path = path.relative_to(MODULE_ROOT).with_suffix("")
         parts = list(module_path.parts)
 
-        if parts[-1] in {"__init__", "__version__", "__main__", " "}:
+        if parts[-1] in {"__version__", "__main__", " "}:
             continue
 
-        doc_path = Path(*parts).with_suffix(".md")
+        if parts[-1] == "__init__":
+            if len(parts) == 1:
+                continue
+            identifier_parts = parts[:-1]
+            doc_path = Path(*identifier_parts) / "index.md"
+        else:
+            identifier_parts = parts
+            doc_path = Path(*parts).with_suffix(".md")
 
         if parts[0] == "utils":
             allowed_utils = {"tensor_conversion", "params"}
-            if len(parts) >= 2 and parts[1] in allowed_utils:
+            if parts[-1] == "__init__":
+                pass
+            elif len(parts) >= 2 and parts[1] in allowed_utils:
                 doc_path = Path(f"{parts[1]}.md")
             else:
                 continue
             if len(parts) > 2:
                 continue
 
-        yield path, parts, doc_path
+        yield path, identifier_parts, doc_path
 
 
 def main() -> None:

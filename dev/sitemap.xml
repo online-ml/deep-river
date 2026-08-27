@@ -100,6 +100,9 @@
         <loc>https://online-ml.github.io/deep-river/dev/reference/tensor_conversion/</loc>
       </url>
       <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/anomaly/</loc>
+      </url>
+      <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/anomaly/ae/</loc>
       </url>
       <url>
@@ -112,6 +115,9 @@
         <loc>https://online-ml.github.io/deep-river/dev/reference/anomaly/scaler/</loc>
       </url>
       <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/classification/</loc>
+      </url>
+      <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/classification/classifier/</loc>
       </url>
       <url>
@@ -121,10 +127,16 @@
         <loc>https://online-ml.github.io/deep-river/dev/reference/classification/zoo/</loc>
       </url>
       <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/forecasting/</loc>
+      </url>
+      <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/forecasting/forecaster/</loc>
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/forecasting/zoo/</loc>
+      </url>
+      <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/regression/</loc>
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/regression/multioutput/</loc>
@@ -137,5 +149,8 @@
       </url>
       <url>
         <loc>https://online-ml.github.io/deep-river/dev/reference/regression/zoo/</loc>
+      </url>
+      <url>
+        <loc>https://online-ml.github.io/deep-river/dev/reference/utils/</loc>
       </url>
 </urlset>
