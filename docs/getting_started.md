@@ -8,6 +8,18 @@ PyTorch modules for representation learning.
 The core workflow is a stream loop: make a prediction for the next item, update a metric,
 and then call `learn_one` so the model adapts before the next item arrives.
 
+```mermaid
+%%{init: {"look": "handDrawn", "theme": "base", "themeVariables": {"primaryColor": "#EAF6FC", "primaryTextColor": "#263746", "primaryBorderColor": "#4A90C2", "secondaryColor": "#E7F4EA", "tertiaryColor": "#FFF3D8", "lineColor": "#527A91"}}}%%
+flowchart TD
+    subgraph model["Model"]
+        train["train"] --> ready["ready"]
+        predict["predict"] --> ready["ready"]
+    end
+    stream[(Stream)] --->|labeled data| train
+    stream -->|unlabeled data| predict
+    ready -->|get data| stream
+```
+
 ## Install
 
 ```bash

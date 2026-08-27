@@ -1,3 +1,5 @@
+"""This module contains forecasters for the deep_river package."""
+
 from deep_river.forecasting.forecaster import DeepForecaster
 from deep_river.forecasting.zoo import (
     GRUForecaster,
@@ -8,8 +10,6 @@ from deep_river.forecasting.zoo import (
     NBEATSForecaster,
     RNNForecaster,
 )
-
-"""This module contains forecasters for the deep_river package."""
 
 __all__ = [
     "DeepForecaster",
