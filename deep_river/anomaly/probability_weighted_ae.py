@@ -39,7 +39,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         self.rolling_mean = utils.Rolling(stats.Mean(), window_size=window_size)
         self.rolling_var = utils.Rolling(stats.Var(), window_size=window_size)
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
+    def learn_one(self, x: dict, y: Any = None) -> None:
         """
         Performs one step of training with a single example,
         scaling the employed learning rate based on the outlier
@@ -47,7 +47,6 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
 
         Parameters
         ----------
-        **kwargs
         x
             Input example.
 
