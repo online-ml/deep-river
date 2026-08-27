@@ -1,45 +1,26 @@
 import copy
-import importlib
-import inspect
 
 import numpy as np
 import pandas as pd
 import pytest
 import torch
 from river import base
-from river.base import Estimator
 
-import deep_river
 from deep_river.base import DeepEstimator, RollingDeepEstimator
-
+from deep_river.utils.estimator_checks import iter_estimators_that_can_be_tested
 
 N_ONLINE = 12
 N_BATCH = 16
 
 
-def iter_estimators():
-    def is_estimator(obj):
-        return inspect.isclass(obj) and issubclass(obj, Estimator)
-
-    for submodule in ("anomaly", "classification", "regression"):
-        yield from (
-            obj
-            for _, obj in inspect.getmembers(
-                importlib.import_module(f"{deep_river.__name__}.{submodule}"),
-                is_estimator,
-            )
-            if not inspect.isabstract(obj)
-        )
-
-
 def benchmark_estimators():
     torch.manual_seed(42)
     torch.set_num_threads(1)
-    for estimator_cls in iter_estimators():
-        for params in estimator_cls._unit_test_params():
-            estimator = estimator_cls(**params)
-            if isinstance(estimator, DeepEstimator):
-                yield estimator
+    for estimator in iter_estimators_that_can_be_tested(
+        ("anomaly", "classification", "regression")
+    ):
+        if isinstance(estimator, DeepEstimator):
+            yield estimator
 
 
 def n_features(estimator):

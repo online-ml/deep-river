@@ -1,10 +1,16 @@
 """Utilities for unit testing and sanity checking estimators."""
 
 import copy
+import importlib
+import inspect
 import tempfile
 from pathlib import Path
 
-__all__ = ["check_estimator"]
+__all__ = [
+    "check_estimator",
+    "iter_estimators",
+    "iter_estimators_that_can_be_tested",
+]
 
 import typing
 
@@ -13,8 +19,36 @@ import pandas as pd
 import pytest
 import torch
 from river import base
+from river.base import Estimator
 from river.checks import _wrapped_partial, _yield_datasets, yield_checks
 from river.time_series.base import Forecaster
+
+
+def iter_estimators(submodules=None):
+    if submodules is None:
+        submodules = importlib.import_module("deep_river").__all__
+
+    def is_estimator(obj):
+        return inspect.isclass(obj) and issubclass(obj, Estimator)
+
+    for submodule in submodules:
+        yield from (
+            obj
+            for _, obj in inspect.getmembers(
+                importlib.import_module(f"deep_river.{submodule}"), is_estimator
+            )
+        )
+
+
+def iter_estimators_that_can_be_tested(submodules=None):
+    ignored = ()
+
+    def can_be_tested(estimator):
+        return not inspect.isabstract(estimator) and not issubclass(estimator, ignored)
+
+    for estimator in filter(can_be_tested, iter_estimators(submodules)):
+        for params in estimator._unit_test_params():
+            yield estimator(**params)
 
 
 def check_deep_learn_one(model, dataset):
