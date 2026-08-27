@@ -1,0 +1,44 @@
+name: codspeed
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  PYTHONHASHSEED: "0"
+
+concurrency:
+  group: codspeed-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  python:
+    name: Python benchmarks
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        id: setup-python
+        with:
+          python-version: "3.12"
+
+      - uses: astral-sh/setup-uv@v7
+
+      - name: Install the project
+        run: uv sync --locked --no-default-groups --group dev --reinstall-package deep_river
+        env:
+          UV_PYTHON: ${{ steps.setup-python.outputs.python-path }}
+
+      - name: Run benchmarks
+        uses: CodSpeedHQ/action@v4
+        with:
+          mode: simulation
+          run: uv run --no-sync pytest benchmarks/codspeed/python --codspeed -o addopts=""
