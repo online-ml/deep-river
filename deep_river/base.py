@@ -116,7 +116,7 @@ class DeepEstimator(base.Estimator):
 
     def __init__(
         self,
-        module: torch.nn.Module,
+        module: Union[torch.nn.Module, Callable[[], torch.nn.Module]],
         loss_fn: Union[str, Callable] = "mse",
         optimizer_fn: Union[str, Callable] = "sgd",
         lr: float = 1e-3,
@@ -127,7 +127,11 @@ class DeepEstimator(base.Estimator):
         **kwargs,
     ):
         super().__init__()
-        self.module = module
+        self.module = (
+            module
+            if isinstance(module, torch.nn.Module)
+            else self._initialize_module(module, seed)
+        )
         self.lr = lr
         self.loss_func = get_loss_fn(loss_fn)
         self.loss_fn = loss_fn
@@ -166,7 +170,14 @@ class DeepEstimator(base.Estimator):
         self.module_input_len = self._get_input_size() if self.input_layer else None
         self.observed_features: SortedSet = SortedSet()
         self.module.to(self.device)
-        torch.manual_seed(seed)
+
+    @staticmethod
+    def _initialize_module(
+        module_fn: Callable[..., torch.nn.Module], seed: int, *args, **kwargs
+    ) -> torch.nn.Module:
+        with torch.random.fork_rng():
+            torch.manual_seed(seed)
+            return module_fn(*args, **kwargs)
 
     @staticmethod
     def _extract_candidate_layers(module: torch.nn.Module) -> list[torch.nn.Module]:
@@ -540,8 +551,10 @@ class DeepEstimator(base.Estimator):
         if "module" in init_params and isinstance(init_params["module"], dict):
             module_info = init_params.pop("module")
             module_cls = cls._import_from_path(module_info["class"])
-            module = module_cls(
-                **cls._filter_kwargs(module_cls.__init__, module_info["kwargs"])
+            module = cls._initialize_module(
+                module_cls,
+                init_params.get("seed", 42),
+                **cls._filter_kwargs(module_cls.__init__, module_info["kwargs"]),
             )
             if state.get("model_state_dict"):
                 module.load_state_dict(state["model_state_dict"])
@@ -585,7 +598,7 @@ class DeepEstimator(base.Estimator):
         params = {**self._get_all_init_params(), **new_params}
 
         if "module" not in new_params:
-            params["module"] = self._rebuild_module()
+            params["module"] = self._rebuild_module(seed=params.get("seed", self.seed))
 
         new_est = self.__class__(**self._filter_kwargs(self.__class__.__init__, params))
 
@@ -670,22 +683,27 @@ class DeepEstimator(base.Estimator):
 
         return params
 
-    def _rebuild_module(self):
+    def _rebuild_module(self, seed: Optional[int] = None):
         """Create a fresh (re‑initialised) copy of the wrapped module."""
+        seed = self.seed if seed is None else seed
         params = self._infer_module_params()
         try:
-            return self.module.__class__(
-                **self._filter_kwargs(self.module.__class__.__init__, params)
+            return self._initialize_module(
+                self.module.__class__,
+                seed,
+                **self._filter_kwargs(self.module.__class__.__init__, params),
             )
         except Exception:  # noqa: E722
-            mod_copy = copy.deepcopy(self.module)
-            for m in mod_copy.modules():
-                if hasattr(m, "reset_parameters"):
-                    try:
-                        m.reset_parameters()
-                    except Exception:  # noqa: E722
-                        pass
-            return mod_copy
+            with torch.random.fork_rng():
+                torch.manual_seed(seed)
+                mod_copy = copy.deepcopy(self.module)
+                for m in mod_copy.modules():
+                    if hasattr(m, "reset_parameters"):
+                        try:
+                            m.reset_parameters()
+                        except Exception:  # noqa: E722
+                            pass
+                return mod_copy
 
     @staticmethod
     def _import_from_path(path: str):

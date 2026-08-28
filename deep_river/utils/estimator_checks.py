@@ -107,7 +107,9 @@ def check_model_persistence(model, dataset):
 
         # Load the model
         try:
+            rng_state = torch.get_rng_state()
             loaded_model = type(model).load(temp_path)
+            assert torch.equal(torch.get_rng_state(), rng_state)
             assert loaded_model is not None, "Loaded model should not be None"
         except (AttributeError, TypeError, RuntimeError):
             # If loading fails due to module construction issues, skip this check
@@ -285,6 +287,42 @@ def check_feature_incremental_preservation(model):
             Path(temp_path).unlink()
 
 
+def check_seed_reproducibility(model):
+    if not hasattr(model, "module") or not hasattr(model, "seed"):
+        return
+
+    with torch.random.fork_rng():
+        initial_state = torch.get_rng_state()
+        first = model.clone()
+        assert torch.equal(torch.get_rng_state(), initial_state)
+
+        torch.rand(10)
+        advanced_state = torch.get_rng_state()
+        second = model.clone()
+        assert torch.equal(torch.get_rng_state(), advanced_state)
+
+        first_parameters = tuple(first.module.parameters())
+        second_parameters = tuple(second.module.parameters())
+        assert len(first_parameters) == len(second_parameters)
+        assert all(
+            torch.equal(first_parameter, second_parameter)
+            for first_parameter, second_parameter in zip(
+                first_parameters, second_parameters
+            )
+        )
+
+        different = model.clone({"seed": model.seed + 1})
+        assert torch.equal(torch.get_rng_state(), advanced_state)
+        different_parameters = tuple(different.module.parameters())
+        assert len(first_parameters) == len(different_parameters)
+        assert any(
+            not torch.equal(first_parameter, different_parameter)
+            for first_parameter, different_parameter in zip(
+                first_parameters, different_parameters
+            )
+        )
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -301,6 +339,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_model_persistence_untrained
     yield check_model_persistence_with_custom_kwargs
     yield check_feature_incremental_preservation
+    yield check_seed_reproducibility
 
     # Classifier checks
     if isinstance(model, base.Classifier) and not isinstance(

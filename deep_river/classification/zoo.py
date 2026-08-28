@@ -95,8 +95,11 @@ class LogisticRegression(Classifier):
     ):
         self.n_features = n_features
         self.n_init_classes = n_init_classes
-        module = LogisticRegression.LRModule(
-            n_features=n_features, n_init_classes=n_init_classes
+        module = self._initialize_module(
+            LogisticRegression.LRModule,
+            seed,
+            n_features=n_features,
+            n_init_classes=n_init_classes,
         )
         if "module" in kwargs:
             del kwargs["module"]
@@ -213,7 +216,9 @@ class MultiLayerPerceptron(Classifier):
         self.n_width = n_width
         self.n_layers = n_layers
         self.n_init_classes = n_init_classes
-        module = MultiLayerPerceptron.MLPModule(
+        module = self._initialize_module(
+            MultiLayerPerceptron.MLPModule,
+            seed,
             n_width=n_width,
             n_layers=n_layers,
             n_features=n_features,
@@ -354,7 +359,9 @@ class LSTMClassifier(RollingClassifier):
         self.n_features = n_features
         self.hidden_size = hidden_size
         self.n_init_classes = n_init_classes
-        module = LSTMClassifier.LSTMModule(
+        module = self._initialize_module(
+            LSTMClassifier.LSTMModule,
+            seed,
             n_features=n_features,
             hidden_size=hidden_size,
             n_init_classes=n_init_classes,
@@ -509,7 +516,9 @@ class RNNClassifier(RollingClassifier):
         self.num_layers = num_layers
         self.nonlinearity = nonlinearity
         self.n_init_classes = n_init_classes
-        module = RNNClassifier.RNNModule(
+        module = self._initialize_module(
+            RNNClassifier.RNNModule,
+            seed,
             n_features=n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
