@@ -391,10 +391,11 @@ class DeepEstimator(base.Estimator):
         # Recurrent layer special case
         if isinstance(layer, (torch.nn.LSTM, torch.nn.GRU, torch.nn.RNN)):
             instructions["input_size"] = "input_attribute"
-            if hasattr(layer, "weight_ih_l0"):
-                instructions["weight_ih_l0"] = {
-                    "input": [{"axis": 1, "n_subparams": 1}]
-                }
+            for param_name, _ in layer.named_parameters(recurse=False):
+                if param_name in {"weight_ih_l0", "weight_ih_l0_reverse"}:
+                    instructions[param_name] = {
+                        "input": [{"axis": 1, "n_subparams": 1}]
+                    }
         return instructions
 
     def _expand_layer(

@@ -589,6 +589,52 @@ def yield_benchmark_checks(model) -> typing.Iterator[typing.Callable]:
         yield check_benchmark_predict_many
 
 
+def check_recurrent_layer_expansion(model):
+    if not isinstance(
+        getattr(model, "input_layer", None),
+        (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM),
+    ):
+        return
+
+    for layer_type in (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM):
+        layer = layer_type(
+            input_size=3,
+            hidden_size=4,
+            num_layers=2,
+            bidirectional=True,
+        )
+        model.module = layer
+        model.input_layer = layer
+        model._rebuild_optimizer()
+        original_parameters = {
+            name: parameter.detach().clone()
+            for name, parameter in layer.named_parameters()
+        }
+
+        model._expand_layer(layer, target_size=5, output=False)
+
+        assert layer.input_size == 5
+        for name, parameter in layer.named_parameters():
+            original_parameter = original_parameters[name]
+            if name in {"weight_ih_l0", "weight_ih_l0_reverse"}:
+                assert parameter.shape[1] == 5
+                assert torch.equal(parameter[:, :3], original_parameter)
+            else:
+                assert torch.equal(parameter, original_parameter)
+
+        optimizer_parameters = {
+            id(parameter)
+            for group in model.optimizer.param_groups
+            for parameter in group["params"]
+        }
+        assert all(
+            id(parameter) in optimizer_parameters for parameter in layer.parameters()
+        )
+
+        output = layer(torch.randn(6, 2, 5))[0]
+        assert output.shape == (6, 2, 8)
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -606,6 +652,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_model_persistence_with_custom_kwargs
     yield check_feature_incremental_preservation
     yield check_predict_many_output_length
+    yield check_recurrent_layer_expansion
 
     # Classifier checks
     if isinstance(model, base.Classifier) and not isinstance(
