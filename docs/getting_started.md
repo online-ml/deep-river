@@ -95,6 +95,40 @@ for i, (x, y) in enumerate(datasets.Phishing().take(200)):
 print(f"Accuracy: {metric.get():.4f}")
 ```
 
+```python
+from torch import nn
+
+from deep_river.regression import RollingRegressor
+
+
+class GrowingSequence(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.gru = nn.GRU(input_size=2, hidden_size=4)
+        self.head = nn.Linear(4, 1)
+
+    def forward(self, x):
+        output, _ = self.gru(x)
+        return self.head(output[-1])
+
+
+model = RollingRegressor(
+    module=GrowingSequence(),
+    is_feature_incremental=True,
+    window_size=3,
+)
+model.learn_one({"b": 2.0, "d": 4.0}, 1.0)
+model.learn_one({"a": 1.0, "c": 3.0, "e": 5.0}, 2.0)
+
+assert list(model.observed_features) == ["a", "b", "c", "d", "e"]
+assert list(model._x_window) == [
+    [0.0, 2.0, 0.0, 4.0, 0.0],
+    [1.0, 0.0, 3.0, 0.0, 5.0],
+]
+prediction = model.predict_one({"f": 6.0})
+assert all(len(row) == 6 for row in model._x_window)
+```
+
 ## Core concepts
 
 - **`learn_one` updates the model online:** each sample is used exactly once in sequence.

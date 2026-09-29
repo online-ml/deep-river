@@ -757,6 +757,24 @@ class RollingDeepEstimator(DeepEstimator):
             **kwargs,
         )
 
+    def _update_observed_features(self, x: dict | pd.DataFrame) -> bool:
+        previous_features = tuple(self.observed_features)
+        updated = super()._update_observed_features(x)
+        if updated and self._x_window:
+            previous_indices = {
+                feature: index for index, feature in enumerate(previous_features)
+            }
+            rows = [
+                [
+                    row[previous_indices[feature]] if feature in previous_indices else 0
+                    for feature in self.observed_features
+                ]
+                for row in self._x_window
+            ]
+            self._x_window.clear()
+            self._x_window.extend(rows)
+        return updated
+
     def _deque2rolling_tensor(self, x_win: Deque):
         """Convert the internal deque to a tensor (with padding logic)."""
         tensor_data = deque2rolling_tensor(x_win, device=self.device)

@@ -168,7 +168,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         """
         self._update_observed_features(X)
 
-        X = X[list(self.observed_features)]
+        X = X.reindex(columns=list(self.observed_features), fill_value=0.0)
         self._x_window.extend(X.values.tolist())
         if len(self._x_window) == self.window_size:
             X_t = deque2rolling_tensor(self._x_window, device=self.device)
