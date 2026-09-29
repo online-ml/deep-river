@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Type, Union, cast
+from typing import Any, Callable, Dict, Hashable, Type, Union, cast
 
 import pandas as pd
 import torch
@@ -159,7 +159,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
             "check_predict_proba_one",
         }
 
-    def learn_one(self, x: dict, y: ClfTarget, **kwargs) -> None:
+    def learn_one(self, x: dict, y: ClfTarget) -> None:
         """Learn from a single (x, y) updating the rolling window."""
         self._update_observed_features(x)
         self._update_observed_targets(y)
@@ -167,18 +167,12 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         x_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=x_t, y=y)
 
-    def predict_proba_one(self, x: dict, **kwargs) -> Dict[ClfTarget, float]:
+    def predict_proba_one(
+        self, x: dict[Hashable, Any], **kwargs: Any
+    ) -> Dict[ClfTarget, float]:
         """Return class probability mapping for one sample using rolling context."""
-        self._update_observed_features(x)
-        x_win = self._x_window.copy()
-        x_win.append([x.get(feature, 0) for feature in self.observed_features])
-        if self.append_predict:
-            self._x_window = x_win
-        self.module.eval()
-        with torch.inference_mode():
-            x_t = self._deque2rolling_tensor(x_win)
-            y_pred = self.module(x_t)
-            proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
+        y_pred = self._rolling_prediction(x)
+        proba = output2proba(y_pred, self.observed_classes, self.output_is_logit)
         return cast(Dict[ClfTarget, float], proba[0])
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:

@@ -1,6 +1,5 @@
 from typing import Any, Callable, List, Union
 
-import numpy as np
 import pandas as pd
 import torch
 from river import anomaly
@@ -141,7 +140,7 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             "check_predict_proba_one_binary",
         }
 
-    def learn_one(self, x: dict, y: Any = None, **kwargs) -> None:
+    def learn_one(self, x: dict, y: Any = None) -> None:
         """Update model using a single sample appended to the rolling window.
 
         Parameters
@@ -150,8 +149,6 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
             Dictionary containing feature name-value pairs for the sample.
         y : Any, optional
             Target value (not used in autoencoder training).
-        **kwargs
-            Additional keyword arguments.
         """
         self._update_observed_features(x)
         self._x_window.append([x.get(feature, 0) for feature in self.observed_features])
@@ -223,25 +220,4 @@ class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
         List[float]
             List of computed anomaly scores (reconstruction errors) for each sample in X.
         """
-        self._update_observed_features(X)
-        X = X[list(self.observed_features)]
-        x_win = self._x_window.copy()
-        x_win.extend(X.values.tolist())
-        if self.append_predict:
-            self._x_window.extend(X.values.tolist())
-
-        if len(self._x_window) == self.window_size:
-            X_t = deque2rolling_tensor(x_win, device=self.device)
-            self.module.eval()
-            with torch.inference_mode():
-                x_pred = self.module(X_t)
-            loss = torch.mean(
-                self.loss_func(x_pred, x_pred, reduction="none"),
-                dim=list(range(1, x_pred.dim())),
-            )
-            losses = np.asarray(loss.detach().cpu().tolist())
-            if len(losses) < len(X):
-                losses = np.pad(losses, (len(X) - len(losses), 0))
-            return losses.tolist()
-        else:
-            return np.zeros(len(X)).tolist()
+        return [self.score_one(row) for row in X.to_dict(orient="records")]
