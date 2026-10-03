@@ -3798,39 +3798,39 @@ depends on the type of model.</p>
 
             <details class="quote">
               <summary>Source code in <code>deep_river/utils/estimator_checks.py</code></summary>
-              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-624">624</a></span>
-<span class="normal"><a href="#__codelineno-0-625">625</a></span>
-<span class="normal"><a href="#__codelineno-0-626">626</a></span>
-<span class="normal"><a href="#__codelineno-0-627">627</a></span>
-<span class="normal"><a href="#__codelineno-0-628">628</a></span>
-<span class="normal"><a href="#__codelineno-0-629">629</a></span>
-<span class="normal"><a href="#__codelineno-0-630">630</a></span>
-<span class="normal"><a href="#__codelineno-0-631">631</a></span>
-<span class="normal"><a href="#__codelineno-0-632">632</a></span>
-<span class="normal"><a href="#__codelineno-0-633">633</a></span>
-<span class="normal"><a href="#__codelineno-0-634">634</a></span>
-<span class="normal"><a href="#__codelineno-0-635">635</a></span>
-<span class="normal"><a href="#__codelineno-0-636">636</a></span>
-<span class="normal"><a href="#__codelineno-0-637">637</a></span>
-<span class="normal"><a href="#__codelineno-0-638">638</a></span>
-<span class="normal"><a href="#__codelineno-0-639">639</a></span>
-<span class="normal"><a href="#__codelineno-0-640">640</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-624"><a id="__codelineno-0-624" name="__codelineno-0-624"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_estimator</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-</span><span id="__span-0-625"><a id="__codelineno-0-625" name="__codelineno-0-625"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a model adheres to `river`&#39;s conventions.</span>
-</span><span id="__span-0-626"><a id="__codelineno-0-626" name="__codelineno-0-626"></a><span class="sd">    This will run a series of unit tests. The nature of the unit tests</span>
-</span><span id="__span-0-627"><a id="__codelineno-0-627" name="__codelineno-0-627"></a><span class="sd">    depends on the type of model.</span>
-</span><span id="__span-0-628"><a id="__codelineno-0-628" name="__codelineno-0-628"></a><span class="sd">    Parameters</span>
-</span><span id="__span-0-629"><a id="__codelineno-0-629" name="__codelineno-0-629"></a><span class="sd">    ----------</span>
-</span><span id="__span-0-630"><a id="__codelineno-0-630" name="__codelineno-0-630"></a><span class="sd">    model</span>
-</span><span id="__span-0-631"><a id="__codelineno-0-631" name="__codelineno-0-631"></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="__span-0-632"><a id="__codelineno-0-632" name="__codelineno-0-632"></a>    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">yield_checks</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-</span><span id="__span-0-633"><a id="__codelineno-0-633" name="__codelineno-0-633"></a>        <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_unit_test_skips</span><span class="p">():</span>
-</span><span id="__span-0-634"><a id="__codelineno-0-634" name="__codelineno-0-634"></a>            <span class="k">continue</span>
-</span><span id="__span-0-635"><a id="__codelineno-0-635" name="__codelineno-0-635"></a>        <span class="n">check</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>  <span class="c1"># todo change to clone</span>
-</span><span id="__span-0-636"><a id="__codelineno-0-636" name="__codelineno-0-636"></a>
-</span><span id="__span-0-637"><a id="__codelineno-0-637" name="__codelineno-0-637"></a>    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">yield_deep_checks</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-</span><span id="__span-0-638"><a id="__codelineno-0-638" name="__codelineno-0-638"></a>        <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_unit_test_skips</span><span class="p">():</span>
-</span><span id="__span-0-639"><a id="__codelineno-0-639" name="__codelineno-0-639"></a>            <span class="k">continue</span>
-</span><span id="__span-0-640"><a id="__codelineno-0-640" name="__codelineno-0-640"></a>        <span class="n">check</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>  <span class="c1"># todo change to clone</span>
+              <div class="language-python highlight"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"><a href="#__codelineno-0-578">578</a></span>
+<span class="normal"><a href="#__codelineno-0-579">579</a></span>
+<span class="normal"><a href="#__codelineno-0-580">580</a></span>
+<span class="normal"><a href="#__codelineno-0-581">581</a></span>
+<span class="normal"><a href="#__codelineno-0-582">582</a></span>
+<span class="normal"><a href="#__codelineno-0-583">583</a></span>
+<span class="normal"><a href="#__codelineno-0-584">584</a></span>
+<span class="normal"><a href="#__codelineno-0-585">585</a></span>
+<span class="normal"><a href="#__codelineno-0-586">586</a></span>
+<span class="normal"><a href="#__codelineno-0-587">587</a></span>
+<span class="normal"><a href="#__codelineno-0-588">588</a></span>
+<span class="normal"><a href="#__codelineno-0-589">589</a></span>
+<span class="normal"><a href="#__codelineno-0-590">590</a></span>
+<span class="normal"><a href="#__codelineno-0-591">591</a></span>
+<span class="normal"><a href="#__codelineno-0-592">592</a></span>
+<span class="normal"><a href="#__codelineno-0-593">593</a></span>
+<span class="normal"><a href="#__codelineno-0-594">594</a></span></pre></div></td><td class="code"><div><pre><span></span><code><span id="__span-0-578"><a id="__codelineno-0-578" name="__codelineno-0-578"></a><span class="k">def</span><span class="w"> </span><span class="nf">check_estimator</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+</span><span id="__span-0-579"><a id="__codelineno-0-579" name="__codelineno-0-579"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if a model adheres to `river`&#39;s conventions.</span>
+</span><span id="__span-0-580"><a id="__codelineno-0-580" name="__codelineno-0-580"></a><span class="sd">    This will run a series of unit tests. The nature of the unit tests</span>
+</span><span id="__span-0-581"><a id="__codelineno-0-581" name="__codelineno-0-581"></a><span class="sd">    depends on the type of model.</span>
+</span><span id="__span-0-582"><a id="__codelineno-0-582" name="__codelineno-0-582"></a><span class="sd">    Parameters</span>
+</span><span id="__span-0-583"><a id="__codelineno-0-583" name="__codelineno-0-583"></a><span class="sd">    ----------</span>
+</span><span id="__span-0-584"><a id="__codelineno-0-584" name="__codelineno-0-584"></a><span class="sd">    model</span>
+</span><span id="__span-0-585"><a id="__codelineno-0-585" name="__codelineno-0-585"></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="__span-0-586"><a id="__codelineno-0-586" name="__codelineno-0-586"></a>    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">yield_checks</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+</span><span id="__span-0-587"><a id="__codelineno-0-587" name="__codelineno-0-587"></a>        <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_unit_test_skips</span><span class="p">():</span>
+</span><span id="__span-0-588"><a id="__codelineno-0-588" name="__codelineno-0-588"></a>            <span class="k">continue</span>
+</span><span id="__span-0-589"><a id="__codelineno-0-589" name="__codelineno-0-589"></a>        <span class="n">check</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>  <span class="c1"># todo change to clone</span>
+</span><span id="__span-0-590"><a id="__codelineno-0-590" name="__codelineno-0-590"></a>
+</span><span id="__span-0-591"><a id="__codelineno-0-591" name="__codelineno-0-591"></a>    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">yield_deep_checks</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+</span><span id="__span-0-592"><a id="__codelineno-0-592" name="__codelineno-0-592"></a>        <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="vm">__name__</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">_unit_test_skips</span><span class="p">():</span>
+</span><span id="__span-0-593"><a id="__codelineno-0-593" name="__codelineno-0-593"></a>            <span class="k">continue</span>
+</span><span id="__span-0-594"><a id="__codelineno-0-594" name="__codelineno-0-594"></a>        <span class="n">check</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>  <span class="c1"># todo change to clone</span>
 </span></code></pre></div></td></tr></table></div>
             </details>
     </div>
