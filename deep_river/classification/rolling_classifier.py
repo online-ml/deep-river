@@ -179,7 +179,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         """Batch update: extend window with rows of X and perform a step."""
         self._update_observed_targets(y)
         self._update_observed_features(X)
-        X = X[list(self.observed_features)]
+        X = X.reindex(columns=list(self.observed_features), fill_value=0.0)
         self._x_window.extend(X.values.tolist())
         X_t = self._deque2rolling_tensor(self._x_window)
         self._learn(x=X_t, y=y)

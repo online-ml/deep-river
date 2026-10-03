@@ -577,6 +577,190 @@ def yield_benchmark_checks(model) -> typing.Iterator[typing.Callable]:
         yield check_benchmark_predict_many
 
 
+class _RollingFeatureModule(torch.nn.Module):
+    def __init__(
+        self,
+        kind: str,
+        layer_type: (
+            type[torch.nn.RNN] | type[torch.nn.GRU] | type[torch.nn.LSTM]
+        ) = torch.nn.GRU,
+        n_features: int = 2,
+    ):
+        super().__init__()
+        self.kind = kind
+        self.encoder = layer_type(n_features, 4, num_layers=2)
+        self.head = torch.nn.Linear(4, 2 if kind == "classifier" else 1)
+
+    def forward(self, x):
+        self.last_input = x.detach().clone()
+        output, _ = self.encoder(x)
+        if self.kind == "autoencoder":
+            return self.head(output).expand_as(x)
+        return self.head(output[-1])
+
+
+def _prepare_rolling_feature_check(
+    model,
+    layer_type=torch.nn.GRU,
+    n_features=2,
+    is_feature_incremental=True,
+    append_predict=False,
+):
+    from deep_river.base import RollingDeepEstimator
+
+    estimator = copy.deepcopy(model)
+    kind = (
+        "classifier"
+        if isinstance(model, base.Classifier)
+        else "regressor" if model._supervised else "autoencoder"
+    )
+    RollingDeepEstimator.__init__(
+        estimator,
+        module=_RollingFeatureModule(kind, layer_type, n_features),
+        loss_fn="mse",
+        optimizer_fn="sgd",
+        device=model.device,
+        seed=model.seed,
+        is_feature_incremental=is_feature_incremental,
+        window_size=3,
+        append_predict=append_predict,
+    )
+    if isinstance(estimator, base.Classifier):
+        estimator.observed_classes.clear()
+        estimator.is_class_incremental = False
+        estimator.output_is_logit = True
+    return estimator
+
+
+def _learn_for_rolling_feature_check(model, x, many=False):
+    if many:
+        _learn_many_for_benchmark(model, pd.DataFrame([x]), pd.Series([1]))
+    else:
+        _learn_one_for_benchmark(model, x, 1)
+
+
+def _predict_for_rolling_feature_check(model, x, many=False):
+    if not model._supervised:
+        result = model.score_many(pd.DataFrame([x]))[0] if many else model.score_one(x)
+    elif isinstance(model, base.Classifier):
+        result = (
+            model.predict_proba_many(pd.DataFrame([x])).iloc[0].to_dict()
+            if many
+            else model.predict_proba_one(x)
+        )
+        assert all(np.isfinite(value) for value in result.values())
+        return
+    else:
+        result = (
+            model.predict_many(pd.DataFrame([x])).iloc[0]
+            if many
+            else model.predict_one(x)
+        )
+    assert np.isfinite(result)
+
+
+def _rolling_feature_rows(model, records):
+    return [
+        [record.get(feature, 0) for feature in model.observed_features]
+        for record in records[-model.window_size :]
+    ]
+
+
+def check_rolling_feature_growth_learn_one(model, layer_type, initial_rows):
+    model = _prepare_rolling_feature_check(model, layer_type)
+    records = [{"b": float(i + 1), "d": float(i + 2)} for i in range(initial_rows)]
+    for record in records:
+        _learn_for_rolling_feature_check(model, record)
+
+    for record in [{"e": 5.0, "a": 1.0, "c": 3.0}, {"f": 6.0}, {"b": 7.0}]:
+        records.append(record)
+        _learn_for_rolling_feature_check(model, record)
+        expected = _rolling_feature_rows(model, records)
+        assert list(model._x_window) == expected
+        assert model._x_window.maxlen == 3
+        assert model.module.last_input[:, 0, :].tolist() == expected
+        assert model.module.encoder.input_size == len(model.observed_features)
+        for parameter in model.module.parameters():
+            assert parameter.grad is not None
+            assert torch.isfinite(parameter.grad).all()
+
+
+def check_rolling_feature_growth_prediction(model, append_predict, many):
+    model = _prepare_rolling_feature_check(model, append_predict=append_predict)
+    records = [{"b": float(i + 1), "d": float(i + 2)} for i in range(3)]
+    for record in records:
+        _learn_for_rolling_feature_check(model, record)
+
+    for record in [{"a": 1.0, "c": 3.0, "e": 5.0}, {"f": 6.0}]:
+        _predict_for_rolling_feature_check(model, record, many=many)
+        assert model.module.last_input[:, 0, :].tolist() == _rolling_feature_rows(
+            model, records + [record]
+        )
+        if append_predict:
+            records.append(record)
+        assert list(model._x_window) == _rolling_feature_rows(model, records)
+        assert model._x_window.maxlen == 3
+
+    _learn_for_rolling_feature_check(model, {"b": 8.0})
+    records.append({"b": 8.0})
+    assert list(model._x_window) == _rolling_feature_rows(model, records)
+
+
+def check_rolling_feature_growth_learn_many(model):
+    model = _prepare_rolling_feature_check(model)
+    records = [{"b": 1.0, "d": 2.0}, {"d": 4.0, "b": 3.0}]
+    for record in records:
+        _learn_for_rolling_feature_check(model, record)
+
+    for record in [{"e": 5.0, "a": 1.0, "c": 3.0}, {"f": 6.0}, {"b": 7.0}]:
+        records.append(record)
+        _learn_for_rolling_feature_check(model, record, many=True)
+        assert list(model._x_window) == _rolling_feature_rows(model, records)
+        assert model.module.last_input[:, 0, :].tolist() == _rolling_feature_rows(
+            model, records
+        )
+        assert model._x_window.maxlen == 3
+        _predict_for_rolling_feature_check(model, record, many=True)
+
+
+def check_rolling_feature_discovery_fixed_input(model):
+    model = _prepare_rolling_feature_check(
+        model, n_features=5, is_feature_incremental=False
+    )
+    _learn_for_rolling_feature_check(model, {"b": 2.0, "d": 4.0})
+    _learn_for_rolling_feature_check(model, {"a": 1.0, "c": 3.0})
+    assert list(model._x_window) == [[0, 2.0, 0, 4.0], [1.0, 0, 3.0, 0]]
+    assert model.module.last_input[:, 0, :].tolist() == [
+        [0, 2.0, 0, 4.0, 0],
+        [1.0, 0, 3.0, 0, 0],
+    ]
+    assert model.module.encoder.input_size == 5
+
+
+def check_rolling_feature_update_preserves_window(model):
+    model = _prepare_rolling_feature_check(model)
+    window = model._x_window
+    assert model._update_observed_features({"b": 2.0, "d": 4.0})
+    assert list(window) == []
+    window.append([2.0, 4.0])
+    assert not model._update_observed_features({"d": 9.0, "b": 8.0})
+    assert not model._update_observed_features({})
+    assert list(window) == [[2.0, 4.0]]
+    assert model._update_observed_features(pd.DataFrame(columns=["e", "a", "c"]))
+    assert model._x_window is window
+    assert list(window) == [[0, 2.0, 0, 4.0, 0]]
+    assert window.maxlen == 3
+
+
+def check_rolling_feature_growth_after_restore(model, use_pickle):
+    model = _prepare_rolling_feature_check(model)
+    _learn_for_rolling_feature_check(model, {"b": 2.0, "d": 4.0})
+    restored = pickle.loads(pickle.dumps(model)) if use_pickle else copy.deepcopy(model)
+    _learn_for_rolling_feature_check(restored, {"a": 1.0, "c": 3.0})
+    assert list(restored._x_window) == [[0, 2.0, 0, 4.0], [1.0, 0, 3.0, 0]]
+    assert list(model._x_window) == [[2.0, 4.0]]
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -602,6 +786,30 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
         and getattr(model, "is_class_incremental", False)
     ):
         yield check_model_persistence_after_incremental_expansion
+
+    if _is_rolling(model):
+        for layer_type in (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM):
+            for initial_rows in (1, 3):
+                yield _wrapped_partial(
+                    check_rolling_feature_growth_learn_one,
+                    layer_type=layer_type,
+                    initial_rows=initial_rows,
+                )
+        for append_predict in (False, True):
+            for many in (False, True):
+                yield _wrapped_partial(
+                    check_rolling_feature_growth_prediction,
+                    append_predict=append_predict,
+                    many=many,
+                )
+        yield check_rolling_feature_growth_learn_many
+        yield check_rolling_feature_update_preserves_window
+        for use_pickle in (False, True):
+            yield _wrapped_partial(
+                check_rolling_feature_growth_after_restore, use_pickle=use_pickle
+            )
+        if model._supervised:
+            yield check_rolling_feature_discovery_fixed_input
 
     # Classifier checks
     if isinstance(model, base.Classifier) and not isinstance(
