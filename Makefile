@@ -5,7 +5,7 @@ check-uv:
 	@which uv > /dev/null || (echo "uv is not installed. Please install it from https://github.com/astral-sh/uv" && exit 1)
 
 install: check-uv
-	uv sync --extra dev
+	uv sync --group dev
 
 format: check-uv
 	uv run prek run --all-files
