@@ -1,9 +1,12 @@
 """Utilities for unit testing and sanity checking estimators."""
 
+import collections
 import copy
 import importlib
 import inspect
+import pickle
 import tempfile
+from collections.abc import Set
 from pathlib import Path
 
 __all__ = [
@@ -103,21 +106,94 @@ def check_dict2tensor(model):
     assert model._dict2tensor(x3).tolist() == [lst]
 
 
+def _assert_persisted_value(left, right, visited=None):
+    """Assert that two persisted values have identical types and contents."""
+    if visited is None:
+        visited = set()
+    pair = (id(left), id(right))
+    if pair in visited:
+        return
+    visited.add(pair)
+    assert type(left) is type(right)
+    if isinstance(left, torch.Tensor):
+        assert torch.equal(left, right)
+    elif isinstance(left, np.ndarray):
+        assert np.array_equal(left, right, equal_nan=True)
+    elif isinstance(left, pd.DataFrame):
+        pd.testing.assert_frame_equal(left, right, check_exact=True)
+    elif isinstance(left, pd.Series):
+        pd.testing.assert_series_equal(left, right, check_exact=True)
+    elif isinstance(left, dict):
+        assert left.keys() == right.keys()
+        for key in left:
+            _assert_persisted_value(left[key], right[key], visited)
+    elif isinstance(left, (list, tuple, collections.deque)):
+        assert len(left) == len(right)
+        for left_item, right_item in zip(left, right):
+            _assert_persisted_value(left_item, right_item, visited)
+    elif isinstance(left, Set):
+        assert left == right
+    elif callable(left):
+        assert left == right
+    elif hasattr(left, "__dict__"):
+        _assert_persisted_value(vars(left), vars(right), visited)
+    else:
+        assert left == right
+
+
+def _round_trip(model):
+    """Save and reload an estimator through a temporary persistence file."""
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "model.pkl"
+        model.save(path)
+        assert path.is_file()
+        rng_state = torch.get_rng_state()
+        loaded_model = type(model).load(path)
+        assert torch.equal(torch.get_rng_state(), rng_state)
+        return loaded_model
+
+
+def _assert_persisted_estimator(model, loaded_model):
+    """Assert that a loaded estimator exactly preserves model and optimizer state."""
+    assert type(model) is type(loaded_model)
+    assert model is not loaded_model
+    assert model.module is not loaded_model.module
+    assert repr(model.module) == repr(loaded_model.module)
+    assert model.module.training == loaded_model.module.training
+    assert model.__dict__.keys() == loaded_model.__dict__.keys()
+    excluded = {"module", "optimizer", "input_layer", "output_layer"}
+    for name in model.__dict__.keys() - excluded:
+        _assert_persisted_value(model.__dict__[name], loaded_model.__dict__[name])
+    _assert_persisted_value(model.module.state_dict(), loaded_model.module.state_dict())
+    _assert_persisted_value(
+        model.optimizer.state_dict(), loaded_model.optimizer.state_dict()
+    )
+    module_parameters = {
+        id(parameter) for parameter in loaded_model.module.parameters()
+    }
+    optimizer_parameters = {
+        id(parameter)
+        for group in loaded_model.optimizer.param_groups
+        for parameter in group["params"]
+    }
+    assert module_parameters == optimizer_parameters
+
+
+def _prediction(model, x):
+    """Produce the task-specific prediction used for persistence comparison."""
+    if isinstance(model, Forecaster):
+        return model.forecast(horizon=3, xs=[x] * 3)
+    if isinstance(model, base.Classifier):
+        return model.predict_proba_one(x)
+    if isinstance(model, (base.MultiTargetRegressor, base.Regressor)):
+        return model.predict_one(x)
+    return model.score_one(x)
+
+
 def check_model_persistence(model, dataset):
-    """Test that a model can be saved and loaded preserving its state.
-
-    This check verifies that:
-    1. The model can be saved to a file
-    2. The model can be loaded from the file
-    3. The loaded model has the same configuration
-    4. The loaded model produces the same predictions
-    """
-
-    # Train the model on a few samples
-    sample_count = 0
+    """Check exact persistence after training an estimator on five samples."""
     last_x = None
-
-    for x, y in dataset:
+    for sample_count, (x, y) in enumerate(dataset, start=1):
         if isinstance(model, Forecaster):
             model.learn_one(y, x)
         elif model._supervised:
@@ -125,202 +201,76 @@ def check_model_persistence(model, dataset):
         else:
             model.learn_one(x)
         last_x = x
-        sample_count += 1
-        if sample_count >= 5:  # Only train on a few samples for the check
+        if sample_count == 5:
             break
 
-    if sample_count == 0:
-        return  # Skip check if no data
-
-    # Create temporary file for saving
-    with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
-        temp_path = f.name
-
-    try:
-        # Save the model
-        model.save(temp_path)
-        assert Path(temp_path).exists(), "Model file should be created"
-
-        # Load the model
-        try:
-            rng_state = torch.get_rng_state()
-            loaded_model = type(model).load(temp_path)
-            assert torch.equal(torch.get_rng_state(), rng_state)
-            assert loaded_model is not None, "Loaded model should not be None"
-        except (AttributeError, TypeError, RuntimeError):
-            # If loading fails due to module construction issues, skip this check
-            # This can happen with test modules or zoo modules
-            return
-
-        # Check basic attributes are preserved
-        if hasattr(model, "device"):
-            assert loaded_model.device == model.device, "Device should be preserved"
-        if hasattr(model, "seed"):
-            assert loaded_model.seed == model.seed, "Seed should be preserved"
-        if hasattr(model, "lr"):
-            assert loaded_model.lr == model.lr, "Learning rate should be preserved"
-
-        # Check model type specific attributes
-        if isinstance(model, base.Classifier) and hasattr(model, "observed_classes"):
-            assert (
-                loaded_model.observed_classes == model.observed_classes
-            ), "Observed classes should be preserved"
-
-        # Test that both models produce similar predictions on the last seen example
-        if last_x is not None:
-            try:
-                if isinstance(model, Forecaster):
-                    xs = [last_x] * 3
-                    pred_original = model.forecast(horizon=3, xs=xs)
-                    pred_loaded = loaded_model.forecast(horizon=3, xs=xs)
-
-                    for original, loaded in zip(pred_original, pred_loaded):
-                        diff = abs(original - loaded)
-                        assert diff < 1e-4, f"Forecast difference too large: {diff}"
-                elif isinstance(model, base.Classifier):
-                    pred_original = model.predict_proba_one(last_x)
-                    pred_loaded = loaded_model.predict_proba_one(last_x)
-
-                    # For probabilistic predictions, check all class probabilities
-                    if isinstance(pred_original, dict) and isinstance(
-                        pred_loaded, dict
-                    ):
-                        for class_label in pred_original:
-                            if class_label in pred_loaded:
-                                diff = abs(
-                                    pred_original[class_label]
-                                    - pred_loaded[class_label]
-                                )
-                                assert (
-                                    diff < 1e-4
-                                ), f"Prediction difference too large for class {class_label}:{diff}"
-                elif isinstance(model, base.Regressor):
-                    pred_original = model.predict_one(last_x)
-                    pred_loaded = loaded_model.predict_one(last_x)
-
-                    diff = abs(pred_original - pred_loaded)
-                    assert diff < 1e-4, f"Prediction difference too large: {diff}"
-
-            except Exception:
-                # If prediction fails, that's okay for this check -
-                # the important part is that save/load works
-                pass
-
-    finally:
-        # Clean up temporary file
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
+    assert last_x is not None
+    loaded_model = _round_trip(model)
+    _assert_persisted_estimator(model, loaded_model)
+    _assert_persisted_value(
+        _prediction(model, last_x), _prediction(loaded_model, last_x)
+    )
 
 
 def check_model_persistence_untrained(model):
-    """Test that an untrained model can be saved and loaded preserving its state."""
-    # Skip persistence checks for problematic model types
-    # Create temporary file for saving
-    with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
-        temp_path = f.name
-
-    try:
-        # Save the untrained model
-        model.save(temp_path)
-        assert Path(temp_path).exists(), "Model file should be created"
-
-        # Load the model
-        try:
-            loaded_model = type(model).load(temp_path)
-            assert loaded_model is not None, "Loaded model should not be None"
-        except (AttributeError, TypeError, RuntimeError):
-            return  # Skip if loading fails
-
-        # Check basic configuration
-        if hasattr(model, "loss_fn"):
-            assert (
-                loaded_model.loss_fn == model.loss_fn
-            ), "Loss function should be preserved"
-        if hasattr(model, "optimizer_fn"):
-            assert (
-                loaded_model.optimizer_fn == model.optimizer_fn
-            ), "Optimizer function should be preserved"
-        if hasattr(model, "lr"):
-            assert loaded_model.lr == model.lr, "Learning rate should be preserved"
-        if hasattr(model, "device"):
-            assert loaded_model.device == model.device, "Device should be preserved"
-        if hasattr(model, "seed"):
-            assert loaded_model.seed == model.seed, "Seed should be preserved"
-
-        # Both models should be uninitialized (if applicable)
-        if hasattr(model, "module_initialized") and hasattr(
-            loaded_model, "module_initialized"
-        ):
-            assert (
-                model.module_initialized == loaded_model.module_initialized
-            ), "Module initialization state should match"
-
-    finally:
-        # Clean up temporary file
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
+    """Check exact persistence before an estimator has received any samples."""
+    loaded_model = _round_trip(model)
+    _assert_persisted_estimator(model, loaded_model)
 
 
-def check_model_persistence_with_custom_kwargs(model):
-    """Test saving models with custom keyword arguments."""
-    # Skip for problematic models
-    # Only test if model has custom kwargs
-    if not hasattr(model, "kwargs") or not model.kwargs:
-        return
-
-    with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
-        temp_path = f.name
-
-    try:
-        # Save the model
-        model.save(temp_path)
-
-        # Load the model
-        try:
-            loaded_model = type(model).load(temp_path)
-
-            # Check that custom kwargs are preserved
-            if hasattr(model, "kwargs") and hasattr(loaded_model, "kwargs"):
-                for key, value in model.kwargs.items():
-                    assert (
-                        loaded_model.kwargs.get(key) == value
-                    ), f"Custom kwarg {key} should be preserved"
-        except (AttributeError, TypeError, RuntimeError):
-            return  # Skip if loading fails
-
-    finally:
-        # Clean up temporary file
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
+def check_model_persistence_rejects_other_type(model):
+    """Check that an estimator file cannot be loaded through an incompatible type."""
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "model.pkl"
+        model.save(path)
+        mismatched_type = type("MismatchedEstimator", (type(model),), {})
+        with pytest.raises(TypeError):
+            mismatched_type.load(path)
 
 
-def check_feature_incremental_preservation(model):
-    """Test that feature incremental settings are preserved."""
-    # Only test models that support feature incremental learning
-    if not hasattr(model, "is_feature_incremental"):
-        return
+def check_model_persistence_legacy_format(model):
+    """Check that files produced by the previous persistence format remain loadable."""
+    state = {
+        "estimator_class": f"{type(model).__module__}.{type(model).__name__}",
+        "init_params": model._get_all_init_params(),
+        "model_state_dict": model.module.state_dict(),
+        "optimizer_state_dict": model.optimizer.state_dict(),
+        "runtime_state": model._get_runtime_state(),
+    }
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / "legacy.pkl"
+        with path.open("wb") as file:
+            pickle.dump(state, file)
+        rng_state = torch.get_rng_state()
+        loaded_model = type(model).load(path)
+        assert torch.equal(torch.get_rng_state(), rng_state)
+    assert type(model) is type(loaded_model)
 
-    with tempfile.NamedTemporaryFile(suffix=".pkl", delete=False) as f:
-        temp_path = f.name
 
-    try:
-        # Save the model
-        model.save(temp_path)
-
-        # Load the model
-        try:
-            loaded_model = type(model).load(temp_path)
-
-            # Check that feature incremental setting is preserved
-            assert (
-                loaded_model.is_feature_incremental == model.is_feature_incremental
-            ), "Feature incremental setting should be preserved"
-        except (AttributeError, TypeError, RuntimeError):
-            return  # Skip if loading fails
-
-    finally:
-        if Path(temp_path).exists():
-            Path(temp_path).unlink()
+def check_model_persistence_after_incremental_expansion(model):
+    """Check persistence after dynamic input and output layer expansion."""
+    initial_input_size = model._get_input_size()
+    initial_output_size = model._get_output_size()
+    x = {f"f{index:04d}": float(index) for index in range(initial_input_size)}
+    expanded_x = {**x, f"f{initial_input_size:04d}": 1.0}
+    model.optimizer_fn = "adam"
+    model._rebuild_optimizer()
+    model.learn_one(x, 0)
+    model.learn_one(expanded_x, 1)
+    model.learn_one(expanded_x, 0)
+    assert model._get_input_size() == initial_input_size + 1
+    assert model._get_output_size() > initial_output_size
+    loaded_model = _round_trip(model)
+    _assert_persisted_estimator(model, loaded_model)
+    _assert_persisted_value(
+        _prediction(model, expanded_x), _prediction(loaded_model, expanded_x)
+    )
+    model.learn_one(expanded_x, 1)
+    loaded_model.learn_one(expanded_x, 1)
+    _assert_persisted_value(model.module.state_dict(), loaded_model.module.state_dict())
+    _assert_persisted_value(
+        model.optimizer.state_dict(), loaded_model.optimizer.state_dict()
+    )
 
 
 def check_seed_reproducibility(model):
@@ -641,10 +591,17 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     # Non-dataset checks (run once per model)
     yield check_dict2tensor
     yield check_model_persistence_untrained
-    yield check_model_persistence_with_custom_kwargs
-    yield check_feature_incremental_preservation
+    yield check_model_persistence_rejects_other_type
+    yield check_model_persistence_legacy_format
     yield check_seed_reproducibility
     yield check_predict_many_output_length
+
+    if (
+        isinstance(model, base.Classifier)
+        and getattr(model, "is_feature_incremental", False)
+        and getattr(model, "is_class_incremental", False)
+    ):
+        yield check_model_persistence_after_incremental_expansion
 
     # Classifier checks
     if isinstance(model, base.Classifier) and not isinstance(

@@ -523,13 +523,7 @@ class DeepEstimator(base.Estimator):
         filepath = Path(filepath)
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
-        state = {
-            "estimator_class": f"{type(self).__module__}.{type(self).__name__}",
-            "init_params": self._get_all_init_params(),
-            "model_state_dict": getattr(self.module, "state_dict", lambda: {})(),
-            "optimizer_state_dict": getattr(self.optimizer, "state_dict", lambda: {})(),
-            "runtime_state": self._get_runtime_state(),
-        }
+        state = {"estimator": self}
 
         with open(filepath, "wb") as f:
             pickle.dump(state, f)
@@ -543,6 +537,14 @@ class DeepEstimator(base.Estimator):
         """
         with open(filepath, "rb") as f:
             state = pickle.load(f)
+
+        if "estimator" in state:
+            estimator = state["estimator"]
+            if not isinstance(estimator, cls):
+                raise TypeError(
+                    f"Saved estimator is {type(estimator).__name__}, not {cls.__name__}"
+                )
+            return estimator
 
         estimator_cls = cls._import_from_path(state["estimator_class"])
         init_params = state["init_params"]
