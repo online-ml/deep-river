@@ -147,7 +147,10 @@ def _round_trip(model):
         path = Path(directory) / "model.pkl"
         model.save(path)
         assert path.is_file()
-        return type(model).load(path)
+        rng_state = torch.get_rng_state()
+        loaded_model = type(model).load(path)
+        assert torch.equal(torch.get_rng_state(), rng_state)
+        return loaded_model
 
 
 def _assert_persisted_estimator(model, loaded_model):
@@ -238,7 +241,9 @@ def check_model_persistence_legacy_format(model):
         path = Path(directory) / "legacy.pkl"
         with path.open("wb") as file:
             pickle.dump(state, file)
+        rng_state = torch.get_rng_state()
         loaded_model = type(model).load(path)
+        assert torch.equal(torch.get_rng_state(), rng_state)
     assert type(model) is type(loaded_model)
 
 
@@ -266,6 +271,42 @@ def check_model_persistence_after_incremental_expansion(model):
     _assert_persisted_value(
         model.optimizer.state_dict(), loaded_model.optimizer.state_dict()
     )
+
+
+def check_seed_reproducibility(model):
+    if not hasattr(model, "module") or not hasattr(model, "seed"):
+        return
+
+    with torch.random.fork_rng():
+        initial_state = torch.get_rng_state()
+        first = model.clone()
+        assert torch.equal(torch.get_rng_state(), initial_state)
+
+        torch.rand(10)
+        advanced_state = torch.get_rng_state()
+        second = model.clone()
+        assert torch.equal(torch.get_rng_state(), advanced_state)
+
+        first_parameters = tuple(first.module.parameters())
+        second_parameters = tuple(second.module.parameters())
+        assert len(first_parameters) == len(second_parameters)
+        assert all(
+            torch.equal(first_parameter, second_parameter)
+            for first_parameter, second_parameter in zip(
+                first_parameters, second_parameters
+            )
+        )
+
+        different = model.clone({"seed": model.seed + 1})
+        assert torch.equal(torch.get_rng_state(), advanced_state)
+        different_parameters = tuple(different.module.parameters())
+        assert len(first_parameters) == len(different_parameters)
+        assert any(
+            not torch.equal(first_parameter, different_parameter)
+            for first_parameter, different_parameter in zip(
+                first_parameters, different_parameters
+            )
+        )
 
 
 BENCHMARK_N_FEATURES = 6
@@ -552,6 +593,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_model_persistence_untrained
     yield check_model_persistence_rejects_other_type
     yield check_model_persistence_legacy_format
+    yield check_seed_reproducibility
     yield check_predict_many_output_length
 
     if (

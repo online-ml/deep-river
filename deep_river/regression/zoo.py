@@ -84,7 +84,9 @@ class LinearRegression(Regressor):
         **kwargs,
     ):
         self.n_features = n_features
-        module = LinearRegression.LRModule(n_features=n_features)
+        module = self._initialize_module(
+            LinearRegression.LRModule, seed, n_features=n_features
+        )
         if "module" in kwargs:
             del kwargs["module"]
         super().__init__(
@@ -192,8 +194,12 @@ class MultiLayerPerceptron(Regressor):
         self.n_features = n_features
         self.n_width = n_width
         self.n_layers = n_layers
-        module = MultiLayerPerceptron.MLPModule(
-            n_features=n_features, n_layers=n_layers, n_width=n_width
+        module = self._initialize_module(
+            MultiLayerPerceptron.MLPModule,
+            seed,
+            n_features=n_features,
+            n_layers=n_layers,
+            n_width=n_width,
         )
         if "module" in kwargs:
             del kwargs["module"]
@@ -321,7 +327,9 @@ class LSTMRegressor(RollingRegressor):
         self.num_layers = num_layers
         self.dropout = dropout
         self.gradient_clip_value = gradient_clip_value
-        module = LSTMRegressor.LSTMModule(
+        module = self._initialize_module(
+            LSTMRegressor.LSTMModule,
+            seed,
             n_features=n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
@@ -456,7 +464,9 @@ class RNNRegressor(RollingRegressor):
         self.num_layers = num_layers
         self.nonlinearity = nonlinearity
         self.dropout = dropout
-        module = RNNRegressor.RNNModule(
+        module = self._initialize_module(
+            RNNRegressor.RNNModule,
+            seed,
             n_features=n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
