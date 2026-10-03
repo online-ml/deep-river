@@ -1,4 +1,14 @@
-from typing import Callable, Iterable, Mapping, Sequence, SupportsFloat, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Hashable,
+    Iterable,
+    Mapping,
+    Sequence,
+    SupportsFloat,
+    Union,
+    cast,
+)
 
 import pandas as pd
 import torch
@@ -16,7 +26,7 @@ class _TestModule(torch.nn.Module):
         self.n_outputs = n_outputs
         self.dense0 = torch.nn.Linear(n_features, n_outputs)
 
-    def forward(self, X, **kwargs):  # noqa: D401 - simple passthrough
+    def forward(self, X, **kwargs):
         return self.dense0(X)
 
 
@@ -24,11 +34,11 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
     """Incremental multi-target regression wrapper for PyTorch modules.
 
     This estimator adapts a ``torch.nn.Module`` to the :mod:`river` streaming API
-    for *multi‑target* (a.k.a. multi‑output) regression. It optionally supports
-    *feature‑incremental* learning (dynamic growth of the input layer when new
+    for *multi-target* (a.k.a. multi-output) regression. It optionally supports
+    *feature-incremental* learning (dynamic growth of the input layer when new
     feature names appear) as provided by :class:`deep_river.base.DeepEstimator` and
-    additionally (optionally) **target‑incremental** learning: if new target names
-    appear during the stream, the *output layer* can be expanded on‑the‑fly so the
+    additionally (optionally) **target-incremental** learning: if new target names
+    appear during the stream, the *output layer* can be expanded on-the-fly so the
     model natively handles the enlarged target vector.
 
     Targets are tracked via an ordered :class:`~sortedcontainers.SortedSet` to
@@ -98,7 +108,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
       and encountering a new target name will only register it internally (the
       tensor conversion will still allocate a slot, but the model's output layer
       size will not change, possibly causing a mismatch). Therefore, enabling
-      target incrementality is recommended for truly open‑world streams.
+      target incrementality is recommended for truly open-world streams.
     """
 
     def __init__(
@@ -126,14 +136,11 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         self.is_target_incremental = is_target_incremental
         self.observed_targets: SortedSet[FeatureName] = SortedSet()
 
-    # ---------------------------------------------------------------------
-    # Public API
-    # ---------------------------------------------------------------------
     def learn_one(
         self,
-        x: dict,
-        y: dict[FeatureName, RegTarget],
-        **kwargs,
+        x: dict[Hashable, Any],
+        y: dict[Hashable, RegTarget],
+        **kwargs: Any,
     ) -> None:
         """Learn from a single multi-target instance.
 
@@ -143,8 +150,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             Feature mapping.
         y : dict[str, float]
             Mapping of target name -> target value.
-        **kwargs
-            Ignored (kept for signature compatibility / future hooks).
         """
         self._update_observed_features(x)
         self._update_observed_targets(y)
@@ -183,7 +188,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         self.module.eval()
         with torch.inference_mode():
             y_pred_t = self.module(x_t).squeeze(0)
-            if y_pred_t.dim() == 0:  # single value fallback
+            if y_pred_t.dim() == 0:
                 y_pred_t = y_pred_t.view(1)
             if y_pred_t.is_cuda:
                 y_pred_t = y_pred_t.cpu()
@@ -210,11 +215,9 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             y_pred = self.module(x_t)
             if y_pred.is_cuda:
                 y_pred = y_pred.cpu()
-        # Ensure 2D
         if y_pred.dim() == 1:
             y_pred = y_pred.view(-1, 1)
         cols = list(self.observed_targets)
-        # Truncate or pad columns if dimensions drift (defensive)
         if y_pred.shape[1] < len(cols):
             pad = torch.zeros(
                 (y_pred.shape[0], len(cols) - y_pred.shape[1]),
@@ -226,9 +229,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             cols = cols + extra
         return pd.DataFrame(y_pred.tolist(), columns=cols, index=X.index)
 
-    # ---------------------------------------------------------------------
-    # Internal helpers
-    # ---------------------------------------------------------------------
     def _update_observed_targets(
         self, y: Union[Mapping[FeatureName, RegTarget], pd.Series, pd.DataFrame]
     ) -> bool:
@@ -249,7 +249,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         elif isinstance(y, pd.Series):
             new_targets = [cast(FeatureName, y.name)] if y.name is not None else []
         elif isinstance(y, pd.DataFrame):
-            # DataFrame columns can be any hashable type
             new_targets = list(cast(Iterable[FeatureName], y.columns))
         else:
             return False
@@ -277,8 +276,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
     ) -> torch.Tensor:
         """Convert a single-sample target dict into a 2D tensor (shape (1, T))."""
         vector = [
-            float(cast(SupportsFloat, y.get(t, 0.0)))  # type: ignore[arg-type]
-            for t in self.observed_targets
+            float(cast(SupportsFloat, y.get(t, 0.0))) for t in self.observed_targets
         ]
         return torch.tensor([vector], dtype=torch.float32, device=self.device)
 
@@ -290,7 +288,6 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         if isinstance(y, pd.DataFrame):
             return y
         if isinstance(y, pd.Series):
-            # Single target series -> DataFrame with its name (or 'y0').
             name = y.name or "y0"
             return y.to_frame(name)
         if isinstance(y, Mapping):
@@ -301,11 +298,9 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
 
     def _multi_target_frame_to_tensor(self, y_df: pd.DataFrame) -> torch.Tensor:
         """Convert a target DataFrame to a tensor with ordering by observed targets."""
-        # Guarantee all observed targets present as columns (add zeros if missing)
         for t in self.observed_targets:
             if t not in y_df.columns:
                 y_df[t] = 0.0
-        # Reorder columns
         y_df = y_df[list(self.observed_targets)]
         return torch.tensor(y_df.values, dtype=torch.float32, device=self.device)
 
@@ -315,17 +310,14 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         state["observed_targets"] = list(self.observed_targets)
         return state
 
-    def _restore_runtime_state(self, state: dict) -> None:  # noqa: D401
+    def _restore_runtime_state(self, state: dict) -> None:
         """Restore runtime state including observed targets."""
         super()._restore_runtime_state(state)
         if "observed_targets" in state:
-            self.observed_targets = SortedSet(state["observed_targets"])  # type: ignore[arg-type]
+            self.observed_targets = SortedSet(state["observed_targets"])
 
-    # ---------------------------------------------------------------------
-    # Testing utilities
-    # ---------------------------------------------------------------------
     @classmethod
-    def _unit_test_params(cls):  # noqa: D401 - part of project-wide testing pattern
+    def _unit_test_params(cls):
         """Yield parameter dictionaries for unit tests."""
         yield {
             "module": _TestModule(10, 3),
@@ -336,7 +328,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         }
 
     @classmethod
-    def _unit_test_skips(cls) -> set:  # noqa: D401
+    def _unit_test_skips(cls) -> set:
         """Return names of generic checks to skip for this estimator."""
         return {
             "check_shuffle_features_no_impact",

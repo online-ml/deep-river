@@ -159,7 +159,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             "check_predict_proba_one",
         }
 
-    def learn_one(self, x: dict, y: base.typing.RegTarget, **kwargs) -> None:
+    def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:
         """Update model using a single (x, y) and current rolling window.
 
         Parameters
@@ -193,21 +193,11 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         float
             Predicted target value.
         """
-        self._update_observed_features(x)
-
-        x_win = self._x_window.copy()
-        x_win.append([x.get(feature, 0) for feature in self.observed_features])
-        if self.append_predict:
-            self._x_window = x_win
-
-        self.module.eval()
-        with torch.inference_mode():
-            x_t = self._deque2rolling_tensor(x_win)
-            y_pred = self.module(x_t)
-            if isinstance(y_pred, torch.Tensor):
-                y_pred = y_pred.detach().view(-1)[-1].cpu().item()
-            else:
-                y_pred = float(y_pred)
+        y_pred = self._rolling_prediction(x)
+        if isinstance(y_pred, torch.Tensor):
+            y_pred = y_pred.detach().view(-1)[-1].cpu().item()
+        else:
+            y_pred = float(y_pred)
 
         return y_pred
 

@@ -1,3 +1,7 @@
+"""
+This module contains the regressors for the deep_river package.
+"""
+
 from deep_river.regression.multioutput import (
     MultiTargetRegressor,
 )
@@ -12,9 +16,6 @@ from deep_river.regression.zoo import (
     RNNRegressor,
 )
 
-"""
-This module contains the regressors for the deep_river package.
-"""
 __all__ = [
     "Regressor",
     "RollingRegressor",

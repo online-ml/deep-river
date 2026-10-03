@@ -13,6 +13,9 @@ format: check-uv
 test: check-uv
 	uv run pytest
 
+benchmark: check-uv
+	uv run pytest benchmarks/codspeed/python --codspeed -o addopts="" $(if $(K),-k "$(K)")
+
 execute-notebooks: check-uv
 	uv run jupyter nbconvert --execute --to notebook --inplace docs/*/*/*.ipynb --ExecutePreprocessor.timeout=-1
 
