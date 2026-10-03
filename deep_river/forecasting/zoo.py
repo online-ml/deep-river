@@ -33,7 +33,6 @@ class LinearForecaster(DeepForecaster):
         **kwargs,
     ):
         self.n_features = n_features
-        torch.manual_seed(seed)
         module = self._initialize_module(
             LinearForecaster.LinearModule,
             seed,
@@ -98,8 +97,10 @@ class MLPForecaster(DeepForecaster):
         module = self._initialize_module(
             MLPForecaster.MLPModule,
             seed,
+            input_size=window_size + n_features,
+            n_width=n_width,
+            n_layers=n_layers,
         )
-        torch.manual_seed(seed)
         kwargs.pop("module", None)
         super().__init__(
             module=module,
@@ -180,8 +181,9 @@ class RNNForecaster(DeepForecaster):
         self.num_layers = num_layers
         self.nonlinearity = nonlinearity
         self.dropout = dropout
-        torch.manual_seed(seed)
-        module = RNNForecaster.RNNModule(
+        module = self._initialize_module(
+            RNNForecaster.RNNModule,
+            seed,
             input_size=1 + n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
@@ -257,8 +259,9 @@ class GRUForecaster(DeepForecaster):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.dropout = dropout
-        torch.manual_seed(seed)
-        module = GRUForecaster.GRUModule(
+        module = self._initialize_module(
+            GRUForecaster.GRUModule,
+            seed,
             input_size=1 + n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
@@ -333,8 +336,9 @@ class LSTMForecaster(DeepForecaster):
         self.hidden_size = hidden_size
         self.num_layers = num_layers
         self.dropout = dropout
-        torch.manual_seed(seed)
-        module = LSTMForecaster.LSTMModule(
+        module = self._initialize_module(
+            LSTMForecaster.LSTMModule,
+            seed,
             input_size=1 + n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
@@ -468,8 +472,9 @@ class LiquidForecaster(DeepForecaster):
         self.num_layers = num_layers
         self.dropout = dropout
         self.time_delta = time_delta
-        torch.manual_seed(seed)
-        module = LiquidForecaster.LiquidModule(
+        module = self._initialize_module(
+            LiquidForecaster.LiquidModule,
+            seed,
             input_size=1 + n_features,
             hidden_size=hidden_size,
             num_layers=num_layers,
@@ -578,8 +583,9 @@ class NBEATSForecaster(DeepForecaster):
         self.n_width = n_width
         self.n_layers = n_layers
         self.n_blocks = n_blocks
-        torch.manual_seed(seed)
-        module = NBEATSForecaster.NBEATSModule(
+        module = self._initialize_module(
+            NBEATSForecaster.NBEATSModule,
+            seed,
             input_size=window_size + n_features,
             n_width=n_width,
             n_layers=n_layers,
