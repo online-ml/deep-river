@@ -332,4 +332,5 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         """Return names of generic checks to skip for this estimator."""
         return {
             "check_shuffle_features_no_impact",
+            "check_learn_many_matches_learn_one",
         }

@@ -3,7 +3,7 @@ from typing import Any, Callable, Union
 import numpy as np
 import pandas as pd
 import torch
-from river.anomaly.base import AnomalyDetector
+from river.base import AnomalyDetector
 from torch import nn
 
 from deep_river.base import DeepEstimator

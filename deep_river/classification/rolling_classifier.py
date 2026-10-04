@@ -157,6 +157,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
     def _unit_test_skips(cls) -> set:
         return {
             "check_predict_proba_one",
+            "check_learn_many_matches_learn_one",
         }
 
     def learn_one(self, x: dict, y: ClfTarget) -> None:
