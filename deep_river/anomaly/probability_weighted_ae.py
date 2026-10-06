@@ -68,17 +68,16 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         losses_numpy = np.asarray(loss.detach().cpu().tolist())
         mean = self.rolling_mean.get()
         var = self.rolling_var.get() if self.rolling_var.get() > 0 else 1
-        if losses_numpy.ndim == 0:
-            self.rolling_mean.update(losses_numpy)
-            self.rolling_var.update(losses_numpy)
-        else:
-            for loss_numpy in range(len(losses_numpy)):
-                self.rolling_mean.update(loss_numpy)
-                self.rolling_var.update(loss_numpy)
+        for loss_numpy in np.atleast_1d(losses_numpy):
+            self.rolling_mean.update(float(loss_numpy))
+            self.rolling_var.update(float(loss_numpy))
 
         loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
-        loss = torch.tensor((self.skip_threshold - prob) / self.skip_threshold) * loss
+        weights = loss.new_tensor(
+            ((self.skip_threshold - prob) / self.skip_threshold).tolist()
+        )
+        loss = (weights * loss).mean()
 
         self.optimizer.zero_grad()
         loss.backward()
@@ -89,7 +88,7 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         X_t = self._df2tensor(X)
 
         self.module.train()
-        x_pred = self.module(X)
+        x_pred = self.module(X_t)
         loss = torch.mean(
             self.loss_func(x_pred, X_t, reduction="none"),
             dim=list(range(1, X_t.dim())),

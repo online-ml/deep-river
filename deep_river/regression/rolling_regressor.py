@@ -157,6 +157,7 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
             # Test fails since `sum(y_pred)` call in test produces large
             # floating point error.
             "check_predict_proba_one",
+            "check_learn_many_matches_learn_one",
         }
 
     def learn_one(self, x: dict, y: base.typing.RegTarget) -> None:

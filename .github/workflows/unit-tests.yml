@@ -20,7 +20,7 @@ jobs:
       matrix:
         python: ['3.11', '3.12']
         os: [ubuntu-latest, macos-latest, windows-latest]
-        river: ['0.25.0']
+        river: ['0.26.1']
 
     steps:
       - uses: actions/checkout@v7
@@ -58,7 +58,7 @@ jobs:
           PYTHONPATH: ${{ github.workspace }}
 
       - name: Build package
-        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.25.0'
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.26.1'
         run: uv build
 
       - name: Upload coverage artifact (diagnostic)
@@ -70,7 +70,7 @@ jobs:
             if-no-files-found: warn
 
       - name: Upload coverage report to Codecov (aggregate project)
-        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.25.0'
+        if: github.repository == 'online-ml/deep-river' && matrix.os == 'ubuntu-latest' && matrix.python == '3.12' && matrix.river == '0.26.1'
         uses: codecov/codecov-action@v4
         with:
           use_oidc: true

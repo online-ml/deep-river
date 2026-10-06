@@ -2,7 +2,7 @@ from typing import Any, Callable, List, Union
 
 import pandas as pd
 import torch
-from river import anomaly
+from river.base import AnomalyDetector
 from torch import nn
 
 from deep_river.base import RollingDeepEstimator
@@ -54,7 +54,7 @@ class _TestLSTMAutoencoder(nn.Module):
         return output
 
 
-class RollingAutoencoder(RollingDeepEstimator, anomaly.base.AnomalyDetector):
+class RollingAutoencoder(RollingDeepEstimator, AnomalyDetector):
     """Rolling window autoencoder for streaming anomaly detection.
 
     Maintains a fixed-size deque of the latest ``window_size`` observations and

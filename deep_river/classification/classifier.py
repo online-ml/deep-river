@@ -340,4 +340,5 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         """Return names of test checks to skip for this estimator."""
         return {
             "check_shuffle_features_no_impact",
+            "check_learn_many_matches_learn_one",
         }

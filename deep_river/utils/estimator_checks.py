@@ -23,8 +23,30 @@ import pytest
 import torch
 from river import base
 from river.base import Estimator
-from river.checks import _wrapped_partial, _yield_datasets, yield_checks
+from river.checks import _wrapped_partial, _yield_datasets
+from river.checks import yield_checks as yield_river_checks
 from river.time_series.base import Forecaster
+from sklearn.metrics import roc_auc_score
+
+
+def check_roc_auc(model, dataset):
+    scores = []
+    labels = []
+    for x, y in dataset:
+        score = model.score_one(x)
+        assert np.isfinite(score)
+        scores.append(score)
+        labels.append(y)
+        model.learn_one(x)
+    assert roc_auc_score(labels, scores) > 0.5
+
+
+def yield_checks(model):
+    for check in yield_river_checks(model):
+        if check.__name__ == "check_roc_auc":
+            yield _wrapped_partial(check_roc_auc, **check.keywords)
+        else:
+            yield check
 
 
 def iter_estimators(submodules=None):
@@ -443,6 +465,137 @@ def _fit_for_benchmark(model):
     return model
 
 
+def _assert_learning_state(left, right):
+    if isinstance(left, torch.Tensor):
+        torch.testing.assert_close(left, right)
+    elif isinstance(left, dict):
+        assert left.keys() == right.keys()
+        for key in left:
+            _assert_learning_state(left[key], right[key])
+    elif isinstance(left, (list, tuple, collections.deque)):
+        assert len(left) == len(right)
+        for first, second in zip(left, right):
+            _assert_learning_state(first, second)
+    else:
+        assert left == right
+
+
+def check_batch_size_one_learning(model):
+    if _is_rolling(model):
+        _fit_for_many_check(model)
+    online = copy.deepcopy(model)
+    batch = copy.deepcopy(model)
+    X = _model_frame(model, CHECK_N_BATCH)
+    y = _benchmark_targets_for(model, len(X))
+    targets = [None] * len(X) if y is None else list(_target_rows(y))
+    devices = (
+        [torch.device(model.device)]
+        if torch.device(model.device).type == "cuda"
+        else []
+    )
+    for index, (x, target) in enumerate(zip(X.to_dict(orient="records"), targets)):
+        with torch.random.fork_rng(devices=devices):
+            _learn_one_for_benchmark(online, x, target)
+        with torch.random.fork_rng(devices=devices):
+            _learn_many_for_benchmark(
+                batch,
+                X.iloc[index : index + 1],
+                None if y is None else y.iloc[index : index + 1],
+            )
+        _assert_learning_state(online.module.state_dict(), batch.module.state_dict())
+        _assert_learning_state(
+            online.optimizer.state_dict(), batch.optimizer.state_dict()
+        )
+        if _is_rolling(model):
+            _assert_learning_state(online._x_window, batch._x_window)
+
+
+def _tensor_storage_bytes(value):
+    visited = {}
+    storages = {}
+    pending = [value]
+
+    while pending:
+        obj = pending.pop()
+        if id(obj) in visited:
+            continue
+        visited[id(obj)] = obj
+        if isinstance(obj, torch.Tensor):
+            storage = obj.untyped_storage()
+            storages[(obj.device, storage.data_ptr())] = storage.nbytes()
+            if obj.is_leaf or obj.retains_grad:
+                pending.append(obj.grad)
+            pending.append(obj.grad_fn)
+        elif isinstance(obj, torch.autograd.graph.Node):
+            pending.extend(node for node, _ in obj.next_functions)
+            pending.append(getattr(obj, "variable", None))
+            for name in dir(obj):
+                if name == "saved_tensors" or name.startswith("_saved_"):
+                    try:
+                        saved = getattr(obj, name)
+                    except RuntimeError as error:
+                        if "after they have already been freed" not in str(error):
+                            raise
+                    else:
+                        pending.append(saved)
+        elif isinstance(obj, dict):
+            pending.extend(obj.keys())
+            pending.extend(obj.values())
+        elif isinstance(obj, (list, tuple, collections.deque, Set)):
+            pending.extend(obj)
+        elif (
+            not isinstance(obj, type)
+            and not inspect.isroutine(obj)
+            and hasattr(obj, "__dict__")
+        ):
+            pending.append(vars(obj))
+
+    return sum(storages.values())
+
+
+def _check_fixed_feature_memory(model, X):
+    y = _benchmark_targets_for(model, len(X))
+    targets = [None] * len(X) if y is None else list(_target_rows(y))
+    rows = X.to_dict(orient="records")
+
+    def run():
+        for x, target in zip(rows, targets):
+            _prediction(model, x)
+            _learn_one_for_benchmark(model, x, target)
+            if _is_rolling(model):
+                assert model._x_window.maxlen == model.window_size
+                assert len(model._x_window) <= model.window_size
+                assert all(
+                    len(row) == len(model.observed_features) for row in model._x_window
+                )
+
+    run()
+    warmed_bytes = _tensor_storage_bytes(model)
+    for _ in range(2):
+        run()
+        assert _tensor_storage_bytes(model) <= warmed_bytes
+        if _is_rolling(model):
+            assert len(model._x_window) == model.window_size
+
+
+def check_bounded_tensor_memory(model):
+    n_samples = max(32, 2 * getattr(model, "window_size", 0))
+    _check_fixed_feature_memory(model, _model_frame(model, n_samples))
+
+
+def check_rolling_memory_after_feature_growth(model):
+    model = _prepare_rolling_feature_check(model)
+    model.optimizer_fn = "adam"
+    model._rebuild_optimizer()
+    X = _model_frame(model, 32)
+    _check_fixed_feature_memory(model, X)
+    initial_bytes = _tensor_storage_bytes(model)
+    X["new_feature"] = 0.5
+    _check_fixed_feature_memory(model, X)
+    assert model._get_input_size() == X.shape[1]
+    assert _tensor_storage_bytes(model) > initial_bytes
+
+
 def check_benchmark_learn_one(model, benchmark):
     rows = _benchmark_rows()
     y = _benchmark_targets_for(model, len(rows))
@@ -780,6 +933,11 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_seed_reproducibility
     yield check_predict_many_output_length
 
+    if not isinstance(model, Forecaster):
+        yield check_bounded_tensor_memory
+        if callable(getattr(model, "learn_many", None)):
+            yield check_batch_size_one_learning
+
     if (
         isinstance(model, base.Classifier)
         and getattr(model, "is_feature_incremental", False)
@@ -788,6 +946,7 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
         yield check_model_persistence_after_incremental_expansion
 
     if _is_rolling(model):
+        yield check_rolling_memory_after_feature_growth
         for layer_type in (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM):
             for initial_rows in (1, 3):
                 yield _wrapped_partial(

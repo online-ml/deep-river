@@ -3,7 +3,7 @@ import abc
 import numpy as np
 from river import base, utils
 from river.anomaly import HalfSpaceTrees
-from river.anomaly.base import AnomalyDetector
+from river.base import AnomalyDetector
 from river.stats import Mean, Min, RollingMin
 
 

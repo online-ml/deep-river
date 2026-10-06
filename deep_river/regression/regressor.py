@@ -146,6 +146,10 @@ class Regressor(DeepEstimator, base.MiniBatchRegressor):
         return pd.Series(y_preds, index=X.index)
 
     @classmethod
+    def _unit_test_skips(cls) -> set:
+        return {"check_learn_many_matches_learn_one"}
+
+    @classmethod
     def _unit_test_params(cls):
         """Provides default parameters for unit testing."""
         yield {
