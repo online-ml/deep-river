@@ -234,7 +234,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
             True if new classes were added.
         """
         n_existing = len(self.observed_classes)
-        values = [y] if isinstance(y, (base.typing.ClfTarget, np.bool_)) else list(y)
+        values = [y] if isinstance(y, (bool, int, str, np.bool_)) else list(y)
         if (
             not self.observed_classes
             and values
