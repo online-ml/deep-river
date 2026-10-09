@@ -1,6 +1,7 @@
 import abc
 
 import numpy as np
+import pandas as pd
 from river import base, utils
 from river.anomaly import HalfSpaceTrees
 from river.base import AnomalyDetector
@@ -32,7 +33,7 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             Dictionary of parameters to be used for unit testing the
             respective class.
         """
-        yield {"anomaly_detector": HalfSpaceTrees()}
+        yield {"anomaly_detector": HalfSpaceTrees(seed=42, window_size=10)}
 
     @classmethod
     def _unit_test_skips(self) -> set:
@@ -102,24 +103,15 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
     def _update_score(self, score: float) -> None:
         pass
 
-    @abc.abstractmethod
-    def score_many(self, *args, **kwargs) -> np.ndarray:
-        """Return scaled anomaly scores based on raw score provided by
-        the wrapped anomaly detector.
+    def score_many(self, X: pd.DataFrame, **kwargs) -> np.ndarray:
+        return np.asarray(
+            [self.score_one(x, **kwargs) for x in X.to_dict(orient="records")],
+            dtype=float,
+        )
 
-        A high score is indicative of an anomaly. A low score corresponds
-        to a normal observation.
-
-        Parameters
-        ----------
-        *args
-            Depends on whether the underlying anomaly detector is
-            supervised or not.
-
-        Returns
-        -------
-        Scaled anomaly scores. Larger values indicate more anomalous examples.
-        """
+    def learn_many(self, X: pd.DataFrame, **kwargs) -> None:
+        for x in X.to_dict(orient="records"):
+            self.learn_one(x, **kwargs)
 
 
 class AnomalyStandardScaler(AnomalyScaler):
