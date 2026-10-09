@@ -2,12 +2,16 @@ import pickle
 
 import numpy as np
 import pytest
-from river import base
 
 from deep_river import anomaly
 
+try:
+    from river.base import AnomalyDetector
+except ImportError:
+    from river.anomaly.base import AnomalyDetector
 
-class ValueDetector(base.AnomalyDetector):
+
+class ValueDetector(AnomalyDetector):
     def __init__(self):
         self.learned = 0
 
