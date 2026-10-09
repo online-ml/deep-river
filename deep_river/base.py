@@ -415,12 +415,11 @@ class DeepEstimator(base.Estimator):
         instructions = self._load_instructions(layer)
         target_str = "output" if output else "input"
 
-        layer_modified = False
+        replacements = {}
         for param_name, instruction in instructions.items():
             if instruction == f"{target_str}_attribute":
                 if getattr(layer, param_name) != target_size:
                     setattr(layer, param_name, target_size)
-                    layer_modified = True
             elif isinstance(instruction, dict):
                 if target_str not in instruction:
                     continue
@@ -430,16 +429,33 @@ class DeepEstimator(base.Estimator):
                     dims_to_add = target_size - param.shape[axis]
                     n_subparams = axis_info["n_subparams"]
                     if dims_to_add > 0:
+                        previous_param = param
                         param = self._expand_weights(
                             param, axis, dims_to_add, n_subparams
                         )
                         if not isinstance(param, torch.nn.Parameter):
                             param = torch.nn.Parameter(param)
                         setattr(layer, param_name, param)
-                        layer_modified = True
-        # Rebuild optimiser so new params are tracked
-        if layer_modified:
-            self._rebuild_optimizer()
+                        replacements[previous_param] = param
+        for group in self.optimizer.param_groups:
+            group["params"] = [replacements.get(p, p) for p in group["params"]]
+        for previous_param, param in replacements.items():
+            if previous_param not in self.optimizer.state:
+                continue
+            state = self.optimizer.state.pop(previous_param)
+            expanded_state = {}
+            for key, value in state.items():
+                if (
+                    isinstance(value, torch.Tensor)
+                    and value.shape == previous_param.shape
+                ):
+                    expanded = value.new_zeros(param.shape)
+                    indices = tuple(slice(0, size) for size in value.shape)
+                    expanded[indices] = value
+                    expanded_state[key] = expanded
+                else:
+                    expanded_state[key] = copy.deepcopy(value)
+            self.optimizer.state[param] = expanded_state
 
     def _rebuild_optimizer(self):
         """Recreate the optimiser with current model parameters.
@@ -479,7 +495,7 @@ class DeepEstimator(base.Estimator):
             * 0.01
         )
         expanded_param = torch.cat([param, new_weights], dim=axis)
-        return torch.nn.Parameter(expanded_param)
+        return torch.nn.Parameter(expanded_param, requires_grad=param.requires_grad)
 
     def _learn(self, x: torch.Tensor, y: Optional[Any] = None):
         """Perform a single optimisation step.
