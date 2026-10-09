@@ -2,10 +2,10 @@ from typing import Any, Callable, List, Union
 
 import pandas as pd
 import torch
-from river.base import AnomalyDetector
 from torch import nn
 
 from deep_river.base import RollingDeepEstimator
+from deep_river.utils.river_compat import AnomalyDetector
 from deep_river.utils.tensor_conversion import deque2rolling_tensor
 
 

@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 import torch
 from river import base
+from river.checks import yield_checks as yield_river_checks
 
 from deep_river import anomaly, regression
 from deep_river.utils import estimator_checks as checks
@@ -211,9 +212,11 @@ def test_batch_prediction_checks_are_retained():
         names = {check.__name__ for check in checks.yield_checks(model)}
         skips = model._unit_test_skips()
         assert "check_learn_many_matches_learn_one" in skips
-        assert "check_predict_many_matches_predict_one" in names - skips
+        upstream_names = {check.__name__ for check in yield_river_checks(model)}
+        prediction_checks = {"check_predict_many_matches_predict_one"}
         if isinstance(model, base.MiniBatchClassifier):
-            assert "check_predict_proba_many_matches_predict_proba_one" in names - skips
+            prediction_checks.add("check_predict_proba_many_matches_predict_proba_one")
+        assert prediction_checks & upstream_names <= names - skips
         deep_names = {check.__name__ for check in checks.yield_deep_checks(model)}
         assert "check_batch_size_one_learning" in deep_names - skips
         assert "check_bounded_tensor_memory" in deep_names - skips
