@@ -49,9 +49,10 @@ def test_new_class_preserves_existing_output_mapping(first, second):
         module[0].bias.copy_(torch.tensor([3.0, -3.0]))
     model = classification.Classifier(module, "cross_entropy", "sgd")
     model._update_observed_targets(first)
+    original_index = model.observed_classes.index(first)
     expected = model.predict_proba_one({"x": 0.0})[first]
     model._update_observed_targets(second)
-    assert model.observed_classes.index(first) == 0
+    assert model.observed_classes.index(first) == original_index
     assert model.predict_proba_one({"x": 0.0})[first] == expected
 
 
