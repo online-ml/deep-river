@@ -8,10 +8,12 @@ from river import base
 from river.base.typing import RegTarget
 from sortedcontainers import SortedSet
 
+from deep_river.utils.ordered_set import OrderedSet
+
 
 def dict2tensor(
     x: dict,
-    features: SortedSet,
+    features: Union[SortedSet, OrderedSet],
     default_value: float = 0.0,
     device: str = "cpu",
     dtype: torch.dtype = torch.float32,
@@ -100,7 +102,7 @@ def deque2rolling_tensor(
 
 def df2tensor(
     X: pd.DataFrame,
-    features: SortedSet,
+    features: Union[SortedSet, OrderedSet],
     default_value: float = 0.0,
     device="cpu",
     dtype=torch.float32,
@@ -138,7 +140,7 @@ def df2tensor(
 
 def labels2onehot(
     y: Union[base.typing.ClfTarget, pd.Series],
-    classes: SortedSet,
+    classes: Union[SortedSet, OrderedSet],
     n_classes: Optional[int] = None,
     device="cpu",
     dtype=torch.float32,
@@ -177,6 +179,12 @@ def labels2onehot(
 
     if n_classes is None:
         n_classes = len(classes)
+    if n_classes == 1 and all(isinstance(c, (bool, np.bool_)) for c in classes):
+        values = y.tolist() if isinstance(y, pd.Series) else [y]
+        if all(isinstance(value, (bool, np.bool_)) for value in values):
+            return torch.tensor(
+                [[float(value)] for value in values], device=device, dtype=dtype
+            )
     if isinstance(y, pd.Series):
         onehot = torch.zeros(len(y), n_classes, device=device, dtype=dtype)
         pos_idcs = [get_class_index(y_i) for y_i in y]
@@ -193,7 +201,9 @@ def labels2onehot(
 
 
 def output2proba(
-    preds: torch.Tensor, classes: SortedSet, output_is_logit: bool = True
+    preds: torch.Tensor,
+    classes: Union[SortedSet, OrderedSet],
+    output_is_logit: bool = True,
 ) -> List[Dict[Hashable, float]]:
     is_probabilistic = output_is_logit
     if output_is_logit:
@@ -226,7 +236,11 @@ def output2proba(
             probs = preds_np.astype("float64")
             if is_probabilistic:
                 probs = renorm_rows(probs)
-            return [dict(zip([False, True], row.astype("float64"))) for row in probs]
+            boolean_labels = list(classes) if n_classes else [False, True]
+            boolean_labels += [
+                label for label in (False, True) if label not in boolean_labels
+            ]
+            return [dict(zip(boolean_labels, row.astype("float64"))) for row in probs]
 
     # Single-output (non-boolean) -> observed class + Unobserved0
     if n_outputs == 1:

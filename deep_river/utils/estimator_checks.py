@@ -882,10 +882,10 @@ def check_rolling_feature_discovery_fixed_input(model):
     )
     _learn_for_rolling_feature_check(model, {"b": 2.0, "d": 4.0})
     _learn_for_rolling_feature_check(model, {"a": 1.0, "c": 3.0})
-    assert list(model._x_window) == [[0, 2.0, 0, 4.0], [1.0, 0, 3.0, 0]]
+    assert list(model._x_window) == [[2.0, 4.0, 0, 0], [0, 0, 1.0, 3.0]]
     assert model.module.last_input[:, 0, :].tolist() == [
-        [0, 2.0, 0, 4.0, 0],
-        [1.0, 0, 3.0, 0, 0],
+        [2.0, 4.0, 0, 0, 0],
+        [0, 0, 1.0, 3.0, 0],
     ]
     assert model.module.encoder.input_size == 5
 
@@ -901,7 +901,7 @@ def check_rolling_feature_update_preserves_window(model):
     assert list(window) == [[2.0, 4.0]]
     assert model._update_observed_features(pd.DataFrame(columns=["e", "a", "c"]))
     assert model._x_window is window
-    assert list(window) == [[0, 2.0, 0, 4.0, 0]]
+    assert list(window) == [[2.0, 4.0, 0, 0, 0]]
     assert window.maxlen == 3
 
 
@@ -910,7 +910,7 @@ def check_rolling_feature_growth_after_restore(model, use_pickle):
     _learn_for_rolling_feature_check(model, {"b": 2.0, "d": 4.0})
     restored = pickle.loads(pickle.dumps(model)) if use_pickle else copy.deepcopy(model)
     _learn_for_rolling_feature_check(restored, {"a": 1.0, "c": 3.0})
-    assert list(restored._x_window) == [[0, 2.0, 0, 4.0], [1.0, 0, 3.0, 0]]
+    assert list(restored._x_window) == [[2.0, 4.0, 0, 0], [0, 0, 1.0, 3.0]]
     assert list(model._x_window) == [[2.0, 4.0]]
 
 

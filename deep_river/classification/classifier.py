@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import torch
 from river import base
-from sortedcontainers import SortedSet
 
 from deep_river.base import DeepEstimator
+from deep_river.utils.ordered_set import OrderedSet
 from deep_river.utils.tensor_conversion import (
     output2proba,
 )
@@ -137,7 +137,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         )
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
-        self.observed_classes: SortedSet = SortedSet()
+        self.observed_classes: OrderedSet = OrderedSet()
 
     # ------------------------------------------------------------------
     # Learning
@@ -237,7 +237,7 @@ class Classifier(DeepEstimator, base.MiniBatchClassifier):
         if isinstance(y, (base.typing.ClfTarget, np.bool_)):  # type: ignore[arg-type]
             self.observed_classes.add(y)
         else:
-            self.observed_classes |= set(y)
+            self.observed_classes.update(y)
 
         if len(self.observed_classes) > n_existing:
             if self.is_class_incremental and self.output_layer:
