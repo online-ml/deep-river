@@ -4,7 +4,7 @@ import numpy as np
 from river import base, utils
 from river.anomaly import HalfSpaceTrees
 from river.base import AnomalyDetector
-from river.stats import Mean, Min, RollingMin
+from river.stats import Max, Mean, Min, RollingMax, RollingMin, Var
 
 
 class AnomalyScaler(base.Wrapper, AnomalyDetector):
@@ -95,7 +95,12 @@ class AnomalyScaler(base.Wrapper, AnomalyDetector):
             The model itself.
         """
 
+        self._update_score(self.anomaly_detector.score_one(*args, **kwargs))
         self.anomaly_detector.learn_one(*args, **kwargs)
+
+    @abc.abstractmethod
+    def _update_score(self, score: float) -> None:
+        pass
 
     @abc.abstractmethod
     def score_many(self, *args, **kwargs) -> np.ndarray:
@@ -145,8 +150,10 @@ class AnomalyStandardScaler(AnomalyScaler):
         self.rolling = rolling
         self.window_size = window_size
         self.mean = utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
-        self.sq_mean = (
-            utils.Rolling(Mean(), self.window_size) if self.rolling else Mean()
+        self.var = (
+            utils.Rolling(Var(ddof=0), self.window_size)
+            if self.rolling
+            else Var(ddof=0)
         )
         self.with_std = with_std
 
@@ -168,16 +175,15 @@ class AnomalyStandardScaler(AnomalyScaler):
         anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args, **kwargs)
-        mean = self.mean.update(raw_score).get()
-        if self.with_std:
-            var = (
-                self.sq_mean.update(raw_score**2).get() - mean**2
-            )  # todo is this correct?
-            score = (raw_score - mean) / var**0.5
-        else:
-            score = raw_score - mean
+        mean = self.mean.get()
+        if not self.with_std:
+            return raw_score - mean
+        var = self.var.get()
+        return (raw_score - mean) / var**0.5 if var > 0 else 0.0
 
-        return score
+    def _update_score(self, score: float) -> None:
+        self.mean.update(score)
+        self.var.update(score)
 
 
 class AnomalyMeanScaler(AnomalyScaler):
@@ -200,7 +206,7 @@ class AnomalyMeanScaler(AnomalyScaler):
         self,
         anomaly_detector: AnomalyDetector,
         rolling: bool = True,
-        window_size=250,
+        window_size: int = 250,
     ):
         super().__init__(anomaly_detector=anomaly_detector)
         self.rolling = rolling
@@ -225,10 +231,11 @@ class AnomalyMeanScaler(AnomalyScaler):
         anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args, **kwargs)
-        mean = self.mean.update(raw_score).get()
-        score = raw_score / mean
+        mean = self.mean.get()
+        return raw_score / mean if mean else 0.0
 
-        return score
+    def _update_score(self, score: float) -> None:
+        self.mean.update(score)
 
 
 class AnomalyMinMaxScaler(AnomalyScaler):
@@ -255,7 +262,7 @@ class AnomalyMinMaxScaler(AnomalyScaler):
         self.rolling = rolling
         self.window_size = window_size
         self.min = RollingMin(self.window_size) if self.rolling else Min()
-        self.max = RollingMin(self.window_size) if self.rolling else Min()
+        self.max = RollingMax(self.window_size) if self.rolling else Max()
 
     def score_one(self, *args, **kwargs):
         """
@@ -275,8 +282,12 @@ class AnomalyMinMaxScaler(AnomalyScaler):
         anomalous examples.
         """
         raw_score = self.anomaly_detector.score_one(*args, **kwargs)
-        min = self.min.update(raw_score).get()
-        max = self.max.update(raw_score).get()
-        score = (raw_score - min) / (max - min)
+        minimum = self.min.get()
+        maximum = self.max.get()
+        if minimum is None or maximum is None:
+            return 0.0
+        return (raw_score - minimum) / (maximum - minimum) if maximum > minimum else 0.0
 
-        return score
+    def _update_score(self, score: float) -> None:
+        self.min.update(score)
+        self.max.update(score)
