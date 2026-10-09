@@ -4,7 +4,7 @@ import numpy as np
 from river import base, utils
 from river.anomaly import HalfSpaceTrees
 from river.base import AnomalyDetector
-from river.stats import Max, Mean, Min, RollingMax, RollingMin, Var
+from river.stats import Mean, Min, RollingMin
 
 
 class AnomalyScaler(base.Wrapper, AnomalyDetector):
@@ -146,6 +146,8 @@ class AnomalyStandardScaler(AnomalyScaler):
         rolling: bool = True,
         window_size: int = 250,
     ):
+        from river.stats import Var
+
         super().__init__(anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
@@ -258,6 +260,8 @@ class AnomalyMinMaxScaler(AnomalyScaler):
         rolling: bool = True,
         window_size: int = 250,
     ):
+        from river.stats import Max, RollingMax
+
         super().__init__(anomaly_detector)
         self.rolling = rolling
         self.window_size = window_size
