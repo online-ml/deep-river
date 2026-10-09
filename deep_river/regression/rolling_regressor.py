@@ -203,25 +203,10 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
         return y_pred
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
-        """Batch update with multiple samples using the rolling window.
-
-        Only performs an optimisation step once the internal window has reached
-        ``window_size`` length to ensure a full sequence is available.
-        """
-        self._update_observed_features(X)
-
-        X = X.reindex(columns=list(self.observed_features), fill_value=0.0)
-        self._x_window.extend(X.values.tolist())
-
-        if len(self._x_window) == self.window_size:
-            X_t = self._deque2rolling_tensor(self._x_window)
-
-            # Convert y to tensor (ensuring proper shape for regression)
-            y_t = torch.tensor(y.values, dtype=torch.float32, device=self.device).view(
-                -1, 1
-            )
-
-            self._learn(x=X_t, y=y_t)
+        if len(X) != len(y):
+            raise ValueError("X and y must contain the same number of rows.")
+        for x, target in zip(X.to_dict(orient="records"), y):
+            self.learn_one(x, target)
 
     def predict_many(self, X: pd.DataFrame) -> pd.Series:
         """Predict targets for multiple samples (appends to a copy of the window).

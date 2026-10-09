@@ -157,22 +157,8 @@ class RollingAutoencoder(RollingDeepEstimator, AnomalyDetector):
         self._learn(x=x_t)
 
     def learn_many(self, X: pd.DataFrame, y=None) -> None:
-        """Batch update; extends window with rows from X and learns if full.
-
-        Parameters
-        ----------
-        X : pd.DataFrame
-            DataFrame containing the input features for each sample.
-        y : None
-            Ignored, present for compatibility.
-        """
-        self._update_observed_features(X)
-
-        X = X.reindex(columns=list(self.observed_features), fill_value=0.0)
-        self._x_window.extend(X.values.tolist())
-        if len(self._x_window) == self.window_size:
-            X_t = deque2rolling_tensor(self._x_window, device=self.device)
-            self._learn(x=X_t)
+        for x in X.to_dict(orient="records"):
+            self.learn_one(x)
 
     def score_one(self, x: dict) -> float:
         """Return reconstruction error for current window + candidate sample.
