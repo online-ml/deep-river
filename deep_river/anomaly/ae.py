@@ -3,10 +3,10 @@ from typing import Any, Callable, Union
 import numpy as np
 import pandas as pd
 import torch
-from river.base import AnomalyDetector
 from torch import nn
 
 from deep_river.base import DeepEstimator
+from deep_river.utils.river_compat import AnomalyDetector
 
 
 class _TestAutoencoder(torch.nn.Module):
