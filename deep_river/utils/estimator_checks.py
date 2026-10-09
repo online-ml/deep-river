@@ -923,6 +923,11 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
 
     """
 
+    from deep_river.base import DeepEstimator
+
+    if not isinstance(model, DeepEstimator):
+        return
+
     dataset_checks = [check_deep_learn_one, check_model_persistence]
 
     # Non-dataset checks (run once per model)
