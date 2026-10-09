@@ -22,17 +22,19 @@ import typing
 
 import numpy as np
 import pandas as pd
-import pytest
 import torch
 from river import base
 from river.base import Estimator
 from river.checks import _wrapped_partial, _yield_datasets
 from river.checks import yield_checks as yield_river_checks
 from river.time_series.base import Forecaster
-from sklearn.metrics import roc_auc_score
+
+from deep_river.utils.river_compat import AnomalyDetector
 
 
 def check_roc_auc(model, dataset):
+    from sklearn.metrics import roc_auc_score
+
     scores = []
     labels = []
     for x, y in dataset:
@@ -80,6 +82,7 @@ def iter_estimators_that_can_be_tested(submodules=None):
 
 
 def check_deep_learn_one(model, dataset):
+    import pytest
 
     # Simulate a crash during backward pass
     def patched_backward(self, *args, **kwargs):
@@ -245,6 +248,8 @@ def check_model_persistence_untrained(model):
 
 def check_model_persistence_rejects_other_type(model):
     """Check that an estimator file cannot be loaded through an incompatible type."""
+    import pytest
+
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "model.pkl"
         model.save(path)
@@ -1301,7 +1306,7 @@ def check_dataframe_backend(model, backend):
         assert isinstance(actual, (pa.ChunkedArray, pa.Table))
 
 
-class _ValueDetector(base.AnomalyDetector):
+class _ValueDetector(AnomalyDetector):
     def __init__(self):
         self.learned = 0
 
