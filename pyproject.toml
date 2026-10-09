@@ -23,15 +23,15 @@ classifiers = [
 ]
 keywords = ["online-learning", "deep-learning", "data-streams"]
 dependencies = [
-    "numpy>=2.3.4,<3",
+    "numpy>=1.26.4,<2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "numpy>=2.3.4,<3; sys_platform != 'darwin' or platform_machine != 'x86_64'",
     "pandas>=2.2,<3",
-    "river>=0.26,<0.27",
-    "scikit-learn>=1.5,<2",
+    "river>=0.23,<0.24; sys_platform == 'darwin' and platform_machine == 'x86_64'",
+    "river>=0.26,<0.27; sys_platform != 'darwin' or platform_machine != 'x86_64'",
+    "scipy>=1.14.1,<2",
     "sortedcontainers>=2.4.0",
     "torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'",
     "torch>=2.5,<2.7; sys_platform != 'darwin' or platform_machine != 'x86_64'",
-    "tqdm~=4.66.5",
-    "torchviz~=0.0.2",
 ]
 
 [project.urls]
@@ -39,6 +39,10 @@ Homepage = "https://github.com/online-ml/deep-river"
 Repository = "https://github.com/online-ml/deep-river"
 Documentation = "https://github.com/online-ml/deep-river"
 
+
+[project.optional-dependencies]
+checks = ["pytest>=8.4.1", "scikit-learn>=1.5,<2"]
+draw = ["torchviz~=0.0.2"]
 
 [tool.setuptools.packages.find]
 include = ["deep_river*"]
@@ -81,8 +85,11 @@ dev = [
     "pytest-cov>=6.2.1",
     "python-slugify>=8.0.0",
     "pyupgrade>=3.17.0",
+    "scikit-learn>=1.5,<2",
     "spacy>=3.2.2",
     "tabulate>=0.9.0",
+    "torchviz~=0.0.2",
+    "tqdm~=4.66.5",
     "watermark>=2.3.1",
     "zensical>=0.0.31",
 ]
