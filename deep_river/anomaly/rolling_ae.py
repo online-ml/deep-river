@@ -140,6 +140,16 @@ class RollingAutoencoder(RollingDeepEstimator, AnomalyDetector):
             "check_predict_proba_one_binary",
         }
 
+    def _update_observed_features(self, x: dict | pd.DataFrame) -> bool:
+        updated = super()._update_observed_features(x)
+        if (
+            self.is_feature_incremental
+            and self.output_layer is not None
+            and self._get_output_size() < self._get_input_size()
+        ):
+            self._expand_layer(self.output_layer, self._get_input_size(), output=True)
+        return updated
+
     def learn_one(self, x: dict, y: Any = None) -> None:
         """Update model using a single sample appended to the rolling window.
 
