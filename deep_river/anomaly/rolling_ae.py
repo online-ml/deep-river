@@ -167,8 +167,9 @@ class RollingAutoencoder(RollingDeepEstimator, AnomalyDetector):
         self._learn(x=x_t)
 
     def learn_many(self, X: pd.DataFrame, y=None) -> None:
-        for x in X.to_dict(orient="records"):
-            self.learn_one(x)
+        columns = X.columns
+        for values in X.to_numpy(dtype=object).tolist():
+            self.learn_one(dict(zip(columns, values)))
 
     def score_one(self, x: dict) -> float:
         """Return reconstruction error for current window + candidate sample.

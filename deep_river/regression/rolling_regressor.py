@@ -205,8 +205,9 @@ class RollingRegressor(RollingDeepEstimator, Regressor):
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
         if len(X) != len(y):
             raise ValueError("X and y must contain the same number of rows.")
-        for x, target in zip(X.to_dict(orient="records"), y):
-            self.learn_one(x, target)
+        columns = X.columns
+        for values, target in zip(X.to_numpy(dtype=object).tolist(), y):
+            self.learn_one(dict(zip(columns, values)), target)
 
     def predict_many(self, X: pd.DataFrame) -> pd.Series:
         """Predict targets for multiple samples (appends to a copy of the window).
