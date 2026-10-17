@@ -6,8 +6,8 @@ import torch
 from river.base.typing import RegTarget
 from sortedcontainers import SortedSet
 
-from deep_river.utils.ordered_set import OrderedSet
 from deep_river.utils.dataframe import frame_to_numpy, values_list
+from deep_river.utils.ordered_set import OrderedSet
 
 
 def dict2tensor(

@@ -18,8 +18,8 @@ from deep_river.utils import (
     get_optim_fn,
     labels2onehot,
 )
-from deep_river.utils.ordered_set import OrderedSet
 from deep_river.utils.dataframe import frame_columns
+from deep_river.utils.ordered_set import OrderedSet
 
 
 class DeepEstimator(base.Estimator):
@@ -794,7 +794,7 @@ class RollingDeepEstimator(DeepEstimator):
             **kwargs,
         )
 
-    def _update_observed_features(self, x: dict | pd.DataFrame) -> bool:
+    def _update_observed_features(self, x: Any) -> bool:
         previous_features = tuple(self.observed_features)
         updated = super()._update_observed_features(x)
         if updated and self._x_window:
