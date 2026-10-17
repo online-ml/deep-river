@@ -914,6 +914,59 @@ def check_rolling_feature_growth_after_restore(model, use_pickle):
     assert list(model._x_window) == [[2.0, 4.0]]
 
 
+def _incremental_autoencoder(model, one_layer=False):
+    output_size = 2 if one_layer else 3
+    layers = [torch.nn.Linear(2, output_size)]
+    if not one_layer:
+        layers.append(torch.nn.Tanh())
+        layers.append(torch.nn.Linear(output_size, 2))
+    kwargs = {"is_feature_incremental": True}
+    if _is_rolling(model):
+        kwargs["window_size"] = 2
+    return type(model)(torch.nn.Sequential(*layers), **kwargs)
+
+
+def check_autoencoder_reconstruction_expansion(model, many):
+    estimator = _incremental_autoencoder(model)
+    for width in (2, 3, 5):
+        record = {str(index): float(index) / 10 for index in range(width)}
+        estimator._update_observed_features(record)
+        assert estimator.input_layer.in_features == width
+        assert estimator.output_layer.out_features == width
+        if many:
+            X = pd.DataFrame([record, record])
+            estimator.learn_many(X)
+            assert np.isfinite(estimator.score_many(X)).all()
+        else:
+            estimator.learn_one(record)
+            assert np.isfinite(estimator.score_one(record))
+    restored = _round_trip(estimator)
+    record["z"] = 1.0
+    restored.learn_one(record)
+    assert restored.input_layer.in_features == 6
+    assert restored.output_layer.out_features == 6
+
+
+def check_autoencoder_expansion_preserves_reconstruction(model):
+    estimator = _incremental_autoencoder(model)
+    estimator.learn_one({"a": 1.0, "b": 2.0})
+    weight = estimator.output_layer.weight.detach().clone()
+    bias = estimator.output_layer.bias.detach().clone()
+    estimator._update_observed_features({"a": 1.0, "b": 2.0, "c": 3.0})
+    torch.testing.assert_close(estimator.output_layer.weight[:2], weight)
+    torch.testing.assert_close(estimator.output_layer.bias[:2], bias)
+
+
+def check_autoencoder_one_layer_expansion(model):
+    if _is_rolling(model):
+        return
+    estimator = _incremental_autoencoder(model, one_layer=True)
+    estimator.learn_one({"a": 1.0, "b": 2.0})
+    estimator.learn_one({"a": 1.0, "b": 2.0, "c": 3.0})
+    assert estimator.module[0].weight.shape == (3, 3)
+    assert np.isfinite(estimator.score_one({"a": 1.0, "b": 2.0, "c": 3.0}))
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -924,6 +977,22 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """
 
     dataset_checks = [check_deep_learn_one, check_model_persistence]
+
+    from deep_river.anomaly import (
+        Autoencoder,
+        ProbabilityWeightedAutoencoder,
+        RollingAutoencoder,
+    )
+
+    if isinstance(
+        model, (Autoencoder, ProbabilityWeightedAutoencoder, RollingAutoencoder)
+    ):
+        for many in (False, True):
+            yield _wrapped_partial(
+                check_autoencoder_reconstruction_expansion, many=many
+            )
+        yield check_autoencoder_expansion_preserves_reconstruction
+        yield check_autoencoder_one_layer_expansion
 
     # Non-dataset checks (run once per model)
     yield check_dict2tensor
