@@ -1,11 +1,12 @@
 from typing import Any, Callable, Hashable, Union, cast
 
+import numpy as np
 import torch
 from river import base
 
 from deep_river.base import DeepEstimator
-from deep_river.utils.ordered_set import OrderedSet
 from deep_river.utils.dataframe import to_native_frame, values_list
+from deep_river.utils.ordered_set import OrderedSet
 from deep_river.utils.tensor_conversion import (
     output2proba,
 )
