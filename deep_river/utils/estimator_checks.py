@@ -1213,6 +1213,82 @@ def check_recurrent_expansion(model, layer_type, bidirectional, num_layers):
         assert restored.module.encoder.weight_ih_l0_reverse.shape[1] == 4
 
 
+class _ValueDetector(base.AnomalyDetector):
+    def __init__(self):
+        self.learned = 0
+
+    def score_one(self, x):
+        return x["value"]
+
+    def learn_one(self, x):
+        self.learned += 1
+
+
+def _anomaly_scaler_types():
+    from deep_river.anomaly import (
+        AnomalyMeanScaler,
+        AnomalyMinMaxScaler,
+        AnomalyStandardScaler,
+    )
+
+    class StandardScaler(AnomalyStandardScaler):
+        def score_many(self, X):
+            return np.array([self.score_one(x) for x in X.to_dict(orient="records")])
+
+    class MeanScaler(AnomalyMeanScaler):
+        def score_many(self, X):
+            return np.array([self.score_one(x) for x in X.to_dict(orient="records")])
+
+    class MinMaxScaler(AnomalyMinMaxScaler):
+        def score_many(self, X):
+            return np.array([self.score_one(x) for x in X.to_dict(orient="records")])
+
+    return StandardScaler, MeanScaler, MinMaxScaler
+
+
+def check_anomaly_scaler_finite_scores(model, scaler_type, rolling):
+    estimator = scaler_type(_ValueDetector(), rolling=rolling)
+    for value in (0.0, 0.0, 3.0, 3.0):
+        x = {"value": value}
+        assert np.isfinite(estimator.score_one(x))
+        estimator.learn_one(x)
+        assert np.isfinite(estimator.score_one(x))
+
+
+def check_anomaly_scaler_uses_prior_statistics(model, scaler_type, expected, rolling):
+    import pytest
+
+    estimator = scaler_type(_ValueDetector(), rolling=rolling)
+    for value in (1.0, 2.0, 3.0):
+        estimator.learn_one({"value": value})
+    state = copy.deepcopy(estimator.__dict__)
+    assert estimator.score_one({"value": 4.0}) == pytest.approx(expected)
+    assert estimator.score_one({"value": 4.0}) == pytest.approx(expected)
+    assert estimator.anomaly_detector.learned == 3
+    _assert_persisted_value(estimator.__dict__, state)
+
+
+def check_anomaly_scaler_rolling_statistics(model, scaler_type, expected):
+    import pytest
+
+    estimator = scaler_type(_ValueDetector(), window_size=2)
+    for value in (1.0, 2.0, 3.0):
+        estimator.learn_one({"value": value})
+    assert estimator.score_one({"value": 4.0}) == pytest.approx(expected)
+
+
+def check_anomaly_standard_scaler_options(model, scaler_type):
+    import pytest
+
+    centered = scaler_type(_ValueDetector(), with_std=False)
+    centered.learn_one({"value": 2.0})
+    assert centered.score_one({"value": 5.0}) == 3.0
+    stable = scaler_type(_ValueDetector(), rolling=False)
+    for value in (1e12, 1e12 + 1, 1e12 + 2):
+        stable.learn_one({"value": value})
+    assert stable.score_one({"value": 1e12 + 3}) == pytest.approx(2 / np.sqrt(2 / 3))
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -1221,6 +1297,39 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     model
 
     """
+
+    from deep_river.anomaly import Autoencoder
+    from deep_river.base import DeepEstimator
+
+    if type(model) is Autoencoder:
+        expected_prior = (2 / np.sqrt(2 / 3), 2.0, 1.5)
+        expected_rolling = (3.0, 1.6, 2.0)
+        for index, scaler_type in enumerate(_anomaly_scaler_types()):
+            for rolling in (False, True):
+                yield _wrapped_partial(
+                    check_anomaly_scaler_finite_scores,
+                    scaler_type=scaler_type,
+                    rolling=rolling,
+                )
+                yield _wrapped_partial(
+                    check_anomaly_scaler_uses_prior_statistics,
+                    scaler_type=scaler_type,
+                    expected=expected_prior[index],
+                    rolling=rolling,
+                )
+            yield _wrapped_partial(
+                check_anomaly_scaler_rolling_statistics,
+                scaler_type=scaler_type,
+                expected=expected_rolling[index],
+            )
+            if index == 0:
+                yield _wrapped_partial(
+                    check_anomaly_standard_scaler_options,
+                    scaler_type=scaler_type,
+                )
+
+    if not isinstance(model, DeepEstimator):
+        return
 
     dataset_checks = [check_deep_learn_one, check_model_persistence]
 
