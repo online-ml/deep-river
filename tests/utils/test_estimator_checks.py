@@ -232,8 +232,10 @@ def test_probability_weighted_batch_loss_and_statistics(n_samples):
     initial_losses = losses.detach().tolist()
     probabilities = 0.5 * (1 + torch.erf(losses.detach().double() / np.sqrt(2)))
     weights = (
-        (reference.skip_threshold - probabilities) / reference.skip_threshold
-    ).to(losses)
+        ((reference.skip_threshold - probabilities) / reference.skip_threshold)
+        .clamp(min=0)
+        .to(losses)
+    )
     (weights * losses).mean().backward()
     reference.optimizer.step()
     model.learn_many(X)
