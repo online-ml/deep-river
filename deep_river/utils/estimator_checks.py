@@ -1376,6 +1376,27 @@ def check_anomaly_standard_scaler_options(model, scaler_type):
     assert stable.score_one({"value": 1e12 + 3}) == pytest.approx(2 / np.sqrt(2 / 3))
 
 
+def check_anomaly_scaler_batch_learning(model):
+    X = pd.DataFrame({"x": [0.1, 0.4, 0.8], "y": [0.8, 0.4, 0.1]}, index=[5, 7, 9])
+    original = X.copy(deep=True)
+    online = copy.deepcopy(model)
+    model.learn_many(X)
+    for x in X.to_dict(orient="records"):
+        online.learn_one(x)
+    state = pickle.dumps(model)
+    actual = model.score_many(X)
+    np.testing.assert_allclose(
+        actual, [online.score_one(x) for x in X.to_dict(orient="records")]
+    )
+    assert actual.shape == (3,)
+    assert np.isfinite(actual).all()
+    assert pickle.dumps(model) == state
+    assert model.score_many(X.iloc[:0]).shape == (0,)
+    model.learn_many(X.iloc[:0])
+    assert pickle.dumps(model) == state
+    pd.testing.assert_frame_equal(X, original)
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -1386,7 +1407,12 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """
 
     from deep_river.anomaly import Autoencoder
+    from deep_river.anomaly.scaler import AnomalyScaler
     from deep_river.base import DeepEstimator
+
+    if isinstance(model, AnomalyScaler):
+        yield check_anomaly_scaler_batch_learning
+        return
 
     if type(model) is Autoencoder:
         expected_prior = (2 / np.sqrt(2 / 3), 2.0, 1.5)
