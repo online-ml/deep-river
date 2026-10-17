@@ -882,10 +882,10 @@ def check_rolling_feature_discovery_fixed_input(model):
     )
     _learn_for_rolling_feature_check(model, {"b": 2.0, "d": 4.0})
     _learn_for_rolling_feature_check(model, {"a": 1.0, "c": 3.0})
-    assert list(model._x_window) == [[0, 2.0, 0, 4.0], [1.0, 0, 3.0, 0]]
+    assert list(model._x_window) == [[2.0, 4.0, 0, 0], [0, 0, 1.0, 3.0]]
     assert model.module.last_input[:, 0, :].tolist() == [
-        [0, 2.0, 0, 4.0, 0],
-        [1.0, 0, 3.0, 0, 0],
+        [2.0, 4.0, 0, 0, 0],
+        [0, 0, 1.0, 3.0, 0],
     ]
     assert model.module.encoder.input_size == 5
 
@@ -901,7 +901,7 @@ def check_rolling_feature_update_preserves_window(model):
     assert list(window) == [[2.0, 4.0]]
     assert model._update_observed_features(pd.DataFrame(columns=["e", "a", "c"]))
     assert model._x_window is window
-    assert list(window) == [[0, 2.0, 0, 4.0, 0]]
+    assert list(window) == [[2.0, 4.0, 0, 0, 0]]
     assert window.maxlen == 3
 
 
@@ -910,8 +910,89 @@ def check_rolling_feature_growth_after_restore(model, use_pickle):
     _learn_for_rolling_feature_check(model, {"b": 2.0, "d": 4.0})
     restored = pickle.loads(pickle.dumps(model)) if use_pickle else copy.deepcopy(model)
     _learn_for_rolling_feature_check(restored, {"a": 1.0, "c": 3.0})
-    assert list(restored._x_window) == [[0, 2.0, 0, 4.0], [1.0, 0, 3.0, 0]]
+    assert list(restored._x_window) == [[2.0, 4.0, 0, 0], [0, 0, 1.0, 3.0]]
     assert list(model._x_window) == [[2.0, 4.0]]
+
+
+def check_ordered_set_indices(model):
+    import pytest
+
+    from deep_river.utils.ordered_set import OrderedSet
+
+    values = OrderedSet(["z", 1])
+    values.update(["a", 2, "z"])
+    assert list(values)[:2] == ["z", 1]
+    assert values.index("z") == 0
+    assert values.index(1) == 1
+    for restored in (copy.deepcopy(values), pickle.loads(pickle.dumps(values))):
+        assert list(restored) == list(values)
+        restored.add("new")
+        assert "new" not in values
+    values.discard("z")
+    assert values.index(1) == 0
+    with pytest.raises(ValueError):
+        values.index("absent")
+
+
+def check_dynamic_zero_feature_mapping(model, many):
+    module = torch.nn.Sequential(torch.nn.Linear(2, 1, bias=False))
+    with torch.no_grad():
+        module[0].weight.copy_(torch.tensor([[2.0, 0.0]]))
+    estimator = type(model)(module, "mse", "sgd", lr=0)
+    assert estimator.predict_one({"z": 3.0}) == 6.0
+    if many:
+        result = estimator.predict_many(pd.DataFrame({"a": [0.0], "z": [3.0]})).iloc[0]
+    else:
+        result = estimator.predict_one({"a": 0.0, "z": 3.0})
+    assert result == 6.0
+    assert list(estimator.observed_features) == ["z", "a"]
+
+
+def check_dynamic_feature_order(model):
+    left = type(model)(torch.nn.Sequential(torch.nn.Linear(2, 1)), "mse", "sgd")
+    right = copy.deepcopy(left)
+    left.predict_one({"z": 2.0, "a": 1.0})
+    right.predict_one({"a": 1.0, "z": 2.0})
+    assert list(left.observed_features) == list(right.observed_features)
+
+
+def check_dynamic_class_mapping(model, first, second):
+    module = torch.nn.Sequential(torch.nn.Linear(1, 2))
+    with torch.no_grad():
+        module[0].weight.zero_()
+        module[0].bias.copy_(torch.tensor([3.0, -3.0]))
+    estimator = type(model)(module, "cross_entropy", "sgd")
+    estimator._update_observed_targets(first)
+    original_index = estimator.observed_classes.index(first)
+    expected = estimator.predict_proba_one({"x": 0.0})[first]
+    estimator._update_observed_targets(second)
+    assert estimator.observed_classes.index(first) == original_index
+    assert estimator.predict_proba_one({"x": 0.0})[first] == expected
+
+
+def check_boolean_class_mapping(model, first):
+    from deep_river.utils.ordered_set import OrderedSet
+    from deep_river.utils.tensor_conversion import labels2onehot
+
+    classes = OrderedSet([first])
+    classes.add(not first)
+    assert labels2onehot(True, classes, n_classes=1).item() == 1.0
+    assert labels2onehot(False, classes, n_classes=1).item() == 0.0
+
+
+def check_dynamic_target_mapping(model):
+    module = torch.nn.Sequential(torch.nn.Linear(1, 2))
+    with torch.no_grad():
+        module[0].weight.zero_()
+        module[0].bias.copy_(torch.tensor([3.0, 7.0]))
+    estimator = type(model)(module, "mse", "sgd")
+    estimator._update_observed_targets({"z": 0.0})
+    assert estimator.predict_one({"x": 0.0})["z"] == 3.0
+    estimator._update_observed_targets({"a": 0.0})
+    assert estimator.predict_one({"x": 0.0}) == {"z": 3.0, "a": 7.0}
+    restored = _round_trip(estimator)
+    assert list(restored.observed_targets) == ["z", "a"]
+    assert restored.predict_one({"x": 0.0}) == estimator.predict_one({"x": 0.0})
 
 
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
@@ -924,6 +1005,30 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """
 
     dataset_checks = [check_deep_learn_one, check_model_persistence]
+
+    from deep_river.classification import Classifier
+    from deep_river.regression import MultiTargetRegressor, Regressor
+
+    if type(model) is Regressor:
+        yield check_ordered_set_indices
+        for many in (False, True):
+            yield _wrapped_partial(check_dynamic_zero_feature_mapping, many=many)
+        yield check_dynamic_feature_order
+
+    if (
+        type(model) is Classifier
+        and getattr(model, "is_class_incremental", False)
+        and not getattr(model, "is_feature_incremental", False)
+    ):
+        for first, second in (("z", "a"), (True, False), (False, True)):
+            yield _wrapped_partial(
+                check_dynamic_class_mapping, first=first, second=second
+            )
+        for first in (True, False):
+            yield _wrapped_partial(check_boolean_class_mapping, first=first)
+
+    if type(model) is MultiTargetRegressor:
+        yield check_dynamic_target_mapping
 
     # Non-dataset checks (run once per model)
     yield check_dict2tensor

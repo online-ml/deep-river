@@ -14,9 +14,9 @@ import pandas as pd
 import torch
 from river import base
 from river.base.typing import FeatureName, RegTarget
-from sortedcontainers import SortedSet
 
 from deep_river.base import DeepEstimator
+from deep_river.utils.ordered_set import OrderedSet
 
 
 class _TestModule(torch.nn.Module):
@@ -134,7 +134,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
             **kwargs,
         )
         self.is_target_incremental = is_target_incremental
-        self.observed_targets: SortedSet[FeatureName] = SortedSet()
+        self.observed_targets: OrderedSet[FeatureName] = OrderedSet()
 
     def learn_one(
         self,
@@ -314,7 +314,7 @@ class MultiTargetRegressor(base.MultiTargetRegressor, DeepEstimator):
         """Restore runtime state including observed targets."""
         super()._restore_runtime_state(state)
         if "observed_targets" in state:
-            self.observed_targets = SortedSet(state["observed_targets"])
+            self.observed_targets = OrderedSet(state["observed_targets"])
 
     @classmethod
     def _unit_test_params(cls):

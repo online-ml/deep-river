@@ -9,7 +9,6 @@ from typing import Any, Callable, Deque, Dict, Optional, Union
 import pandas as pd
 import torch
 from river import base
-from sortedcontainers import SortedSet
 
 from deep_river.utils import (
     deque2rolling_tensor,
@@ -20,6 +19,7 @@ from deep_river.utils import (
     get_optim_fn,
     labels2onehot,
 )
+from deep_river.utils.ordered_set import OrderedSet
 
 
 class DeepEstimator(base.Estimator):
@@ -168,7 +168,7 @@ class DeepEstimator(base.Estimator):
 
         # Store initial expected input length
         self.module_input_len = self._get_input_size() if self.input_layer else None
-        self.observed_features: SortedSet = SortedSet()
+        self.observed_features: OrderedSet = OrderedSet()
         self.module.to(self.device)
 
     @staticmethod
@@ -499,7 +499,9 @@ class DeepEstimator(base.Estimator):
                 y = float2tensor(y, self.device)
         else:  # Classification (one‑hot path)
             n_classes = y_pred.shape[-1]
-            observed_classes = getattr(self, "observed_classes", SortedSet())
+            observed_classes: OrderedSet = getattr(
+                self, "observed_classes", OrderedSet()
+            )
             y = labels2onehot(y, observed_classes, n_classes, self.device)
 
         self.module.train()
@@ -656,7 +658,7 @@ class DeepEstimator(base.Estimator):
         """Restore runtime state (features, classes, rolling buffers)."""
         for attr, data in state.items():
             if attr.endswith(("_features", "_classes")):
-                setattr(self, attr, SortedSet(data) if data else SortedSet())
+                setattr(self, attr, OrderedSet(data) if data else OrderedSet())
             elif attr == "window_buffer" and hasattr(self, "_x_window"):
                 from collections import deque
 
@@ -732,14 +734,14 @@ class DeepEstimator(base.Estimator):
             return kwargs
 
     @staticmethod
-    def _serialize_sorted_set(sorted_set: SortedSet) -> list:
+    def _serialize_sorted_set(sorted_set: OrderedSet) -> list:
         """Convert a ``SortedSet`` to a plain list (JSON / pickle friendly)."""
         return list(sorted_set) if sorted_set else []
 
     @staticmethod
-    def _deserialize_sorted_set(data: list) -> SortedSet:
+    def _deserialize_sorted_set(data: list) -> OrderedSet:
         """Convert a list back into a ``SortedSet``."""
-        return SortedSet(data) if data else SortedSet()
+        return OrderedSet(data) if data else OrderedSet()
 
 
 class RollingDeepEstimator(DeepEstimator):
