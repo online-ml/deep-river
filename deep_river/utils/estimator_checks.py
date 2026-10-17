@@ -8,6 +8,8 @@ __all__ = ["check_estimator"]
 
 import typing
 
+import numpy as np
+import pandas as pd
 import pytest
 import torch
 from river import base
@@ -285,6 +287,92 @@ def check_feature_incremental_preservation(model):
             Path(temp_path).unlink()
 
 
+def _backend_frame(data, backend, index=None):
+    if backend == "pandas":
+        return pd.DataFrame(data, index=index)
+    if backend == "polars":
+        import polars as pl
+
+        return pl.DataFrame(data)
+    if backend == "pyarrow":
+        import pyarrow as pa
+
+        return pa.table(data)
+    raise ValueError(backend)
+
+
+def _backend_series(values, backend, index=None):
+    if backend == "pandas":
+        return pd.Series(values, index=index, name="target")
+    if backend == "polars":
+        import polars as pl
+
+        return pl.Series("target", values)
+    if backend == "pyarrow":
+        import pyarrow as pa
+
+        return pa.chunked_array([values])
+    raise ValueError(backend)
+
+
+def _backend_values(value):
+    if isinstance(value, (pd.Series, pd.DataFrame)):
+        return value.to_numpy()
+    if hasattr(value, "to_pandas"):
+        return value.to_pandas().to_numpy()
+    return value.to_numpy()
+
+
+def check_dataframe_backend(model, backend):
+    reference = copy.deepcopy(model)
+    candidate = copy.deepcopy(model)
+    n_features = model._get_input_size()
+    columns = [f"f{index}" for index in range(n_features)]
+    train_data = {
+        column: [float(index + 1), np.nan, float(index + 3)]
+        for index, column in enumerate(columns)
+    }
+    train_index = pd.Index(["i0", "i1", "i2"])
+    targets = (
+        [False, True, False] if isinstance(model, base.Classifier) else [1.0, 0.0, 1.0]
+    )
+    with torch.random.fork_rng():
+        state = torch.get_rng_state()
+        reference.learn_many(
+            _backend_frame(train_data, "pandas", train_index),
+            _backend_series(targets, "pandas", train_index),
+        )
+        torch.set_rng_state(state)
+        candidate.learn_many(
+            _backend_frame(train_data, backend, train_index),
+            _backend_series(targets, backend, train_index),
+        )
+    predict_data = {
+        column: [float(index), float(index + 1)]
+        for index, column in reversed(list(enumerate(columns)))
+    }
+    predict_index = pd.Index(["p0", "p1"])
+    expected_X = _backend_frame(predict_data, "pandas", predict_index)
+    actual_X = _backend_frame(predict_data, backend, predict_index)
+    if isinstance(model, base.Classifier):
+        expected = reference.predict_proba_many(expected_X)
+        actual = candidate.predict_proba_many(actual_X)
+    else:
+        expected = reference.predict_many(expected_X)
+        actual = candidate.predict_many(actual_X)
+    assert np.allclose(_backend_values(actual), _backend_values(expected))
+    if backend == "pandas":
+        assert actual.index.equals(predict_index)
+    elif backend == "polars":
+        import polars as pl
+
+        assert isinstance(actual, (pl.Series, pl.DataFrame))
+    else:
+        import pyarrow as pa
+
+        assert isinstance(actual, (pa.ChunkedArray, pa.Table))
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -301,6 +389,13 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     yield check_model_persistence_untrained
     yield check_model_persistence_with_custom_kwargs
     yield check_feature_incremental_preservation
+
+    from deep_river.classification import Classifier
+    from deep_river.regression import Regressor
+
+    if type(model) in (Classifier, Regressor):
+        for backend in ("pandas", "polars", "pyarrow"):
+            yield _wrapped_partial(check_dataframe_backend, backend=backend)
 
     # Classifier checks
     if isinstance(model, base.Classifier) and not isinstance(
