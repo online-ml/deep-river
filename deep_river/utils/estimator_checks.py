@@ -4,6 +4,7 @@ import collections
 import copy
 import importlib
 import inspect
+import math
 import pickle
 import tempfile
 from collections.abc import Set
@@ -914,6 +915,67 @@ def check_rolling_feature_growth_after_restore(model, use_pickle):
     assert list(model._x_window) == [[2.0, 4.0]]
 
 
+def _probability_weighted_model(model, optimizer_fn="sgd"):
+    module = torch.nn.Sequential(torch.nn.Linear(1, 1, bias=False))
+    with torch.no_grad():
+        module[0].weight.zero_()
+    return type(model)(module, optimizer_fn=optimizer_fn, lr=0.01)
+
+
+def check_probability_weighted_outlier_updates(model, many, optimizer_fn):
+    estimator = _probability_weighted_model(model, optimizer_fn)
+    estimator.learn_one({"a": 0.1})
+    parameters = copy.deepcopy(estimator.module.state_dict())
+    state = copy.deepcopy(estimator.optimizer.state_dict())
+    before = estimator.score_one({"a": 10.0})
+    if many:
+        estimator.learn_many(pd.DataFrame({"a": [10.0, 10.0]}))
+    else:
+        estimator.learn_one({"a": 10.0})
+    _assert_learning_state(estimator.module.state_dict(), parameters)
+    _assert_learning_state(estimator.optimizer.state_dict(), state)
+    assert estimator.score_one({"a": 10.0}) == before
+    assert estimator.rolling_mean.get() > 1
+
+
+def check_probability_weighted_mixed_batch(model):
+    import pytest
+
+    estimator = _probability_weighted_model(model)
+    X = pd.DataFrame({"a": [0.1, 10.0]})
+    probability = 0.5 * (1 + math.erf(0.01 / np.sqrt(2)))
+    expected_gradient = -0.01 * (0.9 - probability) / 0.9
+    estimator.learn_many(X)
+    assert estimator.module[0].weight.item() == pytest.approx(-0.01 * expected_gradient)
+    assert estimator.rolling_mean.get() == pytest.approx((0.01 + 100) / 2)
+
+
+def check_probability_weighted_configuration(model):
+    import pytest
+
+    for threshold in (0.0, -0.1, 1.1, np.nan, np.inf):
+        with pytest.raises(ValueError, match="skip_threshold"):
+            type(model)(
+                torch.nn.Sequential(torch.nn.Linear(1, 1)),
+                skip_threshold=threshold,
+            )
+    for window_size in (0, -1):
+        with pytest.raises(ValueError, match="window_size"):
+            type(model)(
+                torch.nn.Sequential(torch.nn.Linear(1, 1)),
+                window_size=window_size,
+            )
+
+
+def check_probability_weighted_gradient_clipping(model):
+    module = torch.nn.Sequential(torch.nn.Linear(1, 1, bias=False))
+    with torch.no_grad():
+        module[0].weight.zero_()
+    estimator = type(model)(module, gradient_clip_value=0.001)
+    estimator.learn_one({"a": 0.1})
+    assert 0 < module[0].weight.grad.norm().item() <= 0.001001
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -924,6 +986,20 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """
 
     dataset_checks = [check_deep_learn_one, check_model_persistence]
+
+    from deep_river.anomaly import ProbabilityWeightedAutoencoder
+
+    if isinstance(model, ProbabilityWeightedAutoencoder):
+        for many in (False, True):
+            for optimizer_fn in ("sgd", "adam"):
+                yield _wrapped_partial(
+                    check_probability_weighted_outlier_updates,
+                    many=many,
+                    optimizer_fn=optimizer_fn,
+                )
+        yield check_probability_weighted_mixed_batch
+        yield check_probability_weighted_configuration
+        yield check_probability_weighted_gradient_clipping
 
     # Non-dataset checks (run once per model)
     yield check_dict2tensor
