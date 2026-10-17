@@ -738,11 +738,20 @@ class _RollingFeatureModule(torch.nn.Module):
             type[torch.nn.RNN] | type[torch.nn.GRU] | type[torch.nn.LSTM]
         ) = torch.nn.GRU,
         n_features: int = 2,
+        bidirectional: bool = False,
+        num_layers: int = 2,
     ):
         super().__init__()
         self.kind = kind
-        self.encoder = layer_type(n_features, 4, num_layers=2)
-        self.head = torch.nn.Linear(4, 2 if kind == "classifier" else 1)
+        self.encoder = layer_type(
+            n_features,
+            4,
+            num_layers=num_layers,
+            bidirectional=bidirectional,
+        )
+        self.head = torch.nn.Linear(
+            4 * (2 if bidirectional else 1), 2 if kind == "classifier" else 1
+        )
 
     def forward(self, x):
         self.last_input = x.detach().clone()
@@ -758,6 +767,8 @@ def _prepare_rolling_feature_check(
     n_features=2,
     is_feature_incremental=True,
     append_predict=False,
+    bidirectional=False,
+    num_layers=2,
 ):
     from deep_river.base import RollingDeepEstimator
 
@@ -769,7 +780,13 @@ def _prepare_rolling_feature_check(
     )
     RollingDeepEstimator.__init__(
         estimator,
-        module=_RollingFeatureModule(kind, layer_type, n_features),
+        module=_RollingFeatureModule(
+            kind,
+            layer_type,
+            n_features,
+            bidirectional=bidirectional,
+            num_layers=num_layers,
+        ),
         loss_fn="mse",
         optimizer_fn="sgd",
         device=model.device,
@@ -914,6 +931,37 @@ def check_rolling_feature_growth_after_restore(model, use_pickle):
     assert list(model._x_window) == [[2.0, 4.0]]
 
 
+def check_recurrent_expansion(model, layer_type, bidirectional, num_layers):
+    estimator = _prepare_rolling_feature_check(
+        model,
+        layer_type=layer_type,
+        bidirectional=bidirectional,
+        num_layers=num_layers,
+    )
+    estimator.learn_one({"a": 1.0, "b": 2.0}, 1.0)
+    recurrent = estimator.module.encoder
+    old = {name: value.detach().clone() for name, value in recurrent.named_parameters()}
+    estimator._update_observed_features({"a": 1.0, "b": 2.0, "c": 3.0})
+    assert recurrent.input_size == 3
+    for name, value in recurrent.named_parameters():
+        if name.startswith("weight_ih_l0"):
+            assert value.shape[1] == 3
+            torch.testing.assert_close(value[:, :2], old[name])
+        else:
+            torch.testing.assert_close(value, old[name])
+    estimator.learn_one({"a": 1.0, "b": 2.0, "c": 3.0}, 2.0)
+    for parameter in recurrent.parameters():
+        assert parameter.grad is not None
+        assert torch.isfinite(parameter.grad).all()
+    restored = _round_trip(estimator)
+    x = {"a": 1.0, "b": 2.0, "c": 3.0}
+    _assert_persisted_value(_prediction(estimator, x), _prediction(restored, x))
+    restored.learn_one({**x, "d": 4.0}, 1.0)
+    assert restored.module.encoder.weight_ih_l0.shape[1] == 4
+    if bidirectional:
+        assert restored.module.encoder.weight_ih_l0_reverse.shape[1] == 4
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -924,6 +972,19 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """
 
     dataset_checks = [check_deep_learn_one, check_model_persistence]
+
+    from deep_river.regression import RollingRegressor
+
+    if type(model) is RollingRegressor:
+        for layer_type in (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM):
+            for bidirectional in (False, True):
+                for num_layers in (1, 2):
+                    yield _wrapped_partial(
+                        check_recurrent_expansion,
+                        layer_type=layer_type,
+                        bidirectional=bidirectional,
+                        num_layers=num_layers,
+                    )
 
     # Non-dataset checks (run once per model)
     yield check_dict2tensor
