@@ -177,13 +177,10 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         return cast(Dict[ClfTarget, float], proba[0])
 
     def learn_many(self, X: pd.DataFrame, y: pd.Series) -> None:
-        """Batch update: extend window with rows of X and perform a step."""
-        self._update_observed_targets(y)
-        self._update_observed_features(X)
-        X = X.reindex(columns=list(self.observed_features), fill_value=0.0)
-        self._x_window.extend(X.values.tolist())
-        X_t = self._deque2rolling_tensor(self._x_window)
-        self._learn(x=X_t, y=y)
+        if len(X) != len(y):
+            raise ValueError("X and y must contain the same number of rows.")
+        for x, target in zip(X.to_dict(orient="records"), y):
+            self.learn_one(x, target)
 
     def predict_proba_many(self, X: pd.DataFrame) -> pd.DataFrame:
         """Return probability DataFrame for multiple samples with rolling context."""
