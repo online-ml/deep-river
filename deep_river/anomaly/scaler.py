@@ -3,8 +3,9 @@ import abc
 import numpy as np
 from river import base, utils
 from river.anomaly import HalfSpaceTrees
-from river.base import AnomalyDetector
 from river.stats import Mean, Min, RollingMin
+
+from deep_river.utils.river_compat import AnomalyDetector
 
 
 class AnomalyScaler(base.Wrapper, AnomalyDetector):
