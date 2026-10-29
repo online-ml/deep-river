@@ -6,6 +6,7 @@ import importlib
 import inspect
 import pickle
 import tempfile
+import warnings
 from collections.abc import Set
 from importlib.util import find_spec
 from pathlib import Path
@@ -509,6 +510,43 @@ def check_batch_size_one_learning(model):
         )
         if _is_rolling(model):
             _assert_learning_state(online._x_window, batch._x_window)
+
+
+def check_rolling_batch_learning(model, batch_size, warmup):
+    if warmup:
+        X_warmup = _model_frame(model, warmup)
+        y_warmup = _benchmark_targets_for(model, len(X_warmup))
+        targets = (
+            [None] * len(X_warmup) if y_warmup is None else list(_target_rows(y_warmup))
+        )
+        for x, target in zip(X_warmup.to_dict(orient="records"), targets):
+            _learn_one_for_benchmark(model, x, target)
+
+    online = copy.deepcopy(model)
+    X = _model_frame(model, batch_size)
+    y = _benchmark_targets_for(model, len(X))
+    targets = [None] * len(X) if y is None else list(_target_rows(y))
+    for x, target in zip(X.to_dict(orient="records"), targets):
+        _learn_one_for_benchmark(online, x, target)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        _learn_many_for_benchmark(model, X, y)
+    _assert_learning_state(model.module.state_dict(), online.module.state_dict())
+    _assert_learning_state(model.optimizer.state_dict(), online.optimizer.state_dict())
+    _assert_learning_state(model._x_window, online._x_window)
+
+
+def check_rolling_batch_rejects_misaligned_targets(model):
+    import pytest
+
+    X = _model_frame(model, 2)
+    y = _benchmark_targets_for(model, 1)
+    parameters = copy.deepcopy(model.module.state_dict())
+    window = copy.deepcopy(model._x_window)
+    with pytest.raises(ValueError, match="same number of rows"):
+        _learn_many_for_benchmark(model, X, y)
+    _assert_learning_state(model.module.state_dict(), parameters)
+    _assert_learning_state(model._x_window, window)
 
 
 def _tensor_storage_bytes(value):
@@ -1362,6 +1400,16 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
         yield check_model_persistence_after_incremental_expansion
 
     if _is_rolling(model):
+        if callable(getattr(model, "learn_many", None)):
+            for batch_size in (0, 1, 2, 3, 7):
+                for warmup in (0, 2):
+                    yield _wrapped_partial(
+                        check_rolling_batch_learning,
+                        batch_size=batch_size,
+                        warmup=warmup,
+                    )
+            if model._supervised:
+                yield check_rolling_batch_rejects_misaligned_targets
         yield check_rolling_memory_after_feature_growth
         for layer_type in (torch.nn.RNN, torch.nn.GRU, torch.nn.LSTM):
             for initial_rows in (1, 3):
