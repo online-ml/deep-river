@@ -967,6 +967,85 @@ def check_autoencoder_one_layer_expansion(model):
     assert np.isfinite(estimator.score_one({"a": 1.0, "b": 2.0, "c": 3.0}))
 
 
+def check_optimizer_expansion_state(model, optimizer, kwargs, output):
+    module = torch.nn.Sequential(torch.nn.Linear(2, 2), torch.nn.Linear(2, 1))
+    estimator = type(model)(module, "mse", "sgd")
+    estimator.optimizer = optimizer(module.parameters(), lr=0.01, **kwargs)
+    estimator.learn_one({"a": 1.0, "b": 2.0}, 3.0)
+    original_optimizer = estimator.optimizer
+    layer = estimator.output_layer if output else estimator.input_layer
+    old_weight = layer.weight
+    old_state = copy.deepcopy(estimator.optimizer.state[old_weight])
+    untouched = module[0].weight if output else module[1].weight
+    untouched_state = copy.deepcopy(estimator.optimizer.state[untouched])
+    estimator._expand_layer(layer, 3, output=output)
+    assert estimator.optimizer is original_optimizer
+    assert old_weight not in estimator.optimizer.state
+    _assert_learning_state(estimator.optimizer.state[untouched], untouched_state)
+    for name, value in old_state.items():
+        actual = estimator.optimizer.state[layer.weight][name]
+        if isinstance(value, torch.Tensor) and value.shape == old_weight.shape:
+            indices = tuple(slice(0, size) for size in value.shape)
+            torch.testing.assert_close(actual[indices], value)
+            extra = actual[old_weight.shape[0] :] if output else actual[:, 2:]
+            assert torch.count_nonzero(extra) == 0
+        else:
+            torch.testing.assert_close(actual, value)
+    before = layer.weight.detach().clone()
+    if output:
+        estimator._learn(torch.tensor([[1.0, 2.0]]), torch.zeros(1, 3))
+    else:
+        estimator.learn_one({"a": 1.0, "b": 2.0, "c": 3.0}, 4.0)
+    assert not torch.equal(before, layer.weight)
+
+
+def check_optimizer_expansion_parameter_groups(model):
+    module = torch.nn.Sequential(torch.nn.Linear(1, 2), torch.nn.Linear(2, 1))
+    estimator = type(model)(module, "mse", "sgd")
+    estimator.optimizer = torch.optim.Adam(
+        [
+            {"params": module[0].parameters(), "lr": 0.02, "betas": (0.8, 0.9)},
+            {"params": module[1].parameters(), "lr": 0.01, "weight_decay": 0.1},
+        ]
+    )
+    scheduler = torch.optim.lr_scheduler.StepLR(estimator.optimizer, step_size=1)
+    estimator.learn_one({"a": 1.0}, 1.0)
+    scheduler.step()
+    groups = [
+        {key: value for key, value in group.items() if key != "params"}
+        for group in estimator.optimizer.param_groups
+    ]
+    estimator._expand_layer(module[0], 2, output=False)
+    assert scheduler.optimizer is estimator.optimizer
+    assert groups == [
+        {key: value for key, value in group.items() if key != "params"}
+        for group in estimator.optimizer.param_groups
+    ]
+    parameters = [
+        parameter
+        for group in estimator.optimizer.param_groups
+        for parameter in group["params"]
+    ]
+    assert {id(parameter) for parameter in parameters} == {
+        id(parameter) for parameter in module.parameters()
+    }
+
+
+def check_optimizer_repeated_expansion(model):
+    estimator = type(model)(
+        torch.nn.Sequential(torch.nn.Linear(1, 1)),
+        "mse",
+        "adam",
+        is_feature_incremental=True,
+    )
+    for size in (2, 3, 5):
+        estimator.learn_one({str(index): float(index) for index in range(size)}, 1.0)
+        assert estimator.input_layer.weight.shape == (1, size)
+        assert estimator.optimizer.state[estimator.input_layer.weight][
+            "exp_avg"
+        ].shape == (1, size)
+
+
 def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
     """Generates unit tests for a given model.
 
@@ -993,6 +1072,25 @@ def yield_deep_checks(model) -> typing.Iterator[typing.Callable]:
             )
         yield check_autoencoder_expansion_preserves_reconstruction
         yield check_autoencoder_one_layer_expansion
+
+    from deep_river.regression import Regressor
+
+    if type(model) is Regressor:
+        for optimizer, kwargs in (
+            (torch.optim.Adam, {"amsgrad": True}),
+            (torch.optim.AdamW, {}),
+            (torch.optim.SGD, {"momentum": 0.9}),
+            (torch.optim.RMSprop, {"momentum": 0.9, "centered": True}),
+        ):
+            for output in (False, True):
+                yield _wrapped_partial(
+                    check_optimizer_expansion_state,
+                    optimizer=optimizer,
+                    kwargs=kwargs,
+                    output=output,
+                )
+        yield check_optimizer_expansion_parameter_groups
+        yield check_optimizer_repeated_expansion
 
     # Non-dataset checks (run once per model)
     yield check_dict2tensor
