@@ -23,6 +23,7 @@ classifiers = [
 ]
 keywords = ["online-learning", "deep-learning", "data-streams"]
 dependencies = [
+    "narwhals>=2,<3",
     "numpy>=2.3.4,<3",
     "pandas>=2.2,<3",
     "river>=0.26,<0.27",
@@ -76,6 +77,8 @@ dev = [
     "numpydoc>=1.2",
     "plotly>=6.3.0",
     "prek>=0.4.5",
+    "polars>=1,<2",
+    "pyarrow>=18,<23",
     "pytest>=8.4.1",
     "pytest-codspeed>=5.0.3",
     "pytest-cov>=6.2.1",

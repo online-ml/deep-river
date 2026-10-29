@@ -6,7 +6,6 @@ import pickle
 from pathlib import Path
 from typing import Any, Callable, Deque, Dict, Optional, Union
 
-import pandas as pd
 import torch
 from river import base
 
@@ -19,6 +18,7 @@ from deep_river.utils import (
     get_optim_fn,
     labels2onehot,
 )
+from deep_river.utils.dataframe import frame_columns
 from deep_river.utils.ordered_set import OrderedSet
 
 
@@ -217,7 +217,7 @@ class DeepEstimator(base.Estimator):
             True if previously unseen feature names were added.
         """
         prev_feature_count = len(self.observed_features)
-        new_features = x.keys() if isinstance(x, dict) else x.columns
+        new_features = x.keys() if isinstance(x, dict) else frame_columns(x)
         self.observed_features.update(new_features)
         if (
             self.is_feature_incremental
@@ -247,7 +247,7 @@ class DeepEstimator(base.Estimator):
         )
         return self._pad_tensor_if_needed(tensor_data, 1)
 
-    def _df2tensor(self, X: pd.DataFrame):
+    def _df2tensor(self, X: Any):
         """Convert a feature DataFrame into a dense float tensor.
 
         See :meth:`_dict2tensor` for handling of missing features and padding.
@@ -260,7 +260,7 @@ class DeepEstimator(base.Estimator):
             device=self.device,
             dtype=torch.float32,
         )
-        return self._pad_tensor_if_needed(tensor_data, X.shape[0])
+        return self._pad_tensor_if_needed(tensor_data, tensor_data.shape[0])
 
     def draw(self):  # type: ignore[override]
         """Render a (partial) computational graph of the wrapped model.
@@ -794,7 +794,7 @@ class RollingDeepEstimator(DeepEstimator):
             **kwargs,
         )
 
-    def _update_observed_features(self, x: dict | pd.DataFrame) -> bool:
+    def _update_observed_features(self, x: Any) -> bool:
         previous_features = tuple(self.observed_features)
         updated = super()._update_observed_features(x)
         if updated and self._x_window:

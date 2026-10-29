@@ -219,6 +219,38 @@ def test_batch_prediction_checks_are_retained():
         assert "check_bounded_tensor_memory" in deep_names - skips
 
 
+@pytest.mark.parametrize(
+    "available, expected",
+    [
+        ({"pandas"}, ["pandas"]),
+        ({"pandas", "polars"}, ["pandas", "polars"]),
+        (
+            {"pandas", "polars", "pyarrow"},
+            ["pandas", "polars", "pyarrow"],
+        ),
+    ],
+)
+def test_dataframe_backend_checks_require_installed_backends(
+    monkeypatch, available, expected
+):
+    model = regression.Regressor(
+        module=torch.nn.Sequential(torch.nn.Linear(2, 1)),
+        loss_fn="mse",
+        optimizer_fn="sgd",
+    )
+    monkeypatch.setattr(
+        checks,
+        "find_spec",
+        lambda name: object() if name in available else None,
+    )
+    backends = [
+        check.keywords["backend"]
+        for check in checks.yield_deep_checks(model)
+        if getattr(check, "func", None) is checks.check_dataframe_backend
+    ]
+    assert backends == expected
+
+
 @pytest.mark.parametrize("n_samples", [1, 4])
 def test_probability_weighted_batch_loss_and_statistics(n_samples):
     model = anomaly.ProbabilityWeightedAutoencoder(
