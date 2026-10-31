@@ -3,11 +3,11 @@ from typing import Any, Callable, Dict, Hashable, Type, Union, cast
 import pandas as pd
 import torch
 from river.base.typing import ClfTarget
-from sortedcontainers import SortedSet
 from torch import optim
 
 from deep_river.base import RollingDeepEstimator
 from deep_river.classification import Classifier
+from deep_river.utils.ordered_set import OrderedSet
 from deep_river.utils.tensor_conversion import output2proba
 
 
@@ -141,7 +141,7 @@ class RollingClassifier(Classifier, RollingDeepEstimator):
         # Classification specific attributes (mirror Classifier.__init__)
         self.output_is_logit = output_is_logit
         self.is_class_incremental = is_class_incremental
-        self.observed_classes: SortedSet = SortedSet()
+        self.observed_classes: OrderedSet = OrderedSet()
 
     @classmethod
     def _unit_test_params(cls):
