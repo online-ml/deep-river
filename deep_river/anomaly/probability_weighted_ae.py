@@ -22,9 +22,13 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         device: str = "cpu",
         seed: int = 42,
         skip_threshold: float = 0.9,
-        window_size=250,
+        window_size: int = 250,
         **kwargs,
     ):
+        if not 0 < skip_threshold <= 1:
+            raise ValueError("skip_threshold must be greater than 0 and at most 1.")
+        if window_size < 1:
+            raise ValueError("window_size must be positive.")
         super().__init__(
             module=module,
             loss_fn=loss_fn,
@@ -75,12 +79,19 @@ class ProbabilityWeightedAutoencoder(ae.Autoencoder):
         loss_scaled = (losses_numpy - mean) / math.sqrt(var)
         prob = ndtr(loss_scaled)
         weights = loss.new_tensor(
-            ((self.skip_threshold - prob) / self.skip_threshold).tolist()
+            np.maximum(0, (self.skip_threshold - prob) / self.skip_threshold).tolist()
         )
-        loss = (weights * loss).mean()
-
         self.optimizer.zero_grad()
+        if not weights.numel():
+            return
+        loss = (weights * loss).mean()
         loss.backward()
+        if not torch.any(weights > 0):
+            return
+        if self.gradient_clip_value is not None:
+            torch.nn.utils.clip_grad_norm_(
+                self.module.parameters(), self.gradient_clip_value
+            )
         self.optimizer.step()
 
     def learn_many(self, X: pd.DataFrame) -> None:
